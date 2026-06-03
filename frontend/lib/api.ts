@@ -1,4 +1,9 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Routes are served by Next.js Route Handlers — no separate backend needed.
+// In the browser, relative paths work fine. From Node (server component / test),
+// we need an absolute URL, which NEXT_PUBLIC_SITE_URL provides on Vercel.
+const API = (typeof window === "undefined"
+  ? (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000")
+  : "");
 
 export interface ProductSummary {
   product_id: string;

@@ -80,14 +80,14 @@ export default function DashboardPage() {
           <div className="text-4xl">🔗</div>
           <div>
             <p className="text-sm font-bold mb-1">
-              The Court Trainer's return problem is a stock problem
+              The Court Trainer&apos;s return problem is a stock problem
             </p>
             <p className="text-xs text-white/60 leading-relaxed">
               22.5% sizing return rate → customers buy UK10, return for too small, rebuy UK11.
               Result: UK11 is at <span className="text-red-300 font-mono font-semibold">-153 units</span>,{" "}
               UK12 at <span className="text-red-300 font-mono font-semibold">-150</span>,{" "}
               UK6 at <span className="text-red-300 font-mono font-semibold">-149</span>.
-              One product's sizing failure is driving your supply chain.
+              One product&apos;s sizing failure is driving your supply chain.
             </p>
           </div>
           <div className="ml-auto flex-shrink-0">

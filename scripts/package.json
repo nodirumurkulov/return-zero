@@ -1,0 +1,9 @@
+{
+  "name": "return-zero-seed",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "csv-parse": "^5"
+  }
+}

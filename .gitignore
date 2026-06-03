@@ -1,15 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-*.egg
-dist/
-build/
-.env
-!.env.example
-
 # Node
 node_modules/
 .next/
@@ -22,8 +10,9 @@ out/
 Thumbs.db
 
 # Data (large raw CSVs — not committed)
-backend/data/
 pretty_fly_data_pack/
+# Seed script dependencies
+scripts/node_modules/
 
 # Editor
 .vscode/
