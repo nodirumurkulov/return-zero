@@ -9,10 +9,11 @@ from routers import sizing, fitscores
 app = FastAPI(title="Return Zero API")
 
 import os
-ALLOWED_ORIGINS = [o.strip() for o in os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:3000,https://*.vercel.app"
-).split(",") if o.strip()]
+VERCEL_URL = os.getenv("VERCEL_URL", "")
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    *(["https://" + VERCEL_URL] if VERCEL_URL else []),
+]
 
 app.add_middleware(
     CORSMiddleware,

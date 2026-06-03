@@ -23,8 +23,14 @@ npm run dev
 ```
 App live at http://localhost:3000
 
+## Deploy
+Frontend deploys to **Vercel** — connect the repo, set root directory to `frontend`, and set:
+```
+NEXT_PUBLIC_API_URL=https://your-backend-url
+```
+
 ## Stack
-- **Frontend:** Next.js 14 (App Router) + Tailwind CSS + Recharts
+- **Frontend:** Next.js 14 (App Router) + Tailwind CSS + Recharts — deployed on Vercel
 - **Backend:** FastAPI + pandas (all data in-memory, pre-computed at startup)
 - **LLM:** OpenAI GPT-4o (swap to Anthropic via `LLM_PROVIDER=anthropic`)
 
