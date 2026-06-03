@@ -5,15 +5,37 @@ AI-powered sizing intelligence for Pretty Fly.
 
 ## Quick start
 
-### Backend
+### 1. Link the data files
+The raw CSVs are not committed (too large). Run this once after cloning:
+```bash
+cd backend
+python setup_data.py --source ../../pretty_fly_data_pack/data
+```
+On Windows add `--copy` to copy instead of symlink.
+
+### 2. Backend
 ```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env .env.local   # add your real API key
+# Edit .env and set OPENAI_API_KEY (or ANTHROPIC_API_KEY + LLM_PROVIDER=anthropic)
 uvicorn main:app --reload --port 8000
 ```
 API live at http://localhost:8000 — visit http://localhost:8000/docs for Swagger UI.
+
+### 3. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+App live at http://localhost:3000
+
+| Route | Description |
+|-------|-------------|
+| `/store` | Pretty Fly storefront — Screen 1 |
+| `/store/<product_id>` | Product detail + sizing chat widget |
+| `/dashboard` | Operator fit-score dashboard — Screen 2 |
 
 ### Frontend
 ```bash
