@@ -1,29 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-*.egg
-dist/
-build/
-.env
-!.env.example
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
 
-# Node
-node_modules/
-.next/
-out/
+# Env files — never commit secrets
+.env
 .env.local
 .env.*.local
+frontend/.env.local
+frontend/.env.*.local
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Data (large raw CSVs — not committed)
-backend/data/
-pretty_fly_data_pack/
 
 # Editor
 .vscode/
@@ -32,6 +21,9 @@ pretty_fly_data_pack/
 # Logs
 *.log
 npm-debug.log*
+
+# Data (large raw CSVs — not committed)
+pretty_fly_data_pack/
 
 # Misc
 .vercel

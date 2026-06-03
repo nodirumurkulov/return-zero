@@ -1,37 +1,82 @@
-# Return Zero
+# Resolve — Commerce Incident Response Platform
 
-AI-powered sizing intelligence for Pretty Fly.
-**Wayflyer × Fin Hackathon | 3–5 June 2026**
+> Incident.io for ecommerce.
+> **Wayflyer × Fin Hackathon | 3–5 June 2026**
 
-## Quick start
+---
 
-### Backend
-```bash
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env .env.local   # add your real API key
-uvicorn main:app --reload --port 8000
-```
-API live at http://localhost:8000 — visit http://localhost:8000/docs for Swagger UI.
+## What is this?
 
-### Frontend
+When a KPI breaks — conversion drops, returns spike, inventory stockouts — Resolve automatically
+detects it, opens an incident, dispatches AI agents to investigate, proposes fixes, and lets the
+operator approve and deploy in one click. It monitors recovery and closes the incident when the
+metric returns to normal.
+
+**Engineering has Incident.io. Ecommerce has Resolve.**
+
+---
+
+## Getting started
+
+### 1. Install dependencies
+
 ```bash
 cd frontend
 npm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example frontend/.env.local
+# Fill in your Supabase URL, publishable key, and LLM key
+```
+
+### 3. Run the dev server
+
+```bash
+cd frontend
 npm run dev
 ```
-App live at http://localhost:3000
+
+App available at **http://localhost:3000**
+
+---
 
 ## Stack
-- **Frontend:** Next.js 14 (App Router) + Tailwind CSS + Recharts
-- **Backend:** FastAPI + pandas (all data in-memory, pre-computed at startup)
-- **LLM:** OpenAI GPT-4o (swap to Anthropic via `LLM_PROVIDER=anthropic`)
 
-## Key numbers
-| Metric | Value |
+| Layer | Technology |
+|-------|------------|
+| Frontend + API routes | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
+| Database | Supabase (PostgreSQL) |
+| LLM | OpenAI GPT-4o (default) or Anthropic Claude |
+| Notifications | Slack Incoming Webhooks |
+| Deploy | Vercel |
+
+---
+
+## Repo layout
+
+```
+resolve/
+├── frontend/          # Next.js 14 app — all code lives here
+│   ├── app/           # Pages and API Route Handlers
+│   ├── components/    # React components
+│   └── lib/           # Shared utilities
+├── plan/              # HACKATHON_PLAN.md · UI_UX_PLAN.md
+├── .env.example       # Copy → frontend/.env.local
+└── README.md
+```
+
+---
+
+## Team
+
+| Person | Focus |
 |--------|-------|
-| Sizing refund £ (24mo) | £305,692 |
-| Court Trainer return rate | 22.5% |
-| First-order sizing refunds | 45.6% |
-| UK11 trainer stockout | -153 units |
+| Person 1 | Detection & Data — KPI monitoring, incident generation, Supabase schema |
+| Person 2 | Kanban & Incident UI — homepage, incident board, detail page |
+| Person 3 | Agents & Workflows — AI agents, root cause, approval state machine |
+| Person 4 | Integrations & Demo — Slack, demo scripting, pitch, final polish |
+
+See `plan/HACKATHON_PLAN.md` for full day-by-day schedule and task breakdown.
