@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pf-black:    #0A0A0A;
+  --pf-white:    #FAFAFA;
+  --pf-cream:    #F5F0E8;
+  --pf-sage:     #8A9E8A;
+  --pf-charcoal: #2C2C2C;
+  --pf-dust:     #E8E3DA;
+
+  --grade-f:  #DC2626;
+  --grade-d:  #EA580C;
+  --grade-c:  #CA8A04;
+  --grade-b:  #2563EB;
+  --grade-a:  #16A34A;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast:  150ms;
+  --t-mid:   250ms;
+  --t-slow:  400ms;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--pf-white);
+  color: var(--pf-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Loading dot animation for chat widget */
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%           { transform: translateY(-4px); opacity: 1; }
+}
+.chat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #999;
+  animation: bounce 1.2s ease infinite;
+}
+.chat-dot:nth-child(2) { animation-delay: 0.15s; }
+.chat-dot:nth-child(3) { animation-delay: 0.30s; }
+
+/* Widget slide-up entry */
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-slide-up {
+  animation: slideUp var(--t-slow) var(--ease-out) both;
+}
+
+/* Widget panel scale-in */
+@keyframes scaleIn {
+  from { transform: scale(0.94) translateY(8px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);   opacity: 1; }
+}
+.animate-scale-in {
+  animation: scaleIn var(--t-mid) var(--ease-out) both;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--pf-dust); border-radius: 2px; }
