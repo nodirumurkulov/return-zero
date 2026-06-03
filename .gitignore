@@ -22,8 +22,5 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Data (large raw CSVs — not committed)
-pretty_fly_data_pack/
-
 # Misc
 .vercel
