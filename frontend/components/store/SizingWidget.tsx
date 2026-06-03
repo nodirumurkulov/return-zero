@@ -25,15 +25,19 @@ function makeOpeningMessage(product: ProductDetail): string {
   return `Hi! I can help you find the right size for the **${title}**. What's your usual size, or which brand do you normally wear?`;
 }
 
+type Message = { role: "user" | "assistant"; content: string };
+
 export default function SizingWidget({ product }: Props) {
-  const [open, setOpen]       = useState(false);
-  const [input, setInput]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [open, setOpen]         = useState(false);
+  const [input, setInput]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  // greeting is displayed but never sent to the API
+  const greeting                = makeOpeningMessage(product);
+  const [apiMessages, setApiMessages] = useState<Message[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  // Auto-open on Court Trainer (grade F) after 3 seconds
+  // Auto-open on Grade F products after 3 seconds
   useEffect(() => {
     if (product.fit_score === "F") {
       const t = setTimeout(() => setOpen(true), 3000);
@@ -41,37 +45,35 @@ export default function SizingWidget({ product }: Props) {
     }
   }, [product.fit_score]);
 
-  // Set opening message when widget first opens
   useEffect(() => {
-    if (open && messages.length === 0) {
-      setMessages([{ role: "assistant", content: makeOpeningMessage(product) }]);
-    }
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (open) setTimeout(() => inputRef.current?.focus(), 100);
+  }, [open]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages / loading state change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [apiMessages, loading]);
+
+  // All displayed messages = static greeting + real API turns
+  const displayed: Message[] = [
+    { role: "assistant", content: greeting },
+    ...apiMessages,
+  ];
 
   async function send() {
     if (!input.trim() || loading) return;
-    const userMsg = { role: "user" as const, content: input.trim() };
-    const next = [...messages, userMsg];
-    setMessages(next);
+    const userMsg: Message = { role: "user", content: input.trim() };
+    const next = [...apiMessages, userMsg];
+    setApiMessages(next);
     setInput("");
     setLoading(true);
 
     try {
-      // Don't send the opening assistant message — only real conversation turns
-      const apiMessages = next.filter((m) => !(m.role === "assistant" && next.indexOf(m) === 0));
-      const reply = await sendSizingMessage(apiMessages, product.product_id);
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      const reply = await sendSizingMessage(next, product.product_id);
+      setApiMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch {
-      setMessages((m) => [
-        ...m,
+      setApiMessages((prev) => [
+        ...prev,
         { role: "assistant", content: "Sorry, something went wrong. Please try again." },
       ]);
     } finally {
@@ -127,7 +129,7 @@ export default function SizingWidget({ product }: Props) {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
-            {messages.map((m, i) => (
+            {displayed.map((m, i) => (
               <ChatBubble key={i} role={m.role} content={m.content} />
             ))}
             {loading && <ChatBubble role="assistant" content="" loading />}

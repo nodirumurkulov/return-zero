@@ -2,16 +2,18 @@
 import { useEffect, useState } from "react";
 import NavBar from "@/components/ui/NavBar";
 import ProductCard from "@/components/store/ProductCard";
-import { fetchProducts, type ProductSummary } from "@/lib/api";
+import { fetchProducts, type ProductSummary, ApiError } from "@/lib/api";
 
 export default function StorePage() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
   const [filter, setFilter]     = useState<"all" | "mens" | "womens">("all");
 
   useEffect(() => {
     fetchProducts()
       .then(setProducts)
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Unexpected error"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -50,6 +52,14 @@ export default function StorePage() {
             ))}
           </div>
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-100 px-4 py-3 flex items-center gap-3 text-sm text-red-700">
+            <span className="text-base">⚠</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Grid */}
         {loading ? (

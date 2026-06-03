@@ -1,5 +1,7 @@
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 export interface ProductSummary {
   product_id: string;
   title: string;
@@ -38,36 +40,64 @@ export interface FitScore {
   inventory_by_size: Record<string, number>;
 }
 
+// ── Error type ────────────────────────────────────────────────────────────────
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: "no-store", ...init });
+  } catch {
+    throw new ApiError(
+      `Could not connect to the API at ${API}. Is the backend running?`,
+    );
+  }
+  if (!res.ok) {
+    throw new ApiError(`API error ${res.status}: ${res.statusText}`, res.status);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ── Endpoints ─────────────────────────────────────────────────────────────────
+
 export async function fetchProducts(): Promise<ProductSummary[]> {
-  const res = await fetch(`${API}/api/sizing/products`, { cache: "no-store" });
-  return res.json();
+  return apiFetch(`${API}/api/sizing/products`);
 }
 
 export async function fetchProduct(id: string): Promise<ProductDetail> {
-  const res = await fetch(`${API}/api/sizing/products/${id}`, { cache: "no-store" });
-  return res.json();
+  return apiFetch(`${API}/api/sizing/products/${id}`);
 }
 
 export async function fetchFitScores(): Promise<FitScore[]> {
-  const res = await fetch(`${API}/api/fitscores`, { cache: "no-store" });
-  return res.json();
+  return apiFetch(`${API}/api/fitscores`);
 }
 
 export async function fetchRecommendation(id: string): Promise<string> {
-  const res = await fetch(`${API}/api/fitscores/${id}/recommendation`, { cache: "no-store" });
-  const data = await res.json();
+  const data = await apiFetch<{ recommendation?: string }>(
+    `${API}/api/fitscores/${id}/recommendation`,
+  );
   return data.recommendation ?? "";
 }
 
 export async function sendSizingMessage(
   messages: { role: string; content: string }[],
-  product_id: string
+  product_id: string,
 ): Promise<string> {
-  const res = await fetch(`${API}/api/sizing/chat`, {
+  const data = await apiFetch<{ reply?: string }>(`${API}/api/sizing/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages, product_id }),
   });
-  const data = await res.json();
   return data.reply ?? "";
 }

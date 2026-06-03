@@ -4,11 +4,12 @@ import NavBar from "@/components/ui/NavBar";
 import StatCard from "@/components/ui/StatCard";
 import FitScoreTable from "@/components/dashboard/FitScoreTable";
 import SizingTrendChart from "@/components/dashboard/SizingTrendChart";
-import { fetchFitScores, fetchRecommendation, type FitScore } from "@/lib/api";
+import { fetchFitScores, fetchRecommendation, type FitScore, ApiError } from "@/lib/api";
 
 export default function DashboardPage() {
   const [scores, setScores]                 = useState<FitScore[]>([]);
   const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
   const [preloadedRecs, setPreloadedRecs]   = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -31,7 +32,10 @@ export default function DashboardPage() {
         );
         setPreloadedRecs(recs);
       })
-      .catch(() => setLoading(false));
+      .catch((e) => {
+        setError(e instanceof ApiError ? e.message : "Unexpected error");
+        setLoading(false);
+      });
   }, []);
 
   const fCount = scores.filter((p) => p.fit_score === "F").length;
@@ -42,6 +46,14 @@ export default function DashboardPage() {
       <NavBar />
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-6">
+
+        {/* Error banner */}
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 flex items-center gap-3 text-sm text-red-700">
+            <span className="text-base">⚠</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Headline stat cards */}
         <div className="grid grid-cols-4 gap-4">

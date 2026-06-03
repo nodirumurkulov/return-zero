@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from services.sizing import get_all_products_summary, get_product_detail
 from services.llm import chat_with_tools
@@ -15,7 +15,10 @@ def products():
 
 @router.get("/products/{product_id}")
 def product_detail(product_id: str):
-    return get_product_detail(product_id)
+    detail = get_product_detail(product_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail=f"Product '{product_id}' not found")
+    return detail
 
 
 class ChatRequest(BaseModel):
