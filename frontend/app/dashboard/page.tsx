@@ -4,17 +4,20 @@ import NavBar from "@/components/ui/NavBar";
 import StatCard from "@/components/ui/StatCard";
 import FitScoreTable from "@/components/dashboard/FitScoreTable";
 import SizingTrendChart from "@/components/dashboard/SizingTrendChart";
-import { fetchFitScores, fetchRecommendation, type FitScore } from "@/lib/api";
+import { fetchFitScores, fetchRecommendation, fetchStats, type FitScore, type SiteStats } from "@/lib/api";
 
 export default function DashboardPage() {
-  const [scores, setScores]                 = useState<FitScore[]>([]);
-  const [loading, setLoading]               = useState(true);
-  const [preloadedRecs, setPreloadedRecs]   = useState<Record<string, string>>({});
+  const [scores, setScores]               = useState<FitScore[]>([]);
+  const [siteStats, setSiteStats]         = useState<SiteStats | null>(null);
+  const [loading, setLoading]             = useState(true);
+  const [preloadedRecs, setPreloadedRecs] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchFitScores()
-      .then(async (data) => {
+    // Fetch fit scores + headline stats in parallel
+    Promise.all([fetchFitScores(), fetchStats()])
+      .then(async ([data, stats]) => {
         setScores(data);
+        setSiteStats(stats);
         setLoading(false);
 
         // Pre-load AI fix recommendations for all F-grade products in background
@@ -37,25 +40,28 @@ export default function DashboardPage() {
   const fCount = scores.filter((p) => p.fit_score === "F").length;
   const dCount = scores.filter((p) => p.fit_score === "D").length;
 
+  const statVal = (val: number | undefined, fmt: (n: number) => string) =>
+    loading || val === undefined ? "—" : fmt(val);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
 
       <main className="max-w-7xl mx-auto px-8 py-8 space-y-6">
 
-        {/* Headline stat cards */}
+        {/* Headline stat cards — values from API */}
         <div className="grid grid-cols-4 gap-4">
           <StatCard
             label="Sizing losses (24 months)"
-            value="£305,692"
-            sub="2,393 refund incidents"
+            value={statVal(siteStats?.total_sizing_loss, (n) => `£${n.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`)}
+            sub={siteStats ? `${siteStats.total_sizing_count.toLocaleString()} refund incidents` : ""}
             alert
             alertColour="red"
           />
           <StatCard
             label="First-order refund risk"
-            value="45.6%"
-            sub="1,092 first-time customers"
+            value={statVal(siteStats?.first_order_pct, (n) => `${n}%`)}
+            sub={siteStats ? `${siteStats.first_order_count.toLocaleString()} first-time customers` : ""}
             alert
             alertColour="orange"
           />
@@ -68,8 +74,8 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Sizing refunds trend"
-            value="+26% YoY"
-            sub="Q4 '24: 330 → Q4 '25: 417"
+            value={statVal(siteStats?.yoy_pct, (n) => `${n > 0 ? "+" : ""}${n}% YoY`)}
+            sub={siteStats ? `Q4 '24: ${siteStats.q4_2024_refunds} → Q4 '25: ${siteStats.q4_2025_refunds}` : ""}
             alert
             alertColour="orange"
           />

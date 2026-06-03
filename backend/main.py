@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import sizing, fitscores
+from routers import sizing, fitscores, stats
 
 app = FastAPI(title="Return Zero API")
 
@@ -15,8 +15,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(sizing.router, prefix="/api/sizing")
+app.include_router(sizing.router,   prefix="/api/sizing")
 app.include_router(fitscores.router, prefix="/api/fitscores")
+app.include_router(stats.router,     prefix="/api/stats")
 
 
 @app.on_event("startup")

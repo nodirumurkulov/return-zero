@@ -38,6 +38,31 @@ export interface FitScore {
   inventory_by_size: Record<string, number>;
 }
 
+export interface SiteStats {
+  total_sizing_loss:  number;
+  total_sizing_count: number;
+  first_order_count:  number;
+  first_order_pct:    number;
+  q4_2024_refunds:    number;
+  q4_2025_refunds:    number;
+  yoy_pct:            number;
+}
+
+export interface TrendPoint {
+  quarter: string;
+  refunds: number;
+}
+
+export async function fetchStats(): Promise<SiteStats> {
+  const res = await fetch(`${API}/api/stats`, { cache: "no-store" });
+  return res.json();
+}
+
+export async function fetchTrend(): Promise<TrendPoint[]> {
+  const res = await fetch(`${API}/api/stats/trend`, { cache: "no-store" });
+  return res.json();
+}
+
 export async function fetchProducts(): Promise<ProductSummary[]> {
   const res = await fetch(`${API}/api/sizing/products`, { cache: "no-store" });
   return res.json();
