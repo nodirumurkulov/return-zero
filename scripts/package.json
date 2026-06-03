@@ -1,0 +1,13 @@
+{
+  "name": "resolve-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "csv-parse": "^5.6.0"
+  }
+}
