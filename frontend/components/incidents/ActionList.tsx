@@ -90,6 +90,7 @@ export default function ActionList({
             {proposed.length} action(s) awaiting approval
           </span>
           <Button
+            data-testid="approve-all-low-risk"
             size="sm"
             onClick={() => {
               approveAll();
@@ -168,6 +169,7 @@ export default function ActionList({
                   </Badge>
                   {action.status === "proposed" && !action.auto_deploy ? (
                     <Button
+                      data-testid="approve-action"
                       variant="secondary"
                       size="sm"
                       onClick={() => {

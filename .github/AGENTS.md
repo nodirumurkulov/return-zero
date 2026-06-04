@@ -4,28 +4,19 @@ CI configuration. **Parent:** [../AGENTS.md](../AGENTS.md) · **Humans:** [READM
 
 ## CI workflow
 
-[workflows/ci.yml](workflows/ci.yml) runs on PRs and pushes to `main`:
+[workflows/ci.yml](workflows/ci.yml) on every PR and `main` push:
 
-```bash
-cd frontend && bun ci && bun run lint && bun run typecheck && bun run test:run && bun run build
+```text
+bun ci → check (lint, typecheck, Vitest) → supabase start → env vars → db:reset → seed → build → playwright e2e
 ```
 
-Uses placeholder Clerk/Supabase env vars — enough to build, not to hit real APIs.
-
-## Best practices
-
-- CI encodes **non-negotiable quality** (lint, types, build) — workflow changes must not trade checks for backward compat with broken code.
-
-## Pull request rules
-
-- Do not disable or weaken CI checks without explicit user request.
-- Do not add `continue-on-error` to lint/typecheck/build steps.
-- Scripts validators are **not** in CI (need live DB).
+Supabase keys go to `$GITHUB_ENV` (not `.env.local`). Requires Docker. E2E always runs.
 
 ## Before pushing
 
-Match CI locally:
-
 ```bash
 cd frontend && bun run check && bun run build
+# parity with CI e2e path:
+cd supabase && supabase start && cd ..
+bun run db:reset && bun run seed && CI=true bun run e2e
 ```

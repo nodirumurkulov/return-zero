@@ -1,5 +1,5 @@
 -- =============================================================
--- 011_incident_actions_timeline_rls.sql
+-- 015_incident_actions_timeline_rls.sql
 -- Authenticated users may read/write incident_actions and incident_timeline
 -- (required for investigate/approve API routes using createClient + RLS).
 -- Mock catalog tables remain read-only for authenticated.

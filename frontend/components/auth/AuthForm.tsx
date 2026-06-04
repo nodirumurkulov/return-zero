@@ -18,10 +18,12 @@ export default function AuthForm({
   title,
   action,
   initialError,
+  nextPath,
 }: {
   title: string;
   action: (formData: FormData) => Promise<{ ok: false; error: string } | void>;
   initialError?: string | null;
+  nextPath?: string | null;
 }) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     async (_prev, formData) => {
@@ -38,6 +40,7 @@ export default function AuthForm({
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
           <div className="space-y-2">
             <Label htmlFor="auth-email">Email</Label>
             <Input

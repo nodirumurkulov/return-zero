@@ -1,19 +1,68 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCI = !!process.env.CI;
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const authFile = "e2e/.auth/user.json";
+
+const webServerEnvKeys = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_APP_URL",
+  "OPENAI_API_KEY",
+  "LLM_PROVIDER",
+] as const;
+
+const webServerEnv = Object.fromEntries(
+  webServerEnvKeys
+    .filter((key) => process.env[key])
+    .map((key) => [key, process.env[key] as string]),
+);
+
 export default defineConfig({
-  testDir: "./e2e",
-  fullyParallel: true,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  fullyParallel: !isCI,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 1 : undefined,
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
+  reporter: isCI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"]],
+  globalSetup: "./e2e/global-setup.ts",
+  outputDir: "test-results",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
+    baseURL,
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: isCI ? "retain-on-failure" : "off",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: process.env.CI ? "bun run start" : "bun run dev",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    command: isCI ? "bun run start" : "bun run dev",
+    url: baseURL,
+    reuseExistingServer: !isCI,
     timeout: 120_000,
+    env: webServerEnv,
   },
+  projects: [
+    {
+      name: "setup",
+      testDir: "./e2e",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      name: "chromium",
+      testDir: "./e2e/specs",
+      use: { ...devices["Desktop Chrome"], storageState: authFile },
+      dependencies: ["setup"],
+      testIgnore: /auth\.spec\.ts/,
+    },
+    {
+      name: "chromium-guest",
+      testDir: "./e2e",
+      testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+  ],
 });

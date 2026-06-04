@@ -231,10 +231,4 @@ cross join (
 where p.product_id <> 'prod_00005'
 on conflict (product_id, metric_key) do nothing;
 
--- Demo hero SKU threshold overrides (config-driven metric_key)
-insert into product_kpi_thresholds (product_id, metric_key, threshold, direction)
-values
-  ('prod_00005', 'return_rate', 0.20, 'above'),
-  ('prod_00005', 'refund_rate', 0.15, 'above'),
-  ('prod_00005', 'support_volume', 25, 'above')
-on conflict (product_id, metric_key) do nothing;
+-- Per-product overrides for demo SKUs are seeded in scripts/seed.ts after products load.
