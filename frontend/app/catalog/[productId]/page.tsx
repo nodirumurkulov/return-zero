@@ -1,0 +1,96 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import KpiCard from "@/components/catalog/KpiCard";
+import HealthBadge from "@/components/catalog/HealthBadge";
+import ThresholdEditor from "@/components/catalog/ThresholdEditor";
+import SectionLabel from "@/components/ui/section-label";
+import { Button } from "@/components/ui/button";
+import { createServiceClient } from "@/lib/supabase/server";
+import {
+  computeProductHealth,
+  type KpiThreshold,
+  type ProductMetric,
+  type ProductMonthlyMetric,
+} from "@/types/database";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  params: { productId: string };
+};
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const supabase = createServiceClient();
+  const { productId } = params;
+
+  const [{ data: product, error }, { data: monthly }, { data: thresholds }] = await Promise.all([
+    supabase.from("product_metrics_view").select("*").eq("product_id", productId).maybeSingle(),
+    supabase
+      .from("product_metrics_monthly_view")
+      .select("*")
+      .eq("product_id", productId)
+      .order("month_start"),
+    supabase.from("product_kpi_thresholds").select("*").eq("product_id", productId),
+  ]);
+
+  if (error || !product) notFound();
+
+  const metrics = product as ProductMetric;
+  const thresholdRows = (thresholds ?? []) as KpiThreshold[];
+  const health = computeProductHealth(metrics, thresholdRows);
+  const monthlyRows = (monthly ?? []) as ProductMonthlyMetric[];
+  const returnTrend = monthlyRows.map((row) => Number(row.return_rate ?? 0));
+  const revenueTrend = monthlyRows.map((row) => Number(row.revenue_gbp ?? 0));
+
+  return (
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <Button asChild variant="ghost" size="sm" className="mb-2 px-0">
+            <Link href="/catalog">← Back to catalog</Link>
+          </Button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">{metrics.title}</h1>
+            <HealthBadge level={health} />
+          </div>
+          <p className="mt-1 text-sm capitalize text-muted-foreground">
+            {metrics.product_type} · {metrics.gender_segment} · {metrics.product_id}
+          </p>
+        </div>
+      </div>
+
+      <SectionLabel>30-day KPIs</SectionLabel>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Return rate"
+          value={`${((metrics.return_rate ?? 0) * 100).toFixed(1)}%`}
+          subtext="Sizing-related returns trending up"
+          trend={returnTrend}
+          accent={(metrics.return_rate ?? 0) > 0.2 ? "danger" : "default"}
+        />
+        <KpiCard
+          label="Refund rate"
+          value={`${((metrics.refund_rate ?? 0) * 100).toFixed(1)}%`}
+          subtext="Share of revenue refunded"
+          trend={returnTrend}
+          accent={(metrics.refund_rate ?? 0) > 0.12 ? "danger" : "default"}
+        />
+        <KpiCard
+          label="Revenue (30d)"
+          value={`£${Number(metrics.revenue_gbp ?? 0).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`}
+          subtext={`${metrics.order_count ?? 0} orders`}
+          trend={revenueTrend}
+        />
+        <KpiCard
+          label="Support tickets"
+          value={String(metrics.support_tickets ?? 0)}
+          subtext={
+            metrics.ad_roas != null ? `Ad ROAS ${metrics.ad_roas.toFixed(1)}x` : "No ad attribution"
+          }
+        />
+      </div>
+
+      <ThresholdEditor productId={productId} thresholds={thresholdRows} />
+    </div>
+  );
+}
