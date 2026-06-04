@@ -55,6 +55,54 @@ export type Database = {
           },
         ]
       }
+      business_reports: {
+        Row: {
+          created_at: string
+          id: string
+          narrative: string | null
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          summary: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          summary?: Json
+        }
+        Relationships: []
+      }
+      product_baselines: {
+        Row: {
+          computed_at: string
+          mean: number
+          metric_key: string
+          product_id: string
+          sample_n: number
+          stddev: number
+        }
+        Insert: {
+          computed_at?: string
+          mean: number
+          metric_key: string
+          product_id: string
+          sample_n: number
+          stddev: number
+        }
+        Update: {
+          computed_at?: string
+          mean?: number
+          metric_key?: string
+          product_id?: string
+          sample_n?: number
+          stddev?: number
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           key: string

@@ -3,7 +3,7 @@ import { RunAnalysis } from "@/components/onboarding/RunAnalysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Sparkline from "@/components/ui/sparkline";
 import type { ReportSummary } from "@/lib/learn/report";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 export default async function ReportPage() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("business_reports")
     .select("summary, narrative, created_at")
@@ -47,7 +47,7 @@ export default async function ReportPage() {
     );
   }
 
-  const summary = data.summary as ReportSummary;
+  const summary = data.summary as unknown as ReportSummary;
   const t = summary.totals;
   const trendLabel =
     summary.trend.revenue_direction === "rising"
