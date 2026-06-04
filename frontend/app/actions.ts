@@ -48,11 +48,10 @@ export async function updateIncidentStatus(incidentId: string, status: string) {
     return { ok: false, error: "Unauthorized" };
   }
 
-  const payload: { status: string; resolved_at?: string | null } = { status };
-
-  if (status === "resolved") {
-    payload.resolved_at = new Date().toISOString();
-  }
+  const payload: { status: string; resolved_at: string | null } = {
+    status,
+    resolved_at: status === "resolved" ? new Date().toISOString() : null,
+  };
 
   const { error } = await supabase.from("incidents").update(payload).eq("id", incidentId);
 

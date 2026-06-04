@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { signUp } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
+import DemoLoginButton from "@/components/auth/DemoLoginButton";
+import OAuthButtons from "@/components/auth/OAuthButtons";
 
 export default function SignUpPage() {
   return (
@@ -10,6 +12,8 @@ export default function SignUpPage() {
         <p className="mt-1 text-sm text-muted-foreground">Commerce Incident Response</p>
       </div>
       <AuthForm title="Create account" action={signUp} />
+      <OAuthButtons />
+      <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         <Link href="/sign-in" className="text-primary hover:underline">
           Already have an account? Sign in
