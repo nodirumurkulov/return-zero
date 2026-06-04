@@ -45,17 +45,23 @@ export interface ComputeOpts {
   windowDays?: number; // override each definition's own window
 }
 
+export interface EngineRun {
+  defs: MetricDefinition[];
+  factsByWindow: Map<number, Map<string, ProductSourceFacts>>;
+  metrics: Record<string, MetricValue[]>;
+}
+
 /**
- * Evaluate the enabled metric_definitions against source facts, applying any
- * per-product threshold overrides. The KPI set comes entirely from config, so
- * the same engine works for any business whose data is in the contract schema.
- *
- * Returns metrics keyed by product_id (each list ordered by definition sort_order).
+ * Core engine pass — evaluates the enabled metric_definitions against source
+ * facts (applying per-product threshold overrides) and returns the metrics PLUS
+ * the definitions and the source-facts maps. Breach detection uses the extra
+ * data to compute £ impact without a second RPC. KPI set comes entirely from
+ * config, so the same engine works for any business in the contract schema.
  */
-export async function computeMetrics(
+export async function computeMetricsDetailed(
   supabase: SupabaseClient,
   opts: ComputeOpts = {}
-): Promise<Record<string, MetricValue[]>> {
+): Promise<EngineRun> {
   const [{ data: defsData, error: defsErr }, { data: ovrData, error: ovrErr }] = await Promise.all([
     supabase.from("metric_definitions").select("*").eq("enabled", true).order("sort_order"),
     supabase.from("product_kpi_thresholds").select("*").eq("active", true),
@@ -83,7 +89,7 @@ export async function computeMetrics(
     factsByWindow.set(w, await getSourceFacts(supabase, w));
   }
 
-  const result: Record<string, MetricValue[]> = {};
+  const metrics: Record<string, MetricValue[]> = {};
   for (const def of defs) {
     const facts = factsByWindow.get(opts.windowDays ?? def.window_days)!;
     for (const [productId, f] of Array.from(facts)) {
@@ -92,7 +98,7 @@ export async function computeMetrics(
       const threshold = override?.threshold ?? def.default_threshold;
       const direction = override?.direction ?? def.direction;
       const value = evalValue(def, f);
-      (result[productId] ??= []).push({
+      (metrics[productId] ??= []).push({
         metric_key: def.metric_key,
         display_name: def.display_name,
         unit: def.unit,
@@ -104,7 +110,17 @@ export async function computeMetrics(
       });
     }
   }
-  return result;
+  return { defs, factsByWindow, metrics };
+}
+
+/**
+ * Metrics keyed by product_id (each list ordered by definition sort_order).
+ */
+export async function computeMetrics(
+  supabase: SupabaseClient,
+  opts: ComputeOpts = {}
+): Promise<Record<string, MetricValue[]>> {
+  return (await computeMetricsDetailed(supabase, opts)).metrics;
 }
 
 /** Metrics for a single product, ordered by definition sort_order. */
