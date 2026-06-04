@@ -133,7 +133,7 @@ Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** o
 |-------|----------|
 | Web app and API | [`frontend/`](frontend/) |
 | Database migrations | [`supabase/`](supabase/) |
-| Seed and validation scripts | [`scripts/`](scripts/) |
+| Seed and validation scripts | [`frontend/scripts/`](frontend/scripts/) |
 | Deployment and analytics docs | [`docs/`](docs/) |
 | Hackathon CSV data | [`pretty_fly_data_pack/`](pretty_fly_data_pack/) |
 
@@ -144,7 +144,6 @@ Humans read **`README.md`** in each folder; coding agents read the matching **`A
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (frontend install, lint, build)
-- [Node.js](https://nodejs.org) 20+ (scripts only)
 - Supabase project with migrations applied
 - Clerk application (publishable + secret keys)
 - LLM API key (OpenAI or Anthropic)
@@ -182,12 +181,11 @@ Open **http://localhost:3000** → sign in → **Catalog** / **Incidents**.
 Apply SQL in [`supabase/migrations/`](./supabase/migrations/) in filename order, then:
 
 ```bash
-cd scripts && npm install
-node --env-file=../frontend/.env.local seed.mjs
-# or: npm run seed
+cd frontend && bun install
+bun run seed
 ```
 
-Validators need a seeded project: `npm run validate` (see [`scripts/README.md`](scripts/README.md)).
+Validators need a seeded project: `bun run validate` (see [`frontend/scripts/README.md`](frontend/scripts/README.md)).
 
 ### Before you open a PR
 

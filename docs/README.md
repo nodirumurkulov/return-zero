@@ -13,7 +13,7 @@ Long-form human reference for deployment and analytics behavior. Keep procedural
 
 Read before changing detection, metrics, or production configuration.
 
-Row-count validation after seeding is documented in [analytics-and-forecasting.md](analytics-and-forecasting.md) and implemented in [`../scripts/validate-counts.mjs`](../scripts/validate-counts.mjs).
+Row-count validation after seeding is documented in [analytics-and-forecasting.md](analytics-and-forecasting.md) and implemented in [`../frontend/scripts/validate-counts.ts`](../frontend/scripts/validate-counts.ts).
 
 ## Notes
 

@@ -1,39 +1,48 @@
-#!/usr/bin/env node
 /**
- * seed.mjs — Resolve hackathon seed script
+ * Seed Pretty Fly CSVs into Supabase and demo incidents.
  *
- * 1. Loads all Pretty Fly CSVs into Supabase (idempotent via upsert)
- * 2. Inserts a fully-populated demo incident (Court Trainer Return Spike)
- *
- * Usage:
- *   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node seed.mjs
- *
- * Or with an .env file:
- *   node --env-file=frontend/.env.local scripts/seed.mjs
+ *   bun --env-file=.env.local run scripts/seed.ts
  */
-
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
-import { chunkArray } from "./lib/chunk.mjs";
-import { createScriptClient } from "./lib/supabase.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+type CsvRow = Record<string, string | number | boolean | null | undefined>;
 
-const supabase = createScriptClient();
-const DATA_DIR = path.resolve(__dirname, "../pretty_fly_data_pack/data");
-
-// ---- Helpers -------------------------------------------------
-function readCSV(filename) {
-  const filePath = path.join(DATA_DIR, filename);
-  const content = fs.readFileSync(filePath, "utf-8");
-  return parse(content, { columns: true, skip_empty_lines: true, cast: true });
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!url || !key) {
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  process.exit(1);
 }
 
-async function upsert(table, rows, conflictColumn = "id") {
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const supabase = createClient(url, key);
+const BATCH_SIZE = 500;
+const DATA_DIR = path.resolve(scriptDir, "../../pretty_fly_data_pack/data");
+
+function readCSV(filename: string): CsvRow[] {
+  const filePath = path.join(DATA_DIR, filename);
+  const content = fs.readFileSync(filePath, "utf-8");
+  return parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    cast: true,
+  }) as CsvRow[];
+}
+
+async function upsert(
+  table: string,
+  rows: Record<string, unknown>[],
+  conflictColumn = "id",
+) {
   if (rows.length === 0) return;
-  for (const chunk of chunkArray(rows, 500)) {
+  for (const chunk of Array.from(
+    { length: Math.ceil(rows.length / BATCH_SIZE) },
+    (_, i) => rows.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
+  )) {
     const { error } = await supabase
       .from(table)
       .upsert(chunk, { onConflict: conflictColumn });
@@ -43,8 +52,11 @@ async function upsert(table, rows, conflictColumn = "id") {
   }
 }
 
-async function insertInChunks(table, rows) {
-  for (const chunk of chunkArray(rows, 500)) {
+async function insertInChunks(table: string, rows: Record<string, unknown>[]) {
+  for (const chunk of Array.from(
+    { length: Math.ceil(rows.length / BATCH_SIZE) },
+    (_, i) => rows.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
+  )) {
     const { error } = await supabase.from(table).insert(chunk);
     if (error) {
       console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
@@ -52,7 +64,7 @@ async function insertInChunks(table, rows) {
   }
 }
 
-function coerceBool(val) {
+function coerceBool(val: unknown): boolean {
   if (typeof val === "boolean") return val;
   if (typeof val === "string") return val.toLowerCase() === "true";
   return Boolean(val);
@@ -296,7 +308,8 @@ async function seedDemoIncidents() {
   console.log("── Seeding demo incidents ────────────────────────────");
 
   const now = new Date();
-  const minus = (mins) => new Date(now.getTime() - mins * 60 * 1000).toISOString();
+  const minus = (mins: number) =>
+    new Date(now.getTime() - mins * 60 * 1000).toISOString();
 
   // ── Incident 1: Court Trainer Return Spike (main demo) ──────
   const { data: inc1, error: e1 } = await supabase
@@ -324,13 +337,18 @@ async function seedDemoIncidents() {
     )
     .select()
     .single();
-  if (e1) { console.error("  ✗ incident 1:", e1.message); return; }
+  if (e1 || !inc1) {
+    console.error("  ✗ incident 1:", e1?.message ?? "no row");
+    return;
+  }
+
+  const incidentId = inc1.id as string;
 
   // agent findings
   await supabase.from("agent_findings").upsert([
     {
       id: "00000000-0000-0000-0001-000000000001",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       agent_name: "Returns Agent",
       agent_icon: "📦",
       summary: "Sizing-related returns increased 26% QoQ (Q4 2024: 330 → Q4 2025: 417). 501 found product too small vs 402 too large — runs small bias confirmed.",
@@ -345,7 +363,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000002",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       agent_name: "Merchandising Agent",
       agent_icon: "🛍️",
       summary: "Product page has zero sizing guidance. No size chart, no fit notes. 22.5% sizing return rate is the highest across all 4 trainer SKUs.",
@@ -359,7 +377,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000003",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       agent_name: "Marketing Agent",
       agent_icon: "📣",
       summary: "Meta cold-traffic campaign drove 1,092 first-time buyers. 45.6% of sizing refunds are first-order customers — no purchase history to inform size recommendation.",
@@ -374,7 +392,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000004",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       agent_name: "Inventory Agent",
       agent_icon: "🏭",
       summary: "UK11: -153 units, UK12: -150 units, UK6: -149 units. Rebuyers post-return are purchasing larger sizes, exhausting UK11/12 stock.",
@@ -392,7 +410,7 @@ async function seedDemoIncidents() {
   await supabase.from("incident_actions").upsert([
     {
       id: "00000000-0000-0000-0002-000000000001",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       title: "Add sizing guidance to product page",
       description: "Publish size chart and fit notes (runs small — size up) to the Court Trainer PDP.",
       impact_level: "high",
@@ -404,7 +422,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000002",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       title: "Enable fit assistant widget",
       description: "Activate the AI fit recommendation widget on the product page — personalised size suggestion based on past orders.",
       impact_level: "high",
@@ -415,7 +433,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000003",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       title: "Update support flow — exchange before refund",
       description: "Route sizing-related support tickets to exchange offer first. Estimated to recover £8,200 in refunds.",
       impact_level: "medium",
@@ -426,7 +444,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000004",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       title: "Pause cold-traffic Meta campaign",
       description: "Pause 'Womens Launch Prospecting' (ROAS 1.1x) to stop driving unsized first-time buyers until fit assistant is live.",
       impact_level: "high",
@@ -441,7 +459,7 @@ async function seedDemoIncidents() {
   await supabase.from("incident_timeline").upsert([
     {
       id: "00000000-0000-0000-0003-000000000001",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "anomaly_detected",
       description: "Return rate for Court Trainer crossed 20% threshold (current: 22.5%)",
       metadata: { threshold: 0.20, actual: 0.225, product: "Court Trainer" },
@@ -449,21 +467,21 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000002",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "incident_created",
       description: "Incident opened automatically — severity set to High, impact estimated at £66,235",
       created_at: minus(47),
     },
     {
       id: "00000000-0000-0000-0003-000000000003",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "agent_assigned",
       description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
       created_at: minus(45),
     },
     {
       id: "00000000-0000-0000-0003-000000000004",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "root_cause_found",
       description: "Root cause identified with 91% confidence — sizing-related returns from cold Meta traffic, no on-page guidance",
       metadata: { confidence: 91 },
@@ -471,14 +489,14 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000005",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "action_proposed",
       description: "4 actions proposed: 1 auto-deploy, 3 requiring approval",
       created_at: minus(38),
     },
     {
       id: "00000000-0000-0000-0003-000000000006",
-      incident_id: inc1.id,
+      incident_id: incidentId,
       event_type: "deployed",
       description: "Action auto-deployed: sizing guidance published to Court Trainer product page",
       created_at: minus(35),

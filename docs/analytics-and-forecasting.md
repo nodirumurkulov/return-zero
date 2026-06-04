@@ -84,5 +84,5 @@ const series  = await getProductSeries(supabase, id, 24);   // sparklines
 
 ## 6. Data validation
 
-`scripts/validate-counts.mjs` asserts imported row counts match `data/README.md`
+`frontend/scripts/validate-counts.ts` asserts imported row counts match `data/README.md`
 (run manually after seeding; see script header for env vars).

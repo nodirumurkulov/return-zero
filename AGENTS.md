@@ -10,7 +10,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 |------|------|-------|
 | Web app + API | `frontend/` | Next.js 16, React 19, Bun, Clerk |
 | Database | `supabase/` | Postgres migrations, RLS |
-| Data tooling | `scripts/` | Node.js (not Bun) |
+| Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
@@ -32,7 +32,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 | `frontend/components/` | React composition, minimal client islands, a11y |
 | `frontend/lib/` | Domain boundaries, DB-aligned types, functional style |
 | `supabase/` | Migrations, RLS, Postgres schema design |
-| `scripts/` | Node ESM, `const` / `for...of`, shared `lib/` helpers |
+| `frontend/scripts/` | Bun CLI; `createClient()` from `@supabase/supabase-js` |
 | Docs (`README.md`, `AGENTS.md`) | Clear prose; keep agent + human docs accurate |
 
 Nested `AGENTS.md` files spell out **context-specific** rules; this section is the non-negotiable default everywhere.
@@ -42,13 +42,12 @@ Nested `AGENTS.md` files spell out **context-specific** rules; this section is t
 ```bash
 cp .env.example frontend/.env.local   # fill Supabase, Clerk, LLM keys
 cd frontend && bun install
-cd scripts && npm install             # only for seed/validate
 ```
 
-Apply DB migrations (Supabase CLI) before seeding. See [supabase/AGENTS.md](supabase/AGENTS.md) and [scripts/AGENTS.md](scripts/AGENTS.md).
+Apply DB migrations (Supabase CLI) before seeding. See [supabase/AGENTS.md](supabase/AGENTS.md) and [frontend/scripts/README.md](frontend/scripts/README.md).
 
 ```bash
-cd scripts && npm run seed
+cd frontend && bun run seed
 ```
 
 ## Development workflow
@@ -60,7 +59,7 @@ cd frontend && bun run build
 cd frontend && bun run verify:secrets
 ```
 
-Package managers: **Bun** in `frontend/`, **npm** in `scripts/`. Do not mix them per package.
+Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Testing instructions
 
@@ -116,7 +115,7 @@ cd frontend && bun run lint && bun run typecheck && bun run build && bun run ver
 | [frontend/app/api/](frontend/app/api/AGENTS.md) | Route handlers |
 | [frontend/components/](frontend/components/AGENTS.md) | React UI |
 | [frontend/lib/](frontend/lib/AGENTS.md) | Domain logic |
-| [scripts/](scripts/AGENTS.md) | Seed, validators |
+| [frontend/scripts/](frontend/scripts/README.md) | Seed, validators |
 | [supabase/](supabase/AGENTS.md) | Migrations, RLS |
 | [.github/](.github/AGENTS.md) | CI |
 
@@ -126,7 +125,7 @@ Each folder also has **README.md** for human onboarding.
 
 | Issue | Check |
 |-------|--------|
-| Lint fails on `let` / IIFE | Refactor to `const`, named function, or `chunkArray` pattern |
+| Lint fails on `let` / IIFE | Refactor to `const`, named function, or `Array.from` batch slices |
 | Empty UI | Seed DB; env vars in `frontend/.env.local` |
 | Types out of sync with DB | Update `lib/<domain>/types.ts` + migration in same PR |
 | Investigation errors | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |

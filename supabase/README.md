@@ -16,7 +16,7 @@ supabase migration list   # inspect history
 
 Migrations live in `migrations/`. RLS and policy tests may live alongside SQL in this tree.
 
-After migrations, seed from [`../scripts/README.md`](../scripts/README.md).
+After migrations, seed from [`../frontend/scripts/README.md`](../frontend/scripts/README.md).
 
 ## What's here
 
@@ -30,7 +30,7 @@ The app reads through typed domain modules in `frontend/lib/*`, not generated Su
 ## Notes
 
 - Service role bypasses RLS — used only on the server in `createServiceClient()`.
-- Changing RPC signatures requires updating `frontend/lib/metrics` and `scripts/check-metrics.mjs`.
+- Changing RPC signatures requires updating `frontend/lib/metrics` and `frontend/scripts/validate-metrics.ts`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

@@ -17,4 +17,4 @@ Deterministic time-series forecasts (no ML). **Parent:** [../../AGENTS.md](../..
 ## Code style
 
 - Same inputs → same outputs.
-- No index `let` loops; use `const`, `reduce`, `chunkArray` patterns from repo conventions.
+- No index `let` loops; use `const`, `reduce`, or `Array.from` batch slices.
