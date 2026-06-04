@@ -1,6 +1,6 @@
 # Scripts
 
-Bun CLI utilities to seed Pretty Fly CSVs into Supabase and validate the database. Same package as the app — uses `@supabase/supabase-js` and `.env.local` directly.
+Bun CLI utilities to seed Pretty Fly CSVs into Supabase and validate the database. Same package as the app — reads Supabase env from `process.env` (or `.env.local` when Bun loads it locally).
 
 ## Prerequisites
 
@@ -19,10 +19,10 @@ bun run validate:metrics
 bun run validate
 ```
 
-Scripts load env via `--env-file=.env.local` in `package.json`. Or run manually:
+Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environment (or in `frontend/.env.local` for local runs).
 
 ```bash
-bun --env-file=.env.local run scripts/seed.ts
+bun run scripts/seed.ts
 ```
 
 ## What's here

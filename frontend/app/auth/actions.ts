@@ -2,12 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { safeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
 });
+
+export type OAuthProvider = "google" | "azure";
+
+function appUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
 
 function readCredentials(formData: FormData) {
   return credentialsSchema.safeParse({
@@ -26,7 +33,7 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { ok: false as const, error: error.message };
 
-  redirect("/catalog");
+  redirect(safeRedirectPath(formData.get("next")));
 }
 
 export async function signUp(formData: FormData) {
@@ -39,12 +46,41 @@ export async function signUp(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     ...parsed.data,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${appUrl()}/auth/callback`,
     },
   });
   if (error) return { ok: false as const, error: error.message };
 
   redirect("/onboarding");
+}
+
+export async function signInAsDemo() {
+  const email = process.env.DEMO_USER_EMAIL;
+  const password = process.env.DEMO_USER_PASSWORD;
+  if (!email || !password) {
+    redirect("/sign-in?error=demo");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    redirect("/sign-in?error=demo");
+  }
+
+  redirect("/catalog");
+}
+
+export async function signInWithProvider(provider: OAuthProvider) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: `${appUrl()}/auth/callback` },
+  });
+  if (error || !data.url) {
+    redirect("/sign-in?error=auth");
+  }
+
+  redirect(data.url);
 }
 
 export async function signOut() {

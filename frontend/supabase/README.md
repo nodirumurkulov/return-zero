@@ -4,7 +4,7 @@ PostgreSQL schema, views, RPCs, and RLS policies for Resolve.
 
 ## Prerequisites
 
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- [Supabase CLI](https://supabase.com/docs/guides/cli) **≥2.54** (CI uses 2.105.x; older CLIs fail to parse `config.toml`)
 - Docker (for `supabase start` / `supabase db reset`)
 
 ## Usage

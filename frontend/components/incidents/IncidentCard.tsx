@@ -44,7 +44,10 @@ export default function IncidentCard({
   }
 
   return (
-    <Card className="group gap-0 p-3 transition-all hover:shadow-pop">
+    <Card
+      data-testid="incident-card"
+      className="group gap-0 p-3 transition-all hover:shadow-pop"
+    >
       <div className="flex items-start justify-between gap-2">
         <SeverityBadge severity={incident.severity} />
         <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(incident.created_at)}</span>
@@ -103,6 +106,7 @@ export default function IncidentCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
+              data-testid="incident-status-trigger"
               variant="outline"
               size="sm"
               className="mt-3 w-full justify-between"

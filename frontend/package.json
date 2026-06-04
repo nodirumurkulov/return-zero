@@ -18,11 +18,15 @@
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint",
     "db:test:rls": "supabase db execute --local -f supabase/tests/rls_policies_test.sql",
-    "seed": "bun --env-file=.env.local run scripts/seed.ts",
-    "validate:counts": "bun --env-file=.env.local run scripts/validate-counts.ts",
-    "validate:metrics": "bun --env-file=.env.local run scripts/validate-metrics.ts",
+    "seed": "bun run scripts/seed.ts",
+    "validate:counts": "bun run scripts/validate-counts.ts",
+    "validate:metrics": "bun run scripts/validate-metrics.ts",
     "validate": "bun run validate:counts && bun run validate:metrics",
-    "db:types": "supabase gen types typescript --local -o lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local -o lib/supabase/database.types.ts",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",

@@ -27,6 +27,9 @@ bun run db:lint
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
+| `test` / `test:watch` | Vitest |
+| `e2e` / `test:e2e` / `e2e:ui` / `e2e:headed` | Playwright ([e2e/README.md](e2e/README.md)) |
+| `e2e:install` | Chromium for local runs |
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
 
@@ -46,8 +49,9 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 - `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
 - `bun run test:watch` — Vitest watch mode.
-- `bun run test:e2e` — Playwright (local or CI e2e job).
 - `bun run check` — lint, typecheck, and `test`.
+- `bun run e2e` / `test:e2e` — Playwright ([e2e/README.md](e2e/README.md)).
+- E2E path: `supabase start` → `db:reset` → `seed` → `build` → `CI=true bun run e2e`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides
