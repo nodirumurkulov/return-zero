@@ -6,30 +6,22 @@
  * 2. Inserts a fully-populated demo incident (Court Trainer Return Spike)
  *
  * Usage:
- *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed.mjs
+ *   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node seed.mjs
  *
  * Or with an .env file:
  *   node --env-file=frontend/.env.local scripts/seed.mjs
  */
 
-import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { parse } from "csv-parse/sync";
+import { chunkArray } from "./lib/chunk.mjs";
+import { createScriptClient } from "./lib/supabase.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ---- Config --------------------------------------------------
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createScriptClient();
 const DATA_DIR = path.resolve(__dirname, "../pretty_fly_data_pack/data");
 
 // ---- Helpers -------------------------------------------------
@@ -41,14 +33,21 @@ function readCSV(filename) {
 
 async function upsert(table, rows, conflictColumn = "id") {
   if (rows.length === 0) return;
-  // Batch in chunks of 500
-  for (let i = 0; i < rows.length; i += 500) {
-    const chunk = rows.slice(i, i + 500);
+  for (const chunk of chunkArray(rows, 500)) {
     const { error } = await supabase
       .from(table)
       .upsert(chunk, { onConflict: conflictColumn });
     if (error) {
-      console.error(`  ✗ ${table} batch ${i}–${i + chunk.length}: ${error.message}`);
+      console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
+    }
+  }
+}
+
+async function insertInChunks(table, rows) {
+  for (const chunk of chunkArray(rows, 500)) {
+    const { error } = await supabase.from(table).insert(chunk);
+    if (error) {
+      console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
     }
   }
 }
@@ -186,9 +185,9 @@ async function seedRawData() {
   // meta_ads_daily
   console.log("  meta_ads_daily…");
   const metaAds = readCSV("meta_ads_daily.csv");
-  // No primary key in CSV — use upsert with all columns; treat rows as insert-only
-  for (let i = 0; i < metaAds.length; i += 500) {
-    const chunk = metaAds.slice(i, i + 500).map((r) => ({
+  await insertInChunks(
+    "meta_ads_daily",
+    metaAds.map((r) => ({
       date: r.date,
       campaign_name: r.campaign_name,
       campaign_objective: r.campaign_objective,
@@ -200,16 +199,16 @@ async function seedRawData() {
       spend_gbp: r.spend_gbp,
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
-    }));
-    await supabase.from("meta_ads_daily").insert(chunk).select("id");
-  }
+    })),
+  );
   console.log(`    → ${metaAds.length} rows`);
 
   // google_ads_daily
   console.log("  google_ads_daily…");
   const googleAds = readCSV("google_ads_daily.csv");
-  for (let i = 0; i < googleAds.length; i += 500) {
-    const chunk = googleAds.slice(i, i + 500).map((r) => ({
+  await insertInChunks(
+    "google_ads_daily",
+    googleAds.map((r) => ({
       date: r.date,
       campaign_name: r.campaign_name,
       campaign_type: r.campaign_type,
@@ -219,9 +218,8 @@ async function seedRawData() {
       spend_gbp: r.spend_gbp,
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
-    }));
-    await supabase.from("google_ads_daily").insert(chunk).select("id");
-  }
+    })),
+  );
   console.log(`    → ${googleAds.length} rows`);
 
   // inventory_movements
