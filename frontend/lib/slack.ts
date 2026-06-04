@@ -4,6 +4,7 @@
  */
 
 import "server-only";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
 export type SlackIncidentPayload = {
@@ -154,4 +155,56 @@ export function parseSlackInteractionPayload(raw: string): SlackInteractionPaylo
   } catch {
     return null;
   }
+}
+
+/**
+ * Slack request signing.
+ * Slack signs each request as `v0=HMAC_SHA256(signingSecret, "v0:{timestamp}:{rawBody}")`,
+ * sent in the `X-Slack-Signature` header alongside `X-Slack-Request-Timestamp`.
+ * See https://api.slack.com/authentication/verifying-requests-from-slack
+ */
+const SLACK_SIGNATURE_VERSION = "v0";
+const MAX_TIMESTAMP_SKEW_SECONDS = 60 * 5;
+
+export type SlackSignatureHeaders = {
+  signature: string | null;
+  timestamp: string | null;
+};
+
+/**
+ * Verify an inbound Slack request signature. Returns false (reject) when the
+ * signing secret is unset, headers are missing/malformed, the timestamp is
+ * stale (replay), or the HMAC does not match. Comparison is constant-time.
+ */
+export function verifySlackRequest(
+  rawBody: string,
+  { signature, timestamp }: SlackSignatureHeaders,
+  signingSecret: string | undefined = process.env.SLACK_SIGNING_SECRET,
+): boolean {
+  if (!signingSecret || !signature || !timestamp) {
+    return false;
+  }
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) {
+    return false;
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestampSeconds) > MAX_TIMESTAMP_SKEW_SECONDS) {
+    return false;
+  }
+
+  const basestring = `${SLACK_SIGNATURE_VERSION}:${timestamp}:${rawBody}`;
+  const expected = `${SLACK_SIGNATURE_VERSION}=${createHmac("sha256", signingSecret)
+    .update(basestring)
+    .digest("hex")}`;
+
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(signature);
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, providedBuffer);
 }
