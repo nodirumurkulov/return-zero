@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { parseSlackInteractionPayload } from "@/lib/api/slack";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,19 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No payload" }, { status: 400 });
   }
 
-  type SlackPayload = {
-    actions?: Array<{ action_id: string; value: string }>;
-    user?: { name: string };
-  };
-
-  const payload: SlackPayload | null = (() => {
-    try {
-      return JSON.parse(rawPayload) as SlackPayload;
-    } catch {
-      return null;
-    }
-  })();
-
+  const payload = parseSlackInteractionPayload(rawPayload);
   if (!payload) {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
@@ -45,7 +34,6 @@ export async function POST(req: NextRequest) {
   const approvedBy = payload.user?.name ?? "slack-user";
 
   if (action.action_id === "approve_low_risk") {
-    // Approve all proposed low-risk actions
     const now = new Date().toISOString();
 
     const { data: lowRiskActions } = await supabase
@@ -73,7 +61,6 @@ export async function POST(req: NextRequest) {
         metadata: { source: "slack", action_ids: ids },
       });
 
-      // Simulate deploy
       await supabase.from("incident_actions").update({
         status: "deployed",
         deployed_at: now,
@@ -89,6 +76,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Slack expects a 200 with an empty body or message update
   return new NextResponse(null, { status: 200 });
 }

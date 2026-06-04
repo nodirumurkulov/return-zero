@@ -1,94 +1,42 @@
-# Resolve — Commerce Incident Response Platform
+# Resolve
 
-> Incident.io for ecommerce.
-> **Wayflyer × Fin Hackathon | 3–5 June 2026**
+Incident response for ecommerce: detect KPI breaches, investigate with AI, approve fixes, track recovery.
 
----
+**Stack:** Next.js 16 · TypeScript · Supabase · Clerk · Vercel · Bun (frontend)
 
-## What is this?
-
-When a KPI breaks — conversion drops, returns spike, inventory stockouts — Resolve automatically
-detects it, opens an incident, dispatches AI agents to investigate, proposes fixes, and lets the
-operator approve and deploy in one click. It monitors recovery and closes the incident when the
-metric returns to normal.
-
-**Engineering has Incident.io. Ecommerce has Resolve.**
-
----
-
-## Getting started
-
-### 1. Install dependencies
-
-Requires [Bun](https://bun.sh) 1.3+ and Node.js 20.9+.
+## Quick start
 
 ```bash
-cd frontend
-bun install
+cp .env.example frontend/.env.local   # fill Supabase, Clerk, LLM keys
+cd frontend && bun install && bun run dev
 ```
 
-### 2. Set up environment variables
+Open http://localhost:3000
+
+Before a PR:
 
 ```bash
-cp .env.example frontend/.env.local
-# Fill in your Supabase URL, publishable key, and LLM key
+cd frontend && bun run check && bun run build
 ```
 
-### 3. Run the dev server
+## Layout
 
-```bash
-cd frontend
-bun run dev
-```
-
-App available at **http://localhost:3000**
-
-Before opening a PR, run `bun run check` and `bun run build` in `frontend/` (or rely on [CI](.github/workflows/ci.yml)).
-
----
+| Directory | Purpose |
+|-----------|---------|
+| [`frontend/`](frontend/) | Web app and API routes |
+| [`scripts/`](scripts/) | Data seed and row-count validation (Node) |
+| [`supabase/`](supabase/) | Postgres migrations |
+| [`docs/`](docs/) | Deployment and architecture |
 
 ## Deploy
 
-Hosted on **Vercel**. The app is in `frontend/`, so set the Vercel **Root
-Directory** to `frontend`. Full deploy + environment-variable reference:
-[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Vercel root directory: **`frontend`**. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
----
+## Contributing
 
-## Stack
+Every major folder has **`README.md`** (humans) and **`AGENTS.md`** (coding agents). Read the pair for the directory you are changing.
 
-| Layer | Technology |
-|-------|------------|
-| Frontend + API routes | Next.js 16 (App Router) · TypeScript · Tailwind CSS · Bun |
-| Database | Supabase (PostgreSQL) |
-| LLM | OpenAI GPT-4o (default) or Anthropic Claude |
-| Notifications | Slack Incoming Webhooks |
-| Deploy | Vercel |
-
----
-
-## Repo layout
-
-```
-resolve/
-├── frontend/          # Next.js 16 app — all code lives here
-│   ├── app/           # Pages and API Route Handlers
-│   ├── components/    # React components
-│   └── lib/           # Shared utilities
-├── plan/              # HACKATHON_PLAN.md · UI_UX_PLAN.md
-├── .env.example       # Copy → frontend/.env.local
-└── README.md
-```
-
----
-
-## Team
-
-| Person | Focus |
-|--------|-------|
-| Person 1 | Detection & Data — KPI monitoring, incident generation, Supabase schema |
-| Person 2 | Kanban & Incident UI — homepage, incident board, detail page |
-| Person 3 | Agents & Workflows — AI agents, root cause, approval state machine |
-| Person 4 | Integrations & Demo — Slack, demo scripting, pitch, final polish |
-
-See `plan/HACKATHON_PLAN.md` for full day-by-day schedule and task breakdown.
+| Audience | Start here |
+|----------|------------|
+| Humans | [`README.md`](README.md) → nested `README.md` |
+| Agents | [`AGENTS.md`](AGENTS.md) → nested `AGENTS.md` |
