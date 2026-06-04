@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import Sparkline from "@/components/ui/sparkline";
 import { cn } from "@/lib/utils";
 

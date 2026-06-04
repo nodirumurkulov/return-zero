@@ -55,6 +55,54 @@ export type Database = {
           },
         ]
       }
+      business_reports: {
+        Row: {
+          created_at: string
+          id: string
+          narrative: string | null
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          summary: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          summary?: Json
+        }
+        Relationships: []
+      }
+      product_baselines: {
+        Row: {
+          computed_at: string
+          mean: number
+          metric_key: string
+          product_id: string
+          sample_n: number
+          stddev: number
+        }
+        Insert: {
+          computed_at?: string
+          mean: number
+          metric_key: string
+          product_id: string
+          sample_n: number
+          stddev: number
+        }
+        Update: {
+          computed_at?: string
+          mean?: number
+          metric_key?: string
+          product_id?: string
+          sample_n?: number
+          stddev?: number
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           key: string
@@ -70,6 +118,21 @@ export type Database = {
           key?: string
           label?: string | null
           value?: number
+        }
+        Relationships: []
+      }
+      replay_state: {
+        Row: {
+          cursor: string | null
+          id: boolean
+        }
+        Insert: {
+          cursor?: string | null
+          id?: boolean
+        }
+        Update: {
+          cursor?: string | null
+          id?: boolean
         }
         Relationships: []
       }
@@ -991,7 +1054,7 @@ export type Database = {
         }[]
       }
       product_source_facts: {
-        Args: { p_window_days?: number }
+        Args: { p_asof?: string; p_window_days?: number }
         Returns: {
           ads_revenue: number
           ads_spend: number

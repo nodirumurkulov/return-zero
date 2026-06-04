@@ -1,5 +1,5 @@
-import type { IncidentRef } from "@/lib/incidents/incident";
-import type { IncidentDetail } from "@/lib/incidents/incident-detail";
+import type { IncidentRef } from "../incident";
+import type { IncidentDetail } from "../incident-detail";
 
 export type FetchIncidentDetailInput = {
   readonly incident: IncidentRef;

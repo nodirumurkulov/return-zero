@@ -7,10 +7,10 @@ import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
 import TriggerInvestigationButton from "@/components/incidents/TriggerInvestigationButton";
 import { EmptyState } from "@/components/ui/empty-state";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
-import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/get-incident-detail-client-query-options";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
 
 export default function IncidentDetailView({ incidentId }: { incidentId: string }) {
   const incidentRef = { id: incidentId };

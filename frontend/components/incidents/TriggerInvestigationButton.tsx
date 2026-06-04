@@ -1,6 +1,8 @@
 "use client";
 
-import { useTriggerInvestigation } from "@/lib/agents/use-trigger-investigation";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useTriggerInvestigation } from "@/lib/agents/hooks";
 
 export default function TriggerInvestigationButton({
   incidentId,
@@ -19,17 +21,20 @@ export default function TriggerInvestigationButton({
     investigate.error instanceof Error ? investigate.error.message : null;
 
   return (
-    <div>
-      <button
+    <div className="mt-4 space-y-2">
+      <Button
         onClick={() => {
           runInvestigation();
         }}
         disabled={investigate.isPending}
-        className="mt-4 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white disabled:opacity-50 transition-colors"
       >
         {investigate.isPending ? "Investigating…" : "Trigger Investigation"}
-      </button>
-      {error && <p className="mt-2 text-xs text-red-400 font-mono">{error}</p>}
+      </Button>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription className="font-mono text-xs">{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

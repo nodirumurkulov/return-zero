@@ -15,7 +15,7 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 - Load data with `await createClient()` + domain queries (`listIncidents`, `getIncidentDetail`, `listCatalogWithThresholds`, …).
 - Do **not** use client `useEffect` + `fetch` for initial page data.
 - Use `export const dynamic = "force-dynamic"` where Supabase data must be fresh.
-- Wrap the app in [`QueryProvider`](../components/providers/QueryProvider.tsx) (root layout). Per-domain TanStack code is one file per function (e.g. `fetch-incident-detail.ts`, `use-approve-actions.ts`) with object-entity API types.
+- Wrap the app in [`QueryProvider`](../components/providers/QueryProvider.tsx) (root layout). Per domain: `lib/<domain>/api/` (functions) + `lib/<domain>/hooks/` (wraps api only).
 
 ## TanStack Query
 

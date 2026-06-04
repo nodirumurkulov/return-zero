@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import type { KpiThreshold } from "@/lib/catalog";
-import { useUpdateThreshold } from "@/lib/catalog/use-update-threshold";
+import { useUpdateThreshold } from "@/lib/catalog/hooks";
 
 const METRIC_LABELS: Record<string, string> = {
   return_rate: "Return rate",

@@ -9,11 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INCIDENT_STATUSES, type Incident } from "@/lib/incidents";
-import { useUpdateIncidentStatus } from "@/lib/incidents/use-update-incident-status";
+import { useUpdateIncidentStatus } from "@/lib/incidents/hooks";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();

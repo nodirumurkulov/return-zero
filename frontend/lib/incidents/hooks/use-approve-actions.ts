@@ -2,18 +2,18 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  triggerInvestigation,
-  type TriggerInvestigationInput,
-} from "@/lib/agents/trigger-investigation";
+  incidentKeys,
+  postApproveIncidentActions,
+  type PostApproveIncidentActionsInput,
+} from "@/lib/incidents/api";
 import type { IncidentRef } from "@/lib/incidents/incident";
-import { incidentKeys } from "@/lib/incidents/incident-query-keys";
 
-export function useTriggerInvestigation(incident: IncidentRef) {
+export function useApproveActions(incident: IncidentRef) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: Omit<TriggerInvestigationInput, "incident">) =>
-      triggerInvestigation({ incident, ...input }),
+    mutationFn: (input: Omit<PostApproveIncidentActionsInput, "incident">) =>
+      postApproveIncidentActions({ incident, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: incidentKeys.detail(incident.id) });
       void queryClient.invalidateQueries({ queryKey: incidentKeys.list() });
