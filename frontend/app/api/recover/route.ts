@@ -16,21 +16,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const advanceDays = await (async (): Promise<number | undefined> => {
-    try {
-      const body = (await req.json()) as { advance_days?: number };
-      return typeof body.advance_days === "number" ? body.advance_days : undefined;
-    } catch {
-      return undefined;
-    }
-  })();
-
+  const advanceDays = await optionalAdvanceDays(req);
   const supabase = createServiceClient();
+
   try {
     const result = await runRecovery(supabase, { advanceDays });
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function optionalAdvanceDays(req: NextRequest): Promise<number | undefined> {
+  try {
+    const body = (await req.json()) as { advance_days?: number };
+    return typeof body.advance_days === "number" ? body.advance_days : undefined;
+  } catch {
+    return undefined;
   }
 }

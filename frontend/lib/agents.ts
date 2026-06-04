@@ -10,7 +10,8 @@ import { callLLM } from "@/lib/llm";
 import { getProductSeries } from "@/lib/metrics/series";
 import { createServiceClient } from "@/lib/supabase/server";
 
-export type AgentFinding = {
+/** LLM output from a single investigation agent (not the persisted DB row). */
+export type LlmAgentFinding = {
   agent_name: string;
   agent_icon: string;
   summary: string;
@@ -18,7 +19,7 @@ export type AgentFinding = {
 };
 
 export type InvestigationResult = {
-  findings: AgentFinding[];
+  findings: LlmAgentFinding[];
   root_cause: string;
   root_cause_confidence: number;
   actions: Array<{
@@ -31,7 +32,7 @@ export type InvestigationResult = {
 };
 
 // ── Returns Agent ─────────────────────────────────────────────
-async function runReturnsAgent(productId: string): Promise<AgentFinding> {
+async function runReturnsAgent(productId: string): Promise<LlmAgentFinding> {
   const supabase = createServiceClient();
 
   // Fetch refunds joined to line items for this product
@@ -83,7 +84,7 @@ The summary must be 1-2 sentences, specific, with exact numbers. The detail is s
 }
 
 // ── Merchandising Agent ───────────────────────────────────────
-async function runMerchandisingAgent(productId: string): Promise<AgentFinding> {
+async function runMerchandisingAgent(productId: string): Promise<LlmAgentFinding> {
   const supabase = createServiceClient();
 
   const { data: product } = await supabase
@@ -131,7 +132,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Summary must be specif
 }
 
 // ── Marketing Agent ───────────────────────────────────────────
-async function runMarketingAgent(productId: string): Promise<AgentFinding> {
+async function runMarketingAgent(productId: string): Promise<LlmAgentFinding> {
   const supabase = createServiceClient();
 
   const { data: metaAds } = await supabase
@@ -196,7 +197,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Summary must be 1-2 se
 }
 
 // ── Inventory Agent ───────────────────────────────────────────
-async function runInventoryAgent(productId: string): Promise<AgentFinding> {
+async function runInventoryAgent(productId: string): Promise<LlmAgentFinding> {
   const supabase = createServiceClient();
 
   const { data: variants } = await supabase
@@ -242,7 +243,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Be specific with exact
 
 // ── Forecasting Agent ─────────────────────────────────────────
 // Deterministic forecasts computed in TS; the LLM only narrates them.
-async function runForecastingAgent(productId: string): Promise<AgentFinding> {
+async function runForecastingAgent(productId: string): Promise<LlmAgentFinding> {
   const supabase = createServiceClient();
 
   const [series, { data: outflowRows }, { data: settingsRows }] = await Promise.all([
@@ -296,7 +297,7 @@ async function runForecastingAgent(productId: string): Promise<AgentFinding> {
 
 // ── Root Cause Synthesiser ────────────────────────────────────
 async function synthesiseRootCause(
-  findings: AgentFinding[]
+  findings: LlmAgentFinding[]
 ): Promise<{ root_cause: string; root_cause_confidence: number; actions: InvestigationResult["actions"] }> {
   const result = await callLLM<{
     root_cause: string;

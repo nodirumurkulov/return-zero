@@ -1,16 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// One month of a product's time series (from product_monthly_series).
-export interface MonthlyPoint {
-  product_id: string;
-  month: string; // YYYY-MM-DD (first of month)
-  units: number;
-  revenue: number;
-  refund_amount: number;
-  refund_count: number;
-  ad_spend: number;
-  ad_revenue: number;
-}
+import type { MonthlyPoint } from "./types";
+
+export type { MonthlyPoint };
 
 function toPoint(r: Record<string, unknown>): MonthlyPoint {
   return {

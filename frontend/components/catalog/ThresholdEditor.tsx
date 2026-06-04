@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import SectionLabel from "@/components/ui/section-label";
-import type { KpiThreshold } from "@/types/database";
+import type { KpiThreshold } from "@/lib/catalog";
 
 const KPI_LABELS: Record<string, string> = {
   return_rate: "Return rate",

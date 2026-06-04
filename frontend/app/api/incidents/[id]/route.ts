@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getIncidentDetail } from "@/lib/incidents";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -6,42 +7,19 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const supabase = createServiceClient();
+  const detail = await getIncidentDetail(supabase, params.id);
 
-  const [incidentRes, findingsRes, actionsRes, timelineRes] = await Promise.all([
-    supabase.from("incidents").select("*").eq("id", params.id).single(),
-    supabase
-      .from("agent_findings")
-      .select("*")
-      .eq("incident_id", params.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("incident_actions")
-      .select("*")
-      .eq("incident_id", params.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("incident_timeline")
-      .select("*")
-      .eq("incident_id", params.id)
-      .order("created_at", { ascending: true }),
-  ]);
-
-  if (incidentRes.error) {
-    return NextResponse.json({ error: incidentRes.error.message }, { status: 404 });
+  if (!detail) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    incident: incidentRes.data,
-    findings: findingsRes.data ?? [],
-    actions: actionsRes.data ?? [],
-    timeline: timelineRes.data ?? [],
-  });
+  return NextResponse.json(detail);
 }
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const supabase = createServiceClient();
-  const body = await req.json() as Record<string, unknown>;
+  const body = (await req.json()) as Record<string, unknown>;
 
   const { data, error } = await supabase
     .from("incidents")

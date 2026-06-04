@@ -3,38 +3,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ActionList, { type IncidentAction } from "@/components/incidents/ActionList";
-import AgentFindingCard, { type AgentFinding } from "@/components/incidents/AgentFindingCard";
-import IncidentTimeline, { type TimelineEvent } from "@/components/incidents/IncidentTimeline";
+import ActionList from "@/components/incidents/ActionList";
+import AgentFindingCard from "@/components/incidents/AgentFindingCard";
+import IncidentTimeline from "@/components/incidents/IncidentTimeline";
 import { EmptyState } from "@/components/ui/empty-state";
 import ImpactTag from "@/components/ui/ImpactTag";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
-
-type Incident = {
-  id: string;
-  title: string;
-  status: string;
-  severity: string;
-  impact_amount?: number | null;
-  impact_label?: string | null;
-  root_cause?: string | null;
-  root_cause_confidence?: number | null;
-  created_at: string;
-  affected_kpis?: string[] | null;
-  affected_product?: string | null;
-  monitoring_kpi?: string | null;
-  baseline_value?: number | null;
-  target_value?: number | null;
-  recovery_pct?: number | null;
-};
-
-type IncidentDetail = {
-  incident: Incident;
-  findings: AgentFinding[];
-  actions: IncidentAction[];
-  timeline: TimelineEvent[];
-};
+import type { IncidentDetail } from "@/lib/incidents";
 
 export default function IncidentDetailPage() {
   const { incidentId } = useParams<{ incidentId: string }>();

@@ -1,10 +1,4 @@
-export type TimelineEvent = {
-  id: string;
-  event_type: string;
-  description: string;
-  metadata?: Record<string, unknown>;
-  created_at: string;
-};
+import type { TimelineEvent } from "@/lib/incidents";
 
 const icons: Record<string, string> = {
   anomaly_detected: "🔍",
