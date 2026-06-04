@@ -35,4 +35,4 @@ Vercel root directory: **`frontend`**. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMEN
 ## Contributing
 
 - Humans: this README and per-folder `README.md` where present.
-- AI/agents: read [`agents.md`](agents.md) and the `agents.md` in the folder you edit.
+- AI/agents: read [`AGENTS.md`](AGENTS.md) and the `AGENTS.md` in the folder you edit.

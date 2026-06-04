@@ -12,11 +12,11 @@ Next.js 16 App Router app. Package manager: **Bun** (`bun.lock`). Lint: strict E
 
 ## Layout
 
-- `app/` — routes and API handlers ([agents.md](app/agents.md))
-- `components/` — UI ([agents.md](components/agents.md))
-- `lib/` — domain logic ([agents.md](lib/agents.md))
+- `app/` — routes and API handlers ([AGENTS.md](app/AGENTS.md))
+- `components/` — UI ([AGENTS.md](components/AGENTS.md))
+- `lib/` — domain logic ([AGENTS.md](lib/AGENTS.md))
 - `proxy.ts` — Clerk auth middleware (Next 16 proxy)
 
 ## Conventions
 
-See root [agents.md](../agents.md). Never add `let` or async IIFEs. Import domain types from `lib/<domain>/`, not from components.
+See root [AGENTS.md](../AGENTS.md). Never add `let` or async IIFEs. Import domain types from `lib/<domain>/`, not from components.

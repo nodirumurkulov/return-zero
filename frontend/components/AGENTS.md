@@ -17,4 +17,4 @@ Presentational and lightly interactive React UI. **No Supabase calls** — recei
 - `"use client"` only when needed (forms, dropdowns, fetch mutations).
 - Async click handlers: `onClick={() => { void handler(); }}` to satisfy `no-misused-promises`.
 
-Subfolders have their own `agents.md` where non-trivial.
+Subfolders have their own `AGENTS.md` where non-trivial.

@@ -1,6 +1,6 @@
 # Agent guide — return-zero (Resolve)
 
-Read this file (and nested `agents.md` in the folder you are editing) before changing code.
+Read this file (and nested `AGENTS.md` in the folder you are editing) before changing code.
 
 ## Product
 
@@ -32,4 +32,4 @@ Deslop work is tracked under project **Epic: Codebase deslop** (RUN-71–RUN-77)
 
 ## Nested guides
 
-Each major directory has its own `agents.md` with local rules and file map.
+Each major directory has its own `AGENTS.md` with local rules and file map.

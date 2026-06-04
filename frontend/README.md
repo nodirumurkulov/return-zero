@@ -9,4 +9,4 @@ bun run dev
 
 Environment: copy repo `.env.example` to `.env.local` here.
 
-Details for agents: [agents.md](agents.md).
+Details for agents: [AGENTS.md](AGENTS.md).

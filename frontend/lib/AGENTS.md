@@ -21,4 +21,4 @@ Server-side and shared domain logic. **Domain-split:** each folder owns types, D
 - Cross-domain imports: `detection` may use `metrics` / `forecast` types only — avoid catalog ↔ incidents coupling.
 - Do not import from `components/`.
 
-Each domain subdirectory has `agents.md`.
+Each domain subdirectory has `AGENTS.md`.
