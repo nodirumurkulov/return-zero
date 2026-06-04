@@ -303,6 +303,76 @@ async function seedRawData() {
   console.log("\n  Raw data loaded.\n");
 }
 
+// ---- Per-product KPI thresholds (after products exist) --------
+async function seedProductKpiThresholds() {
+  console.log("── Seeding product KPI thresholds ───────────────────");
+
+  const { data: products, error: listError } = await supabase
+    .from("products")
+    .select("product_id");
+  if (listError) {
+    console.error("  ✗ list products:", listError.message);
+    return;
+  }
+
+  const defaultMetrics = [
+    { metric_key: "return_rate", threshold: 0.12, direction: "above" },
+    { metric_key: "refund_rate", threshold: 0.08, direction: "above" },
+    { metric_key: "support_volume", threshold: 10, direction: "above" },
+  ] as const;
+
+  const defaultRows = (products ?? [])
+    .filter((p) => p.product_id !== "prod_00005")
+    .flatMap((p) =>
+      defaultMetrics.map((m) => ({
+        product_id: p.product_id,
+        metric_key: m.metric_key,
+        threshold: m.threshold,
+        direction: m.direction,
+        active: true,
+      })),
+    );
+
+  if (defaultRows.length > 0) {
+    await upsert("product_kpi_thresholds", defaultRows, "product_id,metric_key");
+    console.log(`  ✓ default thresholds for ${products?.length ?? 0} products`);
+  }
+
+  const { error: heroError } = await supabase.from("product_kpi_thresholds").upsert(
+    [
+      {
+        product_id: "prod_00005",
+        metric_key: "return_rate",
+        threshold: 0.2,
+        direction: "above",
+        active: true,
+      },
+      {
+        product_id: "prod_00005",
+        metric_key: "refund_rate",
+        threshold: 0.15,
+        direction: "above",
+        active: true,
+      },
+      {
+        product_id: "prod_00005",
+        metric_key: "support_volume",
+        threshold: 25,
+        direction: "above",
+        active: true,
+      },
+    ],
+    { onConflict: "product_id,metric_key" },
+  );
+  if (heroError) {
+    console.error("  ✗ Court Trainer thresholds:", heroError.message);
+  } else {
+    console.log("  ✓ Court Trainer (prod_00005) threshold overrides");
+  }
+
+  console.log("");
+}
+
 // ---- Seed demo incidents -------------------------------------
 async function seedDemoIncidents() {
   console.log("── Seeding demo incidents ────────────────────────────");
@@ -574,6 +644,7 @@ async function main() {
 
   try {
     await seedRawData();
+    await seedProductKpiThresholds();
     await seedDemoIncidents();
     console.log("=== Done ✓ ===\n");
   } catch (err) {
