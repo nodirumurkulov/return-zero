@@ -1,14 +1,18 @@
 # components/incidents/
 
-Client UI for the incidents workflow. **Display only** — types come from `@/lib/incidents`.
+Incident UI. Server pages fetch via `getIncidentDetail`; small client islands for mutations.
 
 ## Components
 
-- `IncidentKanban` — uses `KANBAN_COLUMNS` from domain
-- `IncidentCard` — uses `INCIDENT_STATUSES` for status dropdown
-- `ActionList`, `AgentFindingCard`, `IncidentTimeline` — props typed from `@/lib/incidents`
+| Component | Role |
+|-----------|------|
+| `IncidentDetailView` | Server — layout for detail page |
+| `TriggerInvestigationButton` | Client — POST investigate, then `router.refresh()` |
+| `IncidentKanban`, `IncidentCard` | Client — kanban board |
+| `ActionList` | Client — approve actions, `router.refresh()` after success |
+| `AgentFindingCard`, `IncidentTimeline` | Display only |
 
 ## Rules
 
-- **Do not re-export** domain types from component files.
-- Prefer redesign: move workflow logic to `lib/incidents/` rather than duplicating in components.
+- Do not re-export domain types from component files.
+- Do not client-fetch `/api/incidents/[id]` for the detail page — use RSC + `router.refresh()`.
