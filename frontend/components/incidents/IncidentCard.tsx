@@ -14,19 +14,7 @@ import {
 import ImpactTag from "@/components/ui/ImpactTag";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
-import type { Incident } from "@/lib/incidents";
-
-export type { Incident } from "@/lib/incidents";
-
-const STATUSES = [
-  "detected",
-  "investigating",
-  "fix_proposed",
-  "awaiting_approval",
-  "deploying",
-  "monitoring",
-  "resolved",
-];
+import { INCIDENT_STATUSES, type Incident } from "@/lib/incidents";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -104,7 +92,7 @@ export default function IncidentCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            {STATUSES.map((status) => (
+            {INCIDENT_STATUSES.map((status) => (
               <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
                 <StatusBadge status={status} />
               </DropdownMenuItem>

@@ -5,12 +5,7 @@ import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import SectionLabel from "@/components/ui/section-label";
-import {
-  computeProductHealth,
-  type KpiThreshold,
-  type ProductMetric,
-  type ProductMonthlyMetric,
-} from "@/lib/catalog";
+import { computeProductHealth, getProductCatalogDetail } from "@/lib/catalog";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,24 +17,12 @@ type PageProps = {
 export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = createServiceClient();
-  const { productId } = params;
+  const detail = await getProductCatalogDetail(supabase, params.productId);
 
-  const [{ data: product, error }, { data: monthly }, { data: thresholds }] = await Promise.all([
-    supabase.from("product_metrics_view").select("*").eq("product_id", productId).maybeSingle(),
-    supabase
-      .from("product_metrics_monthly_view")
-      .select("*")
-      .eq("product_id", productId)
-      .order("month_start"),
-    supabase.from("product_kpi_thresholds").select("*").eq("product_id", productId),
-  ]);
+  if (!detail) notFound();
 
-  if (error || !product) notFound();
-
-  const metrics = product as ProductMetric;
-  const thresholdRows = (thresholds ?? []) as KpiThreshold[];
+  const { product: metrics, monthly: monthlyRows, thresholds: thresholdRows } = detail;
   const health = computeProductHealth(metrics, thresholdRows);
-  const monthlyRows = (monthly ?? []) as ProductMonthlyMetric[];
   const returnTrend = monthlyRows.map((row) => Number(row.return_rate ?? 0));
   const revenueTrend = monthlyRows.map((row) => Number(row.revenue_gbp ?? 0));
 
@@ -91,7 +74,7 @@ export default async function ProductDetailPage(props: PageProps) {
         />
       </div>
 
-      <ThresholdEditor productId={productId} thresholds={thresholdRows} />
+      <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
     </div>
   );
 }

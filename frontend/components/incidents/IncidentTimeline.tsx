@@ -1,7 +1,5 @@
 import type { TimelineEvent } from "@/lib/incidents";
 
-export type { TimelineEvent } from "@/lib/incidents";
-
 const icons: Record<string, string> = {
   anomaly_detected: "🔍",
   incident_created: "🚨",

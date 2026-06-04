@@ -1,4 +1,4 @@
-export type { KpiThresholdRow, ProductMetricsRow } from "./db";
+export { getProductCatalogDetail, listCatalogWithThresholds } from "./queries";
 export { computeHealthLevel, computeProductHealth } from "./health";
 export type {
   HealthLevel,

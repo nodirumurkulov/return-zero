@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isIncidentStatus } from "@/lib/incidents";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
@@ -32,6 +33,10 @@ export async function updateThreshold(productId: string, formData: FormData) {
 }
 
 export async function updateIncidentStatus(incidentId: string, status: string) {
+  if (!isIncidentStatus(status)) {
+    return { ok: false, error: "Invalid incident status" };
+  }
+
   const supabase = createServiceClient();
   const payload: { status: string; resolved_at?: string | null } = { status };
 

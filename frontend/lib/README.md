@@ -1,17 +1,5 @@
-# Lib
+# frontend/lib
 
-Server-side and shared logic, organized by domain. Import from `@/lib/<domain>`.
+Domain-split server libraries. Each folder under `lib/<domain>/` owns its types, Supabase row shapes, mappers, and queries.
 
-| Module | Role |
-|--------|------|
-| [`incidents/`](incidents/) | Incidents, actions, queries |
-| [`catalog/`](catalog/) | Products, thresholds, health |
-| [`metrics/`](metrics/) | KPI engine and time series |
-| [`forecast/`](forecast/) | Deterministic forecasts |
-| [`detection/`](detection/) | Breach detection and recovery |
-| [`api/`](api/) | HTTP parsing helpers |
-| [`supabase/`](supabase/) | Supabase clients |
-
-Top-level files: `agents.ts`, `llm.ts`, `slack.ts`, etc.
-
-Agents: [AGENTS.md](AGENTS.md).
+See `AGENTS.md` in this directory and in each domain folder for agent rules.

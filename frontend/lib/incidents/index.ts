@@ -1,15 +1,14 @@
-export type {
-  AgentFindingRow,
-  IncidentActionRow,
-  IncidentRow,
-  TimelineEventRow,
-} from "./db";
-export { getIncidentDetail, listIncidents } from "./queries";
+export {
+  approveIncidentActions,
+  listLowRiskProposedActionIds,
+} from "./approve";
+export { getIncident, getIncidentDetail, listIncidents } from "./queries";
 export type { IncidentDetail } from "./queries";
 export {
-  fromAgentFindingRow,
-  fromIncidentActionRow,
-  fromIncidentRow,
-  fromTimelineEventRow,
-} from "./types";
+  INCIDENT_STATUSES,
+  isIncidentStatus,
+  KANBAN_COLUMNS,
+  type IncidentStatus,
+  type KanbanStatus,
+} from "./status";
 export type { AgentFinding, Incident, IncidentAction, TimelineEvent } from "./types";

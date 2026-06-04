@@ -1,18 +1,14 @@
 # components/incidents/
 
-Incident UI: kanban board, cards, action approval, timeline, agent findings.
-
-## Types
-
-Import `Incident`, `IncidentAction`, etc. from `@/lib/incidents`. Re-export from component files only for backward compatibility.
+Client UI for the incidents workflow. **Display only** — types come from `@/lib/incidents`.
 
 ## Components
 
-- `IncidentKanban` — columns by status
-- `IncidentCard` — card + status dropdown (server action)
-- `ActionList` — approves via `/api/incidents/[id]/approve`
-- `AgentFindingCard`, `IncidentTimeline` — display only
+- `IncidentKanban` — uses `KANBAN_COLUMNS` from domain
+- `IncidentCard` — uses `INCIDENT_STATUSES` for status dropdown
+- `ActionList`, `AgentFindingCard`, `IncidentTimeline` — props typed from `@/lib/incidents`
 
-## Status list
+## Rules
 
-`STATUSES` in `IncidentCard` should move to `lib/incidents/status.ts` (RUN-75).
+- **Do not re-export** domain types from component files.
+- Prefer redesign: move workflow logic to `lib/incidents/` rather than duplicating in components.

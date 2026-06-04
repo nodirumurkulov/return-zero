@@ -3,8 +3,6 @@
 import { useState } from "react";
 import type { IncidentAction } from "@/lib/incidents";
 
-export type { IncidentAction } from "@/lib/incidents";
-
 const impactColour: Record<string, string> = {
   high:   "text-green-400",
   medium: "text-yellow-400",

@@ -1,7 +1,5 @@
 import type { AgentFinding } from "@/lib/incidents";
 
-export type { AgentFinding } from "@/lib/incidents";
-
 export default function AgentFindingCard({ finding }: { finding: AgentFinding }) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">

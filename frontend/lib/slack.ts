@@ -130,3 +130,17 @@ export async function sendIncidentNotification(
     console.error(`[Slack] Webhook failed: ${res.status} ${text}`);
   }
 }
+
+/** Slack interactive webhook: URL-encoded form with a JSON `payload` field. */
+export type SlackInteractionPayload = {
+  actions?: Array<{ action_id: string; value: string }>;
+  user?: { name: string };
+};
+
+export function parseSlackInteractionPayload(raw: string): SlackInteractionPayload | null {
+  try {
+    return JSON.parse(raw) as SlackInteractionPayload;
+  } catch {
+    return null;
+  }
+}

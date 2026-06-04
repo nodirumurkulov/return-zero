@@ -2,20 +2,12 @@
 
 import { EmptyState } from "@/components/ui/empty-state";
 import StatusBadge from "@/components/ui/StatusBadge";
-import IncidentCard, { type Incident } from "./IncidentCard";
-
-const COLUMNS: { status: string; label: string }[] = [
-  { status: "detected", label: "Detected" },
-  { status: "investigating", label: "Investigating" },
-  { status: "fix_proposed", label: "Fix Proposed" },
-  { status: "awaiting_approval", label: "Awaiting Approval" },
-  { status: "monitoring", label: "Monitoring" },
-  { status: "resolved", label: "Resolved" },
-];
+import { KANBAN_COLUMNS, type Incident } from "@/lib/incidents";
+import IncidentCard from "./IncidentCard";
 
 export default function IncidentKanban({ incidents }: { incidents: Incident[] }) {
   const byStatus: Record<string, Incident[]> = {};
-  COLUMNS.forEach((col) => {
+  KANBAN_COLUMNS.forEach((col) => {
     byStatus[col.status] = incidents.filter((i) => i.status === col.status);
   });
 
@@ -30,7 +22,7 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
 
   return (
     <div className="flex min-h-[calc(100vh-10rem)] gap-4 overflow-x-auto pb-4">
-      {COLUMNS.map((col) => {
+      {KANBAN_COLUMNS.map((col) => {
         const cards = byStatus[col.status] ?? [];
         return (
           <div key={col.status} className="flex w-72 shrink-0 flex-col">

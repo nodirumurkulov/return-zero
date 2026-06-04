@@ -29,6 +29,15 @@ export type IncidentDetail = {
   timeline: TimelineEvent[];
 };
 
+export async function getIncident(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<Incident | null> {
+  const { data, error } = await supabase.from("incidents").select("*").eq("id", id).single();
+  if (error || !data) return null;
+  return fromIncidentRow(data as IncidentRow);
+}
+
 export async function getIncidentDetail(
   supabase: SupabaseClient,
   id: string,

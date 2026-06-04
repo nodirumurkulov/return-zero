@@ -21,4 +21,4 @@ Each subdirectory has `README.md` + `AGENTS.md`.
 
 ## Conventions
 
-See root [AGENTS.md](../AGENTS.md). Never add `let` or async IIFEs. Import domain types from `lib/<domain>/`, not from components.
+See root [AGENTS.md](../AGENTS.md). Prefer **redesign over backward compatibility**. Never add `let` or async IIFEs. Import domain types from `lib/<domain>/` only — never re-export from components.

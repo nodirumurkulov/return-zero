@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { readAdvanceDays } from "@/lib/api/read-json";
 import { runRecovery } from "@/lib/detection/recover";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -17,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const advanceDays = await readAdvanceDays(req);
+  const advanceDays = await optionalAdvanceDays(req);
   const supabase = createServiceClient();
 
   try {
@@ -26,5 +25,14 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function optionalAdvanceDays(req: NextRequest): Promise<number | undefined> {
+  try {
+    const body = (await req.json()) as { advance_days?: number };
+    return typeof body.advance_days === "number" ? body.advance_days : undefined;
+  } catch {
+    return undefined;
   }
 }
