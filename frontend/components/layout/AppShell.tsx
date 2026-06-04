@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, LogOut, Search, Siren } from "lucide-react";
+import { LayoutGrid, LogOut, Receipt, Search, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
@@ -24,6 +24,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const NAV = [
+  { href: "/orders", label: "Orders", icon: Receipt },
   { href: "/catalog", label: "Catalog", icon: LayoutGrid },
   { href: "/incidents", label: "Incidents", icon: Siren },
 ] as const;
