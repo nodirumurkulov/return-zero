@@ -64,6 +64,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Testing instructions
 
+- Component and lib unit tests: `cd frontend && bun run test` (Vitest + React Testing Library).
 - CI runs lint, typecheck, Vitest (`bun run test`), build, and Playwright smoke (`test:e2e` job).
 - After schema or metrics changes: `cd scripts && npm run validate` against a seeded Supabase project.
 - RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).

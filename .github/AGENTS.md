@@ -7,7 +7,7 @@ CI configuration. **Parent:** [../AGENTS.md](../AGENTS.md) · **Humans:** [READM
 [workflows/ci.yml](workflows/ci.yml) runs on PRs and pushes to `main`:
 
 ```bash
-cd frontend && bun ci && bun run lint && bun run typecheck && bun run build
+cd frontend && bun ci && bun run lint && bun run typecheck && bun run test:run && bun run build
 ```
 
 Uses placeholder Clerk/Supabase env vars — enough to build, not to hit real APIs.

@@ -44,7 +44,10 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Testing
 
-- `bun run test` (Vitest); `bun run test:e2e` (Playwright, local or CI e2e job).
+- `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
+- `bun run test:watch` — Vitest watch mode.
+- `bun run test:e2e` — Playwright (local or CI e2e job).
+- `bun run check` — lint, typecheck, and `test`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides
