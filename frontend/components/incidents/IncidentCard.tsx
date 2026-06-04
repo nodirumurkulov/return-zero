@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import ImpactTag from "@/components/ui/ImpactTag";
@@ -29,61 +27,58 @@ function timeAgo(dateStr: string) {
 export default function IncidentCard({ incident }: { incident: Incident }) {
   return (
     <Link href={`/incidents/${incident.id}`}>
-      <div className="group bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all cursor-pointer">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <SeverityBadge severity={incident.severity} />
-          <span className="text-xs text-zinc-500 shrink-0">
-            {timeAgo(incident.created_at)}
-          </span>
-        </div>
+    <div className="group rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <SeverityBadge severity={incident.severity} />
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {timeAgo(incident.created_at)}
+        </span>
+      </div>
 
-        {/* Title */}
-        <h3 className="text-sm font-medium text-zinc-100 leading-snug mb-2 group-hover:text-white transition-colors">
+      <Link href={`/incidents/${incident.id}`}>
+        <h3 className="mb-2 text-sm font-medium leading-snug transition-colors group-hover:text-primary">
           {incident.title}
         </h3>
+      </Link>
 
-        {/* Impact */}
-        <div className="mb-3">
-          <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
+      <div className="mb-3">
+        <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
+      </div>
+
+      {incident.root_cause && (
+        <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {incident.root_cause}
+        </p>
+      )}
+
+      {incident.affected_kpis && incident.affected_kpis.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {incident.affected_kpis.slice(0, 3).map((kpi) => (
+            <span
+              key={kpi}
+              className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+            >
+              {kpi}
+            </span>
+          ))}
         </div>
+      )}
 
-        {/* Root cause snippet */}
-        {incident.root_cause && (
-          <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed mb-3">
-            {incident.root_cause}
-          </p>
-        )}
-
-        {/* KPIs */}
-        {incident.affected_kpis && incident.affected_kpis.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {incident.affected_kpis.slice(0, 3).map((kpi) => (
-              <span
-                key={kpi}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono"
-              >
-                {kpi}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Confidence */}
-        {incident.root_cause_confidence != null && (
+      {incident.root_cause_confidence != null && (
           <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-purple-500 rounded-full"
+                className="h-full rounded-full bg-primary"
                 style={{ width: `${incident.root_cause_confidence}%` }}
               />
             </div>
-            <span className="text-[10px] text-zinc-500 font-mono">
+            <span className="font-mono text-[10px] text-muted-foreground">
               {incident.root_cause_confidence}% confidence
             </span>
           </div>
-        )}
-      </div>
+        )
+      )}
+    </div>
     </Link>
   );
 }
