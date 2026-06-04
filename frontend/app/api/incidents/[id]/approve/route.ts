@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendIncidentNotification } from "@/lib/slack";
+import { captureRecoveryBaseline } from "@/lib/detection/recover";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,11 @@ export async function POST(
       incident_id: params.id,
       app_url: appUrl,
     });
+
+    // Snapshot the breached KPI so the recovery loop can track it (RUN-22/23).
+    if (incident.affected_product) {
+      await captureRecoveryBaseline(supabase, params.id, incident.affected_product, incident.affected_kpis ?? null);
+    }
   }
 
   return NextResponse.json({ success: true, approved: actionIds.length });
