@@ -53,6 +53,22 @@ export async function signUp(formData: FormData) {
   redirect("/onboarding");
 }
 
+export async function signInAsDemo() {
+  const email = process.env.DEMO_USER_EMAIL;
+  const password = process.env.DEMO_USER_PASSWORD;
+  if (!email || !password) {
+    redirect("/sign-in?error=demo");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    redirect("/sign-in?error=demo");
+  }
+
+  redirect("/catalog");
+}
+
 export async function signInWithProvider(provider: OAuthProvider) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
