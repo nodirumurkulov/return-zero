@@ -3,6 +3,16 @@
 **Wayflyer × Fin AI - Build the Future of E-commerce**
 *Wednesday 3 - Friday 5 June 2026, London*
 
+## Using this pack with Resolve
+
+This repo loads these CSVs into Supabase via [`../scripts/README.md`](../scripts/README.md):
+
+```bash
+cd scripts && npm install && npm run seed
+```
+
+Expected row counts are listed in [`data/README.md`](data/README.md) and checked with `npm run validate:counts`.
+
 ---
 
 ## Welcome
