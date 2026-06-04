@@ -1,6 +1,6 @@
-import type { Direction } from "../metrics/types";
-import type { MonthlyPoint } from "../metrics/series";
 import { linearTrend } from "../forecast/methods";
+import type { MonthlyPoint } from "../metrics/series";
+import type { Direction } from "../metrics/types";
 
 export type Severity = "critical" | "high" | "medium" | "low";
 
@@ -27,17 +27,21 @@ export function scoreSeverity(input: {
   impactAmount: number; // £ exposure
   worsening?: boolean; // forecast trend heading further from target
 }): Severity {
-  let score = (severityRank(input.baseSeverity) - 2) * 0.5; // base nudge: -0.5..+1
-
-  if (input.magnitude >= 3) score += 3;
-  else if (input.magnitude >= 2) score += 2;
-  else if (input.magnitude >= 1.5) score += 1;
-
-  if (input.impactAmount >= 50_000) score += 3;
-  else if (input.impactAmount >= 20_000) score += 2;
-  else if (input.impactAmount >= 5_000) score += 1;
-
-  if (input.worsening) score += 1;
+  const magnitudePoints =
+    input.magnitude >= 3 ? 3 : input.magnitude >= 2 ? 2 : input.magnitude >= 1.5 ? 1 : 0;
+  const impactPoints =
+    input.impactAmount >= 50_000
+      ? 3
+      : input.impactAmount >= 20_000
+        ? 2
+        : input.impactAmount >= 5_000
+          ? 1
+          : 0;
+  const score =
+    (severityRank(input.baseSeverity) - 2) * 0.5 +
+    magnitudePoints +
+    impactPoints +
+    (input.worsening ? 1 : 0);
 
   if (score >= 4.5) return "critical";
   if (score >= 2.5) return "high";
@@ -45,25 +49,25 @@ export function scoreSeverity(input: {
   return "low";
 }
 
+function recentRates(metricKey: string, recent: MonthlyPoint[]): number[] | null {
+  switch (metricKey) {
+    case "refund_rate":
+      return recent.map((p) => (p.revenue > 0 ? p.refund_amount / p.revenue : 0));
+    case "return_rate":
+      return recent.map((p) => (p.units > 0 ? p.refund_count / p.units : 0));
+    case "ad_roas":
+      return recent.map((p) => (p.ad_spend > 0 ? p.ad_revenue / p.ad_spend : 0));
+    default:
+      return null;
+  }
+}
+
 /** Is the metric's recent series trending further from its healthy side? */
 export function metricTrendWorsening(metricKey: string, series: MonthlyPoint[], direction: Direction): boolean {
   if (series.length < 4) return false;
   const recent = series.slice(-6);
-  let rates: number[];
-  switch (metricKey) {
-    case "refund_rate":
-      rates = recent.map((p) => (p.revenue > 0 ? p.refund_amount / p.revenue : 0));
-      break;
-    case "return_rate":
-      rates = recent.map((p) => (p.units > 0 ? p.refund_count / p.units : 0));
-      break;
-    case "ad_roas":
-      rates = recent.map((p) => (p.ad_spend > 0 ? p.ad_revenue / p.ad_spend : 0));
-      break;
-    default:
-      return false;
-  }
+  const rates = recentRates(metricKey, recent);
+  if (!rates) return false;
   const slope = linearTrend(rates).slope;
-  // "above" breaches worsen as the rate rises; "below" (ROAS) worsens as it falls.
   return direction === "above" ? slope > 0 : slope < 0;
 }

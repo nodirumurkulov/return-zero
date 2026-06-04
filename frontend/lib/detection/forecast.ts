@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getMonthlySeries } from "../metrics/series";
 import { forecastForProduct, type ProductForecast } from "../forecast/product";
+import { getMonthlySeries } from "../metrics/series";
 
 // Predictive detection: forecast each product forward and open FORWARD-LOOKING
 // incidents from config-driven forecast_rules — the "alert before the loss"

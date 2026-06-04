@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
-  const kpiName = String(formData.get("kpi_name") ?? "");
+  const rawKpi = formData.get("kpi_name");
+  const kpiName = typeof rawKpi === "string" ? rawKpi : "";
   const warningValue = Number(formData.get("warning_value"));
   const criticalValue = Number(formData.get("critical_value"));
 

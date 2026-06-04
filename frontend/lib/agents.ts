@@ -5,10 +5,10 @@
  */
 
 import "server-only";
-import { createServiceClient } from "@/lib/supabase/server";
+import { forecastForProduct } from "@/lib/forecast/product";
 import { callLLM } from "@/lib/llm";
 import { getProductSeries } from "@/lib/metrics/series";
-import { forecastForProduct } from "@/lib/forecast/product";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export type AgentFinding = {
   agent_name: string;

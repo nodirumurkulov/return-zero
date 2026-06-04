@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { updateThreshold } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import SectionLabel from "@/components/ui/section-label";
-import { Card, CardContent } from "@/components/ui/card";
-import { updateThreshold } from "@/app/actions";
 import type { KpiThreshold } from "@/types/database";
 
 const KPI_LABELS: Record<string, string> = {

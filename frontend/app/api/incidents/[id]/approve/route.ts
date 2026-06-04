@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
-import { sendIncidentNotification } from "@/lib/slack";
+import { type NextRequest, NextResponse } from "next/server";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
+import { sendIncidentNotification } from "@/lib/slack";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,19 +17,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const approvedBy = body.approved_by ?? "operator";
   const now = new Date().toISOString();
 
-  // Resolve which actions to approve
-  let actionIds: string[] = body.action_ids ?? [];
+  const lowRiskIds = body.approve_all_low_risk
+    ? (
+        await supabase
+          .from("incident_actions")
+          .select("id")
+          .eq("incident_id", params.id)
+          .eq("status", "proposed")
+          .eq("risk_level", "low")
+      ).data?.map((a) => a.id as string) ?? []
+    : [];
 
-  if (body.approve_all_low_risk) {
-    const { data: proposed } = await supabase
-      .from("incident_actions")
-      .select("id")
-      .eq("incident_id", params.id)
-      .eq("status", "proposed")
-      .eq("risk_level", "low");
-
-    actionIds = [...actionIds, ...(proposed?.map((a) => a.id) ?? [])];
-  }
+  const actionIds = [...(body.action_ids ?? []), ...lowRiskIds];
 
   if (actionIds.length === 0) {
     return NextResponse.json({ error: "No actions to approve" }, { status: 400 });

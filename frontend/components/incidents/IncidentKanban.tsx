@@ -1,8 +1,8 @@
 "use client";
 
-import IncidentCard, { type Incident } from "./IncidentCard";
-import StatusBadge from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/empty-state";
+import StatusBadge from "@/components/ui/StatusBadge";
+import IncidentCard, { type Incident } from "./IncidentCard";
 
 const COLUMNS: { status: string; label: string }[] = [
   { status: "detected", label: "Detected" },

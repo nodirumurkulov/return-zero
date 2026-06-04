@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ProductSourceFacts } from "../metrics/types";
 import { computeMetricsDetailed } from "../metrics/engine";
 import { getMonthlySeries } from "../metrics/series";
+import type { ProductSourceFacts } from "../metrics/types";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 
 // Deterministic KPI breach detection. Runs the config-driven metrics engine over

@@ -98,7 +98,9 @@ export default function ActionList({
             {proposed.length} action(s) awaiting approval
           </span>
           <button
-            onClick={approveAll}
+            onClick={() => {
+              void approveAll();
+            }}
             disabled={loading}
             className="text-xs px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white font-medium disabled:opacity-50 transition-colors"
           >
@@ -154,7 +156,9 @@ export default function ActionList({
               </span>
               {action.status === "proposed" && !action.auto_deploy && (
                 <button
-                  onClick={() => approveOne(action.id)}
+                  onClick={() => {
+                    void approveOne(action.id);
+                  }}
                   disabled={loading}
                   className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 hover:border-zinc-600 transition-colors disabled:opacity-50"
                 >

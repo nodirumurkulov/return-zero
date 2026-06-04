@@ -1,6 +1,6 @@
+import { ClerkProvider, Show } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ClerkProvider, Show } from "@clerk/nextjs";
 import AppShell from "@/components/layout/AppShell";
 import "./globals.css";
 

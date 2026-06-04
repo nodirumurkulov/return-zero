@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import KpiCard from "@/components/catalog/KpiCard";
 import HealthBadge from "@/components/catalog/HealthBadge";
+import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
-import SectionLabel from "@/components/ui/section-label";
 import { Button } from "@/components/ui/button";
+import SectionLabel from "@/components/ui/section-label";
 import { createServiceClient } from "@/lib/supabase/server";
 import {
   computeProductHealth,

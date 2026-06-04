@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { runInvestigation } from "@/lib/agents";
 import { sendIncidentNotification } from "@/lib/slack";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 

@@ -1,8 +1,8 @@
-import { createServiceClient } from "@/lib/supabase/server";
-import IncidentKanban from "@/components/incidents/IncidentKanban";
 import type { Incident } from "@/components/incidents/IncidentCard";
-import SectionLabel from "@/components/ui/section-label";
+import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { EmptyState } from "@/components/ui/empty-state";
+import SectionLabel from "@/components/ui/section-label";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 

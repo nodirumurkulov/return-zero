@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
-import ImpactTag from "@/components/ui/ImpactTag";
-import AgentFindingCard, { type AgentFinding } from "@/components/incidents/AgentFindingCard";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ActionList, { type IncidentAction } from "@/components/incidents/ActionList";
+import AgentFindingCard, { type AgentFinding } from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline, { type TimelineEvent } from "@/components/incidents/IncidentTimeline";
 import { EmptyState } from "@/components/ui/empty-state";
+import ImpactTag from "@/components/ui/ImpactTag";
+import SeverityBadge from "@/components/ui/SeverityBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 type Incident = {
   id: string;
@@ -50,20 +50,22 @@ export default function IncidentDetailPage() {
     return json;
   }, [incidentId]);
 
+  const cancelledRef = useRef(false);
+
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
     load()
       .then((json) => {
-        if (!cancelled) setData(json);
+        if (!cancelledRef.current) setData(json);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Error");
+        if (!cancelledRef.current) setError(err instanceof Error ? err.message : "Error");
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelledRef.current) setLoading(false);
       });
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
     };
   }, [load]);
 
@@ -199,7 +201,9 @@ export default function IncidentDetailPage() {
         {/* Trigger investigation button */}
         {incident.status === "detected" && incident.affected_product && (
           <button
-            onClick={triggerInvestigation}
+            onClick={() => {
+              void triggerInvestigation();
+            }}
             disabled={investigating}
             className="mt-4 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white disabled:opacity-50 transition-colors"
           >
@@ -239,7 +243,9 @@ export default function IncidentDetailPage() {
             <ActionList
               actions={actions}
               incidentId={incident.id}
-              onUpdate={load}
+              onUpdate={() => {
+                void load();
+              }}
             />
           </section>
         </div>

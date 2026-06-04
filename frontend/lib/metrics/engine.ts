@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSourceFacts } from "./sources";
 import type {
   Direction,
   MetricDefinition,
@@ -7,7 +8,6 @@ import type {
   ProductSourceFacts,
   ThresholdOverride,
 } from "./types";
-import { getSourceFacts } from "./sources";
 
 // Within 10% of the threshold (on the safe side) counts as a warning.
 const WARNING_BAND = 0.1;
