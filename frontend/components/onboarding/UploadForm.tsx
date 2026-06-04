@@ -56,12 +56,12 @@ export default function UploadForm() {
           </Button>
         </form>
 
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-3 text-sm text-sev-critical">{error}</p>}
 
         {results && (
           <div className="mt-4 space-y-1 font-mono text-xs">
             {results.map((r) => (
-              <div key={r.table} className={r.error ? "text-red-400" : "text-emerald-400"}>
+              <div key={r.table} className={r.error ? "text-sev-critical" : "text-sev-resolved"}>
                 {r.error ? "✗" : "✓"} {r.table}: {r.count.toLocaleString()}
                 {r.error ? ` — ${r.error}` : ""}
               </div>
