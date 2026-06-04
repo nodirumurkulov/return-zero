@@ -1,26 +1,35 @@
-# lib/incidents/
+# AGENTS.md — lib/incidents
 
-Single source of truth for incident domain types and Supabase access.
+Incident domain — single source of truth for incident types and Supabase reads/writes. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
 ## Files
 
-- `types.ts` — table types (`Incident`, …); **same shape as DB columns**
-- `schemas.ts` — Zod request body schemas (parsed inline in routes)
-- `status.ts` — `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus`
-- `queries.ts` — `listIncidents`, `getIncident`, `getIncidentDetail`
-- `approve.ts` — `approveIncidentActions`, `listLowRiskProposedActionIds`
-- `index.ts` — public API
+| File | Export |
+|------|--------|
+| `types.ts` | `Incident`, `IncidentAction`, `AgentFinding`, `TimelineEvent` |
+| `queries.ts` | `listIncidents`, `getIncident`, `getIncidentDetail` |
+| `approve.ts` | `approveIncidentActions`, `listLowRiskProposedActionIds` |
+| `status.ts` | `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus` |
+| `schemas.ts` | `approveIncidentBodySchema` |
+| `index.ts` | Public API |
 
 ## Usage
 
 ```typescript
 import {
-  listIncidents,
   getIncidentDetail,
   approveIncidentActions,
-  INCIDENT_STATUSES,
   type Incident,
 } from "@/lib/incidents";
 ```
 
-Do not redefine incident types elsewhere or add `*Row` / `from*Row` mappers.
+## Best practices
+
+- Single source of truth for incident types and flows — **refactor consumers** when APIs change; no compatibility aliases.
+- Extend `approve.ts` / `queries.ts` instead of duplicating logic in routes, Slack, or components.
+
+## Rules
+
+- Do not redefine `Incident` in pages or components.
+- Types match DB columns exactly — update `types.ts` when migrations add columns.
+- Approve flow is shared by API route and Slack webhook; extend `approve.ts`, not duplicate logic.

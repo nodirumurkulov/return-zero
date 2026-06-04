@@ -1,12 +1,21 @@
-# lib/metrics/
+# AGENTS.md — lib/metrics
 
-Config-driven KPI engine and monthly time series for detection/forecasting.
+Config-driven KPI engine and monthly series. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
 ## Files
 
-- `types.ts` — `MetricDefinition`, `MonthlyPoint`, engine types
-- `engine.ts` — compute metrics from source facts
-- `series.ts` — `getMonthlySeries` (paginated RPC)
-- `sources.ts` — load source facts
+| File | Role |
+|------|------|
+| `types.ts` | `MetricDefinition`, `ProductSourceFacts`, `MonthlyPoint`, … |
+| `engine.ts` | `computeProductMetrics`, breach evaluation |
+| `series.ts` | Monthly series (paginated RPC) |
+| `sources.ts` | Load source facts |
 
-`MonthlyPoint` lives in `types.ts`; `series.ts` re-exports it.
+## Best practices
+
+- Engine reads definitions from DB — **do not** hard-code metric keys in new code; migrate stragglers when you touch them.
+
+## Rules
+
+- KPI definitions come from DB (`metric_definitions`), not hard-coded metric keys in routes.
+- Changing RPC signatures requires updating `scripts/check-metrics.mjs` and consumers in `detection/`.

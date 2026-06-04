@@ -1,11 +1,20 @@
-# lib/forecast/
+# AGENTS.md — lib/forecast
 
-Deterministic time-series methods (linear trend, EWMA, seasonality). No ML.
+Deterministic time-series forecasts (no ML). **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
 ## Files
 
-- `types.ts` — `PointForecast`, `StockoutForecast`
-- `methods.ts` — `linearTrend`, `forecastAhead`, …
-- `predictors.ts`, `product.ts` — product-level wiring
+| File | Role |
+|------|------|
+| `types.ts` | `PointForecast`, `StockoutForecast` |
+| `methods.ts` | `linearTrend`, `forecastAhead`, seasonality helpers |
+| `predictors.ts`, `product.ts` | Product-level wiring |
 
-Use `reduce` / `const` only — no index `let` loops.
+## Best practices
+
+- Deterministic forecasts only — no ML stubs or “placeholder” APIs left for compat; replace callers when signatures improve.
+
+## Code style
+
+- Same inputs → same outputs.
+- No index `let` loops; use `const`, `reduce`, `chunkArray` patterns from repo conventions.

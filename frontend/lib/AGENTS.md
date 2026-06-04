@@ -1,26 +1,43 @@
-# lib/
+# AGENTS.md — lib
 
-Server-side and shared domain logic. **Domain-split:** each folder owns types, DB rows, mappers, queries, and mutations.
+Server-side domain logic. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.md](README.md)
 
-## Domains
+## Scope
+
+All Supabase access for app logic goes through `createServiceClient()` and domain queries. Do not import from `components/`.
+
+## Domain modules
 
 | Module | Import | Owns |
 |--------|--------|------|
-| `incidents/` | `@/lib/incidents` | Incidents, actions, findings, timeline, status, approve flow, queries |
-| `catalog/` | `@/lib/catalog` | Product metrics, thresholds, health, catalog queries |
-| `metrics/` | `@/lib/metrics/types` | Metric engine, monthly series |
-| `forecast/` | `@/lib/forecast` | Deterministic forecasts |
+| `incidents/` | `@/lib/incidents` | Incidents, actions, findings, timeline, approve |
+| `catalog/` | `@/lib/catalog` | Metrics, thresholds, health, catalog queries |
+| `metrics/` | `@/lib/metrics/*` | KPI engine, definitions, series |
 | `detection/` | `@/lib/detection/*` | Detect, severity, recover |
-| `agents.ts` | `@/lib/agents` | LLM orchestration (`LlmAgentFinding` — not DB `AgentFinding`) |
-| `slack.ts` | `@/lib/slack` | Webhooks + `parseSlackInteractionPayload` |
-| `supabase/` | `@/lib/supabase/server` | Service role client |
+| `forecast/` | `@/lib/forecast` | Deterministic forecasts |
+| `agents.ts` | `@/lib/agents` | LLM investigation (`LlmAgentFinding` ≠ DB `AgentFinding`) |
+| `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod |
+| `supabase/` | `@/lib/supabase/server` | Service-role client |
 
-## Rules
+Each domain folder has its own `AGENTS.md`.
 
-- No `let`; use `const`, `reduce`, or small named functions.
-- **Redesign over backward compat:** change public exports and fix all call sites; no component re-exports of domain types.
-- **One type per table/view** in `types.ts` — same fields as Supabase columns. No `*Row` aliases or `from*Row` mappers.
-- Cross-domain imports: `detection` may use `metrics` / `forecast` — avoid catalog ↔ incidents coupling.
-- Do not import from `components/`.
+## Best practices (domain layer)
 
-Each domain subdirectory has `AGENTS.md`.
+- **Types = database truth.** One type per table/view in `types.ts`; no `*Row`, no `from*Row`, no DTO mappers “for compatibility.”
+- **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules.
+- **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.
+- Prefer **TypeScript advanced types** only when they clarify domain invariants; avoid clever types that obscure DB shape.
+- Cross-domain: `detection` → `metrics` / `forecast` OK; avoid `catalog` ↔ `incidents` coupling.
+
+## Code style
+
+- Follow root [Best practices mandate](../../AGENTS.md#best-practices-mandate).
+- When exports change, update **all** call sites (app, api, components, scripts if any) in the same change.
+
+## Commands
+
+Validated via parent package:
+
+```bash
+cd frontend && bun run lint && bun run typecheck
+```
