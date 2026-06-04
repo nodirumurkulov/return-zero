@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { LayoutGrid, Search, Siren } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,9 @@ export default function AppShell({
   searchSlot?: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const displayName = user?.fullName ?? user?.username ?? "Account";
+  const email = user?.primaryEmailAddress?.emailAddress;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -55,7 +58,17 @@ export default function AppShell({
             <span className="h-2 w-2 animate-pulse rounded-full bg-sev-low" />
             <span className="text-xs text-muted-foreground">Agents monitoring</span>
           </div>
-          <UserButton />
+          <div className="flex items-center gap-3">
+            <UserButton />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">
+                {displayName}
+              </p>
+              {email ? (
+                <p className="truncate text-xs text-muted-foreground">{email}</p>
+              ) : null}
+            </div>
+          </div>
         </div>
       </aside>
 
