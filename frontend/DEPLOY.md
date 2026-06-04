@@ -20,11 +20,13 @@ Copy from [`.env.example`](../.env.example) into Vercel project settings:
 ```bash
 cd frontend
 npm install --legacy-peer-deps
-npm run build
+npm run build   # passes without local .env when API routes use force-dynamic
 npx vercel --prod
 ```
 
 Set **Root Directory** to `frontend` in the Vercel project settings.
+
+**Note:** Production runtime still requires all env vars above. `npm run build` only needs them if pages/routes are statically prerendered at build time — API routes are marked `force-dynamic` so CI/Vercel can build before secrets are wired (RUN-52).
 
 ## Post-deploy checklist
 
