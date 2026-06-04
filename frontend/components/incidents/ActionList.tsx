@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { IncidentAction } from "@/lib/incidents";
 
@@ -26,12 +27,11 @@ const statusStyle: Record<string, string> = {
 export default function ActionList({
   actions,
   incidentId,
-  onUpdate,
 }: {
   actions: IncidentAction[];
   incidentId: string;
-  onUpdate?: () => void;
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -49,7 +49,7 @@ export default function ActionList({
       const json = await res.json() as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");
       setMessage(`${json.approved} action(s) approved and deployed`);
-      onUpdate?.();
+      router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {
@@ -69,7 +69,7 @@ export default function ActionList({
       const json = await res.json() as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");
       setMessage("Action approved and deployed");
-      onUpdate?.();
+      router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     } finally {
