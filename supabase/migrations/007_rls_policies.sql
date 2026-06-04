@@ -1,5 +1,5 @@
 -- =============================================================
--- 003_rls_policies.sql  (RUN-34)
+-- 007_rls_policies.sql  (RUN-34)
 -- Row-Level Security policies for read/write access.
 --
 -- Model:
@@ -12,8 +12,7 @@
 -- Enabling RLS without a policy denies everything, so every table that gets
 -- RLS here also gets the policy it needs in the same block. Re-runnable:
 -- policies are dropped before being recreated, and table refs are guarded
--- with to_regclass so this migration is safe even if a table (e.g.
--- kpi_thresholds, created by RUN-9) does not exist yet.
+-- with to_regclass so this migration is safe even if a table does not exist yet.
 -- =============================================================
 
 -- ---- read-only for authenticated: raw "mock data" + read-only incident detail
@@ -41,11 +40,13 @@ begin
   end loop;
 end $$;
 
--- ---- read + write for authenticated: kpi_thresholds, incidents, agent_findings
+-- ---- read + write for authenticated: product_kpi_thresholds, incidents, agent_findings
+-- (the issue calls the thresholds table "kpi_thresholds"; RUN-9 named it
+--  product_kpi_thresholds in 003_metrics_config.sql.)
 do $$
 declare
   t text;
-  read_write_tables text[] := array['kpi_thresholds','incidents','agent_findings'];
+  read_write_tables text[] := array['product_kpi_thresholds','incidents','agent_findings'];
 begin
   foreach t in array read_write_tables loop
     if to_regclass(format('public.%I', t)) is not null then
