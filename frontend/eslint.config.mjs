@@ -71,6 +71,21 @@ export default tseslint.config(
       "no-console": "warn",
       "prefer-const": "error",
       "no-var": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "VariableDeclarator > CallExpression[callee.type='ArrowFunctionExpression']",
+          message:
+            "Do not use an IIFE to initialize a variable. Use a named function or a lib/api helper.",
+        },
+        {
+          selector:
+            "VariableDeclarator > CallExpression[callee.type='FunctionExpression']",
+          message:
+            "Do not use an IIFE to initialize a variable. Use a named function or a lib/api helper.",
+        },
+      ],
 
       // Turn on in RUN-73 after Zod + typed Supabase rows per domain.
       "@typescript-eslint/no-unsafe-assignment": "off",

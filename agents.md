@@ -10,7 +10,7 @@ Resolve is an ecommerce incident-response app: detect KPI breaches, open inciden
 
 - Prefer **`const`**. Do not use `let` unless ESLint cannot be satisfied another way (rare).
 - Do not use **`var`**.
-- Do not use **async IIFEs** or other clever wrappers to assign one constant (e.g. `const x = await (async () => ...)()`). Use a **named function** or a small helper in `lib/`.
+- Do not use **IIFEs** (sync or async) to initialize a variable — e.g. `const x = (() => ...)()` or `const x = await (async () => ...)()`. Use a **named function** or a helper in `lib/api/` (`parseJsonString`, `readOptionalJson`, `parseSlackInteractionPayload`, …). ESLint enforces this via `no-restricted-syntax`.
 - Prefer **pure functions**, `reduce`, and early returns over mutable loops.
 - Use **domain modules** under `lib/<domain>/` for types, DB row shapes, mappers, and queries. Import from `@/lib/incidents`, `@/lib/catalog`, etc. — not from deleted `types/database.ts`.
 - API JSON bodies: use helpers in `lib/api/` (later Zod in domain `schemas.ts`). Optional bodies must handle empty/invalid JSON without IIFEs.
