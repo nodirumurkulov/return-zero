@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "seed": "bun seed.mjs",
-    "validate-counts": "bun validate-counts.mjs"
+    "seed": "node seed.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

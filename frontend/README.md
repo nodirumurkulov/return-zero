@@ -11,7 +11,7 @@ Goal of this guide: **a new teammate can run Resolve locally in under 15 minutes
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| [Bun](https://bun.sh) | **1.2+** | Package manager and script runner |
+| [Bun](https://bun.sh) | **1.3+** | Package manager and script runner |
 | Node.js | **20.9+** | Required by Next.js 16 (used by `next build`) |
 | A Supabase project | — | Free tier is fine — [supabase.com](https://supabase.com) |
 | A Clerk application | — | Free tier is fine — [clerk.com](https://clerk.com) |
@@ -27,7 +27,7 @@ cd frontend
 bun install
 ```
 
-Lockfile: `bun.lock` (commit it). CI uses `bun install --frozen-lockfile` for reproducible installs.
+Lockfile: `bun.lock` (commit it). CI uses `bun ci` (Bun 1.3.14) for reproducible installs.
 
 ---
 
@@ -76,8 +76,8 @@ The seed script loads the Pretty Fly CSVs and inserts the Court Trainer demo inc
 
 ```bash
 cd scripts
-bun install
-bun --env-file=../frontend/.env.local seed.mjs
+npm install
+node --env-file=../frontend/.env.local seed.mjs
 ```
 
 The script is idempotent (upserts), so it's safe to re-run. It requires
@@ -161,7 +161,7 @@ frontend/
 
 | Symptom | Fix |
 |---------|-----|
-| `bun install --frozen-lockfile` fails (lockfile mismatch) | Run `bun install` locally and commit `bun.lock` |
+| `bun ci` fails (lockfile mismatch) | Run `bun install` locally and commit `bun.lock` |
 | Vercel build: `No Next.js version detected` | Set **Root Directory = `frontend`** in Vercel (see Deploy step 1) |
 | Redirected to `/sign-in` forever | Check `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
 | `/catalog` 404s after sign-in | The catalog route is still in progress; the redirect target is correct |

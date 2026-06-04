@@ -20,7 +20,7 @@ metric returns to normal.
 
 ### 1. Install dependencies
 
-Requires [Bun](https://bun.sh) 1.2+ and Node.js 20.9+.
+Requires [Bun](https://bun.sh) 1.3+ and Node.js 20.9+.
 
 ```bash
 cd frontend
