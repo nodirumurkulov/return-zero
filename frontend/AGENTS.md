@@ -44,7 +44,9 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Testing
 
-- No `bun test` yet; rely on `bun run check` and `bun run build`.
+- `bun run test` — Vitest watch mode.
+- `bun run test:run` — single CI run (co-located `components/**/*.test.tsx`).
+- `bun run check` — lint, typecheck, and `test:run`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

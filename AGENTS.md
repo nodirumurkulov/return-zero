@@ -64,7 +64,8 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Testing instructions
 
-- No automated test suite yet; CI runs lint, typecheck, and build only.
+- Component unit tests: `cd frontend && bun run test:run` (Vitest + React Testing Library).
+- CI runs lint, typecheck, unit tests, and build.
 - After schema or metrics changes: `cd scripts && npm run validate` against a seeded Supabase project.
 - RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.
