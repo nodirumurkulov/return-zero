@@ -1,5 +1,5 @@
+import type { HealthLevel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
-import type { HealthLevel } from "@/types/database";
 
 const styles: Record<HealthLevel, string> = {
   healthy: "bg-sev-low/20 text-green-400 border-sev-low/30",

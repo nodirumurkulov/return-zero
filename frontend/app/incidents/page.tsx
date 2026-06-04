@@ -1,7 +1,7 @@
-import type { Incident } from "@/components/incidents/IncidentCard";
 import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { EmptyState } from "@/components/ui/empty-state";
 import SectionLabel from "@/components/ui/section-label";
+import { listIncidents } from "@/lib/incidents";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -9,23 +9,23 @@ export const dynamic = "force-dynamic";
 export default async function IncidentsPage() {
   const supabase = createServiceClient();
 
-  const { data: incidents, error } = await supabase
-    .from("incidents")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const result = await listIncidents(supabase).then(
+    (rows) => ({ ok: true as const, rows }),
+    (err: unknown) => ({
+      ok: false as const,
+      message: err instanceof Error ? err.message : "Failed to load incidents",
+    }),
+  );
 
-  if (error) {
+  if (!result.ok) {
     return (
       <div className="p-6">
-        <EmptyState
-          title="Failed to load incidents"
-          description={error.message}
-        />
+        <EmptyState title="Failed to load incidents" description={result.message} />
       </div>
     );
   }
 
-  const rows = (incidents ?? []) as unknown as Incident[];
+  const { rows } = result;
   const totalImpact = rows.reduce((sum, i) => sum + (Number(i.impact_amount) || 0), 0);
   const open = rows.filter((i) => i.status !== "resolved").length;
 

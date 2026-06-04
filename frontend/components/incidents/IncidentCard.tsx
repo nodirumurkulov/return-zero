@@ -14,19 +14,9 @@ import {
 import ImpactTag from "@/components/ui/ImpactTag";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
+import type { Incident } from "@/lib/incidents";
 
-export type Incident = {
-  id: string;
-  title: string;
-  status: string;
-  severity: string;
-  impact_amount?: number | null;
-  impact_label?: string | null;
-  root_cause?: string | null;
-  root_cause_confidence?: number | null;
-  created_at: string;
-  affected_kpis?: string[] | null;
-};
+export type { Incident } from "@/lib/incidents";
 
 const STATUSES = [
   "detected",

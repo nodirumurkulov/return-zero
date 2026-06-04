@@ -1,11 +1,6 @@
-export type AgentFinding = {
-  id: string;
-  agent_name: string;
-  agent_icon?: string;
-  summary: string;
-  detail?: Record<string, unknown>;
-  created_at: string;
-};
+import type { AgentFinding } from "@/lib/incidents";
+
+export type { AgentFinding } from "@/lib/incidents";
 
 export default function AgentFindingCard({ finding }: { finding: AgentFinding }) {
   return (
