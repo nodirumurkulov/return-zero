@@ -181,7 +181,7 @@ Validators need a seeded project: `bun run validate` (see [`frontend/scripts/REA
 
 ```bash
 cd frontend && bun run check && bun run build
-cd frontend && bun run verify:secrets
+cd frontend/supabase && supabase start && cd .. && bun run db:reset && bun run db:lint
 ```
 
 ---

@@ -5,8 +5,11 @@ Postgres schema, views, RPCs, RLS. **Parent:** [../AGENTS.md](../AGENTS.md) · *
 ## Setup commands
 
 ```bash
-supabase link                    # once per machine
-supabase db push                 # apply migrations
+supabase start                 # local stack (once per machine)
+supabase link                  # remote project (deploy)
+cd .. && bun run db:reset      # apply migrations locally
+cd .. && bun run db:lint       # lint migrations
+cd .. && bun run db:types      # regenerate TypeScript types
 ```
 
 ## Layout
@@ -14,25 +17,25 @@ supabase db push                 # apply migrations
 | Path | Role |
 |------|------|
 | `migrations/` | Ordered SQL — never edit old files in place |
-| `tests/` | RLS tests + `run_rls_test.sh` if present |
+| `tests/rls_policies_test.sql` | RLS assertions (run via `bun run db:test:rls` after reset) |
 | `config.toml` | Local Supabase config |
 
 ## Best practices
 
 - **Postgres idioms:** indexes, constraints, and RLS policies named clearly; avoid breaking migrations in place.
-- Column renames/types: migration + `frontend/lib/<domain>/types.ts` + seed/validators in **one PR** — no “DB first, types later” compat window.
+- Column renames/types: migration + `frontend/lib/supabase/database.types.ts` + seed/validators in **one PR** — no “DB first, types later” compat window.
 
 ## Rules
 
 - New schema change → **new migration file** only.
-- When columns change, update matching types in `frontend/lib/<domain>/types.ts` in the same PR.
-- Frontend uses service role on the server; RLS still matters for anon paths and tests.
+- When columns change, run `bun run db:types` and update domain types in the same PR.
+- User-facing app code uses `createClient()` (RLS); admin client only for cron, seed, Slack.
 
 ## Testing
 
 ```bash
-# after local supabase up, if tests exist:
-./tests/run_rls_test.sh
+supabase start
+cd .. && bun run db:reset && bun run db:lint && bun run db:test:rls
 ```
 
-After seed: `cd scripts && npm run validate`
+After seed: `cd .. && bun run validate`

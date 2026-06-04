@@ -57,7 +57,7 @@ cd frontend && bun run seed
 cd frontend && bun run dev          # http://localhost:3000
 cd frontend && bun run check        # lint + typecheck
 cd frontend && bun run build
-cd frontend && bun run verify:secrets
+cd frontend/supabase && supabase start && cd .. && bun run db:reset
 ```
 
 Package manager: **Bun** in `frontend/` (app + scripts).
@@ -66,7 +66,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 - No automated test suite yet; CI runs lint, typecheck, and build only.
 - After schema or metrics changes: `cd scripts && npm run validate` against a seeded Supabase project.
-- RLS: see `supabase/tests/` if present.
+- RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.
 
 ## Code style
@@ -84,7 +84,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 Run before every PR:
 
 ```bash
-cd frontend && bun run lint && bun run typecheck && bun run build && bun run verify:secrets
+cd frontend && bun run lint && bun run typecheck && bun run build
 ```
 
 ## Security
@@ -93,7 +93,7 @@ cd frontend && bun run lint && bun run typecheck && bun run build && bun run ver
 - `SUPABASE_SERVICE_ROLE_KEY`, LLM keys, `SLACK_*`, `CRON_SECRET` are server-only.
 - Use `await createClient()` from `@/lib/supabase/server` in RSC, server actions, and user APIs (RLS).
 - Use `createAdminClient()` from `@/lib/supabase/admin` for cron routes, Slack webhook, and scripts only.
-- Run `bun run verify:secrets` after touching env usage or client files.
+- Keep server secrets out of `"use client"` files and off `NEXT_PUBLIC_*` env vars.
 
 ## Build and deployment
 

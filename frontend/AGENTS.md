@@ -16,7 +16,7 @@ cp ../.env.example .env.local   # if missing
 bun run dev              # dev server
 bun run check            # lint + typecheck
 bun run build
-bun run verify:secrets
+bun run db:lint
 ```
 
 | Script | Purpose |
@@ -24,7 +24,7 @@ bun run verify:secrets
 | `dev` | Local server |
 | `check` | ESLint (`--max-warnings 0`) + `tsc` |
 | `build` | Production build |
-| `verify:secrets` | Block server secrets in client code |
+| `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
 
