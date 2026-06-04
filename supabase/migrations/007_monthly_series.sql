@@ -21,6 +21,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public
 as $$
   with bounds as (
     select date_trunc('month', max(created_at))::date as last_month from orders

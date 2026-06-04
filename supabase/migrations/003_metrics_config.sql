@@ -86,3 +86,9 @@ on conflict (metric_key) do update set
   default_threshold  = excluded.default_threshold,
   severity           = excluded.severity,
   sort_order         = excluded.sort_order;
+
+-- Demo override: tighter return-rate threshold on the hero SKU (Court Trainer)
+-- so the catalog reads "critical". Engine shape (per-product override).
+insert into product_kpi_thresholds (product_id, metric_key, threshold, direction, active)
+values ('prod_00005', 'return_rate', 0.15, 'above', true)
+on conflict (product_id, metric_key) do nothing;
