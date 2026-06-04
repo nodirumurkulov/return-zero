@@ -121,6 +121,21 @@ export type Database = {
         }
         Relationships: []
       }
+      replay_state: {
+        Row: {
+          cursor: string | null
+          id: boolean
+        }
+        Insert: {
+          cursor?: string | null
+          id?: boolean
+        }
+        Update: {
+          cursor?: string | null
+          id?: boolean
+        }
+        Relationships: []
+      }
       collections: {
         Row: {
           collection_id: string
@@ -1039,7 +1054,7 @@ export type Database = {
         }[]
       }
       product_source_facts: {
-        Args: { p_window_days?: number }
+        Args: { p_asof?: string; p_window_days?: number }
         Returns: {
           ads_revenue: number
           ads_spend: number
