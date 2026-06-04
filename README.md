@@ -43,6 +43,14 @@ App available at **http://localhost:3000**
 
 ---
 
+## Deploy
+
+Hosted on **Vercel**. The app is in `frontend/`, so set the Vercel **Root
+Directory** to `frontend`. Full deploy + environment-variable reference:
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+---
+
 ## Stack
 
 | Layer | Technology |
