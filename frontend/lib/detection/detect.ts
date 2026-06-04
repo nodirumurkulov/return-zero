@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeMetricsDetailed } from "../metrics/engine";
 import { getMonthlySeries } from "../metrics/series";
 import type { ProductSourceFacts } from "../metrics/types";
+import { notifyNewIncident } from "../slack";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 
 // Deterministic KPI breach detection. Runs the config-driven metrics engine over
@@ -38,8 +39,15 @@ export interface DetectionResult {
   skipped: { product_id: string; reason: string }[];
 }
 
-export async function detectBreaches(supabase: SupabaseClient): Promise<DetectionResult> {
-  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase);
+export interface DetectOpts {
+  asOf?: string; // replay cursor — compute metrics as of this date instead of "now"
+}
+
+export async function detectBreaches(
+  supabase: SupabaseClient,
+  opts: DetectOpts = {},
+): Promise<DetectionResult> {
+  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase, { asOf: opts.asOf });
   const defByKey = new Map(defs.map((d) => [d.metric_key, d]));
 
   // Dedup: products that already have an open incident.
@@ -85,7 +93,9 @@ export async function detectBreaches(supabase: SupabaseClient): Promise<Detectio
     const primary = ranked[0];
 
     const value = primary.m.value ?? 0;
-    const series = seriesByProduct.get(productId) ?? [];
+    const fullSeries = seriesByProduct.get(productId) ?? [];
+    // As of the replay cursor, the trend should only "see" months up to the cursor.
+    const series = opts.asOf ? fullSeries.filter((p) => p.month <= opts.asOf!) : fullSeries;
     const severity = scoreSeverity({
       baseSeverity: primary.def.severity,
       magnitude: breachMagnitude(value, primary.m.threshold, primary.m.direction),
@@ -144,6 +154,14 @@ export async function detectBreaches(supabase: SupabaseClient): Promise<Detectio
       severity,
       affected_kpis,
       impact_amount: Math.round(primary.impact),
+    });
+
+    await notifyNewIncident({
+      incident_id: inc.id as string,
+      title,
+      severity,
+      impact_amount: Math.round(primary.impact),
+      impact_label: primary.def.impact_label,
     });
   }
 

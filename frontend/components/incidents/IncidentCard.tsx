@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INCIDENT_STATUSES, type Incident } from "@/lib/incidents";
 
 function timeAgo(dateStr: string) {

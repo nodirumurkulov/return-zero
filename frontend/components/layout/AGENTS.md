@@ -1,6 +1,6 @@
 # AGENTS.md — components/layout
 
-`AppShell` — sidebar nav, header, Clerk `UserButton`. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
+`AppShell` — shadcn `Sidebar` nav, header search slot, Supabase sign-out. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 ## Best practices
 
@@ -8,5 +8,6 @@
 
 ## Rules
 
-- Client component (`usePathname`, `useUser`).
+- Client component (`usePathname`, `SidebarProvider`, `TooltipProvider`).
 - No data fetching; auth enforced in `proxy.ts`.
+- Sign-out via server action `signOut` from `@/app/auth/actions`.

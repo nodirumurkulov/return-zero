@@ -113,7 +113,11 @@ export default function ActionList({
       )}
 
       {message ? (
-        <Alert className="border-green-500/20 bg-green-500/10 text-green-400" role="status" aria-live="polite">
+        <Alert
+          className="border-green-500/20 bg-green-500/10 text-green-400"
+          role="status"
+          aria-live="polite"
+        >
           <AlertDescription>{message}</AlertDescription>
         </Alert>
       ) : null}

@@ -43,6 +43,7 @@ function statusFor(value: number | null, threshold: number, direction: Direction
 export interface ComputeOpts {
   productId?: string; // restrict to one product
   windowDays?: number; // override each definition's own window
+  asOf?: string; // anchor the rolling window to this date (replay cursor); default = latest order
 }
 
 export interface EngineRun {
@@ -86,7 +87,7 @@ export async function computeMetricsDetailed(
     : new Set(defs.map((d) => d.window_days));
   const factsByWindow = new Map<number, Map<string, ProductSourceFacts>>();
   for (const w of Array.from(windows)) {
-    factsByWindow.set(w, await getSourceFacts(supabase, w));
+    factsByWindow.set(w, await getSourceFacts(supabase, w, opts.asOf));
   }
 
   const metrics: Record<string, MetricValue[]> = {};

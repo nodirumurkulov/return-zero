@@ -25,6 +25,15 @@
     --ring: 239 84% 67%;
     --radius: 0.5rem;
 
+    --sidebar: 240 6% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 239 84% 67%;
+
     /* Resolve design tokens (src/system.jsx) */
     --sev-critical: 0 84% 60%;
     --sev-high: 25 95% 53%;
