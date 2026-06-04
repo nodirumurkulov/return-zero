@@ -1,6 +1,6 @@
 # Frontend
 
-Next.js 16 App Router application for Resolve: catalog KPIs, incident workflow, API routes, and Clerk auth.
+Next.js 16 App Router application for Resolve: catalog KPIs, incident workflow, API routes, and Supabase Auth.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ bun install
 bun run dev          # http://localhost:3000
 bun run check        # lint + typecheck
 bun run build
-bun run verify:secrets
+bun run db:reset       # requires supabase start
 ```
 
 | Script | Purpose |
@@ -22,7 +22,8 @@ bun run verify:secrets
 | `dev` | Local dev server |
 | `check` | ESLint (`--max-warnings 0`) + `tsc` |
 | `build` | Production build |
-| `verify:secrets` | Ensures service keys are not referenced from client code |
+| `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI — migrations and RLS tests |
+| `db:types` | Regenerate `lib/supabase/database.types.ts` |
 
 ## What's here
 
@@ -31,7 +32,7 @@ bun run verify:secrets
 | [`app/`](app/) | Routes, pages, API handlers |
 | [`components/`](components/) | React UI (server + client islands) |
 | [`lib/`](lib/) | Domain logic, Supabase server client, agents |
-| [`proxy.ts`](proxy.ts) | Clerk middleware (Next 16 proxy) |
+| [`proxy.ts`](proxy.ts) | Supabase session refresh (Next 16 proxy) |
 | [`eslint.config.mjs`](eslint.config.mjs) | Strict flat config |
 
 Data loads on the **server** (`createServiceClient`, domain queries). Client components handle mutations and call `router.refresh()` after success.

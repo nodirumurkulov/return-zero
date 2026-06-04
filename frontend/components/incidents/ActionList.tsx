@@ -44,7 +44,7 @@ export default function ActionList({
       const res = await fetch(`/api/incidents/${incidentId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approve_all_low_risk: true, approved_by: "operator" }),
+        body: JSON.stringify({ approve_all_low_risk: true }),
       });
       const json = await res.json() as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");
@@ -64,7 +64,7 @@ export default function ActionList({
       const res = await fetch(`/api/incidents/${incidentId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_ids: [actionId], approved_by: "operator" }),
+        body: JSON.stringify({ action_ids: [actionId] }),
       });
       const json = await res.json() as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");

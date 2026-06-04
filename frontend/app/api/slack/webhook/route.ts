@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { approveIncidentActions, listLowRiskProposedActionIds } from "@/lib/incidents";
 import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
   const params = new URLSearchParams(body);
   const rawPayload = params.get("payload");
 

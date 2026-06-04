@@ -14,14 +14,8 @@ type ProductRow = Pick<
 
 // Catalog data is assembled from the config-driven metrics engine (the single
 // source of truth used by detection/forecasting/recovery), not the retired
-// product_metrics_view. The KpiThreshold rows are synthesised from each metric's
-// effective threshold so the existing warning/critical health UI keeps working.
-
-const WARNING_BAND = 0.1;
-
-function kpiNameFor(metricKey: string): string {
-  return metricKey === "support_volume" ? "support_tickets" : metricKey;
-}
+// product_metrics_view. Threshold rows are synthesised from each metric's
+// effective threshold when no per-product override exists in the DB.
 
 function valueOf(metrics: MetricValue[], key: string): number | null {
   return metrics.find((m) => m.metric_key === key)?.value ?? null;
@@ -31,12 +25,11 @@ function synthThresholds(productId: string, metrics: MetricValue[]): KpiThreshol
   return metrics.map((m) => ({
     id: `${productId}:${m.metric_key}`,
     product_id: productId,
-    kpi_name: kpiNameFor(m.metric_key),
-    critical_value: m.threshold,
-    warning_value:
-      m.direction === "above" ? m.threshold * (1 - WARNING_BAND) : m.threshold * (1 + WARNING_BAND),
+    metric_key: m.metric_key,
+    threshold: m.threshold,
     direction: m.direction,
-    updated_at: "",
+    active: true,
+    created_at: "",
   }));
 }
 

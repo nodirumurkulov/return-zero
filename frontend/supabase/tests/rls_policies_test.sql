@@ -1,7 +1,7 @@
 -- =============================================================
 -- rls_policies_test.sql  (RUN-34)
 -- Asserts the 003 RLS policies behave correctly for anon vs authenticated.
--- Run via supabase/tests/run_rls_test.sh (which loads the migrations first).
+-- After migrations: `bun run db:reset` then `bun run db:test:rls` (Supabase CLI, local).
 -- Any failed assertion RAISEs, aborting under `psql -v ON_ERROR_STOP=1`.
 -- =============================================================
 

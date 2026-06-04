@@ -37,7 +37,7 @@ When `CRON_SECRET` is set, detect/forecast/recover require `Authorization: Beare
 
 ## Rules
 
-- `createServiceClient()` from `@/lib/supabase/server` only.
+- User routes: `await createClient()` + `getUser()`; cron/Slack: `createAdminClient()` from `@/lib/supabase/admin`.
 - No async IIFEs, no ad-hoc `as` casts for request bodies.
 - Do not add generic `read-json` helpers — Zod schemas live in the owning domain.
 - Follow root [Best practices mandate](../../../AGENTS.md#best-practices-mandate).

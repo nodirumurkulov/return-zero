@@ -8,8 +8,8 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 
 | Area | Path | Stack |
 |------|------|-------|
-| Web app + API | `frontend/` | Next.js 16, React 19, Bun, Clerk |
-| Database | `supabase/` | Postgres migrations, RLS |
+| Web app + API | `frontend/` | Next.js 16, React 19, Bun, Supabase Auth |
+| Database | `frontend/supabase/` | Postgres migrations, RLS |
 | Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
 | Hackathon | `hackathon/` | Pretty Fly CSVs, demo guides (not app code) |
@@ -41,11 +41,11 @@ Nested `AGENTS.md` files spell out **context-specific** rules; this section is t
 ## Setup commands
 
 ```bash
-cp .env.example frontend/.env.local   # fill Supabase, Clerk, LLM keys
+cp .env.example frontend/.env.local   # fill Supabase (URL, anon, service role), LLM keys
 cd frontend && bun install
 ```
 
-Apply DB migrations (Supabase CLI) before seeding. See [supabase/AGENTS.md](supabase/AGENTS.md) and [frontend/scripts/README.md](frontend/scripts/README.md).
+Apply DB migrations (Supabase CLI) before seeding. See [frontend/supabase/](frontend/supabase/) and [frontend/scripts/README.md](frontend/scripts/README.md).
 
 ```bash
 cd frontend && bun run seed
@@ -57,7 +57,7 @@ cd frontend && bun run seed
 cd frontend && bun run dev          # http://localhost:3000
 cd frontend && bun run check        # lint + typecheck
 cd frontend && bun run build
-cd frontend && bun run verify:secrets
+cd frontend/supabase && supabase start && cd .. && bun run db:reset
 ```
 
 Package manager: **Bun** in `frontend/` (app + scripts).
@@ -66,7 +66,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 - No automated test suite yet; CI runs lint, typecheck, and build only.
 - After schema or metrics changes: `cd scripts && npm run validate` against a seeded Supabase project.
-- RLS: see `supabase/tests/` if present.
+- RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.
 
 ## Code style
@@ -84,15 +84,16 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 Run before every PR:
 
 ```bash
-cd frontend && bun run lint && bun run typecheck && bun run build && bun run verify:secrets
+cd frontend && bun run lint && bun run typecheck && bun run build
 ```
 
 ## Security
 
 - Never put server secrets in `NEXT_PUBLIC_*` or client components.
-- `SUPABASE_SERVICE_ROLE_KEY`, `CLERK_SECRET_KEY`, LLM keys, `SLACK_*`, `CRON_SECRET` are server-only.
-- Use `createServiceClient()` from `@/lib/supabase/server` in routes and RSC only.
-- Run `bun run verify:secrets` after touching env usage or client files.
+- `SUPABASE_SERVICE_ROLE_KEY`, LLM keys, `SLACK_*`, `CRON_SECRET` are server-only.
+- Use `await createClient()` from `@/lib/supabase/server` in RSC, server actions, and user APIs (RLS).
+- Use `createAdminClient()` from `@/lib/supabase/admin` for cron routes, Slack webhook, and scripts only.
+- Keep server secrets out of `"use client"` files and off `NEXT_PUBLIC_*` env vars.
 
 ## Build and deployment
 
@@ -117,7 +118,7 @@ cd frontend && bun run lint && bun run typecheck && bun run build && bun run ver
 | [frontend/components/](frontend/components/AGENTS.md) | React UI |
 | [frontend/lib/](frontend/lib/AGENTS.md) | Domain logic |
 | [frontend/scripts/](frontend/scripts/README.md) | Seed, validators |
-| [supabase/](supabase/AGENTS.md) | Migrations, RLS |
+| [frontend/supabase/](frontend/supabase/) | Migrations, RLS |
 | [.github/](.github/AGENTS.md) | CI |
 
 Each folder also has **README.md** for human onboarding.

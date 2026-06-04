@@ -32,9 +32,7 @@ bun --env-file=.env.local run scripts/seed.ts
 | `seed.ts` | Upsert CSVs from `hackathon/data-pack/data/` + demo incidents |
 | `validate-counts.ts` | Assert table row counts |
 | `validate-metrics.ts` | Assert metrics RPCs on seeded data |
-| `verify-secrets.sh` | Block server secrets in client bundles (`bun run verify:secrets`) |
-
-No separate `scripts/` package at repo root — no `.mjs` helpers; `createClient()` from `@supabase/supabase-js` in each script.
+No separate `scripts/` package at repo root; `createClient()` from `@supabase/supabase-js` in each script. DB setup uses Supabase CLI (`bun run db:reset` in `frontend/`).
 
 ## Notes
 

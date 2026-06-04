@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { detectBreaches } from "@/lib/detection/detect";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // POST /api/detect — run deterministic KPI breach detection over the catalogue
 // and open incidents for newly-breached products. Safe to call repeatedly: it
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
   try {
     const result = await detectBreaches(supabase);
     return NextResponse.json({

@@ -11,7 +11,7 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 ## Development workflow
 
 - Default to **Server Components**; `"use client"` only for hooks, browser APIs, or event handlers.
-- Load data with `createServiceClient()` + domain queries (`listIncidents`, `getIncidentDetail`, `listCatalogWithThresholds`, …).
+- Load data with `await createClient()` + domain queries (`listIncidents`, `getIncidentDetail`, `listCatalogWithThresholds`, …).
 - Do **not** use client `useEffect` + `fetch` for initial page data.
 - Use `export const dynamic = "force-dynamic"` where Supabase data must be fresh.
 

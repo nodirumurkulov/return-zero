@@ -124,7 +124,7 @@ Recovery uses a **projected** KPI path after deploy (demo-friendly on static fix
 | Piece | Location |
 |-------|----------|
 | Web app and API | [`frontend/`](frontend/) |
-| Database migrations | [`supabase/`](supabase/) |
+| Database migrations | [`frontend/supabase/`](frontend/supabase/) |
 | Seed and validation scripts | [`frontend/scripts/`](frontend/scripts/) |
 | Deployment and analytics docs | [`docs/`](docs/) |
 | Hackathon materials | [`hackathon/`](hackathon/) (data pack, demo script, PDF) |
@@ -137,7 +137,7 @@ Humans read **`README.md`** in each folder; coding agents read the matching **`A
 
 - [Bun](https://bun.sh) 1.3+ (frontend install, lint, build)
 - Supabase project with migrations applied
-- Clerk application (publishable + secret keys)
+- Supabase Auth enabled (email/password for local demo)
 - LLM API key (OpenAI or Anthropic)
 
 ## Environment variables
@@ -146,10 +146,8 @@ Copy [`.env.example`](.env.example) to `frontend/.env.local` and fill in values.
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXT_PUBLIC_CLERK_*` | Clerk auth URLs and publishable key |
-| `CLERK_SECRET_KEY` | Server-side Clerk (never `NEXT_PUBLIC_`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key (browser + RLS server client) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server routes and scripts only |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Investigation agents |
 | `LLM_PROVIDER` | `openai` or `anthropic` |
@@ -183,7 +181,7 @@ Validators need a seeded project: `bun run validate` (see [`frontend/scripts/REA
 
 ```bash
 cd frontend && bun run check && bun run build
-cd frontend && bun run verify:secrets
+cd frontend/supabase && supabase start && cd .. && bun run db:reset && bun run db:lint
 ```
 
 ---

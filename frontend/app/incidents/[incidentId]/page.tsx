@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import IncidentDetailView from "@/components/incidents/IncidentDetailView";
 import { getIncidentDetail } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ type PageProps = {
 
 export default async function IncidentDetailPage(props: PageProps) {
   const { incidentId } = await props.params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const detail = await getIncidentDetail(supabase, incidentId);
 
   if (!detail) notFound();

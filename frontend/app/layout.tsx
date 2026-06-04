@@ -1,7 +1,7 @@
-import { ClerkProvider, Show } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import AppShell from "@/components/layout/AppShell";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -11,20 +11,28 @@ export const metadata: Metadata = {
   description: "Commerce Incident Response Platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const shellUser = user
+    ? {
+        id: user.id,
+        email: user.email ?? null,
+        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+      }
+    : null;
+
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <ClerkProvider afterSignOutUrl="/sign-in">
-          <Show when="signed-out">{children}</Show>
-          <Show when="signed-in">
-            <AppShell>{children}</AppShell>
-          </Show>
-        </ClerkProvider>
+        {shellUser ? <AppShell user={shellUser}>{children}</AppShell> : children}
       </body>
     </html>
   );

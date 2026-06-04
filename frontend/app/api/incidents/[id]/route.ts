@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getIncidentDetail, updateIncidentBodySchema } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const detail = await getIncidentDetail(supabase, params.id);
 
   if (!detail) {
@@ -18,6 +18,14 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const raw = await req.json().catch(() => null);
   const parsed = updateIncidentBodySchema.safeParse(raw);
   if (!parsed.success) {
@@ -27,7 +35,6 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     );
   }
 
-  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("incidents")
     .update(parsed.data)
