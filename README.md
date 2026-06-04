@@ -70,7 +70,7 @@ flowchart LR
     A3[Marketing]
     A4[Inventory]
     A5[Forecasting]
-    INV[POST /api/investigate]
+    INV[POST /api/agents/investigate]
     RC[Root cause + actions]
     INC --> INV
     INV --> A1 & A2 & A3 & A4 & A5
@@ -194,7 +194,7 @@ cd frontend && bun run verify:secrets
 |--------|------|---------|
 | `POST` | `/api/detect` | Scan catalogue for KPI breaches; open new incidents |
 | `POST` | `/api/forecast` | Predictive incidents from forecast rules |
-| `POST` | `/api/investigate` | Run five agents + synthesize root cause & actions |
+| `POST` | `/api/agents/investigate` | Run five agents + synthesize root cause & actions |
 | `POST` | `/api/incidents/[id]/approve` | Approve actions; start deploy / monitoring |
 | `POST` | `/api/recover` | Advance monitoring recovery; auto-resolve |
 | `POST` | `/api/slack/webhook` | Slack interactive approvals (when configured) |

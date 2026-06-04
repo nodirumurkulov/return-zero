@@ -66,7 +66,7 @@ const fc = forecastForProduct(series, currentUnits, dailyOutflow, leadDays, buff
 | `POST /api/detect` | reactive: breach detection → opens incidents (severity via `lib/detection/severity.ts`) |
 | `POST /api/forecast` | predictive: forecast rules → forward-looking incidents |
 | `POST /api/recover` | advances projected recovery for monitoring incidents → auto-resolve (`{ advance_days }`) |
-| `POST /api/investigate` | LLM agents narrate an existing incident (5 agents → root cause + actions) |
+| `POST /api/agents/investigate` | LLM agents narrate an existing incident (5 agents → root cause + actions) |
 
 ## 5. UI reads (server components)
 

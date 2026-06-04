@@ -9,7 +9,7 @@ UI for the incident command center: kanban board, detail layout, approvals, and 
 | `IncidentKanban` | yes | Columns from `KANBAN_COLUMNS` |
 | `IncidentCard` | yes | Card + status dropdown |
 | `IncidentDetailView` | no (server) | Full detail page layout |
-| `TriggerInvestigationButton` | yes | POST `/api/investigate`, then `router.refresh()` |
+| `TriggerInvestigationButton` | yes | POST `/api/agents/investigate`, then `router.refresh()` |
 | `ActionList` | yes | Approve actions via API |
 | `AgentFindingCard`, `IncidentTimeline` | no | Display-only |
 

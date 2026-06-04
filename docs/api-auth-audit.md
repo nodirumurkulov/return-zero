@@ -24,7 +24,7 @@ still redirect unauthenticated users to `/sign-in`.
 | `/api/incidents` | GET | no | Clerk middleware | `401 {"error":"Unauthorized"}` |
 | `/api/incidents/[id]` | GET, PATCH | PATCH yes | Clerk middleware | `401` |
 | `/api/incidents/[id]/approve` | POST | yes | Clerk middleware | `401` |
-| `/api/investigate` | POST | yes | Clerk middleware | `401` |
+| `/api/agents/investigate` | POST | yes | Clerk middleware | `401` |
 | `/api/detect` | POST | yes (opens incidents) | Clerk middleware + optional `CRON_SECRET` | `401` (see F5) |
 | `/api/slack/webhook` | POST | **yes (service role)** | **Public — no auth** ⚠ | **200, request processed** (see ⚠ F2) |
 
@@ -36,7 +36,7 @@ still redirect unauthenticated users to `/sign-in`.
 | `/api/incidents/[id]` GET | `404` when incident missing |
 | `/api/incidents/[id]` PATCH | `500` on DB error |
 | `/api/incidents/[id]/approve` POST | `400` "No actions to approve"; `500` on DB error |
-| `/api/investigate` POST | `400` missing `incident_id`/`product_id`; `500` on failure |
+| `/api/agents/investigate` POST | `400` missing `incident_id`/`product_id`; `500` on failure |
 | `/api/detect` POST | `401` if `CRON_SECRET` set and bearer mismatches; `500` on failure |
 | `/api/slack/webhook` POST | `400` missing/invalid `payload`; `500` on DB error |
 
@@ -48,7 +48,7 @@ GET    /api/incidents      -> 404  GET    /api/incidents      -> 401 {"error":"U
 GET    /api/incidents/abc  -> 404  GET    /api/incidents/abc  -> 401
 PATCH  /api/incidents/abc  -> 404  PATCH  /api/incidents/abc  -> 401
 POST   .../abc/approve     -> 404  POST   .../abc/approve     -> 401
-POST   /api/investigate    -> 404  POST   /api/investigate    -> 401
+POST   /api/agents/investigate -> 404  POST /api/agents/investigate -> 401
 POST   /api/detect         -> 404  POST   /api/detect         -> 401
 POST   /api/slack/webhook  -> 404  POST   /api/slack/webhook  -> 200 (PUBLIC ⚠ see F2)
 ```

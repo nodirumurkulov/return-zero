@@ -22,7 +22,7 @@ if (!parsed.success) {
 | Route | Domain module |
 |-------|----------------|
 | `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
-| `POST /api/investigate` | `agents` + `agents/schemas.ts` |
+| `POST /api/agents/investigate` | `agents/investigate` + `agents/schemas.ts` |
 | `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
 | `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |

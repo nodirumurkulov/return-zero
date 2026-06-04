@@ -10,7 +10,7 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `GET` | `/api/incidents/[id]` | Incident detail payload |
 | `PATCH` | `/api/incidents/[id]` | Update incident fields |
 | `POST` | `/api/incidents/[id]/approve` | Approve proposed actions |
-| `POST` | `/api/investigate` | Run AI investigation |
+| `POST` | `/api/agents/investigate` | Run AI investigation |
 | `POST` | `/api/detect` | KPI breach detection (cron-capable) |
 | `POST` | `/api/forecast` | Forecast-risk detection (cron-capable) |
 | `POST` | `/api/recover` | Advance monitoring recovery (cron-capable) |

@@ -7,7 +7,7 @@ Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 | File | Server/client | Role |
 |------|---------------|------|
 | `IncidentDetailView.tsx` | server | Detail layout |
-| `TriggerInvestigationButton.tsx` | client | POST `/api/investigate` → `router.refresh()` |
+| `TriggerInvestigationButton.tsx` | client | POST `/api/agents/investigate` → `router.refresh()` |
 | `IncidentKanban.tsx`, `IncidentCard.tsx` | client | Kanban |
 | `ActionList.tsx` | client | Approve → `router.refresh()` |
 | `AgentFindingCard.tsx`, `IncidentTimeline.tsx` | server OK | Display |

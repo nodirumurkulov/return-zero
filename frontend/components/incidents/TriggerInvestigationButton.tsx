@@ -18,7 +18,7 @@ export default function TriggerInvestigationButton({
     setInvestigating(true);
     setError(null);
     try {
-      const res = await fetch("/api/investigate", {
+      const res = await fetch("/api/agents/investigate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ incident_id: incidentId, product_id: productId }),
