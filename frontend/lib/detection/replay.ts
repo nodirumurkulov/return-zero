@@ -10,7 +10,8 @@ import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
 // threshold — the "alert before the loss" moment, streaming onto the Kanban.
 // Detection is deduped against open incidents, so re-runs are idempotent.
 
-const DEFAULT_START = "2025-12-01"; // BASELINE_END — replay streams the post-baseline window
+export const REPLAY_START = "2025-12-01"; // BASELINE_END — replay streams the post-baseline window
+const DEFAULT_START = REPLAY_START;
 const DEFAULT_ADVANCE_DAYS = 7;
 
 function asDate(value: string): string {
@@ -24,7 +25,7 @@ function addDays(iso: string, days: number): string {
 }
 
 // Latest order date in the data — the replay never advances past it.
-async function dataEndDate(supabase: SupabaseClient): Promise<string | null> {
+export async function dataEndDate(supabase: SupabaseClient): Promise<string | null> {
   const { data } = await supabase
     .from("orders")
     .select("created_at")
