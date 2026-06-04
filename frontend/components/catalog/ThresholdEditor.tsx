@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { updateThreshold } from "@/app/actions";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SectionLabel } from "@/components/ui/section-label";
 import type { KpiThreshold } from "@/lib/catalog";
+import { useUpdateThreshold } from "@/lib/catalog/hooks";
 
 const METRIC_LABELS: Record<string, string> = {
   return_rate: "Return rate",
@@ -22,14 +22,18 @@ export default function ThresholdEditor({
   productId: string;
   thresholds: KpiThreshold[];
 }) {
-  const [pending, startTransition] = useTransition();
+  const updateThreshold = useUpdateThreshold({ id: productId });
   const [message, setMessage] = useState<string | null>(null);
 
   function onSave(formData: FormData) {
     setMessage(null);
-    startTransition(async () => {
-      const result = await updateThreshold(productId, formData);
-      setMessage(result.ok ? "Saved" : (result.error ?? "Failed to save"));
+    updateThreshold.mutate(formData, {
+      onSuccess: (result) => {
+        setMessage(result.ok ? "Saved" : (result.error ?? "Failed to save"));
+      },
+      onError: () => {
+        setMessage("Failed to save");
+      },
     });
   }
 
@@ -76,7 +80,7 @@ export default function ThresholdEditor({
               />
             </label>
             <div className="flex items-end">
-              <Button type="submit" size="sm" disabled={pending}>
+              <Button type="submit" size="sm" disabled={updateThreshold.isPending}>
                 Save
               </Button>
             </div>

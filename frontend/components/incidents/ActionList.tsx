@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import type { IncidentAction } from "@/lib/incidents";
+import { useApproveActions } from "@/lib/incidents/hooks";
 import { cn } from "@/lib/utils";
 
 const impactColour: Record<string, string> = {
@@ -38,50 +38,40 @@ export default function ActionList({
   actions: IncidentAction[];
   incidentId: string;
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const approve = useApproveActions({ id: incidentId });
   const [message, setMessage] = useState<string | null>(null);
 
   const proposed = actions.filter((a) => a.status === "proposed");
+  const loading = approve.isPending;
 
-  async function approveAll() {
-    setLoading(true);
+  function approveAll() {
     setMessage(null);
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approve_all_low_risk: true }),
-      });
-      const json = (await res.json()) as { approved?: number; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed");
-      setMessage(`${json.approved} action(s) approved and deployed`);
-      router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
+    approve.mutate(
+      { approval: { kind: "all_low_risk" } },
+      {
+        onSuccess: (data) => {
+          setMessage(`${data.approval.approvedCount} action(s) approved and deployed`);
+        },
+        onError: (err) => {
+          setMessage(err instanceof Error ? err.message : "Error");
+        },
+      },
+    );
   }
 
-  async function approveOne(actionId: string) {
-    setLoading(true);
+  function approveOne(actionId: string) {
     setMessage(null);
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_ids: [actionId] }),
-      });
-      const json = (await res.json()) as { approved?: number; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed");
-      setMessage("Action approved and deployed");
-      router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
+    approve.mutate(
+      { approval: { kind: "action_ids", actionIds: [actionId] } },
+      {
+        onSuccess: () => {
+          setMessage("Action approved and deployed");
+        },
+        onError: (err) => {
+          setMessage(err instanceof Error ? err.message : "Error");
+        },
+      },
+    );
   }
 
   if (actions.length === 0) {
@@ -102,7 +92,7 @@ export default function ActionList({
           <Button
             size="sm"
             onClick={() => {
-              void approveAll();
+              approveAll();
             }}
             disabled={loading}
             aria-busy={loading}
@@ -181,7 +171,7 @@ export default function ActionList({
                       variant="secondary"
                       size="sm"
                       onClick={() => {
-                        void approveOne(action.id);
+                        approveOne(action.id);
                       }}
                       disabled={loading}
                       aria-busy={loading}

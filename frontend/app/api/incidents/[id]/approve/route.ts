@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
@@ -73,6 +74,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       );
     }
   }
+
+  revalidatePath("/incidents");
+  revalidatePath(`/incidents/${params.id}`);
 
   return NextResponse.json({ success: true, approved: actionIds.length });
 }

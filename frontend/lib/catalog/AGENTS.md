@@ -9,6 +9,8 @@ Catalog metrics, thresholds, health. **Parent:** [../../AGENTS.md](../../AGENTS.
 | `types.ts` | `ProductMetric`, `KpiThreshold`, `ProductMonthlyMetric` |
 | `queries.ts` | `listCatalogWithThresholds`, `getProductCatalogDetail` |
 | `health.ts` | `computeProductHealth`, `computeHealthLevel` |
+| `api/` | `catalogKeys`, `updateThresholdApi` — see `api/index.ts` |
+| `hooks/` | `useUpdateThreshold` wraps `updateThresholdApi` |
 | `index.ts` | Public exports |
 
 ## Best practices

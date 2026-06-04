@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { investigateBodySchema, runInvestigation } from "@/lib/agents";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
@@ -136,6 +137,9 @@ export async function POST(req: NextRequest) {
         app_url: appUrl,
       });
     }
+
+    revalidatePath("/incidents");
+    revalidatePath(`/incidents/${incident_id}`);
 
     return NextResponse.json({
       success: true,
