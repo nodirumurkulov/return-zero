@@ -1,6 +1,19 @@
+"use client";
+
+import { useTransition } from "react";
 import Link from "next/link";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import ImpactTag from "@/components/ui/ImpactTag";
+import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { updateIncidentStatus } from "@/app/actions";
+import { ChevronDown } from "lucide-react";
 
 export type Incident = {
   id: string;
@@ -15,6 +28,16 @@ export type Incident = {
   affected_kpis?: string[] | null;
 };
 
+const STATUSES = [
+  "detected",
+  "investigating",
+  "fix_proposed",
+  "awaiting_approval",
+  "deploying",
+  "monitoring",
+  "resolved",
+];
+
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -24,9 +47,22 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function IncidentCard({ incident }: { incident: Incident }) {
+export default function IncidentCard({
+  incident,
+  editable = false,
+}: {
+  incident: Incident;
+  editable?: boolean;
+}) {
+  const [pending, startTransition] = useTransition();
+
+  function changeStatus(status: string) {
+    startTransition(async () => {
+      await updateIncidentStatus(incident.id, status);
+    });
+  }
+
   return (
-    <Link href={`/incidents/${incident.id}`}>
     <div className="group rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30">
       <div className="mb-3 flex items-start justify-between gap-2">
         <SeverityBadge severity={incident.severity} />
@@ -64,7 +100,29 @@ export default function IncidentCard({ incident }: { incident: Incident }) {
         </div>
       )}
 
-      {incident.root_cause_confidence != null && (
+      {editable ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-between"
+              disabled={pending}
+            >
+              <StatusBadge status={incident.status} />
+              <ChevronDown className="h-4 w-4 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            {STATUSES.map((status) => (
+              <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
+                <StatusBadge status={status} />
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        incident.root_cause_confidence != null && (
           <div className="mt-3 flex items-center gap-2">
             <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
               <div
@@ -79,6 +137,5 @@ export default function IncidentCard({ incident }: { incident: Incident }) {
         )
       )}
     </div>
-    </Link>
   );
 }

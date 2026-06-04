@@ -29,3 +29,23 @@ export async function updateThreshold(productId: string, formData: FormData) {
   revalidatePath("/catalog");
   return { ok: true };
 }
+
+export async function updateIncidentStatus(incidentId: string, status: string) {
+  const supabase = createServiceClient();
+  const payload: { status: string; resolved_at?: string | null } = { status };
+
+  if (status === "resolved") {
+    payload.resolved_at = new Date().toISOString();
+  }
+
+  const { error } = await supabase
+    .from("incidents")
+    .update(payload)
+    .eq("id", incidentId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/incidents");
+  revalidatePath(`/incidents/${incidentId}`);
+  return { ok: true };
+}
