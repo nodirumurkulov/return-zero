@@ -14,7 +14,7 @@ export const clerkAppearance = {
     fontFamily: "Inter, system-ui, sans-serif",
   },
   elements: {
-    rootBox: "w-full",
+    rootBox: "flex w-full justify-center",
     card: "bg-zinc-900 border border-zinc-800 shadow-xl",
     headerTitle: "text-white",
     headerSubtitle: "text-zinc-400",
