@@ -9,4 +9,4 @@ bun run dev
 
 Environment: copy repo `.env.example` to `.env.local` here.
 
-Details for agents: [AGENTS.md](AGENTS.md).
+Subfolders each have `README.md` and `AGENTS.md`. Agents start at [AGENTS.md](AGENTS.md).

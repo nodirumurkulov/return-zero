@@ -8,4 +8,4 @@ node seed.mjs
 node validate-counts.mjs    # needs Supabase env vars
 ```
 
-Agent notes: [AGENTS.md](AGENTS.md).
+Agents: [AGENTS.md](AGENTS.md).

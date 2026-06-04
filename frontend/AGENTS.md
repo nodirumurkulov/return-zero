@@ -12,9 +12,11 @@ Next.js 16 App Router app. Package manager: **Bun** (`bun.lock`). Lint: strict E
 
 ## Layout
 
-- `app/` — routes and API handlers ([AGENTS.md](app/AGENTS.md))
-- `components/` — UI ([AGENTS.md](components/AGENTS.md))
-- `lib/` — domain logic ([AGENTS.md](lib/AGENTS.md))
+Each subdirectory has `README.md` + `AGENTS.md`.
+
+- `app/` — routes and API ([README](app/README.md) · [AGENTS](app/AGENTS.md))
+- `components/` — UI ([README](components/README.md) · [AGENTS](components/AGENTS.md))
+- `lib/` — domain logic ([README](lib/README.md) · [AGENTS](lib/AGENTS.md))
 - `proxy.ts` — Clerk auth middleware (Next 16 proxy)
 
 ## Conventions
