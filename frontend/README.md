@@ -1,6 +1,6 @@
 # Resolve — Frontend
 
-The Next.js 14 (App Router) application for **Resolve**, the commerce incident response
+The Next.js 16 (App Router) application for **Resolve**, the commerce incident response
 platform. All app code, API route handlers, and the Clerk/Supabase integration live here.
 
 Goal of this guide: **a new teammate can run Resolve locally in under 15 minutes.**
@@ -11,8 +11,8 @@ Goal of this guide: **a new teammate can run Resolve locally in under 15 minutes
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Node.js | **18.17+** (20 LTS recommended) | Required by Next.js 14 |
-| npm | 9+ | Ships with Node |
+| [Bun](https://bun.sh) | **1.3+** | Package manager and script runner |
+| Node.js | **20.9+** | Required by Next.js 16 (used by `next build`) |
 | A Supabase project | — | Free tier is fine — [supabase.com](https://supabase.com) |
 | A Clerk application | — | Free tier is fine — [clerk.com](https://clerk.com) |
 | An OpenAI **or** Anthropic API key | — | For the investigation agents |
@@ -24,12 +24,10 @@ Goal of this guide: **a new teammate can run Resolve locally in under 15 minutes
 
 ```bash
 cd frontend
-npm install --legacy-peer-deps
+bun install
 ```
 
-> **Why `--legacy-peer-deps`?** `@clerk/nextjs@7` declares a peer dependency on
-> Next.js 15/16, but this app is pinned to `next@14.2.35`. The flag lets npm install
-> the working combination. (Vercel installs respect this via the lockfile.)
+Lockfile: `bun.lock` (commit it). CI uses `bun ci` (Bun 1.3.14) for reproducible installs.
 
 ---
 
@@ -91,11 +89,11 @@ The script is idempotent (upserts), so it's safe to re-run. It requires
 
 ```bash
 cd frontend
-npm run dev
+bun run dev
 ```
 
 Open **http://localhost:3000**. You'll be redirected to `/sign-in` (all routes except
-`/sign-in` and `/sign-up` are protected by Clerk middleware). After signing in you land
+`/sign-in` and `/sign-up` are protected by Clerk `proxy.ts`). After signing in you land
 on `/catalog`.
 
 ---
@@ -106,10 +104,14 @@ Run from `frontend/`:
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start the dev server (http://localhost:3000) |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm run lint` | Next.js lint |
+| `bun run dev` | Start the dev server (http://localhost:3000) |
+| `bun run build` | Production build |
+| `bun run start` | Serve the production build |
+| `bun run lint` | ESLint (flat config) |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun run check` | Lint + typecheck (same as CI quality gates before build) |
+
+Pull requests must pass the [**CI**](../../.github/workflows/ci.yml) workflow (`bun ci`, lint, typecheck, build).
 
 ---
 
@@ -131,15 +133,20 @@ frontend/
 │   ├── clerk-appearance.ts   # Shared Clerk theme
 │   ├── agents.ts · llm.ts    # Agent orchestration + LLM provider
 │   └── slack.ts              # Slack notifications
-└── middleware.ts             # Clerk route protection
+└── proxy.ts                  # Clerk route protection (Next.js 16)
 ```
 
 ---
 
 ## Deploy to Vercel
 
+> Full reference (every env var + scopes): [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
+
 1. Import the repo into Vercel and set the **Root Directory** to `frontend`.
-2. Framework preset: **Next.js** (auto-detected).
+   ⚠ This is required — without it the build fails with
+   `No Next.js version detected` (the repo root has no `package.json`). Root
+   Directory is a dashboard-only setting; it cannot be set via `vercel.json`.
+2. Framework preset: **Next.js** (auto-detected once Root Directory is `frontend`).
 3. Add every variable from `.env.example` under **Settings → Environment Variables**
    (Production + Preview). Set `NEXT_PUBLIC_APP_URL` to your deployment URL.
 4. In the **Clerk dashboard**, add your Vercel domain to the allowed origins/redirect URLs.
@@ -154,7 +161,8 @@ frontend/
 
 | Symptom | Fix |
 |---------|-----|
-| `npm install` fails with `ERESOLVE` peer dep error | Use `npm install --legacy-peer-deps` (see step 1) |
+| `bun ci` fails (lockfile mismatch) | Run `bun install` locally and commit `bun.lock` |
+| Vercel build: `No Next.js version detected` | Set **Root Directory = `frontend`** in Vercel (see Deploy step 1) |
 | Redirected to `/sign-in` forever | Check `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
 | `/catalog` 404s after sign-in | The catalog route is still in progress; the redirect target is correct |
 | Seed script exits with "Missing … URL/KEY" | Ensure `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set |
@@ -164,5 +172,5 @@ frontend/
 
 ## Stack
 
-Next.js 14 (App Router) · TypeScript · Tailwind CSS · Clerk (auth) ·
+Next.js 16 (App Router) · TypeScript · Tailwind CSS · Bun · Clerk (auth) ·
 Supabase (Postgres) · OpenAI / Anthropic · Slack · Vercel

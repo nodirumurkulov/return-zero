@@ -13,7 +13,7 @@ import type { MetricValue } from "@/lib/metrics/types";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 };
 
 function accentFor(metrics: MetricValue[], key: string): "default" | "danger" {
@@ -21,7 +21,8 @@ function accentFor(metrics: MetricValue[], key: string): "default" | "danger" {
   return status === "critical" || status === "warning" ? "danger" : "default";
 }
 
-export default async function ProductDetailPage({ params }: PageProps) {
+export default async function ProductDetailPage(props: PageProps) {
+  const params = await props.params;
   const supabase = createServiceClient();
   const { productId } = params;
 

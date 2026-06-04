@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <ClerkProvider>
+        <ClerkProvider afterSignOutUrl="/sign-in">
           <Show when="signed-out">{children}</Show>
           <Show when="signed-in">
             <AppShell>{children}</AppShell>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -38,26 +38,34 @@ type IncidentDetail = {
 
 export default function IncidentDetailPage() {
   const { incidentId } = useParams<{ incidentId: string }>();
-  const router = useRouter();
   const [data, setData] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [investigating, setInvestigating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}`);
-      const json = (await res.json()) as IncidentDetail & { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Not found");
-      setData(json);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch(`/api/incidents/${incidentId}`);
+    const json = (await res.json()) as IncidentDetail & { error?: string };
+    if (!res.ok) throw new Error(json.error ?? "Not found");
+    return json;
   }, [incidentId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    load()
+      .then((json) => {
+        if (!cancelled) setData(json);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Error");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
 
   async function triggerInvestigation() {
     if (!data?.incident.affected_product) return;
@@ -71,7 +79,8 @@ export default function IncidentDetailPage() {
           product_id: data.incident.affected_product,
         }),
       });
-      await load();
+      const json = await load();
+      setData(json);
     } finally {
       setInvestigating(false);
     }
