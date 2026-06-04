@@ -12,12 +12,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # Secrets aren't available to fork PRs and may not be configured yet.
+      # Validate only when they're present; otherwise skip (green) so the check
+      # never blocks unrelated PRs. Add NEXT_PUBLIC_SUPABASE_URL +
+      # SUPABASE_SERVICE_ROLE_KEY as repo secrets to enable enforcement.
+      - name: Detect DB credentials
+        id: creds
+        env:
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Install deps
+        if: steps.creds.outputs.present == 'true'
         working-directory: scripts
         run: npm install @supabase/supabase-js --no-audit --no-fund
+
       - name: Validate imported row counts
+        if: steps.creds.outputs.present == 'true'
         working-directory: scripts
         run: node validate-counts.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Skipped (no DB credentials)
+        if: steps.creds.outputs.present != 'true'
+        run: echo "::notice::Skipping row-count validation — Supabase secrets not configured (add NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY to enable)."
