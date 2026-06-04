@@ -21,7 +21,7 @@ if (!url || !key) {
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const supabase = createClient(url, key);
 const BATCH_SIZE = 500;
-const DATA_DIR = path.resolve(scriptDir, "../../pretty_fly_data_pack/data");
+const DATA_DIR = path.resolve(scriptDir, "../../hackathon/data-pack/data");
 
 function readCSV(filename: string): CsvRow[] {
   const filePath = path.join(DATA_DIR, filename);

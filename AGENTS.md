@@ -12,6 +12,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 | Database | `supabase/` | Postgres migrations, RLS |
 | Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
+| Hackathon | `hackathon/` | Pretty Fly CSVs, demo guides (not app code) |
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
 

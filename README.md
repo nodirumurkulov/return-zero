@@ -115,15 +115,7 @@ Recovery uses a **projected** KPI path after deploy (demo-friendly on static fix
 
 ---
 
-## Judge demo (5 minutes)
-
-Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** or run locally (below).
-
-1. **Sign in** at `/sign-in` (Clerk) — you land on **Catalog**.
-2. Open **Court Trainer** (`/catalog/prod_court_trainer`) — note elevated return rate vs thresholds.
-3. Go to **Incidents** — open **Court Trainer Return Spike** (pre-seeded, often `awaiting_approval`).
-4. Review **agent cards**, **root cause**, and **proposed actions**.
-5. **Approve** low-risk actions → incident moves to `deploying` / `monitoring`.
+**Judge demo:** [hackathon/judge-demo.md](hackathon/judge-demo.md) (5-minute walkthrough).
 
 ---
 
@@ -135,7 +127,7 @@ Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** o
 | Database migrations | [`supabase/`](supabase/) |
 | Seed and validation scripts | [`frontend/scripts/`](frontend/scripts/) |
 | Deployment and analytics docs | [`docs/`](docs/) |
-| Hackathon CSV data | [`pretty_fly_data_pack/`](pretty_fly_data_pack/) |
+| Hackathon materials | [`hackathon/`](hackathon/) (data pack, demo script, PDF) |
 
 Humans read **`README.md`** in each folder; coding agents read the matching **`AGENTS.md`**.
 
@@ -253,6 +245,7 @@ Pretty Fly (and real merchants) live on **unit economics**: returns erode margin
 
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — Vercel, env, cron
 - [`docs/analytics-and-forecasting.md`](docs/analytics-and-forecasting.md) — metrics and forecast behavior
+- [`hackathon/README.md`](hackathon/README.md) — Pretty Fly data pack and demo materials
 - [`frontend/README.md`](frontend/README.md) — frontend onboarding
 
 ---

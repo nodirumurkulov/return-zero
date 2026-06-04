@@ -29,7 +29,7 @@ bun --env-file=.env.local run scripts/seed.ts
 
 | File | Purpose |
 |------|---------|
-| `seed.ts` | Upsert CSVs from `pretty_fly_data_pack/data/` + demo incidents |
+| `seed.ts` | Upsert CSVs from `hackathon/data-pack/data/` + demo incidents |
 | `validate-counts.ts` | Assert table row counts |
 | `validate-metrics.ts` | Assert metrics RPCs on seeded data |
 | `verify-secrets.sh` | Block server secrets in client bundles (`bun run verify:secrets`) |
