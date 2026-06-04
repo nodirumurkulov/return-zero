@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { forecastForProduct, type ProductForecast } from "../forecast/product";
 import { getMonthlySeries } from "../metrics/series";
+import { notifyNewIncident } from "../slack";
 
 // Predictive detection: forecast each product forward and open FORWARD-LOOKING
 // incidents from config-driven forecast_rules — the "alert before the loss"
@@ -170,6 +171,14 @@ export async function detectForecastRisks(supabase: SupabaseClient): Promise<For
     ]);
 
     created.push({ incident_id: inc.id as string, product_id: productId, title, severity: primary.severity, kinds: risks.map((r) => r.kind) });
+
+    await notifyNewIncident({
+      incident_id: inc.id as string,
+      title,
+      severity: primary.severity,
+      impact_amount: primary.impact_amount,
+      impact_label: "forecast risk",
+    });
   }
 
   return { scanned: entries.length, created, skipped };

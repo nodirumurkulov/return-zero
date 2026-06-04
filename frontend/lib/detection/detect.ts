@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeMetricsDetailed } from "../metrics/engine";
 import { getMonthlySeries } from "../metrics/series";
 import type { ProductSourceFacts } from "../metrics/types";
+import { notifyNewIncident } from "../slack";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 
 // Deterministic KPI breach detection. Runs the config-driven metrics engine over
@@ -144,6 +145,14 @@ export async function detectBreaches(supabase: SupabaseClient): Promise<Detectio
       severity,
       affected_kpis,
       impact_amount: Math.round(primary.impact),
+    });
+
+    await notifyNewIncident({
+      incident_id: inc.id as string,
+      title,
+      severity,
+      impact_amount: Math.round(primary.impact),
+      impact_label: primary.def.impact_label,
     });
   }
 

@@ -6,15 +6,15 @@ Breach detection, severity, forecast-risk scan, recovery loop. **Parent:** [../.
 
 | File | Role |
 |------|------|
-| `detect.ts` | KPI breach scan → incidents |
-| `forecast.ts` | Forecast-rule scan |
+| `detect.ts` | KPI breach scan → incidents (+ Slack alert on create) |
+| `forecast.ts` | Forecast-rule scan (+ Slack alert on create) |
 | `severity.ts` | Impact scoring |
 | `recover.ts` | Monitoring recovery + baseline capture |
 | `schemas.ts` | `recoverBodySchema` for `/api/recover` |
 
 ## Dependencies
 
-May import `metrics` and `forecast`. Avoid importing incident UI types.
+May import `metrics`, `forecast`, and `slack` (`notifyNewIncident` on incident create). Avoid importing incident UI types.
 
 ## Best practices
 
@@ -23,5 +23,5 @@ May import `metrics` and `forecast`. Avoid importing incident UI types.
 
 ## Rules
 
-- Cron-capable routes call these modules; keep side effects (DB writes) here, not in route files.
+- Cron-capable routes call these modules; keep side effects (DB writes, Slack alerts) here, not in route files.
 - Recovery and detect logic stay deterministic where possible.
