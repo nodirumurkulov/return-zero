@@ -1,5 +1,5 @@
 -- =============================================================
--- 007_rls_policies.sql  (RUN-34)
+-- 008_rls_policies.sql  (RUN-34)
 -- Row-Level Security policies for read/write access.
 --
 -- Model:
