@@ -6,12 +6,9 @@ import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import SectionLabel from "@/components/ui/section-label";
 import { Button } from "@/components/ui/button";
 import { createServiceClient } from "@/lib/supabase/server";
-import {
-  computeProductHealth,
-  type KpiThreshold,
-  type ProductMetric,
-  type ProductMonthlyMetric,
-} from "@/types/database";
+import { getCatalogProduct } from "@/lib/metrics/catalog";
+import { getProductSeries } from "@/lib/metrics/series";
+import type { MetricValue } from "@/lib/metrics/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,28 +16,24 @@ type PageProps = {
   params: { productId: string };
 };
 
+function accentFor(metrics: MetricValue[], key: string): "default" | "danger" {
+  const status = metrics.find((m) => m.metric_key === key)?.status;
+  return status === "critical" || status === "warning" ? "danger" : "default";
+}
+
 export default async function ProductDetailPage({ params }: PageProps) {
   const supabase = createServiceClient();
   const { productId } = params;
 
-  const [{ data: product, error }, { data: monthly }, { data: thresholds }] = await Promise.all([
-    supabase.from("product_metrics_view").select("*").eq("product_id", productId).maybeSingle(),
-    supabase
-      .from("product_metrics_monthly_view")
-      .select("*")
-      .eq("product_id", productId)
-      .order("month_start"),
-    supabase.from("product_kpi_thresholds").select("*").eq("product_id", productId),
+  const [product, series] = await Promise.all([
+    getCatalogProduct(supabase, productId),
+    getProductSeries(supabase, productId, 12),
   ]);
 
-  if (error || !product) notFound();
+  if (!product) notFound();
 
-  const metrics = product as ProductMetric;
-  const thresholdRows = (thresholds ?? []) as KpiThreshold[];
-  const health = computeProductHealth(metrics, thresholdRows);
-  const monthlyRows = (monthly ?? []) as ProductMonthlyMetric[];
-  const returnTrend = monthlyRows.map((row) => Number(row.return_rate ?? 0));
-  const revenueTrend = monthlyRows.map((row) => Number(row.revenue_gbp ?? 0));
+  const returnTrend = series.map((p) => (p.units > 0 ? p.refund_count / p.units : 0));
+  const revenueTrend = series.map((p) => p.revenue);
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -50,11 +43,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <Link href="/catalog">← Back to catalog</Link>
           </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{metrics.title}</h1>
-            <HealthBadge level={health} />
+            <h1 className="text-2xl font-semibold tracking-tight">{product.title}</h1>
+            <HealthBadge level={product.health} />
           </div>
           <p className="mt-1 text-sm capitalize text-muted-foreground">
-            {metrics.product_type} · {metrics.gender_segment} · {metrics.product_id}
+            {product.product_type} · {product.gender_segment} · {product.product_id}
           </p>
         </div>
       </div>
@@ -63,34 +56,35 @@ export default async function ProductDetailPage({ params }: PageProps) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Return rate"
-          value={`${((metrics.return_rate ?? 0) * 100).toFixed(1)}%`}
-          subtext="Sizing-related returns trending up"
+          value={`${((product.return_rate ?? 0) * 100).toFixed(1)}%`}
+          subtext="Refunded units / units sold"
           trend={returnTrend}
-          accent={(metrics.return_rate ?? 0) > 0.2 ? "danger" : "default"}
+          accent={accentFor(product.metrics, "return_rate")}
         />
         <KpiCard
           label="Refund rate"
-          value={`${((metrics.refund_rate ?? 0) * 100).toFixed(1)}%`}
+          value={`${((product.refund_rate ?? 0) * 100).toFixed(1)}%`}
           subtext="Share of revenue refunded"
           trend={returnTrend}
-          accent={(metrics.refund_rate ?? 0) > 0.12 ? "danger" : "default"}
+          accent={accentFor(product.metrics, "refund_rate")}
         />
         <KpiCard
           label="Revenue (30d)"
-          value={`£${Number(metrics.revenue_gbp ?? 0).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`}
-          subtext={`${metrics.order_count ?? 0} orders`}
+          value={`£${product.revenue_gbp.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`}
+          subtext={`${Math.round(product.units)} units`}
           trend={revenueTrend}
         />
         <KpiCard
           label="Support tickets"
-          value={String(metrics.support_tickets ?? 0)}
+          value={String(Math.round(product.support_tickets))}
           subtext={
-            metrics.ad_roas != null ? `Ad ROAS ${metrics.ad_roas.toFixed(1)}x` : "No ad attribution"
+            product.ad_roas != null ? `Ad ROAS ${product.ad_roas.toFixed(1)}x` : "No ad attribution"
           }
+          accent={accentFor(product.metrics, "support_volume")}
         />
       </div>
 
-      <ThresholdEditor productId={productId} thresholds={thresholdRows} />
+      <ThresholdEditor productId={productId} metrics={product.metrics} />
     </div>
   );
 }

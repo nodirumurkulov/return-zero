@@ -4,24 +4,21 @@ import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
-  const kpiName = String(formData.get("kpi_name") ?? "");
-  const warningValue = Number(formData.get("warning_value"));
-  const criticalValue = Number(formData.get("critical_value"));
+  const metricKey = String(formData.get("metric_key") ?? "");
+  const threshold = Number(formData.get("threshold"));
 
-  if (!kpiName || Number.isNaN(warningValue) || Number.isNaN(criticalValue)) {
-    return { ok: false, error: "Invalid threshold values" };
+  if (!metricKey || Number.isNaN(threshold)) {
+    return { ok: false, error: "Invalid threshold value" };
   }
 
   const supabase = createServiceClient();
+  // Engine-shape per-product override (global default lives on the definition).
   const { error } = await supabase
     .from("product_kpi_thresholds")
-    .update({
-      warning_value: warningValue,
-      critical_value: criticalValue,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("product_id", productId)
-    .eq("kpi_name", kpiName);
+    .upsert(
+      { product_id: productId, metric_key: metricKey, threshold, active: true },
+      { onConflict: "product_id,metric_key" }
+    );
 
   if (error) return { ok: false, error: error.message };
 

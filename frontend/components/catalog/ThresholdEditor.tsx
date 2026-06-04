@@ -6,21 +6,14 @@ import { Input } from "@/components/ui/input";
 import SectionLabel from "@/components/ui/section-label";
 import { Card, CardContent } from "@/components/ui/card";
 import { updateThreshold } from "@/app/actions";
-import type { KpiThreshold } from "@/types/database";
-
-const KPI_LABELS: Record<string, string> = {
-  return_rate: "Return rate",
-  refund_rate: "Refund rate",
-  support_tickets: "Support tickets",
-  ad_roas: "Ad ROAS",
-};
+import type { MetricValue } from "@/lib/metrics/types";
 
 export default function ThresholdEditor({
   productId,
-  thresholds,
+  metrics,
 }: {
   productId: string;
-  thresholds: KpiThreshold[];
+  metrics: MetricValue[];
 }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -37,42 +30,24 @@ export default function ThresholdEditor({
     <Card>
       <CardContent className="space-y-4 p-4">
         <SectionLabel>KPI thresholds</SectionLabel>
-        {thresholds.map((threshold) => (
+        {metrics.map((m) => (
           <form
-            key={threshold.id}
+            key={m.metric_key}
             action={onSave}
-            className="grid gap-3 rounded-md border border-border p-3 md:grid-cols-4"
+            className="grid items-end gap-3 rounded-md border border-border p-3 md:grid-cols-4"
           >
-            <input type="hidden" name="kpi_name" value={threshold.kpi_name} />
-            <div className="md:col-span-4">
-              <p className="text-sm font-medium">
-                {KPI_LABELS[threshold.kpi_name] ?? threshold.kpi_name}
-              </p>
+            <input type="hidden" name="metric_key" value={m.metric_key} />
+            <div className="md:col-span-2">
+              <p className="text-sm font-medium">{m.display_name}</p>
               <p className="text-xs text-muted-foreground">
-                Alert when {threshold.direction === "below" ? "below" : "above"} thresholds
+                Alert when {m.direction === "below" ? "below" : "above"} threshold
               </p>
             </div>
             <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">Warning</span>
-              <Input
-                name="warning_value"
-                type="number"
-                step="0.01"
-                defaultValue={threshold.warning_value}
-                required
-              />
+              <span className="text-muted-foreground">Threshold</span>
+              <Input name="threshold" type="number" step="0.01" defaultValue={m.threshold} required />
             </label>
-            <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">Critical</span>
-              <Input
-                name="critical_value"
-                type="number"
-                step="0.01"
-                defaultValue={threshold.critical_value}
-                required
-              />
-            </label>
-            <div className="flex items-end md:col-span-2">
+            <div className="flex items-end">
               <Button type="submit" size="sm" disabled={pending}>
                 Save
               </Button>

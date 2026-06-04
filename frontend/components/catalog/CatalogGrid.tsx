@@ -4,19 +4,9 @@ import { useMemo, useState } from "react";
 import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import CatalogEmpty from "@/components/catalog/CatalogEmpty";
 import { Input } from "@/components/ui/input";
-import {
-  computeProductHealth,
-  type KpiThreshold,
-  type ProductMetric,
-} from "@/types/database";
+import type { CatalogProduct } from "@/lib/metrics/catalog";
 
-export default function CatalogGrid({
-  products,
-  thresholdsByProduct,
-}: {
-  products: ProductMetric[];
-  thresholdsByProduct: Record<string, KpiThreshold[]>;
-}) {
+export default function CatalogGrid({ products }: { products: CatalogProduct[] }) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -52,14 +42,7 @@ export default function CatalogGrid({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((product) => (
-            <ProductCatalogCard
-              key={product.product_id}
-              product={product}
-              health={computeProductHealth(
-                product,
-                thresholdsByProduct[product.product_id] ?? []
-              )}
-            />
+            <ProductCatalogCard key={product.product_id} product={product} health={product.health} />
           ))}
         </div>
       )}
