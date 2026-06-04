@@ -158,10 +158,18 @@ async function runMarketingAgent(productId: string): Promise<AgentFinding> {
     roas: data.spend > 0 ? +(data.revenue / data.spend).toFixed(2) : 0,
   }));
 
-  const lowRoas = campaignSummary.filter((c) => c.roas < 1.5);
+  // Config-driven alarm bar (no hardcoded threshold) — same as the detector uses.
+  const { data: roasDef } = await supabase
+    .from("metric_definitions")
+    .select("default_threshold")
+    .eq("metric_key", "ad_roas")
+    .single();
+  const roasAlarm = Number(roasDef?.default_threshold ?? 1.5);
+  const lowRoas = campaignSummary.filter((c) => c.roas < roasAlarm);
 
   const context = {
     product_id: productId,
+    roas_alarm: roasAlarm,
     campaign_summary: campaignSummary,
     low_roas_campaigns: lowRoas,
   };
@@ -182,7 +190,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Summary must be 1-2 se
   return {
     agent_name: "Marketing Agent",
     agent_icon: "📣",
-    summary: result.summary ?? `${lowRoas.length} campaigns with ROAS < 1.5x detected`,
+    summary: result.summary ?? `${lowRoas.length} campaigns below the ${roasAlarm}x ROAS alarm`,
     detail: result.detail ?? context,
   };
 }
