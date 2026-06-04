@@ -41,7 +41,7 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
 
             <div className="flex flex-1 flex-col gap-3">
               {cards.map((incident) => (
-                <IncidentCard key={incident.id} incident={incident} />
+                <IncidentCard key={incident.id} incident={incident} editable />
               ))}
               {cards.length === 0 && (
                 <div className="flex min-h-[80px] flex-1 items-center justify-center rounded-lg border border-dashed border-border">
