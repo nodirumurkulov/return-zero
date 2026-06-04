@@ -1,4 +1,5 @@
 import IncidentKanban from "@/components/incidents/IncidentKanban";
+import { ReplayControl } from "@/components/incidents/ReplayControl";
 import { EmptyState } from "@/components/ui/empty-state";
 import SectionLabel from "@/components/ui/section-label";
 import { listIncidents } from "@/lib/incidents";
@@ -29,6 +30,14 @@ export default async function IncidentsPage() {
   const totalImpact = rows.reduce((sum, i) => sum + (Number(i.impact_amount) || 0), 0);
   const open = rows.filter((i) => i.status !== "resolved").length;
 
+  // Replay cursor (defensive: null if the replay_state table isn't present yet).
+  const { data: replay } = await supabase
+    .from("replay_state")
+    .select("cursor")
+    .eq("id", true)
+    .maybeSingle();
+  const replayCursor = replay?.cursor ? String(replay.cursor).slice(0, 10) : null;
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -39,6 +48,7 @@ export default async function IncidentsPage() {
             {open} open · £{totalImpact.toLocaleString("en-GB")} total exposure
           </p>
         </div>
+        <ReplayControl initialCursor={replayCursor} />
       </div>
 
       <IncidentKanban incidents={rows} />
