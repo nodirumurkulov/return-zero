@@ -6,10 +6,14 @@ import Link from "next/link";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ImpactTag from "@/components/ui/ImpactTag";
+import SectionLabel from "@/components/ui/section-label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import AgentFindingCard, { type AgentFinding } from "@/components/incidents/AgentFindingCard";
 import ActionList, { type IncidentAction } from "@/components/incidents/ActionList";
 import IncidentTimeline, { type TimelineEvent } from "@/components/incidents/IncidentTimeline";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Incident = {
   id: string;
@@ -50,6 +54,7 @@ export default function IncidentDetailPage() {
       const json = (await res.json()) as IncidentDetail & { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Not found");
       setData(json);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -57,13 +62,15 @@ export default function IncidentDetailPage() {
     }
   }, [incidentId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function triggerInvestigation() {
     if (!data?.incident.affected_product) return;
     setInvestigating(true);
     try {
-      await fetch("/api/investigate", {
+      const res = await fetch("/api/investigate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,24 +78,43 @@ export default function IncidentDetailPage() {
           product_id: data.incident.affected_product,
         }),
       });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Investigation failed");
       await load();
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Investigation failed");
     } finally {
       setInvestigating(false);
     }
   }
 
+  function handleActionsUpdate() {
+    load();
+    router.refresh();
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <span className="text-zinc-500 text-sm font-mono animate-pulse">Loading…</span>
+      <div className="space-y-6 p-4 md:p-6">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-8 w-2/3 max-w-lg" />
+        <Skeleton className="h-24 w-full max-w-2xl" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Skeleton className="h-48 lg:col-span-2" />
+          <Skeleton className="h-48" />
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <p className="text-red-400 text-sm font-mono">{error ?? "Incident not found"}</p>
+      <div className="p-4 md:p-6">
+        <EmptyState
+          title="Could not load incident"
+          description={error ?? "Incident not found"}
+        />
       </div>
     );
   }
@@ -96,39 +122,35 @@ export default function IncidentDetailPage() {
   const { incident, findings, actions, timeline } = data;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      {/* Top bar */}
-      <div className="border-b border-zinc-900 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/incidents"
-            className="text-zinc-500 hover:text-zinc-200 text-xs font-mono transition-colors"
-          >
-            ← Incidents
-          </Link>
-          <span className="text-zinc-700">/</span>
-          <span className="text-xs text-zinc-400 font-mono">
-            {incident.id.slice(0, 8)}
-          </span>
-        </div>
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Button asChild variant="ghost" size="sm" className="h-8 px-2">
+          <Link href="/incidents">← Incidents</Link>
+        </Button>
+        <span className="text-muted-foreground">/</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {incident.id.slice(0, 8)}
+        </span>
       </div>
 
-      {/* Incident header */}
-      <div className="px-6 py-6 border-b border-zinc-900">
-        <div className="flex flex-wrap items-start gap-3 mb-4">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start gap-3">
           <SeverityBadge severity={incident.severity} />
           <StatusBadge status={incident.status} />
           <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
         </div>
 
-        <h1 className="text-2xl font-semibold tracking-tight mb-2">{incident.title}</h1>
+        <div>
+          <SectionLabel>Incident</SectionLabel>
+          <h1 className="text-xl font-semibold tracking-tight">{incident.title}</h1>
+        </div>
 
         {incident.affected_kpis && incident.affected_kpis.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-4">
+          <div className="flex flex-wrap gap-2">
             {incident.affected_kpis.map((kpi) => (
               <span
                 key={kpi}
-                className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-500 font-mono"
+                className="rounded bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
               >
                 {kpi}
               </span>
@@ -136,80 +158,74 @@ export default function IncidentDetailPage() {
           </div>
         )}
 
-        {/* Root cause */}
         {incident.root_cause && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-w-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Root Cause
-              </span>
-              {incident.root_cause_confidence != null && (
-                <span className="text-xs text-purple-400 font-mono">
-                  {incident.root_cause_confidence}% confidence
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-zinc-200 leading-relaxed">{incident.root_cause}</p>
-            {incident.root_cause_confidence != null && (
-              <div className="mt-3 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-purple-500 rounded-full"
-                  style={{ width: `${incident.root_cause_confidence}%` }}
-                />
+          <Card className="max-w-2xl shadow-card">
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <SectionLabel>Root cause</SectionLabel>
+                {incident.root_cause_confidence != null && (
+                  <span className="font-mono text-xs text-primary">
+                    {incident.root_cause_confidence}% confidence
+                  </span>
+                )}
               </div>
-            )}
-          </div>
+              <p className="text-sm leading-relaxed text-foreground">{incident.root_cause}</p>
+              {incident.root_cause_confidence != null && (
+                <div className="h-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${incident.root_cause_confidence}%` }}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {/* Recovery progress (monitoring / resolved) */}
-        {incident.monitoring_kpi != null && incident.recovery_pct != null &&
+        {incident.monitoring_kpi != null &&
+          incident.recovery_pct != null &&
           (incident.status === "monitoring" || incident.status === "resolved") && (
-          <div className="mt-4 bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-w-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Projected recovery · {incident.monitoring_kpi}
-              </span>
-              <span className="text-xs text-emerald-400 font-mono">
-                {Math.round((incident.recovery_pct ?? 0) * 100)}%
-              </span>
-            </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 rounded-full transition-all"
-                style={{ width: `${Math.round((incident.recovery_pct ?? 0) * 100)}%` }}
-              />
-            </div>
-            {incident.baseline_value != null && incident.target_value != null && (
-              <p className="mt-2 text-xs text-zinc-500 font-mono">
-                baseline {Number(incident.baseline_value).toFixed(2)} → target {Number(incident.target_value).toFixed(2)} (projected)
-              </p>
-            )}
-          </div>
-        )}
+            <Card className="max-w-2xl shadow-card">
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <SectionLabel>
+                    Projected recovery · {incident.monitoring_kpi}
+                  </SectionLabel>
+                  <span className="font-mono text-xs text-sev-low">
+                    {Math.round((incident.recovery_pct ?? 0) * 100)}%
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-sev-low transition-all"
+                    style={{
+                      width: `${Math.round((incident.recovery_pct ?? 0) * 100)}%`,
+                    }}
+                  />
+                </div>
+                {incident.baseline_value != null && incident.target_value != null && (
+                  <p className="font-mono text-xs text-muted-foreground">
+                    baseline {Number(incident.baseline_value).toFixed(2)} → target{" "}
+                    {Number(incident.target_value).toFixed(2)} (projected)
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Trigger investigation button */}
         {incident.status === "detected" && incident.affected_product && (
-          <button
-            onClick={triggerInvestigation}
-            disabled={investigating}
-            className="mt-4 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white disabled:opacity-50 transition-colors"
-          >
-            {investigating ? "Investigating…" : "Trigger Investigation"}
-          </button>
+          <Button onClick={triggerInvestigation} disabled={investigating} size="sm">
+            {investigating ? "Investigating…" : "Trigger investigation"}
+          </Button>
         )}
       </div>
 
-      {/* Main grid */}
-      <div className="px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: findings + actions */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Agent findings */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-8 lg:col-span-2">
           <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-              Agent Findings
-            </h2>
+            <SectionLabel className="mb-3 block">Agent findings</SectionLabel>
             {findings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {findings.map((f) => (
                   <AgentFindingCard key={f.id} finding={f} />
                 ))}
@@ -222,26 +238,20 @@ export default function IncidentDetailPage() {
             )}
           </section>
 
-          {/* Actions */}
           <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-              Proposed Actions
-            </h2>
+            <SectionLabel className="mb-3 block">Proposed actions</SectionLabel>
             <ActionList
               actions={actions}
               incidentId={incident.id}
-              onUpdate={load}
+              onUpdate={handleActionsUpdate}
             />
           </section>
         </div>
 
-        {/* Right: timeline */}
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-            Timeline
-          </h2>
+        <section>
+          <SectionLabel className="mb-3 block">Timeline</SectionLabel>
           <IncidentTimeline events={timeline} />
-        </div>
+        </section>
       </div>
     </div>
   );

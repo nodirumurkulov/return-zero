@@ -1,6 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SeverityBadge from "@/components/ui/SeverityBadge";
 import ImpactTag from "@/components/ui/ImpactTag";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { updateIncidentStatus } from "@/app/actions";
+import { INCIDENT_STATUSES } from "@/lib/incident-status";
 import { ChevronDown } from "lucide-react";
 
 export type Incident = {
@@ -27,16 +29,6 @@ export type Incident = {
   created_at: string;
   affected_kpis?: string[] | null;
 };
-
-const STATUSES = [
-  "detected",
-  "investigating",
-  "fix_proposed",
-  "awaiting_approval",
-  "deploying",
-  "monitoring",
-  "resolved",
-];
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -54,11 +46,19 @@ export default function IncidentCard({
   incident: Incident;
   editable?: boolean;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   function changeStatus(status: string) {
+    setStatusError(null);
     startTransition(async () => {
-      await updateIncidentStatus(incident.id, status);
+      const result = await updateIncidentStatus(incident.id, status);
+      if (!result.ok) {
+        setStatusError(result.error ?? "Failed to update status");
+        return;
+      }
+      router.refresh();
     });
   }
 
@@ -101,26 +101,31 @@ export default function IncidentCard({
       )}
 
       {editable ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between"
-              disabled={pending}
-            >
-              <StatusBadge status={incident.status} />
-              <ChevronDown className="h-4 w-4 opacity-60" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            {STATUSES.map((status) => (
-              <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
-                <StatusBadge status={status} />
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="space-y-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-between"
+                disabled={pending}
+              >
+                <StatusBadge status={incident.status} />
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {INCIDENT_STATUSES.map((status) => (
+                <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
+                  <StatusBadge status={status} />
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {statusError && (
+            <p className="text-xs text-destructive">{statusError}</p>
+          )}
+        </div>
       ) : (
         incident.root_cause_confidence != null && (
           <div className="mt-3 flex items-center gap-2">

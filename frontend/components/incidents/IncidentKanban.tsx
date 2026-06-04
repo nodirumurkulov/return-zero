@@ -3,21 +3,15 @@
 import IncidentCard, { type Incident } from "./IncidentCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/empty-state";
-
-const COLUMNS: { status: string; label: string }[] = [
-  { status: "detected", label: "Detected" },
-  { status: "investigating", label: "Investigating" },
-  { status: "fix_proposed", label: "Fix Proposed" },
-  { status: "awaiting_approval", label: "Awaiting Approval" },
-  { status: "monitoring", label: "Monitoring" },
-  { status: "resolved", label: "Resolved" },
-];
+import { INCIDENT_KANBAN_COLUMNS, isIncidentStatus } from "@/lib/incident-status";
 
 export default function IncidentKanban({ incidents }: { incidents: Incident[] }) {
   const byStatus: Record<string, Incident[]> = {};
-  COLUMNS.forEach((col) => {
+  INCIDENT_KANBAN_COLUMNS.forEach((col) => {
     byStatus[col.status] = incidents.filter((i) => i.status === col.status);
   });
+
+  const uncategorized = incidents.filter((i) => !isIncidentStatus(i.status));
 
   if (incidents.length === 0) {
     return (
@@ -30,7 +24,7 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
 
   return (
     <div className="flex min-h-[calc(100vh-10rem)] gap-4 overflow-x-auto pb-4">
-      {COLUMNS.map((col) => {
+      {INCIDENT_KANBAN_COLUMNS.map((col) => {
         const cards = byStatus[col.status] ?? [];
         return (
           <div key={col.status} className="flex w-72 shrink-0 flex-col">
@@ -52,6 +46,21 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
           </div>
         );
       })}
+      {uncategorized.length > 0 && (
+        <div className="flex w-72 shrink-0 flex-col">
+          <div className="mb-3 flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-muted-foreground">Other</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {uncategorized.length}
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col gap-3">
+            {uncategorized.map((incident) => (
+              <IncidentCard key={incident.id} incident={incident} editable />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

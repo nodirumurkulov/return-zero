@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export type IncidentAction = {
   id: string;
@@ -16,19 +19,19 @@ export type IncidentAction = {
 };
 
 const impactColour: Record<string, string> = {
-  high:   "text-green-400",
+  high: "text-sev-low",
   medium: "text-yellow-400",
-  low:    "text-zinc-500",
+  low: "text-muted-foreground",
 };
 
 const riskColour: Record<string, string> = {
-  high:   "text-red-400",
+  high: "text-sev-critical",
   medium: "text-yellow-400",
-  low:    "text-green-400",
+  low: "text-sev-low",
 };
 
 const statusStyle: Record<string, string> = {
-  proposed: "bg-zinc-800 text-zinc-400 border border-zinc-700",
+  proposed: "bg-muted text-muted-foreground border border-border",
   approved: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   deployed: "bg-green-500/20 text-green-400 border border-green-500/30",
   rejected: "bg-red-500/20 text-red-400 border border-red-500/30",
@@ -44,26 +47,30 @@ export default function ActionList({
   incidentId: string;
   onUpdate?: () => void;
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const proposed = actions.filter((a) => a.status === "proposed");
 
   async function approveAll() {
     setLoading(true);
     setMessage(null);
+    setError(null);
     try {
       const res = await fetch(`/api/incidents/${incidentId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ approve_all_low_risk: true, approved_by: "operator" }),
       });
-      const json = await res.json() as { approved?: number; error?: string };
+      const json = (await res.json()) as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");
-      setMessage(`${json.approved} action(s) approved and deployed`);
+      setMessage(`${json.approved ?? 0} action(s) approved and deployed`);
       onUpdate?.();
+      router.refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setLoading(false);
     }
@@ -72,18 +79,20 @@ export default function ActionList({
   async function approveOne(actionId: string) {
     setLoading(true);
     setMessage(null);
+    setError(null);
     try {
       const res = await fetch(`/api/incidents/${incidentId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action_ids: [actionId], approved_by: "operator" }),
       });
-      const json = await res.json() as { approved?: number; error?: string };
+      const json = (await res.json()) as { approved?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed");
       setMessage("Action approved and deployed");
       onUpdate?.();
+      router.refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setLoading(false);
     }
@@ -91,85 +100,85 @@ export default function ActionList({
 
   return (
     <div className="space-y-3">
-      {/* Bulk approve button */}
       {proposed.filter((a) => !a.auto_deploy && a.risk_level === "low").length > 0 && (
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-          <span className="text-xs text-zinc-500">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <span className="text-xs text-muted-foreground">
             {proposed.length} action(s) awaiting approval
           </span>
-          <button
-            onClick={approveAll}
-            disabled={loading}
-            className="text-xs px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white font-medium disabled:opacity-50 transition-colors"
-          >
+          <Button onClick={approveAll} disabled={loading} size="sm" variant="secondary">
             {loading ? "Approving…" : "Approve all low-risk"}
-          </button>
+          </Button>
         </div>
       )}
 
       {message && (
-        <p className="text-xs text-green-400 bg-green-500/10 rounded px-3 py-2 border border-green-500/20">
+        <p className="rounded-md border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs text-green-400">
           {message}
+        </p>
+      )}
+      {error && (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
         </p>
       )}
 
       {actions.map((action) => (
-        <div
-          key={action.id}
-          className="bg-zinc-900 border border-zinc-800 rounded-lg p-4"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-sm font-medium text-zinc-200">{action.title}</span>
-                {action.auto_deploy && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                    Auto-deploy
+        <Card key={action.id} className="shadow-card">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{action.title}</span>
+                  {action.auto_deploy && (
+                    <span className="rounded border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[10px] text-blue-400">
+                      Auto-deploy
+                    </span>
+                  )}
+                </div>
+                {action.description && (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {action.description}
+                  </p>
+                )}
+                <div className="mt-2 flex gap-4 text-xs">
+                  <span>
+                    Impact:{" "}
+                    <span className={impactColour[action.impact_level] ?? "text-muted-foreground"}>
+                      {action.impact_level}
+                    </span>
                   </span>
+                  <span>
+                    Risk:{" "}
+                    <span className={riskColour[action.risk_level] ?? "text-muted-foreground"}>
+                      {action.risk_level}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusStyle[action.status] ?? statusStyle.proposed}`}
+                >
+                  {action.status}
+                </span>
+                {action.status === "proposed" && !action.auto_deploy && (
+                  <Button
+                    onClick={() => approveOne(action.id)}
+                    disabled={loading}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Approve
+                  </Button>
                 )}
               </div>
-              {action.description && (
-                <p className="text-xs text-zinc-500 leading-relaxed">{action.description}</p>
-              )}
-              <div className="flex gap-4 mt-2 text-xs">
-                <span>
-                  Impact:{" "}
-                  <span className={impactColour[action.impact_level] ?? "text-zinc-400"}>
-                    {action.impact_level}
-                  </span>
-                </span>
-                <span>
-                  Risk:{" "}
-                  <span className={riskColour[action.risk_level] ?? "text-zinc-400"}>
-                    {action.risk_level}
-                  </span>
-                </span>
-              </div>
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusStyle[action.status] ?? statusStyle.proposed}`}
-              >
-                {action.status}
-              </span>
-              {action.status === "proposed" && !action.auto_deploy && (
-                <button
-                  onClick={() => approveOne(action.id)}
-                  disabled={loading}
-                  className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 hover:border-zinc-600 transition-colors disabled:opacity-50"
-                >
-                  Approve
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
 
       {actions.length === 0 && (
-        <p className="text-sm text-zinc-600 text-center py-4">
-          No actions proposed yet
-        </p>
+        <p className="py-4 text-center text-sm text-muted-foreground">No actions proposed yet</p>
       )}
     </div>
   );
