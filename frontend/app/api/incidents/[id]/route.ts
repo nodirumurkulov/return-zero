@@ -3,10 +3,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const supabase = createServiceClient();
 
   const [incidentRes, findingsRes, actionsRes, timelineRes] = await Promise.all([
@@ -40,10 +38,8 @@ export async function GET(
   });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const supabase = createServiceClient();
   const body = await req.json() as Record<string, unknown>;
 

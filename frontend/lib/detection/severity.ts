@@ -5,7 +5,6 @@ import { linearTrend } from "../forecast/methods";
 export type Severity = "critical" | "high" | "medium" | "low";
 
 const RANK: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1 };
-const BY_RANK: Record<number, Severity> = { 4: "critical", 3: "high", 2: "medium", 1: "low" };
 
 export function severityRank(s: string): number {
   return RANK[(s as Severity)] ?? 2;

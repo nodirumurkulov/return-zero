@@ -2,6 +2,7 @@
 frontend/.next/
 frontend/out/
 frontend/node_modules/
+scripts/node_modules/
 
 # Env files — never commit secrets
 .env
