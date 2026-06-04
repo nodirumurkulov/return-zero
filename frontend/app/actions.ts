@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
-  const metricKey = String(formData.get("metric_key") ?? "");
+  const rawKey = formData.get("metric_key");
+  const metricKey = typeof rawKey === "string" ? rawKey : "";
   const threshold = Number(formData.get("threshold"));
 
   if (!metricKey || Number.isNaN(threshold)) {

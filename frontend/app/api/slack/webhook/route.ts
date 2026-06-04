@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,14 +19,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No payload" }, { status: 400 });
   }
 
-  let payload: {
+  type SlackPayload = {
     actions?: Array<{ action_id: string; value: string }>;
     user?: { name: string };
   };
 
-  try {
-    payload = JSON.parse(rawPayload);
-  } catch {
+  const payload: SlackPayload | null = (() => {
+    try {
+      return JSON.parse(rawPayload) as SlackPayload;
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!payload) {
     return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 

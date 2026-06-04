@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { updateThreshold } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import SectionLabel from "@/components/ui/section-label";
-import { Card, CardContent } from "@/components/ui/card";
-import { updateThreshold } from "@/app/actions";
 import type { MetricValue } from "@/lib/metrics/types";
 
 export default function ThresholdEditor({

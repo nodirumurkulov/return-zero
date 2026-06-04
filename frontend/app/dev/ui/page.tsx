@@ -1,11 +1,11 @@
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
 import HealthBadge from "@/components/catalog/HealthBadge";
-import SectionLabel from "@/components/ui/section-label";
-import Sparkline from "@/components/ui/sparkline";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import SectionLabel from "@/components/ui/section-label";
+import SeverityBadge from "@/components/ui/SeverityBadge";
+import Sparkline from "@/components/ui/sparkline";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function UiShowcasePage() {
   return (

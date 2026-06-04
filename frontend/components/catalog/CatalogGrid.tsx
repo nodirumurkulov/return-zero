@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import CatalogEmpty from "@/components/catalog/CatalogEmpty";
+import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import { Input } from "@/components/ui/input";
 import type { CatalogProduct } from "@/lib/metrics/catalog";
 

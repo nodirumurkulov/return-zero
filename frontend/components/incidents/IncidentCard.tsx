@@ -1,19 +1,19 @@
 "use client";
 
-import { useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import ImpactTag from "@/components/ui/ImpactTag";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { useTransition } from "react";
+import { updateIncidentStatus } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { updateIncidentStatus } from "@/app/actions";
-import { ChevronDown } from "lucide-react";
+import ImpactTag from "@/components/ui/ImpactTag";
+import SeverityBadge from "@/components/ui/SeverityBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export type Incident = {
   id: string;

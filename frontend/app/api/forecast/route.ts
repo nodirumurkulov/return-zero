@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { detectForecastRisks } from "@/lib/detection/forecast";
+import { createServiceClient } from "@/lib/supabase/server";
 
 // POST /api/forecast — run predictive (forecast-based) detection over the
 // catalogue and open forward-looking incidents per the config-driven

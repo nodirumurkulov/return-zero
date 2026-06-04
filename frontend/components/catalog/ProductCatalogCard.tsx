@@ -1,8 +1,8 @@
 import Link from "next/link";
 import HealthBadge from "@/components/catalog/HealthBadge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { HealthLevel } from "@/types/database";
 import type { CatalogProduct } from "@/lib/metrics/catalog";
+import type { HealthLevel } from "@/types/database";
 
 type ProductCatalogCardProps = {
   product: CatalogProduct;

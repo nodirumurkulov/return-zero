@@ -25,9 +25,10 @@ export interface CatalogProduct {
 const RANK: Record<MetricStatus, number> = { healthy: 0, warning: 1, critical: 2 };
 
 function worstStatus(metrics: MetricValue[]): MetricStatus {
-  let worst: MetricStatus = "healthy";
-  for (const m of metrics) if (RANK[m.status] > RANK[worst]) worst = m.status;
-  return worst;
+  return metrics.reduce<MetricStatus>(
+    (worst, m) => (RANK[m.status] > RANK[worst] ? m.status : worst),
+    "healthy",
+  );
 }
 
 function valueOf(metrics: MetricValue[], key: string): number | null {

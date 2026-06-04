@@ -38,17 +38,17 @@ export async function getMonthlySeries(
 
   // PostgREST caps RPC results (default 1000 rows); the full series is
   // products x months (~1488), so page through it to avoid silent truncation.
-  const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;
-  for (let from = 0; ; from += pageSize) {
+  const fetchPage = async (from: number): Promise<Record<string, unknown>[]> => {
     const { data, error } = await supabase
       .rpc("product_monthly_series", { p_months: months })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(`product_monthly_series failed: ${error.message}`);
     const page = (data ?? []) as Record<string, unknown>[];
-    rows.push(...page);
-    if (page.length < pageSize) break;
-  }
+    if (page.length < pageSize) return page;
+    return [...page, ...(await fetchPage(from + pageSize))];
+  };
+  const rows = await fetchPage(0);
 
   const byProduct = new Map<string, MonthlyPoint[]>();
   for (const row of rows) {
