@@ -27,7 +27,8 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: 2.34.3
+          # Match supabase/config.toml (requires CLI ≥2.54; 2.105+ for current template keys)
+          version: 2.105.0
 
       - name: Supabase
         working-directory: frontend/supabase
