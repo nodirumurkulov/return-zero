@@ -1,29 +1,18 @@
-# Supabase (server)
+# Supabase (`lib/supabase/`)
 
-Service-role Supabase client for API routes, server components, and `lib/agents.ts`.
+Three typed clients over `@supabase/ssr` / `@supabase/supabase-js`:
 
-## What's here
+| File | Role |
+|------|------|
+| `client.ts` | Browser — `createBrowserClient<Database>` |
+| `server.ts` | Server — `createClient()` with cookies (RLS as `authenticated`) |
+| `admin.ts` | Service role — cron, seed, validators only |
+| `middleware.ts` | Session refresh for `proxy.ts` |
 
-| File | Export |
-|------|--------|
-| `server.ts` | `createServiceClient()` |
+Regenerate types after schema changes:
 
-Uses `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY`. There is **no** browser client in this repo.
-
-## Usage
-
-```typescript
-import { createServiceClient } from "@/lib/supabase/server";
-
-const supabase = createServiceClient();
-const { data, error } = await supabase.from("incidents").select("*");
+```bash
+cd frontend && supabase db reset && bun run db:types
 ```
 
-## Notes
-
-- Never import this module from `"use client"` files.
-- Run `bun run verify:secrets` in `frontend/` before PRs to catch accidental client leaks.
-
-**Agents:** [AGENTS.md](AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+Migrations live in [`../supabase/migrations/`](../supabase/migrations/).

@@ -10,7 +10,7 @@ set -euo pipefail
 # Run from the frontend/ root regardless of where the script is invoked.
 cd "$(dirname "$0")/.."
 
-SECRETS="SUPABASE_SERVICE_ROLE_KEY|CLERK_SECRET_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|SLACK_WEBHOOK_URL|SLACK_SIGNING_SECRET"
+SECRETS="SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|SLACK_WEBHOOK_URL|SLACK_SIGNING_SECRET"
 fail=0
 
 # 1. Secrets must never appear in a Client Component.

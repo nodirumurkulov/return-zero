@@ -29,7 +29,7 @@ The app reads through typed domain modules in `frontend/lib/*`, not generated Su
 
 ## Notes
 
-- Service role bypasses RLS — used only on the server in `createServiceClient()`.
+- Service role bypasses RLS — used only via `createAdminClient()` (cron, seed, Slack webhook).
 - Changing RPC signatures requires updating `frontend/lib/metrics` and `frontend/scripts/validate-metrics.ts`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  

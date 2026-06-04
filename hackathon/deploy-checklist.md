@@ -6,9 +6,8 @@ Frontend deploys from `frontend/` on Vercel.
 
 Copy from [`.env.example`](../.env.example) into Vercel project settings (repo root):
 
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY` + `LLM_PROVIDER=anthropic`)

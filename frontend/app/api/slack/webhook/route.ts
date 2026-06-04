@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { approveIncidentActions, listLowRiskProposedActionIds } from "@/lib/incidents";
 import { parseSlackInteractionPayload } from "@/lib/slack";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * Slack sends application/x-www-form-urlencoded with a `payload` field.
  */
 export async function POST(req: NextRequest) {
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
 
   const body = await req.text();
   const params = new URLSearchParams(body);

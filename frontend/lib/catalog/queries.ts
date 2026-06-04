@@ -18,6 +18,7 @@ export async function listCatalogWithThresholds(supabase: SupabaseClient): Promi
   const thresholdsByProduct = (thresholds ?? []).reduce<Record<string, KpiThreshold[]>>(
     (acc, row) => {
       const threshold = row as KpiThreshold;
+      if (!threshold.product_id) return acc;
       const list = acc[threshold.product_id] ?? [];
       list.push(threshold);
       acc[threshold.product_id] = list;

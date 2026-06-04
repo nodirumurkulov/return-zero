@@ -5,10 +5,12 @@
  */
 
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { forecastForProduct } from "@/lib/forecast/product";
 import { callLLM } from "@/lib/llm";
 import { getProductSeries } from "@/lib/metrics/series";
-import { createServiceClient } from "@/lib/supabase/server";
+
+type AgentSupabase = SupabaseClient;
 
 /** LLM output from a single investigation agent (not the persisted DB row). */
 export type LlmAgentFinding = {
@@ -32,8 +34,7 @@ export type InvestigationResult = {
 };
 
 // ── Returns Agent ─────────────────────────────────────────────
-async function runReturnsAgent(productId: string): Promise<LlmAgentFinding> {
-  const supabase = createServiceClient();
+async function runReturnsAgent(supabase: AgentSupabase, productId: string): Promise<LlmAgentFinding> {
 
   // Fetch refunds joined to line items for this product
   const { data: refundData } = await supabase
@@ -84,8 +85,10 @@ The summary must be 1-2 sentences, specific, with exact numbers. The detail is s
 }
 
 // ── Merchandising Agent ───────────────────────────────────────
-async function runMerchandisingAgent(productId: string): Promise<LlmAgentFinding> {
-  const supabase = createServiceClient();
+async function runMerchandisingAgent(
+  supabase: AgentSupabase,
+  productId: string,
+): Promise<LlmAgentFinding> {
 
   const { data: product } = await supabase
     .from("products")
@@ -132,8 +135,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Summary must be specif
 }
 
 // ── Marketing Agent ───────────────────────────────────────────
-async function runMarketingAgent(productId: string): Promise<LlmAgentFinding> {
-  const supabase = createServiceClient();
+async function runMarketingAgent(supabase: AgentSupabase, productId: string): Promise<LlmAgentFinding> {
 
   const { data: metaAds } = await supabase
     .from("meta_ads_daily")
@@ -197,8 +199,7 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Summary must be 1-2 se
 }
 
 // ── Inventory Agent ───────────────────────────────────────────
-async function runInventoryAgent(productId: string): Promise<LlmAgentFinding> {
-  const supabase = createServiceClient();
+async function runInventoryAgent(supabase: AgentSupabase, productId: string): Promise<LlmAgentFinding> {
 
   const { data: variants } = await supabase
     .from("variants")
@@ -243,8 +244,10 @@ Respond with JSON: { "summary": "...", "detail": {...} }. Be specific with exact
 
 // ── Forecasting Agent ─────────────────────────────────────────
 // Deterministic forecasts computed in TS; the LLM only narrates them.
-async function runForecastingAgent(productId: string): Promise<LlmAgentFinding> {
-  const supabase = createServiceClient();
+async function runForecastingAgent(
+  supabase: AgentSupabase,
+  productId: string,
+): Promise<LlmAgentFinding> {
 
   const [series, { data: outflowRows }, { data: settingsRows }] = await Promise.all([
     getProductSeries(supabase, productId, 24),
@@ -340,16 +343,16 @@ Auto-deploy should only be true for low-risk, purely additive actions (e.g. addi
 
 // ── Orchestrator ──────────────────────────────────────────────
 export async function runInvestigation(
-  incidentId: string,
-  productId: string
+  supabase: AgentSupabase,
+  _incidentId: string,
+  productId: string,
 ): Promise<InvestigationResult> {
-  // All agents run in parallel
   const [returns, merch, marketing, inventory, forecasting] = await Promise.all([
-    runReturnsAgent(productId),
-    runMerchandisingAgent(productId),
-    runMarketingAgent(productId),
-    runInventoryAgent(productId),
-    runForecastingAgent(productId),
+    runReturnsAgent(supabase, productId),
+    runMerchandisingAgent(supabase, productId),
+    runMarketingAgent(supabase, productId),
+    runInventoryAgent(supabase, productId),
+    runForecastingAgent(supabase, productId),
   ]);
 
   const findings = [returns, merch, marketing, inventory, forecasting];

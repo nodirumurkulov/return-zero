@@ -1,21 +1,36 @@
-# AGENTS.md — lib/supabase
+# Supabase clients (`lib/supabase/`)
 
-Server-only Supabase client. **Parent:** [../../AGENTS.md](../../AGENTS.md)
+## Auth checklist (required)
 
-## API
+| Rule | Implementation |
+|------|----------------|
+| **Use `getUser()` for auth** | Middleware, RSC, server actions, user API routes — never `getSession()` for authorization |
+| **No gap before `getUser()` in middleware** | `updateSession`: create client → immediately `getUser()` |
+| **Return response with cookies** | Always return the `NextResponse` that received `setAll`; clone cookies onto redirects |
+| **Per-request server client** | `await createClient()` in each RSC / action / route — no module singleton on server |
+| **Admin client** | `createAdminClient()` in `admin.ts` only — cron, seed, Slack webhook, validators |
 
-```typescript
-import { createServiceClient } from "@/lib/supabase/server";
+## Files
+
+| File | Use |
+|------|-----|
+| `client.ts` | `createBrowserClient` — client islands only |
+| `server.ts` | `createClient()` — RSC, server actions, user APIs (RLS) |
+| `admin.ts` | `createAdminClient()` — bypass RLS (server-only) |
+| `middleware.ts` | `updateSession()` — session refresh + `getUser()` |
+| `database.types.ts` | Generated `Database` type — `bun run db:types` after migrations |
+| `db.ts` | `Tables<>`, `Views<>` helpers |
+
+## Imports
+
+```ts
+// RSC / server actions / user mutations
+import { createClient } from "@/lib/supabase/server";
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+
+// Cron / seed only
+import { createAdminClient } from "@/lib/supabase/admin";
 ```
 
-Implementation: [server.ts](server.ts) — `@supabase/supabase-js` + `SUPABASE_SERVICE_ROLE_KEY`.
-
-## Best practices
-
-- **Server-only client** — if a browser client appears, delete it and fix imports; do not reintroduce `@supabase/ssr` browser helpers.
-
-## Rules
-
-- **Never** import from `"use client"` files.
-- No browser client in this repo.
-- Run `cd frontend && bun run verify:secrets` after changes that touch env or client bundles.
+Do **not** import `admin.ts` or service role from `"use client"` files.

@@ -16,17 +16,19 @@
     "seed": "bun --env-file=.env.local run scripts/seed.ts",
     "validate:counts": "bun --env-file=.env.local run scripts/validate-counts.ts",
     "validate:metrics": "bun --env-file=.env.local run scripts/validate-metrics.ts",
-    "validate": "bun run validate:counts && bun run validate:metrics"
+    "validate": "bun run validate:counts && bun run validate:metrics",
+    "db:types": "supabase gen types typescript --local -o lib/supabase/database.types.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.4.3",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "csv-parse": "^5.6.0",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "openai": "^6.41.0",
@@ -35,8 +37,7 @@
     "recharts": "^3.8.1",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3",
-    "csv-parse": "^5.6.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22",

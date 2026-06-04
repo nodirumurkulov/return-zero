@@ -29,20 +29,14 @@ run -c "do \$\$ begin
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
 end \$\$;"
 
-# Apply the migrations RUN-34's RLS policies depend on, in order. We list them
-# explicitly rather than globbing *.sql because main currently ships TWO
-# conflicting `003_*` migrations that both define `product_kpi_thresholds`
-# (003_metrics_config.sql uses `metric_key`; 003_product_metrics.sql uses
-# `kpi_name`) — applying both fails. We use the canonical RUN-9 config schema
-# (metrics_config). 008_rls_policies.sql is schema-agnostic and works either way.
 MIGRATIONS=(
   001_base_data_schema.sql
   002_incidents_schema.sql
-  003_metrics_config.sql
+  003_metrics_and_catalog.sql
   004_product_source_facts.sql
   005_metric_impact.sql
   006_performance_indexes.sql
-  008_rls_policies.sql
+  008_forecast_and_rls.sql
 )
 echo "==> apply migrations in order"
 for name in "${MIGRATIONS[@]}"; do

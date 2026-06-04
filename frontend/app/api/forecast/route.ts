@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { detectForecastRisks } from "@/lib/detection/forecast";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // POST /api/forecast — run predictive (forecast-based) detection over the
 // catalogue and open forward-looking incidents per the config-driven
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
   try {
     const result = await detectForecastRisks(supabase);
     return NextResponse.json({

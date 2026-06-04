@@ -2,12 +2,12 @@ import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { EmptyState } from "@/components/ui/empty-state";
 import SectionLabel from "@/components/ui/section-label";
 import { listIncidents } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function IncidentsPage() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
 
   const result = await listIncidents(supabase).then(
     (rows) => ({ ok: true as const, rows }),

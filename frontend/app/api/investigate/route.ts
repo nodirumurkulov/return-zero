@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { runInvestigation } from "@/lib/agents";
 import { investigateBodySchema } from "@/lib/agents/schemas";
 import { sendIncidentNotification } from "@/lib/slack";
-import { createServiceClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { incident_id, product_id } = parsed.data;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Move incident to investigating
+  const { incident_id, product_id } = parsed.data;
+
   await supabase
     .from("incidents")
     .update({ status: "investigating", investigation_started_at: new Date().toISOString() })
@@ -32,21 +39,18 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    // Run all agents
-    const result = await runInvestigation(incident_id, product_id);
+    const result = await runInvestigation(supabase, incident_id, product_id);
 
-    // Store findings
     await supabase.from("agent_findings").insert(
       result.findings.map((f) => ({
         incident_id,
         agent_name: f.agent_name,
         agent_icon: f.agent_icon,
         summary: f.summary,
-        detail: f.detail,
-      }))
+        detail: f.detail as Json,
+      })),
     );
 
-    // Store actions
     await supabase.from("incident_actions").insert(
       result.actions.map((a) => ({
         incident_id,
@@ -56,17 +60,19 @@ export async function POST(req: NextRequest) {
         risk_level: a.risk_level,
         auto_deploy: a.auto_deploy,
         status: "proposed",
-      }))
+      })),
     );
 
-    // Update incident with root cause
     const now = new Date().toISOString();
-    await supabase.from("incidents").update({
-      status: "fix_proposed",
-      root_cause: result.root_cause,
-      root_cause_confidence: result.root_cause_confidence,
-      fix_proposed_at: now,
-    }).eq("id", incident_id);
+    await supabase
+      .from("incidents")
+      .update({
+        status: "fix_proposed",
+        root_cause: result.root_cause,
+        root_cause_confidence: result.root_cause_confidence,
+        fix_proposed_at: now,
+      })
+      .eq("id", incident_id);
 
     await supabase.from("incident_timeline").insert([
       {
@@ -82,7 +88,6 @@ export async function POST(req: NextRequest) {
       },
     ]);
 
-    // Auto-deploy low-risk auto_deploy actions
     const autoActions = result.actions.filter((a) => a.auto_deploy);
     if (autoActions.length > 0) {
       const { data: storedActions } = await supabase
@@ -93,10 +98,13 @@ export async function POST(req: NextRequest) {
 
       if (storedActions?.length) {
         const ids = storedActions.map((a) => a.id);
-        await supabase.from("incident_actions").update({
-          status: "deployed",
-          deployed_at: now,
-        }).in("id", ids);
+        await supabase
+          .from("incident_actions")
+          .update({
+            status: "deployed",
+            deployed_at: now,
+          })
+          .in("id", ids);
 
         await supabase.from("incident_timeline").insert({
           incident_id,
@@ -106,7 +114,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fetch full incident for Slack
     const { data: incident } = await supabase
       .from("incidents")
       .select("*")

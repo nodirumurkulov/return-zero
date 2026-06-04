@@ -4,7 +4,7 @@ Server-side domain logic. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Hu
 
 ## Scope
 
-All Supabase access for app logic goes through `createServiceClient()` and domain queries. Do not import from `components/`.
+User-facing data uses `await createClient()` (RLS). Cron/seed use `createAdminClient()`. Do not import from `components/`.
 
 ## Domain modules
 

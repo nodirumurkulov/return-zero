@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getIncidentDetail } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const detail = await getIncidentDetail(supabase, params.id);
 
   if (!detail) {
@@ -18,8 +19,15 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
-  const body = (await req.json()) as Record<string, unknown>;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await req.json()) as Database["public"]["Tables"]["incidents"]["Update"];
 
   const { data, error } = await supabase
     .from("incidents")

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("incidents")

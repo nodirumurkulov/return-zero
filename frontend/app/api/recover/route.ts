@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runRecovery } from "@/lib/detection/recover";
 import { recoverBodySchema } from "@/lib/detection/schemas";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
 
   try {
     const result = await runRecovery(supabase, { advanceDays: parsed.data.advance_days });
