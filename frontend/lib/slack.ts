@@ -133,6 +133,37 @@ export async function sendIncidentNotification(
   }
 }
 
+export type NewIncidentAlert = {
+  incident_id: string;
+  title: string;
+  severity: string;
+  impact_amount: number | null;
+  impact_label: string | null;
+};
+
+/**
+ * Fire a Slack alert for a newly detected incident (severity, exposure, Approve
+ * button). Called from detection when a breach/forecast opens an incident.
+ * Never throws — a Slack failure must not abort detection.
+ */
+export async function notifyNewIncident(alert: NewIncidentAlert): Promise<void> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  try {
+    await sendIncidentNotification({
+      title: alert.title,
+      severity: alert.severity,
+      status: "detected",
+      impact_amount: alert.impact_amount,
+      impact_label: alert.impact_label,
+      incident_id: alert.incident_id,
+      app_url: appUrl,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[Slack] new-incident alert failed: ${message}`);
+  }
+}
+
 /** Slack interactive webhook: URL-encoded form with a JSON `payload` field. */
 export const slackInteractionPayloadSchema = z.object({
   actions: z
