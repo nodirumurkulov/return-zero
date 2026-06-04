@@ -91,12 +91,19 @@ function evaluateRule(rule: ForecastRule, fc: ProductForecast, leadDays: number)
   }
 }
 
-export async function detectForecastRisks(supabase: SupabaseClient): Promise<ForecastDetectionResult> {
+export interface ForecastDetectOpts {
+  asOf?: string; // replay cursor — forecast as of this date instead of "now"
+}
+
+export async function detectForecastRisks(
+  supabase: SupabaseClient,
+  opts: ForecastDetectOpts = {},
+): Promise<ForecastDetectionResult> {
   const [{ data: ruleRows, error: ruleErr }, { data: setRows }, { data: outflowRows }, { data: incRows }, { data: prodRows }] =
     await Promise.all([
       supabase.from("forecast_rules").select("*").eq("enabled", true),
       supabase.from("business_settings").select("key, value"),
-      supabase.rpc("product_daily_outflow", { p_days: 28 }),
+      supabase.rpc("product_daily_outflow", { p_days: 28, ...(opts.asOf ? { p_asof: opts.asOf } : {}) }),
       supabase.from("incidents").select("affected_product, status"),
       supabase.from("products").select("product_id, title"),
     ]);
@@ -123,7 +130,9 @@ export async function detectForecastRisks(supabase: SupabaseClient): Promise<For
   const skipped: ForecastDetectionResult["skipped"] = [];
   const entries = Array.from(seriesByProduct.entries());
 
-  for (const [productId, series] of entries) {
+  for (const [productId, fullSeries] of entries) {
+    // As of the replay cursor, only forecast from history up to the cursor.
+    const series = opts.asOf ? fullSeries.filter((p) => p.month <= opts.asOf!) : fullSeries;
     const o = outflow.get(productId) ?? { daily: 0, balance: 0 };
     const fc = forecastForProduct(series, o.balance, o.daily, leadDays, bufferDays);
     const risks = rules.map((r) => evaluateRule(r, fc, leadDays)).filter((r): r is Risk => r !== null);
