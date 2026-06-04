@@ -7,7 +7,7 @@ CI configuration. **Parent:** [../AGENTS.md](../AGENTS.md) · **Humans:** [READM
 [workflows/ci.yml](workflows/ci.yml) on every PR and `main` push:
 
 ```text
-bun ci → check → supabase start → env vars → db:reset → seed → build → playwright e2e
+bun ci → check (lint, typecheck, Vitest) → supabase start → env vars → db:reset → seed → build → playwright e2e
 ```
 
 Supabase keys go to `$GITHUB_ENV` (not `.env.local`). Requires Docker. E2E always runs.

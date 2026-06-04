@@ -47,8 +47,11 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Testing
 
-- `bun run check` (lint, typecheck, Vitest); `bun run e2e` (Playwright; `test:e2e` alias).
-- E2E path: `supabase start` → `db:reset` → `seed` → `build` → `CI=true bun run e2e` ([e2e/README.md](e2e/README.md)).
+- `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
+- `bun run test:watch` — Vitest watch mode.
+- `bun run check` — lint, typecheck, and `test`.
+- `bun run e2e` / `test:e2e` — Playwright ([e2e/README.md](e2e/README.md)).
+- E2E path: `supabase start` → `db:reset` → `seed` → `build` → `CI=true bun run e2e`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

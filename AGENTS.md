@@ -64,9 +64,9 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Testing instructions
 
-- **Unit:** `cd frontend && bun run test` (Vitest).
+- **Unit:** `cd frontend && bun run test` (Vitest + React Testing Library; co-located `*.test.tsx`).
 - **E2E:** `supabase start`, then `db:reset`, `seed`, `build`, `CI=true bun run e2e`. See [frontend/e2e/README.md](frontend/e2e/README.md).
-- **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — `check` → Supabase → seed → build → Playwright.
+- **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — `check` (lint, typecheck, Vitest) → Supabase → seed → build → Playwright.
 - After schema or metrics changes: `cd frontend && bun run validate` against a seeded Supabase project.
 - RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.
