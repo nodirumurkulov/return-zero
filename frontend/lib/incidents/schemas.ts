@@ -1,7 +1,4 @@
-import type { NextRequest } from "next/server";
 import { z } from "zod";
-
-import { parseRequestJson, type ParseJsonResult } from "@/lib/http/parse-json";
 
 export const approveIncidentBodySchema = z.object({
   action_ids: z.array(z.string().min(1)).optional(),
@@ -10,9 +7,3 @@ export const approveIncidentBodySchema = z.object({
 });
 
 export type ApproveIncidentBody = z.infer<typeof approveIncidentBodySchema>;
-
-export function parseApproveIncidentBody(
-  req: NextRequest,
-): Promise<ParseJsonResult<ApproveIncidentBody>> {
-  return parseRequestJson(req, approveIncidentBodySchema);
-}

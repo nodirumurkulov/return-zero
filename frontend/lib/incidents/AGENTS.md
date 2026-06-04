@@ -5,7 +5,7 @@ Single source of truth for incident domain types and Supabase access.
 ## Files
 
 - `types.ts` — table types (`Incident`, …); **same shape as DB columns**
-- `schemas.ts` — Zod request bodies (`parseApproveIncidentBody`)
+- `schemas.ts` — Zod request body schemas (parsed inline in routes)
 - `status.ts` — `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus`
 - `queries.ts` — `listIncidents`, `getIncident`, `getIncidentDetail`
 - `approve.ts` — `approveIncidentActions`, `listLowRiskProposedActionIds`

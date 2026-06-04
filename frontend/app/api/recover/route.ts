@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runRecovery } from "@/lib/detection/recover";
-import { parseRecoverBody } from "@/lib/detection/schemas";
+import { recoverBodySchema } from "@/lib/detection/schemas";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +17,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const parsed = await parseRecoverBody(req);
+  const raw = await req.json().catch(() => ({}));
+  const parsed = recoverBodySchema.safeParse(raw);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
   }
 
   const supabase = createServiceClient();
