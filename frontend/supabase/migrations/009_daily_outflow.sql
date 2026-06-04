@@ -17,6 +17,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public
 as $$
   with asof as (
     select coalesce(p_asof, (select max(date) from inventory_movements)) as d

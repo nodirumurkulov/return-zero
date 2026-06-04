@@ -26,6 +26,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public
 as $$
   with win as (
     select max(created_at) as hi,
