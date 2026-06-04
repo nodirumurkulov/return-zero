@@ -1,5 +1,5 @@
 import Link from "next/link";
-import HealthBadge from "@/components/catalog/HealthBadge";
+import { HealthBadge } from "@/components/catalog/HealthBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { HealthLevel, ProductMetric } from "@/lib/catalog";
 

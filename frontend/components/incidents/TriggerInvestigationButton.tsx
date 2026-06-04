@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 export default function TriggerInvestigationButton({
   incidentId,
@@ -34,17 +36,20 @@ export default function TriggerInvestigationButton({
   }
 
   return (
-    <div>
-      <button
+    <div className="mt-4 space-y-2">
+      <Button
         onClick={() => {
           void triggerInvestigation();
         }}
         disabled={investigating}
-        className="mt-4 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white disabled:opacity-50 transition-colors"
       >
         {investigating ? "Investigating…" : "Trigger Investigation"}
-      </button>
-      {error && <p className="mt-2 text-xs text-red-400 font-mono">{error}</p>}
+      </Button>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription className="font-mono text-xs">{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

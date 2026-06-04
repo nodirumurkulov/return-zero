@@ -1,7 +1,7 @@
 "use client";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { KANBAN_COLUMNS, type Incident } from "@/lib/incidents";
 import IncidentCard from "./IncidentCard";
 

@@ -1,6 +1,6 @@
 import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { EmptyState } from "@/components/ui/empty-state";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import { listIncidents } from "@/lib/incidents";
 import { createClient } from "@/lib/supabase/server";
 

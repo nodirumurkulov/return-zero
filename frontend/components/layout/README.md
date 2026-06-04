@@ -1,27 +1,26 @@
-# Layout components
+# Layout
 
-Shell chrome for authenticated pages: sidebar navigation, header search slot, and Clerk account menu.
+Shell chrome for authenticated pages: shadcn sidebar navigation, header search slot, and account sign-out.
 
-## What's here
+## Components
 
-| Component | Purpose |
-|-----------|---------|
-| `AppShell` | Sidebar + header wrapper used in root layout |
-
-Navigation links: Catalog (`/catalog`), Incidents (`/incidents`).
+| Component | Role |
+|-----------|------|
+| `AppShell` | `SidebarProvider` + nav + header wrapper used in root layout |
 
 ## Usage
 
 ```tsx
-<AppShell searchSlot={optionalSlot}>{children}</AppShell>
+<AppShell user={shellUser} searchSlot={optionalSlot}>
+  {children}
+</AppShell>
 ```
 
-`AppShell` is a client component (`usePathname`, `useUser`).
+`AppShell` is a client component (`usePathname`, sidebar state).
 
 ## Notes
 
-- Auth is enforced by Clerk middleware in `frontend/proxy.ts`, not inside `AppShell`.
+- Auth is enforced by middleware in `frontend/proxy.ts`, not inside `AppShell`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+**Parent:** [../README.md](../README.md)
