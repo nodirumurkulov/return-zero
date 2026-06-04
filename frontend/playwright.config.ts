@@ -4,6 +4,21 @@ const isCI = !!process.env.CI;
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 const authFile = "e2e/.auth/user.json";
 
+const webServerEnvKeys = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_APP_URL",
+  "OPENAI_API_KEY",
+  "LLM_PROVIDER",
+] as const;
+
+const webServerEnv = Object.fromEntries(
+  webServerEnvKeys
+    .filter((key) => process.env[key])
+    .map((key) => [key, process.env[key] as string]),
+);
+
 export default defineConfig({
   fullyParallel: !isCI,
   forbidOnly: isCI,
@@ -27,6 +42,7 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: 120_000,
+    env: webServerEnv,
   },
   projects: [
     {
@@ -46,6 +62,7 @@ export default defineConfig({
       testDir: "./e2e",
       testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
     },
   ],
 });

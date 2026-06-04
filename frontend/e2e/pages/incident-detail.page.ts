@@ -28,6 +28,6 @@ export class IncidentDetailPage {
   }
 
   successAlert() {
-    return this.page.locator('[role="alert"]').filter({ hasText: /approved/i });
+    return this.page.getByRole("status").filter({ hasText: /approved/i });
   }
 }

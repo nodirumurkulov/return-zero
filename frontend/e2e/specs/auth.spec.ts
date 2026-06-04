@@ -34,7 +34,7 @@ test.describe("Authentication", () => {
     await page.locator("#auth-email").fill(email);
     await page.locator("#auth-password").fill("e2e-signup-password-12");
     await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page).toHaveURL(/\/catalog$/);
+    await expect(page).toHaveURL(/\/onboarding$/);
   });
 
   test("honors next redirect after sign-in", async ({ page }) => {

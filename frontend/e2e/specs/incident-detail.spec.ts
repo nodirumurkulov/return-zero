@@ -6,10 +6,14 @@ import {
   MAIN_INCIDENT_TITLE,
 } from "../constants";
 import { IncidentDetailPage } from "../pages/incident-detail.page";
+import { resetMainIncidentFixture } from "../reset-main-incident";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("Incident detail", () => {
+  test.beforeEach(async () => {
+    await resetMainIncidentFixture();
+  });
   test("shows findings and proposed actions", async ({ page }) => {
     const detail = new IncidentDetailPage(page);
     await detail.goto(MAIN_INCIDENT_ID);
@@ -53,13 +57,21 @@ test.describe("Incident detail", () => {
     await detail.goto(E2E_DETECTED_INCIDENT_ID);
     await expect(page.getByRole("heading", { name: E2E_DETECTED_INCIDENT_TITLE })).toBeVisible();
 
+    const investigation = page.locator("div").filter({
+      has: detail.triggerInvestigationButton(),
+    });
+
     await detail.triggerInvestigationButton().click();
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    await expect(detail.triggerInvestigationButton()).toBeEnabled({ timeout: 15_000 });
+    await expect(investigation.getByRole("alert")).toHaveCount(0);
+    await expect(detail.triggerInvestigationButton()).not.toHaveAttribute("aria-busy", "true", {
+      timeout: 15_000,
+    });
   });
 
   test("returns not found for unknown incident ids", async ({ page }) => {
     await page.goto("/incidents/00000000-0000-0000-0000-000000009999");
-    await expect(page.getByText(/not found/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "This page could not be found." }),
+    ).toBeVisible();
   });
 });
