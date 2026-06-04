@@ -47,6 +47,14 @@ Before opening a PR, run `bun run check` and `bun run build` in `frontend/` (or 
 
 ---
 
+## Deploy
+
+Hosted on **Vercel**. The app is in `frontend/`, so set the Vercel **Root
+Directory** to `frontend`. Full deploy + environment-variable reference:
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
+---
+
 ## Stack
 
 | Layer | Technology |
