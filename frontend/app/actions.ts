@@ -7,23 +7,23 @@ import { createServiceClient } from "@/lib/supabase/server";
 export async function updateThreshold(productId: string, formData: FormData) {
   const rawKpi = formData.get("kpi_name");
   const kpiName = typeof rawKpi === "string" ? rawKpi : "";
-  const warningValue = Number(formData.get("warning_value"));
+  // The editor still posts warning/critical; the engine uses a single threshold,
+  // so we persist the critical value as the per-product override threshold.
   const criticalValue = Number(formData.get("critical_value"));
 
-  if (!kpiName || Number.isNaN(warningValue) || Number.isNaN(criticalValue)) {
-    return { ok: false, error: "Invalid threshold values" };
+  if (!kpiName || Number.isNaN(criticalValue)) {
+    return { ok: false, error: "Invalid threshold value" };
   }
+
+  const metricKey = kpiName === "support_tickets" ? "support_volume" : kpiName;
 
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("product_kpi_thresholds")
-    .update({
-      warning_value: warningValue,
-      critical_value: criticalValue,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("product_id", productId)
-    .eq("kpi_name", kpiName);
+    .upsert(
+      { product_id: productId, metric_key: metricKey, threshold: criticalValue, active: true },
+      { onConflict: "product_id,metric_key" }
+    );
 
   if (error) return { ok: false, error: error.message };
 
