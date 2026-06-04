@@ -8,11 +8,11 @@ Ecommerce incident response for the **Pretty Fly** demo brand: detect KPI breach
 
 | | |
 |---|---|
-| **Live demo** | [return-zero-57ht-nodir-s-projects1.vercel.app](https://return-zero-57ht-nodir-s-projects1.vercel.app) — sign in with Clerk, then open **Catalog** or **Incidents** |
+| **Live demo** | [return-zero-57ht-nodir-s-projects1.vercel.app](https://return-zero-57ht-nodir-s-projects1.vercel.app) — sign in with Supabase Auth, then open **Catalog** or **Incidents** |
 | **Repo** | [github.com/nodirumurkulov/return-zero](https://github.com/nodirumurkulov/return-zero) |
 | **Project board** | [Linear — Run-zero](https://linear.app/run-zero/team/RUN/all) |
 
-**Stack:** Next.js 16 · TypeScript · Supabase · Clerk · Vercel · Bun (`frontend/`)
+**Stack:** Next.js 16 · TypeScript · Supabase (Auth + Postgres) · Vercel · Bun (`frontend/`)
 
 ---
 
@@ -208,7 +208,7 @@ Deploy on Vercel with **Root Directory** set to `frontend`. See [`docs/DEPLOYMEN
 | Symptom | Likely cause | What to do |
 |---------|--------------|------------|
 | Empty catalog or incidents | DB not seeded | Run `scripts` seed against your Supabase project |
-| Auth redirect loops | Clerk URL mismatch | Match sign-in/up URLs in Clerk dashboard and `.env.local` |
+| Auth redirect loops | Supabase redirect URL mismatch | Add `http://localhost:3000/**` and your Vercel URL in Supabase Auth → URL configuration |
 | Investigation fails | Missing LLM key or provider | Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |
 | Cron routes 401 | `CRON_SECRET` set | Send `Authorization: Bearer $CRON_SECRET` or clear for local dev |
 
@@ -224,7 +224,7 @@ Built by the **[Run-zero](https://linear.app/run-zero)** team (Wayflyer × Fin H
 | **Naseem** | Frontend — product catalog, KPI editor, app shell, Slack cards, Vercel deploy |
 | **Botir Khaltaev** | ML & AI — KPI detection, severity scoring, five-agent investigation, recovery monitoring |
 | **Mohamed El Amine Atoui** | Data — Pretty Fly pipeline, SQL metrics layer, analytics for catalog & agents |
-| **nodir** | Security & platform — Clerk auth, Supabase RLS, API hardening, env & deploy config |
+| **nodir** | Security & platform — Supabase Auth, RLS, API hardening, env & deploy config |
 
 ---
 

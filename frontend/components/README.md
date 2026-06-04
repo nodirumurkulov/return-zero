@@ -8,7 +8,7 @@ React UI grouped by product area. Components receive data via **props** from ser
 |--------|---------|------|
 | [`catalog/`](catalog/) | `/catalog/*` | Grid, KPI cards, threshold editor |
 | [`incidents/`](incidents/) | `/incidents/*` | Kanban, detail view, approvals |
-| [`layout/`](layout/) | Authenticated layout | Shell, nav, Clerk `UserButton` |
+| [`layout/`](layout/) | Authenticated layout | Shell, nav, sign-out |
 | [`ui/`](ui/) | Everywhere | Buttons, badges, cards, inputs |
 
 ## Usage

@@ -1,97 +1,61 @@
-# API Route Auth & Error-Response Audit (RUN-31)
+# API Route Auth & Error-Response Audit
 
-Audit of every `/api/*` route handler in `frontend/app/api/`: what enforces auth,
-whether the route mutates data, and what unauthenticated callers receive.
+Audit of every `/api/*` route handler in `frontend/app/api/`: auth enforcement, mutation scope, and error shapes.
+
+**Last reviewed:** 2026-06-04 (Supabase Auth + `frontend/proxy.ts`)
 
 ## How auth is enforced
 
-All routes are gated by Clerk in `frontend/middleware.ts`. The matcher runs the
-middleware on every request except Next internals/static assets, and explicitly on
-`/(api|trpc)(.*)`. Public routes are `/sign-in`, `/sign-up`, and `/api/slack/webhook`
-(the latter added by RUN-32 — see ⚠ F2 below).
+1. **`frontend/proxy.ts`** — Refreshes the Supabase session on each request. Public prefixes: `/sign-in`, `/sign-up`, `/auth/callback`, `/api/slack/webhook`. Scheduler paths (`/api/detect`, `/api/forecast`, `/api/recover`) skip the session gate when `CRON_SECRET` is set and the request presents a valid bearer/`x-cron-secret` (see [`lib/cron-auth.ts`](../frontend/lib/cron-auth.ts)).
 
-As of this change, unauthenticated `/api/*` requests get a **consistent JSON `401`**
-(`{"error":"Unauthorized"}`) instead of Clerk's default HTML 404/redirect. Page routes
-still redirect unauthenticated users to `/sign-in`.
+2. **Unauthenticated `/api/*`** — JSON `401` with `{ "error": "Unauthorized" }` (not an HTML redirect).
 
-> Updated after merging `main`: `main` now also ships `/api/detect` (RUN-20) and has
-> made `/api/slack/webhook` **public** (RUN-32, partial). Both are reflected below.
+3. **Route-level guards** — Mutating user routes call `supabase.auth.getUser()` and return `401` when missing. Cron routes call `assertCronAuthorized(req)` before using `createAdminClient()`.
 
 ## Route inventory
 
 | Route | Methods | Mutates? | Auth mechanism | Unauth response |
 |-------|---------|----------|----------------|-----------------|
-| `/api/incidents` | GET | no | Clerk middleware | `401 {"error":"Unauthorized"}` |
-| `/api/incidents/[id]` | GET, PATCH | PATCH yes | Clerk middleware | `401` |
-| `/api/incidents/[id]/approve` | POST | yes | Clerk middleware | `401` |
-| `/api/investigate` | POST | yes | Clerk middleware | `401` |
-| `/api/detect` | POST | yes (opens incidents) | Clerk middleware + optional `CRON_SECRET` | `401` (see F5) |
-| `/api/slack/webhook` | POST | **yes (service role)** | **Public — no auth** ⚠ | **200, request processed** (see ⚠ F2) |
+| `/api/incidents` | GET | no | Proxy + `getUser()` in handler | `401` |
+| `/api/incidents/[id]` | GET, PATCH | PATCH yes | Proxy + `getUser()` on PATCH | `401` |
+| `/api/incidents/[id]/approve` | POST | yes | Proxy + `getUser()` | `401` |
+| `/api/investigate` | POST | yes | Proxy + `getUser()` | `401` |
+| `/api/detect` | POST | yes (opens incidents) | `assertCronAuthorized` or session + admin client | `401` / `503` if prod without `CRON_SECRET` |
+| `/api/forecast` | POST | yes | Same as detect | Same |
+| `/api/recover` | POST | yes | Same as detect | Same |
+| `/api/slack/webhook` | POST | yes (service role) | Public route; **HMAC** via `verifySlackRequest` | `401` invalid signature |
 
-## In-route error responses (input validation)
+## In-route validation
 
-| Route | Validation errors |
-|-------|-------------------|
-| `/api/incidents` GET | `500` on DB error |
-| `/api/incidents/[id]` GET | `404` when incident missing |
-| `/api/incidents/[id]` PATCH | `500` on DB error |
-| `/api/incidents/[id]/approve` POST | `400` "No actions to approve"; `500` on DB error |
-| `/api/investigate` POST | `400` missing `incident_id`/`product_id`; `500` on failure |
-| `/api/detect` POST | `401` if `CRON_SECRET` set and bearer mismatches; `500` on failure |
-| `/api/slack/webhook` POST | `400` missing/invalid `payload`; `500` on DB error |
+| Route | Validation |
+|-------|------------|
+| `/api/incidents/[id]` PATCH | `updateIncidentBodySchema` (strict partial allowlist) |
+| `/api/incidents/[id]/approve` POST | `approveIncidentBodySchema` |
+| `/api/investigate` POST | `investigateBodySchema` |
+| `/api/recover` POST | `recoverBodySchema` |
+| `/api/slack/webhook` POST | `parseSlackInteractionPayload` after signature verify |
 
-## Manual test (unauthenticated, no Clerk session)
+## Cron / production policy
 
-```
-# Before (this PR)                 # After (this PR)
-GET    /api/incidents      -> 404  GET    /api/incidents      -> 401 {"error":"Unauthorized"}
-GET    /api/incidents/abc  -> 404  GET    /api/incidents/abc  -> 401
-PATCH  /api/incidents/abc  -> 404  PATCH  /api/incidents/abc  -> 401
-POST   .../abc/approve     -> 404  POST   .../abc/approve     -> 401
-POST   /api/investigate    -> 404  POST   /api/investigate    -> 401
-POST   /api/detect         -> 404  POST   /api/detect         -> 401
-POST   /api/slack/webhook  -> 404  POST   /api/slack/webhook  -> 200 (PUBLIC ⚠ see F2)
-```
+- **Production** requires `CRON_SECRET`; scheduler routes return `503` if it is missing.
+- When `CRON_SECRET` is set (any environment), cron routes require `Authorization: Bearer <secret>` or matching `x-cron-secret`.
+- **Local dev** without `CRON_SECRET`: cron routes require a normal Supabase session (proxy); routes use the admin client after session check.
 
-> Note: `/api/slack/webhook` was gated when this audit was first written. After
-> merging `main` (RUN-32) it is **public**, so it no longer returns `401` — it
-> processes the request. See ⚠ F2 — it is public **without** signature verification.
+## Slack webhook
 
-Before: Clerk returned an HTML `404` (`x-clerk-auth-status: signed-out`). After: every
-`/api/*` route returns a consistent JSON `401`. ✅
-
-## Findings & recommendations
-
-- **F1 — Inconsistent unauth responses. (FIXED here.)** `/api/*` now returns JSON `401`
-  uniformly via middleware.
-- **⚠ F2 — Slack webhook is PUBLIC but UNVERIFIED (active vulnerability). (Owner: [RUN-32](https://linear.app/run-zero/issue/RUN-32))**
-  `main` now lists `/api/slack/webhook(.*)` in `isPublicRoute` (RUN-32, half done), but the
-  handler in `app/api/slack/webhook/route.ts` performs **service-role mutations** (approves
-  `incident_actions`, updates incidents) with **no `X-Slack-Signature`/timestamp check**.
-  Anyone on the internet can POST a crafted `payload` and approve/execute actions. This is
-  the exact scenario the original audit warned about. **RUN-32 must add signature
-  verification using `SLACK_SIGNING_SECRET` before this ships** — or the route must be
-  re-gated. Until then this is an open, unauthenticated mutation endpoint.
-- **F3 — No per-route `auth()` guards (defense-in-depth). (Owner: [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
-  Routes rely solely on middleware. RUN-28 should add `const { userId } = await auth()`
-  checks inside each handler so protection survives any future middleware-matcher change.
-- **F4 — `PATCH /api/incidents/[id]` mass-assignment. (Owner: [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
-  The handler spreads the raw request body into `update(body)`, allowing a client to set any
-  column. Recommend an allowlist (e.g. only `status`, `assignee`, `notes`).
-- **F5 — `/api/detect` is unreachable by a cron. (Owner: RUN-20 / deploy)**
-  The route supports a `CRON_SECRET` bearer so a scheduler can trigger breach detection, but
-  Clerk middleware gates `/api/*` and `/api/detect` is **not** public, so a Vercel cron (no
-  Clerk session) is rejected with `401` before `CRON_SECRET` is ever checked. To use it as a
-  cron, either add `/api/detect` to `isPublicRoute` and rely on `CRON_SECRET`, or invoke it
-  with a valid session. (Manual/authenticated calls work today.)
+Inbound requests must pass `verifySlackRequest` (`SLACK_SIGNING_SECRET`, timestamp skew, constant-time HMAC). Without a valid signature the handler returns `401` and performs no mutations.
 
 ## Checklist
 
-- [x] Every `/api/*` route requires authentication (Clerk middleware, matcher verified).
-- [x] Unauthenticated `/api/*` requests return a consistent `401` JSON response.
-- [x] Page routes redirect unauthenticated users to `/sign-in`.
-- [x] Input-validation errors return appropriate `400`/`404`.
-- [x] Manual test run and recorded (above).
-- [~] Slack webhook made public — **done on `main` (RUN-32)** — but signature verification is **still missing (⚠ F2, vulnerability)**.
-- [ ] Per-route `auth()` guards + PATCH field allowlist — **RUN-28**.
-- [ ] `/api/detect` cron reachability (F5) — **RUN-20 / deploy**.
+- [x] Unauthenticated `/api/*` (except signed Slack) returns JSON `401`
+- [x] Page routes redirect unauthenticated users to `/sign-in`
+- [x] PATCH incidents uses Zod allowlist (no raw body spread)
+- [x] Slack webhook verifies signatures before service-role writes
+- [x] Cron auth centralized in `lib/cron-auth.ts`
+- [x] Production requires `CRON_SECRET` for scheduler routes
+- [x] Mutating user routes use `getUser()` defense-in-depth
+
+## Related
+
+- Env reference: [`.env.example`](../.env.example), [DEPLOYMENT.md](./DEPLOYMENT.md)
+- Agent conventions: [frontend/app/api/AGENTS.md](../frontend/app/api/AGENTS.md)
