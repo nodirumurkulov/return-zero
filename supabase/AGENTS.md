@@ -1,16 +1,33 @@
-# supabase/
+# AGENTS.md — supabase
 
-Postgres schema and RLS tests for Resolve.
+Postgres schema, views, RPCs, RLS. **Parent:** [../AGENTS.md](../AGENTS.md) · **Humans:** [README.md](README.md)
+
+## Setup commands
+
+```bash
+supabase link                    # once per machine
+supabase db push                 # apply migrations
+```
 
 ## Layout
 
-- `migrations/` — ordered SQL migrations (apply via Supabase CLI)
-- `tests/` — RLS test SQL + `run_rls_test.sh`
-- `config.toml` — local Supabase config
+| Path | Role |
+|------|------|
+| `migrations/` | Ordered SQL — never edit old files in place |
+| `tests/` | RLS tests + `run_rls_test.sh` if present |
+| `config.toml` | Local Supabase config |
 
 ## Rules
 
-- Schema changes require a new migration file; do not edit old migrations in place.
-- Row shapes in frontend should match migrations; update `lib/*/db.ts` when columns change.
+- New schema change → **new migration file** only.
+- When columns change, update matching types in `frontend/lib/<domain>/types.ts` in the same PR.
+- Frontend uses service role on the server; RLS still matters for anon paths and tests.
 
-Humans: use Supabase dashboard or CLI for apply/push — not documented step-by-step here.
+## Testing
+
+```bash
+# after local supabase up, if tests exist:
+./tests/run_rls_test.sh
+```
+
+After seed: `cd scripts && npm run validate`

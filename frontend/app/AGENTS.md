@@ -1,23 +1,28 @@
-# app/
+# AGENTS.md — app
 
-Next.js App Router: pages, layouts, server actions, and route handlers.
+Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.md](README.md)
 
-## Rules
+## Development workflow
 
-- **Default to Server Components.** Add `"use client"` only for hooks, browser APIs, or event handlers.
-- **Fetch on the server** via `createServiceClient()` or domain queries (`listIncidents`, `getIncidentDetail`). Avoid client `useEffect` + `fetch` for initial page data (see RUN-76).
-- API routes live under `app/api/` — see [api/AGENTS.md](api/AGENTS.md).
-- Server actions: `app/actions.ts` — threshold and incident status updates with `revalidatePath`.
+- Default to **Server Components**; `"use client"` only for hooks, browser APIs, or event handlers.
+- Load data with `createServiceClient()` + domain queries (`listIncidents`, `getIncidentDetail`, `listCatalogWithThresholds`, …).
+- Do **not** use client `useEffect` + `fetch` for initial page data.
+- Use `export const dynamic = "force-dynamic"` where Supabase data must be fresh.
 
-## Key routes
+## Key paths
 
-| Path | Role |
-|------|------|
-| `/catalog` | Product health grid |
-| `/incidents` | Kanban (server-loaded) |
-| `/incidents/[id]` | Detail (moving to server + client islands) |
-| `/api/detect`, `/api/investigate`, … | Pipelines |
+| Path | Notes |
+|------|--------|
+| `catalog/`, `catalog/[productId]/` | RSC + catalog queries |
+| `incidents/`, `incidents/[incidentId]/` | RSC; detail uses `IncidentDetailView` + client islands |
+| `actions.ts` | `updateThreshold`, `updateIncidentStatus` + `revalidatePath` |
+| `api/` | See [api/AGENTS.md](api/AGENTS.md) |
 
 ## Auth
 
-Clerk protects routes via `proxy.ts`. Public: sign-in/up, Slack webhook.
+Clerk via [../proxy.ts](../proxy.ts). Public routes: sign-in/up, Slack webhook.
+
+## Code style
+
+- Import domain types from `@/lib/<domain>`, never redefine in page files.
+- After server actions that mutate data, `revalidatePath` is already used in `actions.ts` — extend consistently.
