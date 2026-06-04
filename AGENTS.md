@@ -37,4 +37,4 @@ Deslop work is tracked under project **Epic: Codebase deslop** (RUN-71–RUN-77)
 
 ## Nested guides
 
-Each major directory has **`README.md`** (overview for humans) and **`AGENTS.md`** (rules and file map for agents). Read both for the folder you edit.
+Each major directory has **`README.md`** (human onboarding: what’s here, usage, notes, last reviewed) and **`AGENTS.md`** (coding rules and file map). Read both for the folder you edit.
