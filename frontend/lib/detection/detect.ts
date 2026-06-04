@@ -1,24 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Direction, ProductSourceFacts } from "../metrics/types";
+import type { ProductSourceFacts } from "../metrics/types";
 import { computeMetricsDetailed } from "../metrics/engine";
+import { getMonthlySeries } from "../metrics/series";
+import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 
 // Deterministic KPI breach detection. Runs the config-driven metrics engine over
 // the catalogue and opens an incident per product with one or more critical
 // breaches. No LLM here — detection is plain math; the agents narrate later.
 
-const SEV_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
-const RANK_SEV: Record<number, string> = { 4: "critical", 3: "high", 2: "medium", 1: "low" };
 const OPEN_EXCLUDED = ["resolved", "canceled"];
-
-function bumpSeverity(sev: string): string {
-  return RANK_SEV[Math.min(4, (SEV_RANK[sev] ?? 2) + 1)];
-}
-
-// How far past the threshold a breach is, as a multiple (>=2 => bump severity).
-function breachMagnitude(value: number, threshold: number, direction: Direction): number {
-  if (threshold === 0) return 1;
-  return direction === "above" ? value / threshold : threshold / Math.max(value, 1e-9);
-}
 
 function factColumn(facts: ProductSourceFacts, source: string | null, field: string | null): number {
   if (!source || !field) return 0;
@@ -69,6 +59,9 @@ export async function detectBreaches(supabase: SupabaseClient): Promise<Detectio
     (prodRows ?? []).map((p) => [p.product_id as string, (p.title as string) ?? (p.product_id as string)])
   );
 
+  // Monthly series for trend input to severity scoring.
+  const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
+
   const created: CreatedIncident[] = [];
   const skipped: DetectionResult["skipped"] = [];
   const productIds = Object.keys(metrics);
@@ -88,14 +81,17 @@ export async function detectBreaches(supabase: SupabaseClient): Promise<Detectio
         const facts = factsByWindow.get(def.window_days)!.get(productId)!;
         return { m, def, impact: factColumn(facts, def.impact_source, def.impact_field) };
       })
-      .sort((a, b) => SEV_RANK[b.def.severity] - SEV_RANK[a.def.severity] || b.impact - a.impact);
+      .sort((a, b) => severityRank(b.def.severity) - severityRank(a.def.severity) || b.impact - a.impact);
     const primary = ranked[0];
 
     const value = primary.m.value ?? 0;
-    let severity = primary.def.severity;
-    if (breachMagnitude(value, primary.m.threshold, primary.m.direction) >= 2) {
-      severity = bumpSeverity(severity);
-    }
+    const series = seriesByProduct.get(productId) ?? [];
+    const severity = scoreSeverity({
+      baseSeverity: primary.def.severity,
+      magnitude: breachMagnitude(value, primary.m.threshold, primary.m.direction),
+      impactAmount: primary.impact,
+      worsening: metricTrendWorsening(primary.m.metric_key, series, primary.m.direction),
+    });
 
     const productTitle = titleById.get(productId) ?? productId;
     const target = `${primary.m.direction === "above" ? "≤" : "≥"}${fmtValue(primary.m.unit, primary.m.threshold)}`;
