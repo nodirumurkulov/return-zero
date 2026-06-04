@@ -9,7 +9,8 @@
 // report still renders with a deterministic narrative.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { callLLM } from "@/lib/llm";
+import { z } from "zod";
+import { callLLMJson } from "@/lib/llm";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MetricValue, MonthlyPoint } from "@/lib/metrics/types";
@@ -258,23 +259,31 @@ function fallbackNarrative(s: ReportSummary): string {
   ].join(" ");
 }
 
+const narrativeLlmSchema = z.object({
+  narrative: z.string().optional(),
+  text: z.string().optional(),
+});
+
 export async function narrate(summary: ReportSummary): Promise<string> {
   const fallback = fallbackNarrative(summary);
   try {
-    const result = await callLLM<{ narrative?: string; text?: string }>([
-      {
-        role: "system",
-        content:
-          "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
-          "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
-          'Reply as JSON: {"narrative": "..."}.',
-      },
-      {
-        role: "user",
-        content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
-      },
-    ]);
-    const text = (result.narrative ?? result.text ?? "").trim();
+    const result = await callLLMJson(
+      [
+        {
+          role: "system",
+          content:
+            "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
+            "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
+            'Reply as JSON: {"narrative": "..."}.',
+        },
+        {
+          role: "user",
+          content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
+        },
+      ],
+      narrativeLlmSchema,
+    );
+    const text = (result?.narrative ?? result?.text ?? "").trim();
     return text.length > 0 ? text : fallback;
   } catch {
     return fallback;

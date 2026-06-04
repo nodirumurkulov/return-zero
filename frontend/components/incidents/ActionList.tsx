@@ -95,6 +95,7 @@ export default function ActionList({
               approveAll();
             }}
             disabled={loading}
+            aria-busy={loading}
           >
             {loading ? "Approving…" : "Approve all low-risk"}
           </Button>
@@ -102,7 +103,11 @@ export default function ActionList({
       )}
 
       {message ? (
-        <Alert className="border-green-500/20 bg-green-500/10 text-green-400">
+        <Alert
+          className="border-green-500/20 bg-green-500/10 text-green-400"
+          role="status"
+          aria-live="polite"
+        >
           <AlertDescription>{message}</AlertDescription>
         </Alert>
       ) : null}
@@ -169,6 +174,8 @@ export default function ActionList({
                         approveOne(action.id);
                       }}
                       disabled={loading}
+                      aria-busy={loading}
+                      aria-label={`Approve action: ${action.title}`}
                     >
                       Approve
                     </Button>

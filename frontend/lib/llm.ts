@@ -6,6 +6,7 @@
 
 import "server-only";
 import OpenAI from "openai";
+import type { z } from "zod";
 
 export type Message = { role: "system" | "user" | "assistant"; content: string };
 
@@ -44,21 +45,21 @@ async function callAnthropic(messages: Message[]): Promise<string> {
   return json.content?.[0]?.text ?? "";
 }
 
-/**
- * Call the LLM and parse the JSON response.
- * Both providers are instructed to return a JSON object.
- */
-export async function callLLM<T = Record<string, unknown>>(
-  messages: Message[]
-): Promise<T> {
-  const raw = provider === "anthropic"
-    ? await callAnthropic(messages)
-    : await callOpenAI(messages);
+async function callLLMRaw(messages: Message[]): Promise<string> {
+  return provider === "anthropic" ? await callAnthropic(messages) : await callOpenAI(messages);
+}
 
+/**
+ * Call the LLM and parse the JSON response with Zod.
+ * Returns null when the response is missing or invalid (callers use deterministic fallbacks).
+ */
+export async function callLLMJson<T>(messages: Message[], schema: z.ZodType<T>): Promise<T | null> {
+  const raw = await callLLMRaw(messages);
   try {
-    return JSON.parse(raw) as T;
+    const parsed: unknown = JSON.parse(raw);
+    const result = schema.safeParse(parsed);
+    return result.success ? result.data : null;
   } catch {
-    // If not valid JSON, wrap in a text field
-    return { text: raw } as T;
+    return null;
   }
 }

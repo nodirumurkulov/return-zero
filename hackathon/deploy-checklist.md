@@ -29,7 +29,7 @@ Set **Root Directory** to `frontend` in the Vercel project settings.
 
 ## Post-deploy checklist
 
-- [ ] Sign in via Clerk works
+- [ ] Sign in via Supabase Auth works
 - [ ] `/catalog` loads 62 products
 - [ ] Court Trainer (`/catalog/prod_00005`) shows return spike
 - [ ] `/incidents` shows INC-247 demo incident

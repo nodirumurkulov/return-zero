@@ -27,11 +27,12 @@ export default function TriggerInvestigationButton({
           runInvestigation();
         }}
         disabled={investigate.isPending}
+        aria-busy={investigate.isPending}
       >
         {investigate.isPending ? "Investigating…" : "Trigger Investigation"}
       </Button>
       {error ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" role="alert" aria-live="polite">
           <AlertDescription className="font-mono text-xs">{error}</AlertDescription>
         </Alert>
       ) : null}

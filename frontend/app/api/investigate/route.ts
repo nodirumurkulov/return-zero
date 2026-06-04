@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
-import { runInvestigation } from "@/lib/agents";
-import { investigateBodySchema } from "@/lib/agents/schemas";
+import { investigateBodySchema, runInvestigation } from "@/lib/agents";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { sendIncidentNotification } from "@/lib/slack";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
@@ -149,8 +149,8 @@ export async function POST(req: NextRequest) {
       actions_count: result.actions.length,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    logApiError("api/investigate", err);
     await supabase.from("incidents").update({ status: "detected" }).eq("id", incident_id);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiErrorResponse(err);
   }
 }

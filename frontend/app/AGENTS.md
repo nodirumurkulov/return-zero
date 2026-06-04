@@ -37,7 +37,7 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 
 ## Auth
 
-Clerk via [../proxy.ts](../proxy.ts). Public routes: sign-in/up, Slack webhook.
+Supabase Auth via [../proxy.ts](../proxy.ts). Public routes: sign-in/up, auth callback, Slack webhook.
 
 ## Code style
 

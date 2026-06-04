@@ -10,7 +10,7 @@ Next.js App Router: pages, layouts, and server actions. All data fetching for pa
 | `/catalog`, `/catalog/[productId]` | RSC | Product KPIs and thresholds |
 | `/incidents`, `/incidents/[incidentId]` | RSC + client islands | Incident kanban and detail |
 | `/dashboard` | redirect | → `/catalog` |
-| `/sign-in`, `/sign-up` | Clerk | Authentication |
+| `/sign-in`, `/sign-up` | Supabase Auth | Authentication |
 
 Server actions live in [`actions.ts`](actions.ts) (e.g. threshold and status updates).
 
