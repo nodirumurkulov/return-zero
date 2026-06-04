@@ -61,17 +61,16 @@ export async function runRecovery(
     .eq("status", "monitoring");
 
   const resolved: string[] = [];
-  let updated = 0;
   const nowMs = Date.now();
+  const active = (incidents ?? []).filter((inc) => inc.monitoring_started_at);
 
-  for (const inc of incidents ?? []) {
-    if (!inc.monitoring_started_at) continue;
+  for (const inc of active) {
     const elapsedDays =
-      opts.advanceDays ?? Math.max(0, (nowMs - new Date(inc.monitoring_started_at).getTime()) / 86_400_000);
+      opts.advanceDays ??
+      Math.max(0, (nowMs - new Date(inc.monitoring_started_at).getTime()) / 86_400_000);
     const pct = horizon > 0 ? Math.min(1, elapsedDays / horizon) : 1;
 
     await supabase.from("incidents").update({ recovery_pct: pct }).eq("id", inc.id);
-    updated++;
 
     if (pct >= 1) {
       const now = new Date().toISOString();
@@ -98,5 +97,5 @@ export async function runRecovery(
     }
   }
 
-  return { monitored: (incidents ?? []).length, updated, resolved };
+  return { monitored: (incidents ?? []).length, updated: active.length, resolved };
 }

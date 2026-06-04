@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { runRecovery } from "@/lib/detection/recover";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +16,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  let advanceDays: number | undefined;
-  try {
-    const body = (await req.json()) as { advance_days?: number };
-    if (typeof body?.advance_days === "number") advanceDays = body.advance_days;
-  } catch {
-    // no body — use real elapsed time
-  }
+  const advanceDays = await (async (): Promise<number | undefined> => {
+    try {
+      const body = (await req.json()) as { advance_days?: number };
+      return typeof body.advance_days === "number" ? body.advance_days : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
 
   const supabase = createServiceClient();
   try {

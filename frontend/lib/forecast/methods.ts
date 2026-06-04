@@ -15,12 +15,13 @@ export function linearTrend(values: number[]): TrendFit {
   if (n === 1) return { slope: 0, intercept: values[0] };
   const meanX = (n - 1) / 2;
   const meanY = values.reduce((a, b) => a + b, 0) / n;
-  let num = 0;
-  let den = 0;
-  for (let i = 0; i < n; i++) {
-    num += (i - meanX) * (values[i] - meanY);
-    den += (i - meanX) ** 2;
-  }
+  const { num, den } = values.reduce(
+    (acc, y, i) => ({
+      num: acc.num + (i - meanX) * (y - meanY),
+      den: acc.den + (i - meanX) ** 2,
+    }),
+    { num: 0, den: 0 },
+  );
   const slope = den === 0 ? 0 : num / den;
   return { slope, intercept: meanY - slope * meanX };
 }
@@ -29,20 +30,17 @@ export function linearTrend(values: number[]): TrendFit {
 export function residualStd(values: number[], fit: TrendFit): number {
   const n = values.length;
   if (n < 3) return 0;
-  let ss = 0;
-  for (let i = 0; i < n; i++) {
+  const ss = values.reduce((sum, y, i) => {
     const pred = fit.intercept + fit.slope * i;
-    ss += (values[i] - pred) ** 2;
-  }
+    return sum + (y - pred) ** 2;
+  }, 0);
   return Math.sqrt(ss / (n - 2));
 }
 
 /** Exponentially-weighted moving average (last smoothed value). */
 export function ewma(values: number[], alpha = 0.4): number {
   if (values.length === 0) return 0;
-  let s = values[0];
-  for (let i = 1; i < values.length; i++) s = alpha * values[i] + (1 - alpha) * s;
-  return s;
+  return values.slice(1).reduce((s, v) => alpha * v + (1 - alpha) * s, values[0]);
 }
 
 /**
@@ -68,25 +66,24 @@ export function seasonalFactor(values: number[], period: number, futureIndex: nu
 export function forecastAhead(
   values: number[],
   horizon: number,
-  opts: { period?: number; seasonal?: boolean } = {}
+  opts: { period?: number; seasonal?: boolean } = {},
 ): PointForecast {
   if (values.length === 0) {
     return { point: 0, lower: 0, upper: 0, horizon, slope: 0, method: "empty", rising: false };
   }
   const fit = linearTrend(values);
   const futureIdx = values.length - 1 + horizon;
-  let point = fit.intercept + fit.slope * futureIdx;
+  const trendPoint = fit.intercept + fit.slope * futureIdx;
 
-  // Anchor to recent level (EWMA) so a long flat history doesn't over-extrapolate.
   const level = ewma(values.slice(-Math.min(6, values.length)));
-  point = 0.6 * point + 0.4 * (level + fit.slope * horizon);
+  const blended = 0.6 * trendPoint + 0.4 * (level + fit.slope * horizon);
 
-  let method = "linear+ewma";
-  if (opts.seasonal && opts.period) {
-    point *= seasonalFactor(values, opts.period, futureIdx);
-    method = "trend+seasonal";
-  }
-  point = Math.max(0, point);
+  const seasonal = opts.seasonal && opts.period;
+  const point = Math.max(
+    0,
+    seasonal ? blended * seasonalFactor(values, opts.period!, futureIdx) : blended,
+  );
+  const method = seasonal ? "trend+seasonal" : "linear+ewma";
 
   const band = 1.96 * residualStd(values, fit) * Math.sqrt(horizon);
   return {

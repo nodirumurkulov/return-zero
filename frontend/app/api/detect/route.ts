@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { detectBreaches } from "@/lib/detection/detect";
+import { createServiceClient } from "@/lib/supabase/server";
 
 // POST /api/detect — run deterministic KPI breach detection over the catalogue
 // and open incidents for newly-breached products. Safe to call repeatedly: it

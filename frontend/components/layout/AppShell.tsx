@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { LayoutGrid, Search, Siren } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 

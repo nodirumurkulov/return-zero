@@ -115,19 +115,16 @@ export function computeHealthLevel(
 
 export function computeProductHealth(
   metrics: ProductMetric,
-  thresholds: KpiThreshold[]
+  thresholds: KpiThreshold[],
 ): HealthLevel {
-  let worst: HealthLevel = "healthy";
-  const rank = { healthy: 0, warning: 1, critical: 2 };
+  const rank = { healthy: 0, warning: 1, critical: 2 } as const;
 
-  for (const threshold of thresholds) {
+  return thresholds.reduce<HealthLevel>((worst, threshold) => {
     const value = metricValue(metrics, threshold.kpi_name);
-    if (value == null) continue;
+    if (value == null) return worst;
     const level = computeHealthLevel(value, threshold);
-    if (rank[level] > rank[worst]) worst = level;
-  }
-
-  return worst;
+    return rank[level] > rank[worst] ? level : worst;
+  }, "healthy");
 }
 
 function metricValue(metrics: ProductMetric, kpiName: string): number | null {
