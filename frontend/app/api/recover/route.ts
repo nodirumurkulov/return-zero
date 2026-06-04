@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { runRecovery } from "@/lib/detection/recover";
+import { requireUserOrCron } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,13 +9,8 @@ export const dynamic = "force-dynamic";
 // auto-resolve those that reach 100%. Body: { advance_days?: number } to
 // fast-forward the monitoring clock (demo). Schedulable via CRON_SECRET.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+  const unauthorized = await requireUserOrCron(req);
+  if (unauthorized) return unauthorized;
 
   let advanceDays: number | undefined;
   try {

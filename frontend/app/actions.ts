@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/auth-guard";
 
 export async function updateThreshold(productId: string, formData: FormData) {
+  if (!(await getUserId())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
   const kpiName = String(formData.get("kpi_name") ?? "");
   const warningValue = Number(formData.get("warning_value"));
   const criticalValue = Number(formData.get("critical_value"));
@@ -31,6 +36,10 @@ export async function updateThreshold(productId: string, formData: FormData) {
 }
 
 export async function updateIncidentStatus(incidentId: string, status: string) {
+  if (!(await getUserId())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
   const supabase = createServiceClient();
   const payload: { status: string; resolved_at?: string | null } = { status };
 

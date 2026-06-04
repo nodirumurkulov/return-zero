@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { detectForecastRisks } from "@/lib/detection/forecast";
+import { requireUserOrCron } from "@/lib/auth-guard";
 
 // POST /api/forecast — run predictive (forecast-based) detection over the
 // catalogue and open forward-looking incidents per the config-driven
 // forecast_rules. Dedups against open incidents; safe to schedule.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+  const unauthorized = await requireUserOrCron(req);
+  if (unauthorized) return unauthorized;
 
   const supabase = createServiceClient();
   try {

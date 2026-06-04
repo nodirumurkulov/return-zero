@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendIncidentNotification } from "@/lib/slack";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
+import { requireUser } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const unauthorized = await requireUser();
+  if (unauthorized) return unauthorized;
+
   const supabase = createServiceClient();
   const body = (await req.json()) as {
     action_ids?: string[];   // specific action IDs to approve

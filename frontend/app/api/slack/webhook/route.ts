@@ -7,6 +7,10 @@ export const dynamic = "force-dynamic";
  * POST /api/slack/webhook
  * Handles Slack interactive component callbacks (button clicks).
  * Slack sends application/x-www-form-urlencoded with a `payload` field.
+ *
+ * Auth note: this is a machine-to-machine endpoint (Slack has no Clerk
+ * session), so it is intentionally NOT guarded by requireUser(). Its
+ * authentication is Slack request-signature verification, handled by RUN-32.
  */
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient();

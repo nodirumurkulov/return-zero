@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
+
+// Fields a client is allowed to PATCH on an incident. Anything else in the body
+// is ignored, so a crafted request can't overwrite ids/timestamps/etc.
+const INCIDENT_PATCHABLE_FIELDS = [
+  "status",
+  "severity",
+  "title",
+  "root_cause",
+  "resolved_at",
+] as const;
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const unauthorized = await requireUser();
+  if (unauthorized) return unauthorized;
+
   const supabase = createServiceClient();
 
   const [incidentRes, findingsRes, actionsRes, timelineRes] = await Promise.all([
@@ -44,12 +58,27 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const unauthorized = await requireUser();
+  if (unauthorized) return unauthorized;
+
   const supabase = createServiceClient();
-  const body = await req.json() as Record<string, unknown>;
+  const body = (await req.json()) as Record<string, unknown>;
+
+  const update: Record<string, unknown> = {};
+  for (const field of INCIDENT_PATCHABLE_FIELDS) {
+    if (field in body) update[field] = body[field];
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json(
+      { error: "No updatable fields provided" },
+      { status: 400 }
+    );
+  }
 
   const { data, error } = await supabase
     .from("incidents")
-    .update(body)
+    .update(update)
     .eq("id", params.id)
     .select()
     .single();

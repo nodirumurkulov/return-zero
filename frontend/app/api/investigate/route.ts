@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { runInvestigation } from "@/lib/agents";
 import { sendIncidentNotification } from "@/lib/slack";
+import { requireUser } from "@/lib/auth-guard";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const unauthorized = await requireUser();
+  if (unauthorized) return unauthorized;
+
   const supabase = createServiceClient();
   const body = (await req.json()) as { incident_id: string; product_id: string };
 

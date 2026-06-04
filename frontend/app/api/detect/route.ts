@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { detectBreaches } from "@/lib/detection/detect";
+import { requireUserOrCron } from "@/lib/auth-guard";
 
 // POST /api/detect — run deterministic KPI breach detection over the catalogue
 // and open incidents for newly-breached products. Safe to call repeatedly: it
 // dedups against products that already have an open incident.
 //
 // Intended to be hit by a scheduler (e.g. a Vercel cron) or triggered manually.
-// If CRON_SECRET is set, callers must present it.
+// Requires either an authenticated Clerk session or a valid CRON_SECRET.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+  const unauthorized = await requireUserOrCron(req);
+  if (unauthorized) return unauthorized;
 
   const supabase = createServiceClient();
   try {

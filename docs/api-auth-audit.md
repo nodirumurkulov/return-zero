@@ -21,11 +21,11 @@ still redirect unauthenticated users to `/sign-in`.
 
 | Route | Methods | Mutates? | Auth mechanism | Unauth response |
 |-------|---------|----------|----------------|-----------------|
-| `/api/incidents` | GET | no | Clerk middleware | `401 {"error":"Unauthorized"}` |
-| `/api/incidents/[id]` | GET, PATCH | PATCH yes | Clerk middleware | `401` |
-| `/api/incidents/[id]/approve` | POST | yes | Clerk middleware | `401` |
-| `/api/investigate` | POST | yes | Clerk middleware | `401` |
-| `/api/detect` | POST | yes (opens incidents) | Clerk middleware + optional `CRON_SECRET` | `401` (see F5) |
+| `/api/incidents` | GET | no | Clerk middleware + `requireUser()` | `401 {"error":"Unauthorized"}` |
+| `/api/incidents/[id]` | GET, PATCH | PATCH yes (allowlisted) | Clerk middleware + `requireUser()` | `401` |
+| `/api/incidents/[id]/approve` | POST | yes | Clerk middleware + `requireUser()` | `401` |
+| `/api/investigate` | POST | yes | Clerk middleware + `requireUser()` | `401` |
+| `/api/detect` `/api/forecast` `/api/recover` | POST | yes (opens/updates incidents) | Clerk middleware + `requireUserOrCron()` (session or `CRON_SECRET`) | `401` (see F5) |
 | `/api/slack/webhook` | POST | **yes (service role)** | **Public — no auth** ⚠ | **200, request processed** (see ⚠ F2) |
 
 ## In-route error responses (input validation)
@@ -72,12 +72,16 @@ Before: Clerk returned an HTML `404` (`x-clerk-auth-status: signed-out`). After:
   the exact scenario the original audit warned about. **RUN-32 must add signature
   verification using `SLACK_SIGNING_SECRET` before this ships** — or the route must be
   re-gated. Until then this is an open, unauthenticated mutation endpoint.
-- **F3 — No per-route `auth()` guards (defense-in-depth). (Owner: [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
-  Routes rely solely on middleware. RUN-28 should add `const { userId } = await auth()`
-  checks inside each handler so protection survives any future middleware-matcher change.
-- **F4 — `PATCH /api/incidents/[id]` mass-assignment. (Owner: [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
-  The handler spreads the raw request body into `update(body)`, allowing a client to set any
-  column. Recommend an allowlist (e.g. only `status`, `assignee`, `notes`).
+- **F3 — No per-route `auth()` guards (defense-in-depth). (FIXED — [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
+  Each handler now calls a route-level guard from `lib/auth-guard.ts`: user-facing routes
+  use `requireUser()` (`401` when no Clerk session); cron routes (`/api/detect`,
+  `/api/forecast`, `/api/recover`) use `requireUserOrCron()` (Clerk session **or** valid
+  `CRON_SECRET`). Protection now survives any future middleware-matcher change. Server
+  Actions in `app/actions.ts` also reject unauthenticated callers.
+- **F4 — `PATCH /api/incidents/[id]` mass-assignment. (FIXED — [RUN-28](https://linear.app/run-zero/issue/RUN-28))**
+  The handler previously spread the raw body into `update(body)`. It now copies only an
+  allowlist (`status`, `severity`, `title`, `root_cause`, `resolved_at`) and returns `400`
+  if no updatable field is provided.
 - **F5 — `/api/detect` is unreachable by a cron. (Owner: RUN-20 / deploy)**
   The route supports a `CRON_SECRET` bearer so a scheduler can trigger breach detection, but
   Clerk middleware gates `/api/*` and `/api/detect` is **not** public, so a Vercel cron (no
@@ -93,5 +97,5 @@ Before: Clerk returned an HTML `404` (`x-clerk-auth-status: signed-out`). After:
 - [x] Input-validation errors return appropriate `400`/`404`.
 - [x] Manual test run and recorded (above).
 - [~] Slack webhook made public — **done on `main` (RUN-32)** — but signature verification is **still missing (⚠ F2, vulnerability)**.
-- [ ] Per-route `auth()` guards + PATCH field allowlist — **RUN-28**.
-- [ ] `/api/detect` cron reachability (F5) — **RUN-20 / deploy**.
+- [x] Per-route `auth()` guards + PATCH field allowlist — **done (RUN-28)**.
+- [ ] `/api/detect` cron reachability (F5) — **RUN-20 / deploy** (still needs `isPublicRoute` change in middleware; route-level guard now accepts `CRON_SECRET`).
