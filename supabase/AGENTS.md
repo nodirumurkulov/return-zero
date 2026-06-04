@@ -17,6 +17,11 @@ supabase db push                 # apply migrations
 | `tests/` | RLS tests + `run_rls_test.sh` if present |
 | `config.toml` | Local Supabase config |
 
+## Best practices
+
+- **Postgres idioms:** indexes, constraints, and RLS policies named clearly; avoid breaking migrations in place.
+- Column renames/types: migration + `frontend/lib/<domain>/types.ts` + seed/validators in **one PR** — no “DB first, types later” compat window.
+
 ## Rules
 
 - New schema change → **new migration file** only.

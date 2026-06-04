@@ -23,6 +23,11 @@ import {
 } from "@/lib/incidents";
 ```
 
+## Best practices
+
+- Single source of truth for incident types and flows — **refactor consumers** when APIs change; no compatibility aliases.
+- Extend `approve.ts` / `queries.ts` instead of duplicating logic in routes, Slack, or components.
+
 ## Rules
 
 - Do not redefine `Incident` in pages or components.

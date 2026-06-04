@@ -16,6 +16,11 @@ Breach detection, severity, forecast-risk scan, recovery loop. **Parent:** [../.
 
 May import `metrics` and `forecast`. Avoid importing incident UI types.
 
+## Best practices
+
+- Keep detection **deterministic and testable** — pure scoring where possible; side effects only in explicit write paths.
+- Schema changes go through `schemas.ts`; remove old body shapes when routes tighten validation.
+
 ## Rules
 
 - Cron-capable routes call these modules; keep side effects (DB writes) here, not in route files.

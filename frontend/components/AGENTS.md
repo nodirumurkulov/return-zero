@@ -17,6 +17,13 @@ React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.
 | [layout/](layout/AGENTS.md) | AppShell |
 | [ui/](ui/AGENTS.md) | Primitives |
 
+## Best practices (UI)
+
+- **Composition over props soup** — split components when booleans multiply; prefer children/slots over `isX` flags (React composition idioms).
+- **No domain logic in UI** — health, severity, approval rules stay in `lib/`; components render and trigger actions only.
+- **No backward compat props** — rename/remove props and update all call sites; do not keep optional deprecated props.
+- **Accessibility:** labels, focus, and keyboard paths on interactive controls (especially approve/investigate flows).
+
 ## Code style
 
 - `"use client"` only when needed (dropdowns, approve, investigation button).

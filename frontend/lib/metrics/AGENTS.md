@@ -11,6 +11,10 @@ Config-driven KPI engine and monthly series. **Parent:** [../../AGENTS.md](../..
 | `series.ts` | Monthly series (paginated RPC) |
 | `sources.ts` | Load source facts |
 
+## Best practices
+
+- Engine reads definitions from DB — **do not** hard-code metric keys in new code; migrate stragglers when you touch them.
+
 ## Rules
 
 - KPI definitions come from DB (`metric_definitions`), not hard-coded metric keys in routes.

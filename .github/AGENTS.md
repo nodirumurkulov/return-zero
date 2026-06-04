@@ -12,6 +12,10 @@ cd frontend && bun ci && bun run lint && bun run typecheck && bun run build
 
 Uses placeholder Clerk/Supabase env vars — enough to build, not to hit real APIs.
 
+## Best practices
+
+- CI encodes **non-negotiable quality** (lint, types, build) — workflow changes must not trade checks for backward compat with broken code.
+
 ## Pull request rules
 
 - Do not disable or weaken CI checks without explicit user request.

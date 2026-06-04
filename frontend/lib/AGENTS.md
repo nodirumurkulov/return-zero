@@ -21,12 +21,18 @@ All Supabase access for app logic goes through `createServiceClient()` and domai
 
 Each domain folder has its own `AGENTS.md`.
 
+## Best practices (domain layer)
+
+- **Types = database truth.** One type per table/view in `types.ts`; no `*Row`, no `from*Row`, no DTO mappers “for compatibility.”
+- **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules.
+- **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.
+- Prefer **TypeScript advanced types** only when they clarify domain invariants; avoid clever types that obscure DB shape.
+- Cross-domain: `detection` → `metrics` / `forecast` OK; avoid `catalog` ↔ `incidents` coupling.
+
 ## Code style
 
-- One type per table/view in `types.ts` — same fields as Supabase columns. No `*Row` aliases, no `from*Row` mappers.
-- Public API via `index.ts` only; keep schemas in `schemas.ts`.
-- Cross-domain: `detection` → `metrics` / `forecast` OK; avoid `catalog` ↔ `incidents` coupling.
-- Redesign over backward compat: update all call sites when exports change.
+- Follow root [Best practices mandate](../../AGENTS.md#best-practices-mandate).
+- When exports change, update **all** call sites (app, api, components, scripts if any) in the same change.
 
 ## Commands
 

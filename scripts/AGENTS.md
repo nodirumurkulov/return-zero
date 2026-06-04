@@ -30,6 +30,11 @@ Env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (use `createScriptC
 | `lib/chunk.mjs` | `chunkArray()` |
 | `lib/supabase.mjs` | Shared client |
 
+## Best practices
+
+- **Modern JS (ESM):** `const`, `for...of`, shared `lib/` helpers — refactor `let` loops when editing a script; no parallel copy-paste Supabase clients.
+- Align validators with `frontend/lib/metrics` RPC contracts; update both when signatures change.
+
 ## Code style
 
 - `const` and `for...of` only; no `let` index loops.

@@ -10,6 +10,10 @@ Deterministic time-series forecasts (no ML). **Parent:** [../../AGENTS.md](../..
 | `methods.ts` | `linearTrend`, `forecastAhead`, seasonality helpers |
 | `predictors.ts`, `product.ts` | Product-level wiring |
 
+## Best practices
+
+- Deterministic forecasts only — no ML stubs or “placeholder” APIs left for compat; replace callers when signatures improve.
+
 ## Code style
 
 - Same inputs → same outputs.

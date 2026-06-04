@@ -15,6 +15,28 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
 
+## Best practices mandate
+
+**Default stance: idiomatic, current best practice — not “make it work with what’s there.”**
+
+1. **No backward compatibility.** Do not keep deprecated APIs, re-exports, shims, feature flags, or “temporary” adapters so old call sites keep compiling. **Redesign, refactor, and delete** obsolete code in the same change; update every import and consumer.
+2. **Follow stack idioms.** Match how this repo and the ecosystem expect code to look (Next.js App Router, React 19 RSC, domain `lib/`, Zod at boundaries, Postgres types in `types.ts`). If local code diverges from idioms, **fix the divergence** — do not add another layer on top.
+3. **Use relevant agent skills by context.** When a task touches an area below, apply that area’s practices from installed skills (e.g. Next.js / React / Vercel / TypeScript / Postgres / modern JS) — not generic shortcuts.
+4. **Smallest correct design.** Prefer clear domain modules, pure functions, and explicit types over clever one-offs. Extend existing modules before inventing parallel patterns.
+5. **Leave the tree cleaner.** Touching a file is permission to bring it in line with these rules; scope stays proportional to the task, but **do not** preserve bad patterns “for later.”
+
+| Context | Apply practices for |
+|---------|---------------------|
+| `frontend/app/` | Next.js App Router, RSC-first data loading, server actions |
+| `frontend/app/api/` | Thin route handlers, Zod validation, no shared JSON helpers |
+| `frontend/components/` | React composition, minimal client islands, a11y |
+| `frontend/lib/` | Domain boundaries, DB-aligned types, functional style |
+| `supabase/` | Migrations, RLS, Postgres schema design |
+| `scripts/` | Node ESM, `const` / `for...of`, shared `lib/` helpers |
+| Docs (`README.md`, `AGENTS.md`) | Clear prose; keep agent + human docs accurate |
+
+Nested `AGENTS.md` files spell out **context-specific** rules; this section is the non-negotiable default everywhere.
+
 ## Setup commands
 
 ```bash
@@ -52,7 +74,7 @@ Package managers: **Bun** in `frontend/`, **npm** in `scripts/`. Do not mix them
 - Prefer **`const`**. No **`let`** unless ESLint cannot be satisfied (rare). No **`var`**.
 - No **IIFEs** for variable init (sync or async). Use a named function or inline `safeParse`. ESLint enforces via `no-restricted-syntax`.
 - Prefer pure functions, `reduce`, and early returns over mutable index loops.
-- **Redesign over backward compatibility.** Delete deprecated surfaces in the same change; fix all imports.
+- **No backward compatibility** (see [Best practices mandate](#best-practices-mandate)): delete deprecated surfaces and fix all imports in the same PR.
 - **Domain modules** under `frontend/lib/<domain>/`: types match Supabase columns, queries, mutations, Zod `schemas.ts`.
 - Import from `@/lib/incidents`, `@/lib/catalog`, etc. Never re-export domain types from `components/`.
 - **API JSON:** Zod in `lib/<domain>/schemas.ts`; routes use `schema.safeParse(await req.json().catch(...))` inline.

@@ -10,6 +10,10 @@ Server pages pass props from `@/lib/catalog` queries. `ThresholdEditor` calls se
 
 `ProductMetric`, `KpiThreshold`, `HealthLevel`, `computeProductHealth` from `@/lib/catalog`.
 
+## Best practices
+
+- Props-only data — refactor toward server-passed catalog types; no optional “legacy” prop shapes.
+
 ## Rules
 
 - No Supabase in components.

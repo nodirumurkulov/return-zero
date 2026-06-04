@@ -29,8 +29,15 @@ if (!parsed.success) {
 
 When `CRON_SECRET` is set, detect/forecast/recover require `Authorization: Bearer <secret>` or matching `x-cron-secret`.
 
+## Best practices (API routes)
+
+- **Thin handlers only** — orchestration belongs in `lib/<domain>/`; routes do not accumulate business logic.
+- **Zod at the boundary** — `safeParse` inline; no wrapper parsers, no `as Type`, no backward-compatible dual shapes.
+- **Delete obsolete endpoints** when flows move (e.g. client fetch replaced by RSC) instead of leaving deprecated routes.
+
 ## Rules
 
 - `createServiceClient()` from `@/lib/supabase/server` only.
 - No async IIFEs, no ad-hoc `as` casts for request bodies.
 - Do not add generic `read-json` helpers — Zod schemas live in the owning domain.
+- Follow root [Best practices mandate](../../../AGENTS.md#best-practices-mandate).

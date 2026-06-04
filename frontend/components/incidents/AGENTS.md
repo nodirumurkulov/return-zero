@@ -12,6 +12,10 @@ Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 | `ActionList.tsx` | client | Approve → `router.refresh()` |
 | `AgentFindingCard.tsx`, `IncidentTimeline.tsx` | server OK | Display |
 
+## Best practices
+
+- Detail page is **RSC-driven** — remove client fetches to incident APIs; use props + `router.refresh()` on mutations only.
+
 ## Rules
 
 - Types from `@/lib/incidents` only.

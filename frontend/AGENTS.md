@@ -28,9 +28,15 @@ bun run verify:secrets
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
 
+## Best practices (this package)
+
+- **No backward compat:** remove dead routes, clients, and re-exports; refactor call sites instead of aliasing old exports.
+- Apply **Next.js 16 + React 19** idioms: RSC by default, small client islands, `router.refresh()` / `revalidatePath` after mutations.
+- If ESLint or types complain, **fix the design** (extract function, move logic to `lib/`) — do not disable rules or add `@ts-expect-error` without explicit user approval.
+
 ## Code style
 
-- Follow root [AGENTS.md](../AGENTS.md): no `let`, no IIFEs, domain imports from `@/lib/*`.
+- Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
 - Auth: [proxy.ts](proxy.ts) (Clerk). Do not bypass without reason.
 
