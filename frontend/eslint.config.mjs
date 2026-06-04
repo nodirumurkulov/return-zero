@@ -23,6 +23,8 @@ export default tseslint.config(
       "postcss.config.mjs",
       "scripts/**/*.ts",
       "lib/supabase/database.types.ts",
+      "e2e/**",
+      "playwright.config.ts",
     ],
   },
   ...nextCoreWebVitals,

@@ -41,7 +41,10 @@ export default function IncidentCard({
   }
 
   return (
-    <div className="group rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30">
+    <div
+      data-testid="incident-card"
+      className="group rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/30"
+    >
       <div className="mb-3 flex items-start justify-between gap-2">
         <SeverityBadge severity={incident.severity} />
         <span className="shrink-0 text-xs text-muted-foreground">
@@ -82,6 +85,7 @@ export default function IncidentCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
+              data-testid="incident-status-trigger"
               variant="outline"
               size="sm"
               className="w-full justify-between"

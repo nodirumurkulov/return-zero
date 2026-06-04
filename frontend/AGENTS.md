@@ -27,6 +27,8 @@ bun run db:lint
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
+| `e2e` / `e2e:ui` / `e2e:headed` | Playwright E2E ([e2e/README.md](e2e/README.md)) |
+| `e2e:install` | Chromium for local runs |
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
 
@@ -40,11 +42,12 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 - Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
-- Auth: [proxy.ts](proxy.ts) (Clerk). Do not bypass without reason.
+- Auth: [proxy.ts](proxy.ts) (Supabase session). Do not bypass without reason.
 
 ## Testing
 
-- No `bun test` yet; rely on `bun run check` and `bun run build`.
+- **E2E:** `supabase start` in `supabase/`, then `bun run db:reset && bun run seed && bun run build && CI=true bun run e2e` (see [e2e/README.md](e2e/README.md)).
+- **Unit/type:** `bun run check` and `bun run build`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

@@ -1,7 +1,7 @@
 /**
  * Seed Pretty Fly CSVs into Supabase and demo incidents.
  *
- *   bun --env-file=.env.local run scripts/seed.ts
+ *   bun run scripts/seed.ts
  */
 import fs from "node:fs";
 import path from "node:path";

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { safeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -26,7 +27,7 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { ok: false as const, error: error.message };
 
-  redirect("/catalog");
+  redirect(safeRedirectPath(formData.get("next")));
 }
 
 export async function signUp(formData: FormData) {
