@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/lib/supabase/database.types";
 import type { MonthlyPoint } from "./types";
 
 export type { MonthlyPoint };
 
-function toPoint(r: Record<string, unknown>): MonthlyPoint {
+type SeriesRow = Database["public"]["Functions"]["product_monthly_series"]["Returns"][number];
+
+function toPoint(r: SeriesRow): MonthlyPoint {
   return {
     product_id: String(r.product_id),
     month: String(r.month),
@@ -23,7 +26,7 @@ function toPoint(r: Record<string, unknown>): MonthlyPoint {
  * contract; this is the substrate the forecasting engine consumes.
  */
 export async function getMonthlySeries(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   opts: { productId?: string; months?: number } = {}
 ): Promise<Map<string, MonthlyPoint[]>> {
   const months = opts.months ?? 24;
@@ -31,12 +34,12 @@ export async function getMonthlySeries(
   // PostgREST caps RPC results (default 1000 rows); the full series is
   // products x months (~1488), so page through it to avoid silent truncation.
   const pageSize = 1000;
-  const fetchPage = async (from: number): Promise<Record<string, unknown>[]> => {
+  const fetchPage = async (from: number): Promise<SeriesRow[]> => {
     const { data, error } = await supabase
       .rpc("product_monthly_series", { p_months: months })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(`product_monthly_series failed: ${error.message}`);
-    const page = (data ?? []) as Record<string, unknown>[];
+    const page = data ?? [];
     if (page.length < pageSize) return page;
     return [...page, ...(await fetchPage(from + pageSize))];
   };
@@ -58,7 +61,7 @@ export async function getMonthlySeries(
 
 /** A single product's monthly series, ascending by month. */
 export async function getProductSeries(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   productId: string,
   months?: number
 ): Promise<MonthlyPoint[]> {

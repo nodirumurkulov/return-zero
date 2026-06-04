@@ -22,6 +22,7 @@ export default tseslint.config(
       "next.config.mjs",
       "postcss.config.mjs",
       "scripts/**/*.ts",
+      "lib/supabase/database.types.ts",
     ],
   },
   ...nextCoreWebVitals,

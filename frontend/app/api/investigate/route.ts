@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { runInvestigation } from "@/lib/agents";
 import { investigateBodySchema } from "@/lib/agents/schemas";
 import { sendIncidentNotification } from "@/lib/slack";
+import type { Json } from "@/lib/supabase/database.types";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,8 @@ export async function POST(req: NextRequest) {
         agent_name: f.agent_name,
         agent_icon: f.agent_icon,
         summary: f.summary,
-        detail: f.detail,
+        // LLM-produced detail is JSON-serializable; stored in a jsonb column.
+        detail: f.detail as Json,
       }))
     );
 
