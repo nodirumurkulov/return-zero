@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signIn } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
+import OAuthButtons from "@/components/auth/OAuthButtons";
 
 export default async function SignInPage({
   searchParams,
@@ -17,7 +18,9 @@ export default async function SignInPage({
         <p className="mt-1 text-sm text-muted-foreground">Commerce Incident Response</p>
       </div>
       <AuthForm title="Sign in" action={signIn} initialError={authError} />
+      <OAuthButtons />
       <p className="text-sm text-muted-foreground">
+        New here?{" "}
         <Link href="/sign-up" className="text-primary hover:underline">
           Create an account
         </Link>
