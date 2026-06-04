@@ -31,7 +31,7 @@ jobs:
 
       - name: Install deps
         if: steps.creds.outputs.present == 'true'
-        run: bun ci
+        run: bun install --frozen-lockfile
 
       - name: Validate imported row counts
         if: steps.creds.outputs.present == 'true'

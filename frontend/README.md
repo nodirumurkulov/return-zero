@@ -27,7 +27,7 @@ cd frontend
 bun install
 ```
 
-Lockfile: `bun.lock` (commit it). CI uses `bun ci` for reproducible installs.
+Lockfile: `bun.lock` (commit it). CI uses `bun install --frozen-lockfile` for reproducible installs.
 
 ---
 
@@ -161,7 +161,7 @@ frontend/
 
 | Symptom | Fix |
 |---------|-----|
-| `bun ci` fails with lockfile mismatch | Run `bun install` locally and commit `bun.lock` |
+| `bun install --frozen-lockfile` fails (lockfile mismatch) | Run `bun install` locally and commit `bun.lock` |
 | Vercel build: `No Next.js version detected` | Set **Root Directory = `frontend`** in Vercel (see Deploy step 1) |
 | Redirected to `/sign-in` forever | Check `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
 | `/catalog` 404s after sign-in | The catalog route is still in progress; the redirect target is correct |
