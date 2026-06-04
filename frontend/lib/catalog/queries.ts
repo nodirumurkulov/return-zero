@@ -3,8 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getProductSeries } from "@/lib/metrics/series";
 import type { MetricValue, ProductSourceFacts } from "@/lib/metrics/types";
+import type { Database } from "@/lib/supabase/database.types";
 
 import type { KpiThreshold, ProductMetric, ProductMonthlyMetric } from "./types";
+
+type ProductRow = Pick<
+  Database["public"]["Tables"]["products"]["Row"],
+  "product_id" | "title" | "product_type" | "gender_segment"
+>;
 
 // Catalog data is assembled from the config-driven metrics engine (the single
 // source of truth used by detection/forecasting/recovery), not the retired
@@ -28,15 +34,15 @@ function synthThresholds(productId: string, metrics: MetricValue[]): KpiThreshol
 }
 
 function toProductMetric(
-  row: Record<string, unknown>,
+  row: ProductRow,
   metrics: MetricValue[],
   facts: ProductSourceFacts | undefined
 ): ProductMetric {
   return {
-    product_id: row.product_id as string,
-    title: (row.title as string) ?? null,
-    product_type: (row.product_type as string) ?? null,
-    gender_segment: (row.gender_segment as string) ?? null,
+    product_id: row.product_id,
+    title: row.title,
+    product_type: row.product_type,
+    gender_segment: row.gender_segment,
     revenue_gbp: facts?.sales_revenue ?? 0,
     order_count: Math.round(facts?.sales_units ?? 0),
     return_rate: valueOf(metrics, "return_rate"),
@@ -46,10 +52,10 @@ function toProductMetric(
   };
 }
 
-async function buildCatalog(supabase: SupabaseClient): Promise<{
+async function buildCatalog(supabase: SupabaseClient<Database>): Promise<{
   metrics: Record<string, MetricValue[]>;
   facts: Map<string, ProductSourceFacts>;
-  productRows: Record<string, unknown>[];
+  productRows: ProductRow[];
 }> {
   const [{ metrics, factsByWindow }, { data: productRows, error }] = await Promise.all([
     computeMetricsDetailed(supabase),
@@ -63,7 +69,7 @@ async function buildCatalog(supabase: SupabaseClient): Promise<{
   return { metrics, facts, productRows: productRows ?? [] };
 }
 
-export async function listCatalogWithThresholds(supabase: SupabaseClient): Promise<{
+export async function listCatalogWithThresholds(supabase: SupabaseClient<Database>): Promise<{
   products: ProductMetric[];
   thresholdsByProduct: Record<string, KpiThreshold[]>;
 }> {
@@ -72,7 +78,7 @@ export async function listCatalogWithThresholds(supabase: SupabaseClient): Promi
   const products: ProductMetric[] = [];
   const thresholdsByProduct: Record<string, KpiThreshold[]> = {};
   for (const row of productRows) {
-    const id = row.product_id as string;
+    const id = row.product_id;
     const mv = metrics[id] ?? [];
     products.push(toProductMetric(row, mv, facts.get(id)));
     thresholdsByProduct[id] = synthThresholds(id, mv);
@@ -82,7 +88,7 @@ export async function listCatalogWithThresholds(supabase: SupabaseClient): Promi
 }
 
 export async function getProductCatalogDetail(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   productId: string
 ): Promise<{
   product: ProductMetric;
@@ -94,7 +100,7 @@ export async function getProductCatalogDetail(
     getProductSeries(supabase, productId, 12),
   ]);
 
-  const row = productRows.find((p) => (p.product_id as string) === productId);
+  const row = productRows.find((p) => p.product_id === productId);
   if (!row) return null;
 
   const mv = metrics[productId] ?? [];

@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         agent_name: f.agent_name,
         agent_icon: f.agent_icon,
         summary: f.summary,
+        // LLM-produced detail is JSON-serializable; stored in a jsonb column.
         detail: f.detail as Json,
       })),
     );

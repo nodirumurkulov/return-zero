@@ -1,10 +1,25 @@
-import type { Views } from "@/lib/supabase/db";
+/** Catalog domain types — built from the metrics engine, not retired SQL views. */
 
-/** Catalog domain types — aligned with Supabase views / tables. */
+export type ProductMetric = {
+  product_id: string;
+  title: string | null;
+  product_type: string | null;
+  gender_segment: string | null;
+  revenue_gbp: number;
+  order_count: number;
+  return_rate: number | null;
+  refund_rate: number | null;
+  support_tickets: number;
+  ad_roas: number | null;
+};
 
-export type ProductMetric = Views<"product_metrics_view">;
-
-export type ProductMonthlyMetric = Views<"product_metrics_monthly_view">;
+export type ProductMonthlyMetric = {
+  product_id: string;
+  month_start: string;
+  revenue_gbp: number;
+  order_count: number;
+  return_rate: number;
+};
 
 export type KpiThreshold = {
   id: string;

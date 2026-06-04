@@ -146,12 +146,14 @@ async function runMarketingAgent(supabase: AgentSupabase, productId: string): Pr
   // Aggregate by campaign
   const campaigns: Record<string, { spend: number; revenue: number; conversions: number }> = {};
   metaAds?.forEach((row) => {
-    if (!campaigns[row.campaign_name]) {
-      campaigns[row.campaign_name] = { spend: 0, revenue: 0, conversions: 0 };
+    const name = row.campaign_name;
+    if (!name) return;
+    if (!campaigns[name]) {
+      campaigns[name] = { spend: 0, revenue: 0, conversions: 0 };
     }
-    campaigns[row.campaign_name].spend += Number(row.spend_gbp);
-    campaigns[row.campaign_name].revenue += Number(row.conversion_value_gbp);
-    campaigns[row.campaign_name].conversions += Number(row.conversions);
+    campaigns[name].spend += Number(row.spend_gbp);
+    campaigns[name].revenue += Number(row.conversion_value_gbp);
+    campaigns[name].conversions += Number(row.conversions);
   });
 
   const campaignSummary = Object.entries(campaigns).map(([name, data]) => ({
@@ -258,7 +260,7 @@ async function runForecastingAgent(
   const o = (outflowRows ?? []).find((r: { product_id: string }) => r.product_id === productId);
   const currentUnits = Number(o?.current_balance ?? 0);
   const dailyOutflow = Number(o?.daily_outflow ?? 0);
-  const settings = new Map((settingsRows ?? []).map((r) => [r.key as string, Number(r.value)]));
+  const settings = new Map((settingsRows ?? []).map((r) => [r.key, Number(r.value)]));
   const leadDays = settings.get("lead_time_days") ?? 71;
   const bufferDays = settings.get("buffer_days") ?? 14;
 

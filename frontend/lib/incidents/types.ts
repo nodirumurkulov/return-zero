@@ -1,4 +1,5 @@
 /** Incident domain types — identical to Supabase table/view columns. */
+import type { Json } from "@/lib/supabase/database.types";
 
 export type Incident = {
   id: string;
@@ -40,7 +41,7 @@ export type AgentFinding = {
   agent_name: string;
   agent_icon: string | null;
   summary: string;
-  detail: Record<string, unknown> | null;
+  detail: Json | null;
   created_at: string;
 };
 
@@ -49,6 +50,6 @@ export type TimelineEvent = {
   incident_id: string;
   event_type: string;
   description: string;
-  metadata: Record<string, unknown> | null;
+  metadata: Json | null;
   created_at: string;
 };
