@@ -7,11 +7,15 @@ on:
 jobs:
   validate-counts:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
+          bun-version: "1.2.15"
 
       # Secrets aren't available to fork PRs and may not be configured yet.
       # Validate only when they're present; otherwise skip (green) so the check
@@ -27,13 +31,11 @@ jobs:
 
       - name: Install deps
         if: steps.creds.outputs.present == 'true'
-        working-directory: scripts
-        run: npm install @supabase/supabase-js --no-audit --no-fund
+        run: bun ci
 
       - name: Validate imported row counts
         if: steps.creds.outputs.present == 'true'
-        working-directory: scripts
-        run: node validate-counts.mjs
+        run: bun validate-counts.mjs
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

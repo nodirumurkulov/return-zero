@@ -16,10 +16,11 @@ import {
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 };
 
-export default async function ProductDetailPage({ params }: PageProps) {
+export default async function ProductDetailPage(props: PageProps) {
+  const params = await props.params;
   const supabase = createServiceClient();
   const { productId } = params;
 

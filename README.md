@@ -20,9 +20,11 @@ metric returns to normal.
 
 ### 1. Install dependencies
 
+Requires [Bun](https://bun.sh) 1.2+ and Node.js 20.9+.
+
 ```bash
 cd frontend
-npm install
+bun install
 ```
 
 ### 2. Set up environment variables
@@ -36,10 +38,12 @@ cp .env.example frontend/.env.local
 
 ```bash
 cd frontend
-npm run dev
+bun run dev
 ```
 
 App available at **http://localhost:3000**
+
+Before opening a PR, run `bun run check` and `bun run build` in `frontend/` (or rely on [CI](.github/workflows/ci.yml)).
 
 ---
 
@@ -47,7 +51,7 @@ App available at **http://localhost:3000**
 
 | Layer | Technology |
 |-------|------------|
-| Frontend + API routes | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
+| Frontend + API routes | Next.js 16 (App Router) · TypeScript · Tailwind CSS · Bun |
 | Database | Supabase (PostgreSQL) |
 | LLM | OpenAI GPT-4o (default) or Anthropic Claude |
 | Notifications | Slack Incoming Webhooks |
@@ -59,7 +63,7 @@ App available at **http://localhost:3000**
 
 ```
 resolve/
-├── frontend/          # Next.js 14 app — all code lives here
+├── frontend/          # Next.js 16 app — all code lives here
 │   ├── app/           # Pages and API Route Handlers
 │   ├── components/    # React components
 │   └── lib/           # Shared utilities
