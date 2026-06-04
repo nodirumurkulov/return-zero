@@ -1,0 +1,23 @@
+name: Validate row counts
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-counts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        working-directory: scripts
+        run: npm install @supabase/supabase-js --no-audit --no-fund
+      - name: Validate imported row counts
+        working-directory: scripts
+        run: node validate-counts.mjs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
