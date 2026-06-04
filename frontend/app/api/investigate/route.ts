@@ -1,21 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runInvestigation } from "@/lib/agents";
+import { investigateBodySchema } from "@/lib/agents/schemas";
 import { sendIncidentNotification } from "@/lib/slack";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const supabase = createServiceClient();
-  const body = (await req.json()) as { incident_id: string; product_id: string };
-
-  const { incident_id, product_id } = body;
-  if (!incident_id || !product_id) {
+  const raw = await req.json().catch(() => null);
+  const parsed = investigateBodySchema.safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "incident_id and product_id required" },
-      { status: 400 }
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
     );
   }
+
+  const { incident_id, product_id } = parsed.data;
+  const supabase = createServiceClient();
 
   // Move incident to investigating
   await supabase

@@ -11,4 +11,5 @@ export {
   type IncidentStatus,
   type KanbanStatus,
 } from "./status";
+export { approveIncidentBodySchema, type ApproveIncidentBody } from "./schemas";
 export type { AgentFinding, Incident, IncidentAction, TimelineEvent } from "./types";

@@ -5,6 +5,7 @@ import {
   getIncident,
   listLowRiskProposedActionIds,
 } from "@/lib/incidents";
+import { approveIncidentBodySchema } from "@/lib/incidents/schemas";
 import { sendIncidentNotification } from "@/lib/slack";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -12,13 +13,17 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
-  const body = (await req.json()) as {
-    action_ids?: string[];
-    approve_all_low_risk?: boolean;
-    approved_by?: string;
-  };
+  const raw = await req.json().catch(() => ({}));
+  const parsed = approveIncidentBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
+  }
 
+  const supabase = createServiceClient();
+  const body = parsed.data;
   const approvedBy = body.approved_by ?? "operator";
 
   const lowRiskIds = body.approve_all_low_risk

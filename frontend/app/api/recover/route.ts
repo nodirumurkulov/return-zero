@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runRecovery } from "@/lib/detection/recover";
+import { recoverBodySchema } from "@/lib/detection/schemas";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,23 +17,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const advanceDays = await optionalAdvanceDays(req);
+  const raw = await req.json().catch(() => ({}));
+  const parsed = recoverBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
   const supabase = createServiceClient();
 
   try {
-    const result = await runRecovery(supabase, { advanceDays });
+    const result = await runRecovery(supabase, { advanceDays: parsed.data.advance_days });
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-async function optionalAdvanceDays(req: NextRequest): Promise<number | undefined> {
-  try {
-    const body = (await req.json()) as { advance_days?: number };
-    return typeof body.advance_days === "number" ? body.advance_days : undefined;
-  } catch {
-    return undefined;
   }
 }

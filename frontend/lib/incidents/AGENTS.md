@@ -4,12 +4,12 @@ Single source of truth for incident domain types and Supabase access.
 
 ## Files
 
-- `db.ts` — row shapes (`IncidentRow`, …); **not** re-exported from `index.ts`
-- `types.ts` — app types + `from*Row` mappers (internal)
+- `types.ts` — table types (`Incident`, …); **same shape as DB columns**
+- `schemas.ts` — Zod request body schemas (parsed inline in routes)
 - `status.ts` — `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus`
 - `queries.ts` — `listIncidents`, `getIncident`, `getIncidentDetail`
 - `approve.ts` — `approveIncidentActions`, `listLowRiskProposedActionIds`
-- `index.ts` — public API only
+- `index.ts` — public API
 
 ## Usage
 
@@ -23,4 +23,4 @@ import {
 } from "@/lib/incidents";
 ```
 
-Do not redefine `Incident` in pages or components. Do not re-export incident types from `components/incidents/*`.
+Do not redefine incident types elsewhere or add `*Row` / `from*Row` mappers.
