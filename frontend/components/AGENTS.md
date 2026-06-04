@@ -1,20 +1,30 @@
-# components/
+# AGENTS.md — components
 
-Presentational and lightly interactive React UI. **No Supabase calls** — receive data via props from server pages.
+React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.md](README.md)
+
+## Scope
+
+- **No Supabase calls** — data arrives via props from server pages.
+- Import types from `@/lib/incidents`, `@/lib/catalog`, etc.
+- **Never re-export** domain types from component files.
 
 ## Structure
 
-| Folder | Purpose |
-|--------|---------|
-| `catalog/` | Product grid, KPI cards, thresholds |
-| `incidents/` | Kanban, cards, actions, timeline |
-| `layout/` | App shell, nav |
-| `ui/` | Primitives (buttons, badges, shadcn-style) |
+| Folder | AGENTS.md |
+|--------|-----------|
+| [catalog/](catalog/AGENTS.md) | Catalog grid, KPIs, thresholds |
+| [incidents/](incidents/AGENTS.md) | Kanban, detail, approvals |
+| [layout/](layout/AGENTS.md) | AppShell |
+| [ui/](ui/AGENTS.md) | Primitives |
 
-## Rules
+## Code style
 
-- Import domain types from `@/lib/incidents` or `@/lib/catalog`, not redefined duplicates.
-- `"use client"` only when needed (forms, dropdowns, fetch mutations).
-- Async click handlers: `onClick={() => { void handler(); }}` to satisfy `no-misused-promises`.
+- `"use client"` only when needed (dropdowns, approve, investigation button).
+- After mutations: `router.refresh()` (see `ActionList`, `TriggerInvestigationButton`).
+- Async clicks: `onClick={() => { void handler(); }}`.
 
-Subfolders have their own `AGENTS.md` where non-trivial.
+## Testing
+
+```bash
+cd frontend && bun run lint && bun run build
+```

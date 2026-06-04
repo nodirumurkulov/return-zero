@@ -1,5 +1,8 @@
-# components/layout/
+# AGENTS.md — components/layout
 
-App chrome: `AppShell` wraps authenticated pages with nav and Clerk user button.
+`AppShell` — sidebar nav, header, Clerk `UserButton`. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
-Client component only for interactive nav. No data fetching.
+## Rules
+
+- Client component (`usePathname`, `useUser`).
+- No data fetching; auth enforced in `proxy.ts`.

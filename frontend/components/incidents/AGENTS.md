@@ -1,18 +1,18 @@
-# components/incidents/
+# AGENTS.md — components/incidents
 
-Incident UI. Server pages fetch via `getIncidentDetail`; small client islands for mutations.
+Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 ## Components
 
-| Component | Role |
-|-----------|------|
-| `IncidentDetailView` | Server — layout for detail page |
-| `TriggerInvestigationButton` | Client — POST investigate, then `router.refresh()` |
-| `IncidentKanban`, `IncidentCard` | Client — kanban board |
-| `ActionList` | Client — approve actions, `router.refresh()` after success |
-| `AgentFindingCard`, `IncidentTimeline` | Display only |
+| File | Server/client | Role |
+|------|---------------|------|
+| `IncidentDetailView.tsx` | server | Detail layout |
+| `TriggerInvestigationButton.tsx` | client | POST `/api/investigate` → `router.refresh()` |
+| `IncidentKanban.tsx`, `IncidentCard.tsx` | client | Kanban |
+| `ActionList.tsx` | client | Approve → `router.refresh()` |
+| `AgentFindingCard.tsx`, `IncidentTimeline.tsx` | server OK | Display |
 
 ## Rules
 
-- Do not re-export domain types from component files.
-- Do not client-fetch `/api/incidents/[id]` for the detail page — use RSC + `router.refresh()`.
+- Types from `@/lib/incidents` only.
+- Do **not** client-fetch `GET /api/incidents/[id]` for the detail page.

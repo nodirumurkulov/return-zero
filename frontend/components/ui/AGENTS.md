@@ -1,5 +1,9 @@
-# components/ui/
+# AGENTS.md — components/ui
 
-Shared UI primitives (Tailwind + Radix). Keep stateless where possible.
+Shared primitives (Tailwind + Radix). **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
-No business logic or domain types. Severity/status badges map string enums to styles only.
+## Rules
+
+- No business logic, no domain types, no Supabase.
+- Badges map string enums to styles only (`SeverityBadge`, `StatusBadge`).
+- Keep components stateless when possible.
