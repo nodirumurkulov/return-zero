@@ -3,7 +3,10 @@
 -- Pretty Fly raw data tables — mirrors CSV structure exactly
 -- =============================================================
 
-create extension if not exists "uuid-ossp";
+-- Synthetic uuid keys below use gen_random_uuid() (core Postgres 13+, always
+-- on Supabase). Avoids uuid-ossp, whose uuid_generate_v4() is not on the
+-- search_path during `supabase db push` (the extension lives in the
+-- `extensions` schema), which made a fresh CLI push fail.
 
 -- ---- products ------------------------------------------------
 create table if not exists products (
@@ -106,7 +109,7 @@ create table if not exists collections (
 
 -- ---- meta_ads_daily ------------------------------------------
 create table if not exists meta_ads_daily (
-  id                    uuid primary key default uuid_generate_v4(),
+  id                    uuid primary key default gen_random_uuid(),
   date                  date,
   campaign_name         text,
   campaign_objective    text,
@@ -122,7 +125,7 @@ create table if not exists meta_ads_daily (
 
 -- ---- google_ads_daily ----------------------------------------
 create table if not exists google_ads_daily (
-  id                   uuid primary key default uuid_generate_v4(),
+  id                   uuid primary key default gen_random_uuid(),
   date                 date,
   campaign_name        text,
   campaign_type        text,
