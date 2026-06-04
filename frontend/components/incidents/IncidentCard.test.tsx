@@ -3,9 +3,16 @@ import IncidentCard from "@/components/incidents/IncidentCard";
 import { createIncidentFixture } from "@/test/fixtures";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
-vi.mock("@/app/actions", () => ({
-  updateIncidentStatus: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock("@/lib/incidents/hooks", async () => {
+  const actual = await vi.importActual("@/lib/incidents/hooks");
+  return {
+    ...actual,
+    useUpdateIncidentStatus: () => ({
+      mutate: vi.fn(),
+      isPending: false,
+    }),
+  };
+});
 
 describe("IncidentCard", () => {
   it("renders title link and impact", () => {

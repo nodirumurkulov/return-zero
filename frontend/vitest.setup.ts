@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import React from "react";
 import { afterEach, vi } from "vitest";
-import { mockPush, mockRefresh, mockReplace } from "@/test/mocks/navigation";
+import { mockPush, mockReplace } from "@/test/mocks/navigation";
 
 vi.mock("server-only", () => ({}));
 
@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
-    refresh: mockRefresh,
+    refresh: vi.fn(),
     back: vi.fn(),
     forward: vi.fn(),
     prefetch: vi.fn(),

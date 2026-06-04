@@ -40,13 +40,14 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 - Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
-- Auth: [proxy.ts](proxy.ts) (Clerk). Do not bypass without reason.
+- Auth: [proxy.ts](proxy.ts) (Supabase session). Do not bypass without reason.
 
 ## Testing
 
-- `bun run test` — Vitest watch mode.
-- `bun run test:run` — single CI run (co-located `components/**/*.test.tsx`).
-- `bun run check` — lint, typecheck, and `test:run`.
+- `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
+- `bun run test:watch` — Vitest watch mode.
+- `bun run test:e2e` — Playwright (local or CI e2e job).
+- `bun run check` — lint, typecheck, and `test`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

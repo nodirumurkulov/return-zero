@@ -36,7 +36,7 @@ React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.
 Co-located unit tests: `ComponentName.test.tsx` next to each component.
 
 ```bash
-cd frontend && bun run test:run
+cd frontend && bun run test
 cd frontend && bun run check
 ```
 

@@ -1,12 +1,16 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { updateThreshold } from "@/app/actions";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { createKpiThresholdFixture } from "@/test/fixtures";
 import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
-vi.mock("@/app/actions", () => ({
-  updateThreshold: vi.fn(),
+const mutate = vi.fn();
+
+vi.mock("@/lib/catalog/hooks", () => ({
+  useUpdateThreshold: () => ({
+    mutate,
+    isPending: false,
+  }),
 }));
 
 describe("ThresholdEditor", () => {
@@ -18,7 +22,9 @@ describe("ThresholdEditor", () => {
   });
 
   it("renders threshold form and shows Saved on success", async () => {
-    vi.mocked(updateThreshold).mockResolvedValue({ ok: true });
+    mutate.mockImplementation((_formData, options) => {
+      options?.onSuccess?.({ ok: true });
+    });
     const threshold = createKpiThresholdFixture({ metric_key: "return_rate" });
     renderWithProviders(
       <ThresholdEditor productId="prod-1" thresholds={[threshold]} />,
@@ -30,13 +36,12 @@ describe("ThresholdEditor", () => {
     await waitFor(() => {
       expect(screen.getByText("Saved")).toBeInTheDocument();
     });
-    expect(updateThreshold).toHaveBeenCalled();
+    expect(mutate).toHaveBeenCalled();
   });
 
   it("shows error message when save fails", async () => {
-    vi.mocked(updateThreshold).mockResolvedValue({
-      ok: false,
-      error: "Validation failed",
+    mutate.mockImplementation((_formData, options) => {
+      options?.onSuccess?.({ ok: false, error: "Validation failed" });
     });
     const threshold = createKpiThresholdFixture();
     renderWithProviders(

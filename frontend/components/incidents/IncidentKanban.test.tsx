@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import IncidentKanban from "@/components/incidents/IncidentKanban";
+
+vi.mock("@/lib/incidents/hooks", () => ({
+  useUpdateIncidentStatus: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}));
 import { createIncidentFixture } from "@/test/fixtures";
 import { render, screen } from "@/test/test-utils";
 

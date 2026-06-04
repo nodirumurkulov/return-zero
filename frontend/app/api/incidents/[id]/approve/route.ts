@@ -1,4 +1,6 @@
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
 import {
   approveIncidentActions,
@@ -44,8 +46,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   try {
     await approveIncidentActions(supabase, params.id, actionIds, user.id);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/incidents/[id]/approve", err);
+    return apiErrorResponse(err);
   }
 
   const incident = await getIncident(supabase, params.id);
@@ -72,6 +74,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       );
     }
   }
+
+  revalidatePath("/incidents");
+  revalidatePath(`/incidents/${params.id}`);
 
   return NextResponse.json({ success: true, approved: actionIds.length });
 }
