@@ -7,6 +7,7 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 - **RSC-first:** pages and layouts fetch on the server; never add client `useEffect` + `fetch` for data already available server-side.
 - **No backward compat for routing/data:** if a page should be server-driven, migrate it fully — remove legacy client data hooks and duplicate API reads.
 - Align with **Next.js App Router** patterns: colocate loading/error only when needed; prefer `revalidatePath` / `dynamic` over stale static assumptions.
+- **TanStack Query (client):** mutations and interactive refetch only — no raw client `fetch` for app data. Initial reads stay on the server unless a page uses prefetch + `HydrationBoundary`.
 
 ## Development workflow
 
@@ -14,13 +15,23 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 - Load data with `await createClient()` + domain queries (`listIncidents`, `getIncidentDetail`, `listCatalogWithThresholds`, …).
 - Do **not** use client `useEffect` + `fetch` for initial page data.
 - Use `export const dynamic = "force-dynamic"` where Supabase data must be fresh.
+- Wrap the app in [`QueryProvider`](../components/providers/QueryProvider.tsx) (root layout). Per-domain TanStack code is one file per function (e.g. `fetch-incident-detail.ts`, `use-approve-actions.ts`) with object-entity API types.
+
+## TanStack Query
+
+| Use case | Pattern |
+|----------|---------|
+| List/catalog pages | RSC only (no `useQuery` for initial load) |
+| Incident detail | Server `fetchQuery` + `dehydrate` in page → client `useQuery` in `IncidentDetailView` |
+| Approve / investigate | `useMutation` → API route; `invalidateQueries` on detail + `revalidatePath` in route |
+| Threshold / status | `useMutation` → server action; `revalidatePath` in action (+ query invalidation where cached) |
 
 ## Key paths
 
 | Path | Notes |
 |------|--------|
 | `catalog/`, `catalog/[productId]/` | RSC + catalog queries |
-| `incidents/`, `incidents/[incidentId]/` | RSC; detail uses `IncidentDetailView` + client islands |
+| `incidents/`, `incidents/[incidentId]/` | List RSC; detail prefetches via `get-incident-detail-query-options.ts` + `IncidentDetailView` |
 | `actions.ts` | `updateThreshold`, `updateIncidentStatus` + `revalidatePath` |
 | `api/` | See [api/AGENTS.md](api/AGENTS.md) |
 

@@ -19,7 +19,7 @@ User-facing data uses `await createClient()` (RLS). Cron/seed use `createAdminCl
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
-Each domain folder has its own `AGENTS.md`.
+Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). TanStack code is one file per function (`fetch-incident-detail.ts`, `use-approve-actions.ts`); API shapes use object entities. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
 
 ## Best practices (domain layer)
 

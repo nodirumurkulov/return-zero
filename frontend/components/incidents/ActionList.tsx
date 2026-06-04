@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { IncidentAction } from "@/lib/incidents";
+import { useApproveActions } from "@/lib/incidents/use-approve-actions";
 
 const impactColour: Record<string, string> = {
   high:   "text-green-400",
@@ -31,55 +31,45 @@ export default function ActionList({
   actions: IncidentAction[];
   incidentId: string;
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const approve = useApproveActions({ id: incidentId });
   const [message, setMessage] = useState<string | null>(null);
 
   const proposed = actions.filter((a) => a.status === "proposed");
 
-  async function approveAll() {
-    setLoading(true);
+  function approveAll() {
     setMessage(null);
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approve_all_low_risk: true }),
-      });
-      const json = await res.json() as { approved?: number; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed");
-      setMessage(`${json.approved} action(s) approved and deployed`);
-      router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
+    approve.mutate(
+      { approval: { kind: "all_low_risk" } },
+      {
+        onSuccess: (data) => {
+          setMessage(`${data.approval.approvedCount} action(s) approved and deployed`);
+        },
+        onError: (err) => {
+          setMessage(err instanceof Error ? err.message : "Error");
+        },
+      },
+    );
   }
 
-  async function approveOne(actionId: string) {
-    setLoading(true);
+  function approveOne(actionId: string) {
     setMessage(null);
-    try {
-      const res = await fetch(`/api/incidents/${incidentId}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_ids: [actionId] }),
-      });
-      const json = await res.json() as { approved?: number; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed");
-      setMessage("Action approved and deployed");
-      router.refresh();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
+    approve.mutate(
+      { approval: { kind: "action_ids", actionIds: [actionId] } },
+      {
+        onSuccess: () => {
+          setMessage("Action approved and deployed");
+        },
+        onError: (err) => {
+          setMessage(err instanceof Error ? err.message : "Error");
+        },
+      },
+    );
   }
+
+  const loading = approve.isPending;
 
   return (
     <div className="space-y-3">
-      {/* Bulk approve button */}
       {proposed.filter((a) => !a.auto_deploy && a.risk_level === "low").length > 0 && (
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
           <span className="text-xs text-zinc-500">
@@ -87,7 +77,7 @@ export default function ActionList({
           </span>
           <button
             onClick={() => {
-              void approveAll();
+              approveAll();
             }}
             disabled={loading}
             className="text-xs px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white font-medium disabled:opacity-50 transition-colors"
@@ -145,7 +135,7 @@ export default function ActionList({
               {action.status === "proposed" && !action.auto_deploy && (
                 <button
                   onClick={() => {
-                    void approveOne(action.id);
+                    approveOne(action.id);
                   }}
                   disabled={loading}
                   className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 hover:border-zinc-600 transition-colors disabled:opacity-50"
