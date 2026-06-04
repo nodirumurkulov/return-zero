@@ -3,13 +3,13 @@ import type { TimelineEvent } from "@/lib/incidents";
 const icons: Record<string, string> = {
   anomaly_detected: "🔍",
   incident_created: "🚨",
-  agent_assigned:   "🤖",
+  agent_assigned: "🤖",
   root_cause_found: "💡",
-  action_proposed:  "📋",
-  approved:         "✅",
-  deployed:         "🚀",
-  monitoring:       "📊",
-  resolved:         "✓",
+  action_proposed: "📋",
+  approved: "✅",
+  deployed: "🚀",
+  monitoring: "📊",
+  resolved: "✓",
 };
 
 function formatTime(dateStr: string) {
@@ -21,32 +21,30 @@ function formatTime(dateStr: string) {
 }
 
 export default function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
+  if (events.length === 0) {
+    return <p className="text-sm text-muted-foreground">No events yet</p>;
+  }
   return (
-    <ol className="relative space-y-0">
-      {events.map((event, i) => (
-        <li key={event.id} className="flex gap-4">
-          {/* Vertical line + dot */}
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 text-base shrink-0 z-10">
+    <ol className="relative">
+      {events.map((event, i) => {
+        const last = i === events.length - 1;
+        return (
+          <li key={event.id} className="relative flex gap-3 pb-4 last:pb-0">
+            {!last ? <span className="absolute left-[15px] top-8 h-full w-px bg-border" /> : null}
+            <span className="z-10 flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm">
               {icons[event.event_type] ?? "•"}
+            </span>
+            <div className="min-w-0 flex-1 pt-1">
+              <p className="text-[13px] leading-snug text-foreground [text-wrap:pretty]">
+                {event.description}
+              </p>
+              <time className="mt-0.5 block tabnum text-[11px] text-muted-foreground">
+                {formatTime(event.created_at)}
+              </time>
             </div>
-            {i < events.length - 1 && (
-              <div className="w-px flex-1 bg-zinc-800 mt-0 mb-0 min-h-[1.5rem]" />
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="pb-6 flex-1 min-w-0">
-            <p className="text-sm text-zinc-200 leading-snug">{event.description}</p>
-            <time className="text-xs text-zinc-600 mt-0.5 font-mono block">
-              {formatTime(event.created_at)}
-            </time>
-          </div>
-        </li>
-      ))}
-      {events.length === 0 && (
-        <li className="text-sm text-zinc-600">No events yet</li>
-      )}
+          </li>
+        );
+      })}
     </ol>
   );
 }
