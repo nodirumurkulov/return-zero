@@ -1,11 +1,11 @@
 import Link from "next/link";
 import UploadForm from "@/components/onboarding/UploadForm";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { count } = await supabase.from("products").select("*", { count: "exact", head: true });
   const productCount = count ?? 0;
 
