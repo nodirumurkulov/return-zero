@@ -1,19 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { IncidentAction } from "@/lib/incidents";
 
-export type IncidentAction = {
-  id: string;
-  title: string;
-  description?: string;
-  impact_level: string;
-  risk_level: string;
-  auto_deploy: boolean;
-  status: string;
-  approved_by?: string;
-  approved_at?: string;
-  deployed_at?: string;
-};
+export type { IncidentAction } from "@/lib/incidents";
 
 const impactColour: Record<string, string> = {
   high:   "text-green-400",

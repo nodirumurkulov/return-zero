@@ -8,7 +8,7 @@ import {
   computeProductHealth,
   type KpiThreshold,
   type ProductMetric,
-} from "@/types/database";
+} from "@/lib/catalog";
 
 export default function CatalogGrid({
   products,

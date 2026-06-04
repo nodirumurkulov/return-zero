@@ -5,13 +5,13 @@ import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import SectionLabel from "@/components/ui/section-label";
-import { createServiceClient } from "@/lib/supabase/server";
 import {
   computeProductHealth,
   type KpiThreshold,
   type ProductMetric,
   type ProductMonthlyMetric,
-} from "@/types/database";
+} from "@/lib/catalog";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 

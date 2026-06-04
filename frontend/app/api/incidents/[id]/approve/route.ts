@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
+import { fromIncidentRow, type IncidentRow } from "@/lib/incidents";
 import { sendIncidentNotification } from "@/lib/slack";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -77,13 +78,14 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   });
 
   // Fetch updated incident for Slack notification
-  const { data: incident } = await supabase
+  const { data: incidentRow } = await supabase
     .from("incidents")
     .select("*")
     .eq("id", params.id)
     .single();
 
-  if (incident) {
+  if (incidentRow) {
+    const incident = fromIncidentRow(incidentRow as IncidentRow);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     await sendIncidentNotification({
       title: incident.title,
@@ -97,9 +99,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       app_url: appUrl,
     });
 
-    // Snapshot the breached KPI so the recovery loop can track it (RUN-22/23).
     if (incident.affected_product) {
-      await captureRecoveryBaseline(supabase, params.id, incident.affected_product, incident.affected_kpis ?? null);
+      await captureRecoveryBaseline(
+        supabase,
+        params.id,
+        incident.affected_product,
+        incident.affected_kpis,
+      );
     }
   }
 

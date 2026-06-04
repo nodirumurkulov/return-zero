@@ -1,7 +1,7 @@
 import CatalogGrid from "@/components/catalog/CatalogGrid";
 import { EmptyState } from "@/components/ui/empty-state";
+import type { KpiThreshold, ProductMetric } from "@/lib/catalog";
 import { createServiceClient } from "@/lib/supabase/server";
-import type { KpiThreshold, ProductMetric } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
