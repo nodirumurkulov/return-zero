@@ -1,18 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { hasCronAuth, matchesCronPath } from "@/lib/cron-auth";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_PREFIXES = ["/sign-in", "/sign-up", "/auth/callback", "/api/slack/webhook"];
-const CRON_PATHS = ["/api/detect", "/api/forecast", "/api/recover"];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-function hasCronAuth(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-  return auth === `Bearer ${secret}` || auth === secret;
 }
 
 function redirectWithCookies(url: URL, sessionResponse: NextResponse) {
@@ -24,7 +17,7 @@ function redirectWithCookies(url: URL, sessionResponse: NextResponse) {
 }
 
 export default async function proxy(request: NextRequest) {
-  if (matchesPrefix(request.nextUrl.pathname, CRON_PATHS) && hasCronAuth(request)) {
+  if (matchesCronPath(request.nextUrl.pathname) && hasCronAuth(request)) {
     return NextResponse.next();
   }
 

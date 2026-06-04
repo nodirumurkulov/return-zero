@@ -10,9 +10,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
   timeout: 60_000,
-  expect: {
-    timeout: 15_000,
-  },
+  expect: { timeout: 15_000 },
   reporter: isCI
     ? [["github"], ["html", { open: "never" }]]
     : [["list"]],
@@ -29,8 +27,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: 120_000,
-    stdout: "pipe",
-    stderr: "pipe",
   },
   projects: [
     {
@@ -47,9 +43,9 @@ export default defineConfig({
     },
     {
       name: "chromium-guest",
-      testDir: "./e2e/specs",
+      testDir: "./e2e",
+      testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /auth\.spec\.ts/,
     },
   ],
 });

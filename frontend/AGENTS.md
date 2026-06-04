@@ -27,7 +27,8 @@ bun run db:lint
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
-| `e2e` / `e2e:ui` / `e2e:headed` | Playwright E2E ([e2e/README.md](e2e/README.md)) |
+| `test` / `test:watch` | Vitest |
+| `e2e` / `test:e2e` / `e2e:ui` / `e2e:headed` | Playwright ([e2e/README.md](e2e/README.md)) |
 | `e2e:install` | Chromium for local runs |
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
@@ -46,8 +47,8 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Testing
 
-- **E2E:** `supabase start` in `supabase/`, then `bun run db:reset && bun run seed && bun run build && CI=true bun run e2e` (see [e2e/README.md](e2e/README.md)).
-- **Unit/type:** `bun run check` and `bun run build`.
+- `bun run check` (lint, typecheck, Vitest); `bun run e2e` (Playwright; `test:e2e` alias).
+- E2E path: `supabase start` → `db:reset` → `seed` → `build` → `CI=true bun run e2e` ([e2e/README.md](e2e/README.md)).
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

@@ -45,7 +45,7 @@ export async function signUp(formData: FormData) {
   });
   if (error) return { ok: false as const, error: error.message };
 
-  redirect("/catalog");
+  redirect("/onboarding");
 }
 
 export async function signOut() {

@@ -27,7 +27,7 @@ if (!parsed.success) {
 | `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 
-When `CRON_SECRET` is set, detect/forecast/recover require `Authorization: Bearer <secret>` or matching `x-cron-secret`.
+Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
 
 ## Best practices (API routes)
 

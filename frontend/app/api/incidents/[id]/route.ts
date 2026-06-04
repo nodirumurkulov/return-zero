@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { getIncidentDetail, updateIncidentBodySchema } from "@/lib/incidents";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,6 +8,13 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const detail = await getIncidentDetail(supabase, params.id);
 
   if (!detail) {
@@ -43,7 +51,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logApiError("api/incidents/[id] PATCH", error);
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json(data);
