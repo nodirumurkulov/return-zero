@@ -6,9 +6,22 @@ Service-role Supabase client for API routes, server components, and `lib/agents.
 
 | File | Export |
 |------|--------|
-| `server.ts` | `createServiceClient()` |
+| `server.ts` | `createServiceClient()`, `ServiceClient` |
+| `database.types.ts` | `Database`, `Json`, `Tables<>`, `TablesInsert<>`, `TablesUpdate<>`, `Enums<>` (generated) |
 
-Uses `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY`. There is **no** browser client in this repo.
+Uses `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY`. The client is typed with the generated `Database` schema (`SupabaseClient<Database>`), so `.from()`, `.rpc()`, insert/update payloads, and query results are type-checked. There is **no** browser client in this repo.
+
+## Generated types
+
+`database.types.ts` is generated from the live schema — **do not edit by hand**. Regenerate after migrations:
+
+```bash
+SUPABASE_ACCESS_TOKEN=... bunx supabase gen types typescript \
+  --project-id <project-ref> --schema public \
+  > lib/supabase/database.types.ts
+```
+
+It is excluded from ESLint (generated code). Prefer the `Tables<"name">`, `TablesInsert<"name">`, and `TablesUpdate<"name">` helpers over redefining row shapes.
 
 ## Usage
 
