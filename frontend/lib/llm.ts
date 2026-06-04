@@ -4,6 +4,7 @@
  * Set LLM_PROVIDER=openai (default) or LLM_PROVIDER=anthropic.
  */
 
+import "server-only";
 import OpenAI from "openai";
 
 export type Message = { role: "system" | "user" | "assistant"; content: string };

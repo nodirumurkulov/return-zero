@@ -4,6 +4,7 @@
  * Each agent queries Supabase for structured context, then calls the LLM.
  */
 
+import "server-only";
 import { createServiceClient } from "@/lib/supabase/server";
 import { callLLM } from "@/lib/llm";
 

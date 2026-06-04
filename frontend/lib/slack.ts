@@ -3,6 +3,8 @@
  * Slack Incoming Webhook notifications for Resolve.
  */
 
+import "server-only";
+
 export type SlackIncidentPayload = {
   title: string;
   severity: string;
