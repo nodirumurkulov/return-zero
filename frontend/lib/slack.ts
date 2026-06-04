@@ -4,6 +4,7 @@
  */
 
 import "server-only";
+import { z } from "zod";
 
 export type SlackIncidentPayload = {
   title: string;
@@ -132,14 +133,24 @@ export async function sendIncidentNotification(
 }
 
 /** Slack interactive webhook: URL-encoded form with a JSON `payload` field. */
-export type SlackInteractionPayload = {
-  actions?: Array<{ action_id: string; value: string }>;
-  user?: { name: string };
-};
+export const slackInteractionPayloadSchema = z.object({
+  actions: z
+    .array(
+      z.object({
+        action_id: z.string(),
+        value: z.string(),
+      }),
+    )
+    .optional(),
+  user: z.object({ name: z.string() }).optional(),
+});
+
+export type SlackInteractionPayload = z.infer<typeof slackInteractionPayloadSchema>;
 
 export function parseSlackInteractionPayload(raw: string): SlackInteractionPayload | null {
   try {
-    return JSON.parse(raw) as SlackInteractionPayload;
+    const parsed = slackInteractionPayloadSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }

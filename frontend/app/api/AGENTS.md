@@ -4,7 +4,7 @@ Route handlers (App Router). Prefer thin routes: auth, parse body, delegate to `
 
 ## Rules
 
-- Parse bodies with a **named function** in the route file or domain Zod schemas (RUN-73) — **no async IIFEs**, no `lib/api/read-json`.
+- Parse JSON bodies with domain `schemas.ts` + `parseRequestJson` from `@/lib/http/parse-json` — **no async IIFEs**, no ad-hoc casts.
 - Slack interactions: `parseSlackInteractionPayload` from `@/lib/slack`.
 - Incident approve/deploy: `approveIncidentActions` from `@/lib/incidents`.
 - Use `createServiceClient()` from `@/lib/supabase/server` for service-role access.

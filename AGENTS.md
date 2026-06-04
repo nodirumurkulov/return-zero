@@ -17,8 +17,8 @@ Resolve is an ecommerce incident-response app: detect KPI breaches, open inciden
 - Do not use **`var`**.
 - Do not use **IIFEs** (sync or async) to initialize a variable — e.g. `const x = (() => ...)()` or `const x = await (async () => ...)()`. Use a **named function** at the bottom of the module or a domain helper. ESLint enforces this via `no-restricted-syntax`.
 - Prefer **pure functions**, `reduce`, and early returns over mutable loops.
-- Use **domain modules** under `lib/<domain>/` for types, DB row shapes, mappers, queries, and mutations. Import from `@/lib/incidents`, `@/lib/catalog`, etc. — not from deleted `types/database.ts`.
-- **No generic `lib/api/read-json` helpers.** Parse JSON in the route with a small named function, or use Zod schemas in the domain module (RUN-73).
+- Use **domain modules** under `lib/<domain>/` for types (same as DB columns), queries, and mutations. Import from `@/lib/incidents`, `@/lib/catalog`, etc. — not from deleted `types/database.ts`.
+- **API JSON:** Zod schemas in `lib/<domain>/schemas.ts`, parsed via `parseRequestJson` in `@/lib/http/parse-json`.
 - React: server components fetch data; keep `"use client"` islands small. Wrap async handlers in JSX as `() => { void fn(); }` when needed for lint.
 - Run before PR: `cd frontend && bun run lint && bun run typecheck && bun run build`.
 

@@ -1,16 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { AgentFindingRow, IncidentActionRow, IncidentRow, TimelineEventRow } from "./db";
-import {
-  fromAgentFindingRow,
-  fromIncidentActionRow,
-  fromIncidentRow,
-  fromTimelineEventRow,
-  type AgentFinding,
-  type Incident,
-  type IncidentAction,
-  type TimelineEvent,
-} from "./types";
+import type { AgentFinding, Incident, IncidentAction, TimelineEvent } from "./types";
 
 export async function listIncidents(supabase: SupabaseClient): Promise<Incident[]> {
   const { data, error } = await supabase
@@ -19,7 +9,7 @@ export async function listIncidents(supabase: SupabaseClient): Promise<Incident[
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data as IncidentRow[]).map(fromIncidentRow);
+  return (data ?? []) as Incident[];
 }
 
 export type IncidentDetail = {
@@ -35,7 +25,7 @@ export async function getIncident(
 ): Promise<Incident | null> {
   const { data, error } = await supabase.from("incidents").select("*").eq("id", id).single();
   if (error || !data) return null;
-  return fromIncidentRow(data as IncidentRow);
+  return data as Incident;
 }
 
 export async function getIncidentDetail(
@@ -64,9 +54,9 @@ export async function getIncidentDetail(
   if (incidentRes.error) return null;
 
   return {
-    incident: fromIncidentRow(incidentRes.data as IncidentRow),
-    findings: ((findingsRes.data ?? []) as AgentFindingRow[]).map(fromAgentFindingRow),
-    actions: ((actionsRes.data ?? []) as IncidentActionRow[]).map(fromIncidentActionRow),
-    timeline: ((timelineRes.data ?? []) as TimelineEventRow[]).map(fromTimelineEventRow),
+    incident: incidentRes.data as Incident,
+    findings: (findingsRes.data ?? []) as AgentFinding[],
+    actions: (actionsRes.data ?? []) as IncidentAction[],
+    timeline: (timelineRes.data ?? []) as TimelineEvent[],
   };
 }
