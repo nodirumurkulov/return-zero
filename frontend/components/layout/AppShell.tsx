@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, LogOut, Receipt, Search, Siren } from "lucide-react";
+import { Activity, LayoutGrid, LogOut, Receipt, Search, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
@@ -68,9 +68,16 @@ export default function AppShell({
     <TooltipProvider>
       <SidebarProvider>
         <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="border-b border-sidebar-border p-5">
-            <p className="text-lg font-semibold tracking-tight">Pretty Fly</p>
-            <p className="text-xs text-muted-foreground">Resolve · Commerce IR</p>
+          <SidebarHeader className="border-b border-sidebar-border p-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-card">
+                <Activity className="size-4" strokeWidth={2.5} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold leading-tight tracking-tight">Hugo</p>
+                <p className="text-[11px] text-muted-foreground">Pretty Fly · Commerce IR</p>
+              </div>
+            </div>
           </SidebarHeader>
 
           <SidebarContent>
@@ -97,13 +104,21 @@ export default function AppShell({
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border p-4">
-            <div className="mb-3 flex items-center gap-2 rounded-md border border-sidebar-border bg-background px-3 py-2">
-              <span className="size-2 animate-pulse rounded-full bg-sev-low" />
-              <span className="text-xs text-muted-foreground">Agents monitoring</span>
+            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-sev-resolved/50" />
+                  <span className="relative inline-flex size-2 rounded-full bg-sev-resolved" />
+                </span>
+                <span className="text-xs font-semibold text-foreground">Hugo is online</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                Watching your KPIs in real time. You&apos;ll hear from it only when something breaks.
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <Avatar className="size-9">
-                <AvatarFallback className="bg-primary/20 text-sm font-medium text-primary">
+                <AvatarFallback className="bg-primary-subtle text-sm font-medium text-primary">
                   {initial}
                 </AvatarFallback>
               </Avatar>
@@ -132,6 +147,9 @@ export default function AppShell({
                   disabled
                 />
               )}
+              <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border px-1 font-mono text-[10px] text-muted-foreground sm:block">
+                ⌘K
+              </kbd>
             </div>
             <div className="md:hidden">
               <SignOutButton />

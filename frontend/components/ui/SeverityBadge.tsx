@@ -2,17 +2,17 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const styles: Record<string, string> = {
-  critical: "bg-red-500/20 text-red-400 border-red-500/30",
-  high: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  low: "bg-green-500/20 text-green-400 border-green-500/30",
+  critical: "bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
+  high: "bg-sev-highBg text-sev-high border-sev-highBd",
+  medium: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
+  low: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",
 };
 
 const dots: Record<string, string> = {
-  critical: "bg-red-400",
-  high: "bg-orange-400",
-  medium: "bg-yellow-400",
-  low: "bg-green-400",
+  critical: "bg-sev-critical",
+  high: "bg-sev-high",
+  medium: "bg-sev-monitor",
+  low: "bg-sev-resolved",
 };
 
 export function SeverityBadge({ severity }: { severity: string }) {

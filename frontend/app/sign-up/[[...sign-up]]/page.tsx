@@ -6,7 +6,7 @@ export default function SignUpPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-12">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Resolve</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Hugo</h1>
         <p className="mt-1 text-sm text-muted-foreground">Commerce Incident Response</p>
       </div>
       <AuthForm title="Create account" action={signUp} />

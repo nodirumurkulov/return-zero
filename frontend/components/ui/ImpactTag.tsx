@@ -21,12 +21,12 @@ export function ImpactTag({
     <Badge
       variant="outline"
       className={cn(
-        "rounded font-mono font-semibold bg-red-500/10 text-red-400 border-red-500/20",
+        "rounded font-mono font-semibold bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
       )}
     >
       {formatGBP(amount)}
       {label ? (
-        <span className="font-normal text-red-400/60">{label}</span>
+        <span className="font-normal text-sev-critical/60">{label}</span>
       ) : null}
     </Badge>
   );
