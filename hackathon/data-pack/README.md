@@ -5,13 +5,13 @@
 
 ## Using this pack with Resolve
 
-This repo loads these CSVs into Supabase via [`../frontend/scripts/README.md`](../frontend/scripts/README.md):
+This repo loads these CSVs into Supabase via [`../../frontend/scripts/README.md`](../../frontend/scripts/README.md):
 
 ```bash
-cd scripts && npm install && npm run seed
+cd frontend && bun install && bun run seed
 ```
 
-Expected row counts are listed in [`data/README.md`](data/README.md) and checked with `npm run validate:counts`.
+Expected row counts are listed in [`data/README.md`](data/README.md) and checked with `bun run validate`.
 
 ---
 
@@ -42,7 +42,7 @@ The best builds often live at the seam between lanes. But knowing which directio
 ## What's in the box
 
 ```
-pretty_fly_data_pack/
+hackathon/data-pack/
 ├── README.md                   ← this file
 ├── data/
 │   ├── products.csv

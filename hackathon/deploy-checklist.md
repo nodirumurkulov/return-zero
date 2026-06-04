@@ -4,7 +4,7 @@ Frontend deploys from `frontend/` on Vercel.
 
 ## Required environment variables
 
-Copy from [`.env.example`](../.env.example) into Vercel project settings:
+Copy from [`.env.example`](../.env.example) into Vercel project settings (repo root):
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
