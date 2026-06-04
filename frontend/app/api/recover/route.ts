@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { readAdvanceDays } from "@/lib/api/read-json";
 import { runRecovery } from "@/lib/detection/recover";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -16,16 +17,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const advanceDays = await (async (): Promise<number | undefined> => {
-    try {
-      const body = (await req.json()) as { advance_days?: number };
-      return typeof body.advance_days === "number" ? body.advance_days : undefined;
-    } catch {
-      return undefined;
-    }
-  })();
-
+  const advanceDays = await readAdvanceDays(req);
   const supabase = createServiceClient();
+
   try {
     const result = await runRecovery(supabase, { advanceDays });
     return NextResponse.json({ success: true, ...result });

@@ -72,7 +72,7 @@ export default tseslint.config(
       "prefer-const": "error",
       "no-var": "error",
 
-      // Enable in RUN-73/74 once Supabase client uses generated or domain Database types.
+      // Turn on in RUN-73 after Zod + typed Supabase rows per domain.
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
