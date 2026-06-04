@@ -9,6 +9,7 @@ import ImpactTag from "@/components/ui/ImpactTag";
 import AgentFindingCard, { type AgentFinding } from "@/components/incidents/AgentFindingCard";
 import ActionList, { type IncidentAction } from "@/components/incidents/ActionList";
 import IncidentTimeline, { type TimelineEvent } from "@/components/incidents/IncidentTimeline";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Incident = {
   id: string;
@@ -173,18 +174,23 @@ export default function IncidentDetailPage() {
         {/* Left: findings + actions */}
         <div className="lg:col-span-2 space-y-8">
           {/* Agent findings */}
-          {findings.length > 0 && (
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
-                Agent Findings
-              </h2>
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+              Agent Findings
+            </h2>
+            {findings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {findings.map((f) => (
                   <AgentFindingCard key={f.id} finding={f} />
                 ))}
               </div>
-            </section>
-          )}
+            ) : (
+              <EmptyState
+                title="No findings yet"
+                description="Trigger investigation to populate agent findings for this incident."
+              />
+            )}
+          </section>
 
           {/* Actions */}
           <section>

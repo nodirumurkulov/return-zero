@@ -3,6 +3,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { runInvestigation } from "@/lib/agents";
 import { sendIncidentNotification } from "@/lib/slack";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient();
   const body = (await req.json()) as { incident_id: string; product_id: string };
