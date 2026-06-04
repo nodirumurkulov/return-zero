@@ -5,7 +5,7 @@ import { updateThreshold } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import type { KpiThreshold } from "@/lib/catalog";
 
 const METRIC_LABELS: Record<string, string> = {

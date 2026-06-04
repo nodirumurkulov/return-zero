@@ -1,6 +1,7 @@
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-export default function SectionLabel({
+export function SectionLabel({
   children,
   className,
 }: {
@@ -8,13 +9,13 @@ export default function SectionLabel({
   className?: string;
 }) {
   return (
-    <p
+    <Label
       className={cn(
         "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground",
-        className
+        className,
       )}
     >
       {children}
-    </p>
+    </Label>
   );
 }

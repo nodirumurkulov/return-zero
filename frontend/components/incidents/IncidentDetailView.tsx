@@ -4,9 +4,9 @@ import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
 import TriggerInvestigationButton from "@/components/incidents/TriggerInvestigationButton";
 import { EmptyState } from "@/components/ui/empty-state";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { IncidentDetail } from "@/lib/incidents";
 
 export default function IncidentDetailView({ detail }: { detail: IncidentDetail }) {
