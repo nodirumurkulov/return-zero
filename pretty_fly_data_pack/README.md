@@ -5,7 +5,7 @@
 
 ## Using this pack with Resolve
 
-This repo loads these CSVs into Supabase via [`../scripts/README.md`](../scripts/README.md):
+This repo loads these CSVs into Supabase via [`../frontend/scripts/README.md`](../frontend/scripts/README.md):
 
 ```bash
 cd scripts && npm install && npm run seed

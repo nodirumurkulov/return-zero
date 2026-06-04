@@ -25,6 +25,8 @@ bun run verify:secrets
 | `check` | ESLint (`--max-warnings 0`) + `tsc` |
 | `build` | Production build |
 | `verify:secrets` | Block server secrets in client code |
+| `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
+| `validate` | Row counts + metrics RPC checks |
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
 
@@ -43,7 +45,7 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 ## Testing
 
 - No `bun test` yet; rely on `bun run check` and `bun run build`.
-- After changes touching metrics/detection: run `scripts` validators against seeded DB.
+- After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides
 

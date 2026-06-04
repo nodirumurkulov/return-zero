@@ -2,8 +2,6 @@
 frontend/.next/
 frontend/out/
 frontend/node_modules/
-scripts/node_modules/
-
 # Env files — never commit secrets
 .env
 .env.local
@@ -25,3 +23,4 @@ npm-debug.log*
 
 # Misc
 .vercel
+scripts/node_modules/

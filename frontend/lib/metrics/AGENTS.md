@@ -18,4 +18,4 @@ Config-driven KPI engine and monthly series. **Parent:** [../../AGENTS.md](../..
 ## Rules
 
 - KPI definitions come from DB (`metric_definitions`), not hard-coded metric keys in routes.
-- Changing RPC signatures requires updating `scripts/check-metrics.mjs` and consumers in `detection/`.
+- Changing RPC signatures requires updating `frontend/scripts/validate-metrics.ts` and consumers in `detection/`.

@@ -21,6 +21,7 @@ export default tseslint.config(
       "eslint.config.mjs",
       "next.config.mjs",
       "postcss.config.mjs",
+      "scripts/**/*.ts",
     ],
   },
   ...nextCoreWebVitals,
