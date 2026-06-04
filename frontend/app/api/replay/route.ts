@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { runReplay } from "@/lib/detection/replay";
+import { resetReplay, runReplay } from "@/lib/detection/replay";
 import { replayBodySchema } from "@/lib/detection/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -29,6 +29,19 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient();
   try {
+    // Reset rewinds the clock to the start (for re-running the orders-feed demo).
+    if (parsed.data.reset) {
+      const { cursor } = await resetReplay(supabase);
+      return NextResponse.json({
+        success: true,
+        reset: true,
+        cursor,
+        previous_cursor: cursor,
+        at_end: false,
+        created: 0,
+      });
+    }
+
     const result = await runReplay(supabase, { advanceDays: parsed.data.advance_days });
     return NextResponse.json({
       success: true,
