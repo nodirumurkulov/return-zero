@@ -23,6 +23,10 @@ type Incident = {
   created_at: string;
   affected_kpis?: string[] | null;
   affected_product?: string | null;
+  monitoring_kpi?: string | null;
+  baseline_value?: number | null;
+  target_value?: number | null;
+  recovery_pct?: number | null;
 };
 
 type IncidentDetail = {
@@ -153,6 +157,32 @@ export default function IncidentDetailPage() {
                   style={{ width: `${incident.root_cause_confidence}%` }}
                 />
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Recovery progress (monitoring / resolved) */}
+        {incident.monitoring_kpi != null && incident.recovery_pct != null &&
+          (incident.status === "monitoring" || incident.status === "resolved") && (
+          <div className="mt-4 bg-zinc-900 border border-zinc-800 rounded-lg p-4 max-w-2xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                Projected recovery · {incident.monitoring_kpi}
+              </span>
+              <span className="text-xs text-emerald-400 font-mono">
+                {Math.round((incident.recovery_pct ?? 0) * 100)}%
+              </span>
+            </div>
+            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all"
+                style={{ width: `${Math.round((incident.recovery_pct ?? 0) * 100)}%` }}
+              />
+            </div>
+            {incident.baseline_value != null && incident.target_value != null && (
+              <p className="mt-2 text-xs text-zinc-500 font-mono">
+                baseline {Number(incident.baseline_value).toFixed(2)} → target {Number(incident.target_value).toFixed(2)} (projected)
+              </p>
             )}
           </div>
         )}
