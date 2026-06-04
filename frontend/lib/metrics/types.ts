@@ -24,6 +24,11 @@ export interface MetricDefinition {
   severity: string;
   enabled: boolean;
   sort_order: number;
+  // Which source fact (and label) represents this metric's £/figure exposure,
+  // used when breach detection opens an incident. See migration 005.
+  impact_source: string | null;
+  impact_field: string | null;
+  impact_label: string | null;
 }
 
 // One row of product_source_facts(window_days) — the generic source layer.
