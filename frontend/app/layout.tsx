@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import AppShell from "@/components/layout/AppShell";
+import QueryProvider from "@/components/providers/QueryProvider";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -32,7 +33,9 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        {shellUser ? <AppShell user={shellUser}>{children}</AppShell> : children}
+        <QueryProvider>
+          {shellUser ? <AppShell user={shellUser}>{children}</AppShell> : children}
+        </QueryProvider>
       </body>
     </html>
   );

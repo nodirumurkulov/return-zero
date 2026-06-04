@@ -1,7 +1,7 @@
 "use client"
 
+import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
-import { Dialog as SheetPrimitive } from "radix-ui"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -45,16 +45,18 @@ function SheetOverlay({
   )
 }
 
+type SheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  side?: "top" | "right" | "bottom" | "left"
+  showCloseButton?: boolean
+}
+
 function SheetContent({
   className,
   children,
   side = "right",
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: "top" | "right" | "bottom" | "left"
-  showCloseButton?: boolean
-}) {
+}: SheetContentProps) {
   return (
     <SheetPortal>
       <SheetOverlay />
