@@ -138,8 +138,13 @@ frontend/
 
 ## Deploy to Vercel
 
+> Full reference (every env var + scopes): [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md).
+
 1. Import the repo into Vercel and set the **Root Directory** to `frontend`.
-2. Framework preset: **Next.js** (auto-detected).
+   ⚠ This is required — without it the build fails with
+   `No Next.js version detected` (the repo root has no `package.json`). Root
+   Directory is a dashboard-only setting; it cannot be set via `vercel.json`.
+2. Framework preset: **Next.js** (auto-detected once Root Directory is `frontend`).
 3. Add every variable from `.env.example` under **Settings → Environment Variables**
    (Production + Preview). Set `NEXT_PUBLIC_APP_URL` to your deployment URL.
 4. In the **Clerk dashboard**, add your Vercel domain to the allowed origins/redirect URLs.
@@ -154,6 +159,7 @@ frontend/
 
 | Symptom | Fix |
 |---------|-----|
+| Vercel build: `No Next.js version detected` | Set **Root Directory = `frontend`** in Vercel (see Deploy step 1) |
 | `npm install` fails with `ERESOLVE` peer dep error | Use `npm install --legacy-peer-deps` (see step 1) |
 | Redirected to `/sign-in` forever | Check `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
 | `/catalog` 404s after sign-in | The catalog route is still in progress; the redirect target is correct |
