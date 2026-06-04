@@ -14,12 +14,13 @@
 
 | File | Use |
 |------|-----|
-| `client.ts` | `createBrowserClient` — client islands only |
 | `server.ts` | `createClient()` — RSC, server actions, user APIs (RLS) |
 | `admin.ts` | `createAdminClient()` — bypass RLS (server-only) |
 | `middleware.ts` | `updateSession()` — session refresh + `getUser()` |
 | `database.types.ts` | Generated `Database` type — `bun run db:types` after migrations |
 | `db.ts` | `Tables<>`, `Views<>` helpers |
+
+There is no `client.ts` until a `"use client"` island needs direct Supabase in the browser. Prefer server actions, RSC data loading, and API routes instead.
 
 ## Imports
 

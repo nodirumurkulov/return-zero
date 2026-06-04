@@ -1,14 +1,15 @@
 # Supabase (`lib/supabase/`)
 
-Three typed clients over `@supabase/ssr` / `@supabase/supabase-js`:
+Typed clients over `@supabase/ssr` / `@supabase/supabase-js`:
 
 | File | Role |
 |------|------|
-| `client.ts` | Browser — `createBrowserClient<Database>` |
 | `server.ts` | Server — `createClient()` with cookies (RLS as `authenticated`) |
 | `admin.ts` | Service role — cron, seed, Slack webhooks, validators only |
 | `middleware.ts` | Session refresh for `proxy.ts` |
 | `database.types.ts` | `Database`, `Json`, `Tables<>`, `TablesInsert<>`, `TablesUpdate<>`, `Enums<>` (generated) |
+
+No browser client file yet — add `client.ts` with `createBrowserClient` only when a client island cannot use server actions or routes.
 
 ## Generated types
 
