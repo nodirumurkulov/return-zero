@@ -1,1 +1,1 @@
-export { learnBodySchema, type LearnBody } from "./schemas";
+export { learnBodySchema, learnResponseSchema, type LearnBody } from "./schemas";
