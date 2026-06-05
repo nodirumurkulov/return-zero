@@ -37,7 +37,7 @@ export async function persistInvestigation(
     incident_id: incidentId,
     organization_id: organizationId,
     event_type: "agent_assigned",
-    description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
+    description: "Quant Analyst dispatched, then Operator",
   });
 
   const result = await runInvestigation(
