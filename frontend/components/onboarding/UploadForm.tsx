@@ -3,9 +3,9 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { onboardingUploadResponseSchema } from "@/lib/onboarding/api-schemas";
+import type { ImportResult } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
-
-type ImportResult = { table: string; count: number; error?: string };
 
 export default function UploadForm() {
   const [pending, startTransition] = useTransition();
@@ -20,9 +20,17 @@ export default function UploadForm() {
     startTransition(async () => {
       try {
         const res = await fetch("/api/onboarding/upload", { method: "POST", body: formData });
-        const json = (await res.json()) as { error?: string; results?: ImportResult[] };
-        if (json.results) setResults(json.results);
-        else setError(json.error ?? "Upload failed");
+        const json: unknown = await res.json();
+        const parsed = onboardingUploadResponseSchema.safeParse(json);
+        if (!parsed.success) {
+          setError("Upload failed");
+          return;
+        }
+        if ("error" in parsed.data) {
+          setError(parsed.data.error);
+          return;
+        }
+        setResults(parsed.data.results);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
       }

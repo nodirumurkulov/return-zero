@@ -16,6 +16,7 @@ export default defineConfig({
     environment: "happy-dom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["lib/**/*.test.ts", "components/**/*.test.{ts,tsx}"],
+    exclude: ["test/integration/**"],
     fileParallelism: false,
     testTimeout: 10_000,
     server: {

@@ -6,15 +6,19 @@ export const onboardingUploadResultSchema = z.object({
   error: z.string().optional(),
 });
 
-export const onboardingUploadSuccessResponseSchema = z.object({
-  success: z.literal(true),
-  results: z.array(onboardingUploadResultSchema),
-});
+export const onboardingUploadSuccessResponseSchema = z
+  .object({
+    success: z.literal(true),
+    results: z.array(onboardingUploadResultSchema),
+  })
+  .strict();
 
-export const onboardingUploadPartialResponseSchema = z.object({
-  success: z.literal(false),
-  results: z.array(onboardingUploadResultSchema),
-});
+export const onboardingUploadPartialResponseSchema = z
+  .object({
+    success: z.literal(false),
+    results: z.array(onboardingUploadResultSchema),
+  })
+  .strict();
 
 export const onboardingUploadResponseSchema = z.union([
   onboardingUploadSuccessResponseSchema,
