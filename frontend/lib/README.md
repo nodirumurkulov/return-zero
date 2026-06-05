@@ -11,7 +11,7 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 | [`metrics/`](metrics/) | `@/lib/metrics/*` | KPI definitions, engine, series |
 | [`detection/`](detection/) | `@/lib/detection/*` | Breach detect, severity, recovery |
 | [`forecast/`](forecast/) | `@/lib/forecast` | Deterministic forecasts |
-| [`agents.ts`](agents.ts) | `@/lib/agents` | Parallel LLM investigation |
+| [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |
 | [`supabase/`](supabase/) | `@/lib/supabase/server` | Service-role Supabase client |
 

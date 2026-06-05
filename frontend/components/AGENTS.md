@@ -19,6 +19,7 @@ React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.
 
 ## Best practices (UI)
 
+- **shadcn/ui first** — extend primitives under `ui/` via `bunx shadcn@latest add`; use thin wrappers for Resolve-specific badges and empty states.
 - **Composition over props soup** — split components when booleans multiply; prefer children/slots over `isX` flags (React composition idioms).
 - **No domain logic in UI** — health, severity, approval rules stay in `lib/`; components render and trigger actions only.
 - **No backward compat props** — rename/remove props and update all call sites; do not keep optional deprecated props.
@@ -32,6 +33,11 @@ React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.
 
 ## Testing
 
+Co-located unit tests: `ComponentName.test.tsx` next to each component.
+
 ```bash
-cd frontend && bun run lint && bun run build
+cd frontend && bun run test
+cd frontend && bun run check
 ```
+
+Fixtures: `frontend/test/fixtures/`. Shared mocks: `frontend/test/mocks/`, `vitest.setup.ts`.

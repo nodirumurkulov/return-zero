@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import type { HealthLevel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ const labels: Record<HealthLevel, string> = {
   critical: "Critical",
 };
 
-export default function HealthBadge({
+export function HealthBadge({
   level,
   className,
 }: {
@@ -27,15 +28,12 @@ export default function HealthBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium",
-        styles[level],
-        className
-      )}
+    <Badge
+      variant="outline"
+      className={cn("gap-1.5 rounded-full font-medium", styles[level], className)}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", dots[level])} />
+      <span className={cn("size-1.5 rounded-full", dots[level])} />
       {labels[level]}
-    </span>
+    </Badge>
   );
 }

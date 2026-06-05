@@ -36,4 +36,4 @@ bun run e2e:install
 
 ## CI
 
-GitHub Actions runs **lint**, **typecheck**, and **build** in parallel, then **E2E** reuses the build artifact. Supabase starts with trimmed services (`--exclude studio,imgproxy,inbucket,edge-runtime`); migrations apply on first start — **no `db reset`**. Then: `seed` → Playwright (`CI=true`, 2 workers, guest auth runs after authenticated specs).
+GitHub Actions runs **lint**, **typecheck**, **test**, and **build** in parallel, then **E2E** reuses the build artifact. Supabase starts with trimmed services (`--exclude studio,imgproxy,inbucket,edge-runtime`); migrations apply on first start — **no `db reset`**. Then: `seed` → Playwright (`CI=true`, 2 workers, guest auth runs after authenticated specs).

@@ -1,7 +1,7 @@
 /**
  * Metrics/series sanity validation on the seeded fixture.
  *
- *   bun --env-file=.env.local run scripts/validate-metrics.ts
+ *   bun run scripts/validate-metrics.ts
  */
 import { createClient } from "@supabase/supabase-js";
 

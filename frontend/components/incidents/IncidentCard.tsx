@@ -2,8 +2,6 @@
 
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useTransition } from "react";
-import { updateIncidentStatus } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,10 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { INCIDENT_STATUSES, type Incident } from "@/lib/incidents";
+import { useUpdateIncidentStatus } from "@/lib/incidents/hooks";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -32,11 +31,12 @@ export default function IncidentCard({
   incident: Incident;
   editable?: boolean;
 }) {
-  const [pending, startTransition] = useTransition();
+  const updateStatus = useUpdateIncidentStatus();
 
   function changeStatus(status: string) {
-    startTransition(async () => {
-      await updateIncidentStatus(incident.id, status);
+    updateStatus.mutate({
+      incident: { id: incident.id },
+      status: { value: status },
     });
   }
 
@@ -89,7 +89,7 @@ export default function IncidentCard({
               variant="outline"
               size="sm"
               className="w-full justify-between"
-              disabled={pending}
+              disabled={updateStatus.isPending}
             >
               <StatusBadge status={incident.status} />
               <ChevronDown className="h-4 w-4 opacity-60" />

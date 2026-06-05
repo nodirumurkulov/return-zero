@@ -1,15 +1,42 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
 import TriggerInvestigationButton from "@/components/incidents/TriggerInvestigationButton";
 import { EmptyState } from "@/components/ui/empty-state";
-import ImpactTag from "@/components/ui/ImpactTag";
-import SeverityBadge from "@/components/ui/SeverityBadge";
-import StatusBadge from "@/components/ui/StatusBadge";
-import type { IncidentDetail } from "@/lib/incidents";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
 
-export default function IncidentDetailView({ detail }: { detail: IncidentDetail }) {
+export default function IncidentDetailView({ incidentId }: { incidentId: string }) {
+  const incidentRef = { id: incidentId };
+  const { data: detail, isError, error, isPending } = useQuery(
+    getIncidentDetailClientQueryOptions(incidentRef),
+  );
+
+  if (isPending && !detail) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white px-6 py-12">
+        <p className="text-sm text-zinc-500">Loading incident…</p>
+      </div>
+    );
+  }
+
+  if (isError || !detail) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white px-6 py-12">
+        <EmptyState
+          title="Failed to load incident"
+          description={error instanceof Error ? error.message : "Unknown error"}
+        />
+      </div>
+    );
+  }
+
   const { incident, findings, actions, timeline } = detail;
 
   return (

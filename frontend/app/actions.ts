@@ -14,6 +14,13 @@ export async function updateThreshold(productId: string, formData: FormData) {
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
   const { error } = await supabase
     .from("product_kpi_thresholds")
     .upsert(
@@ -34,11 +41,17 @@ export async function updateIncidentStatus(incidentId: string, status: string) {
   }
 
   const supabase = await createClient();
-  const payload: { status: string; resolved_at?: string | null } = { status };
-
-  if (status === "resolved") {
-    payload.resolved_at = new Date().toISOString();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Unauthorized" };
   }
+
+  const payload: { status: string; resolved_at: string | null } = {
+    status,
+    resolved_at: status === "resolved" ? new Date().toISOString() : null,
+  };
 
   const { error } = await supabase.from("incidents").update(payload).eq("id", incidentId);
 

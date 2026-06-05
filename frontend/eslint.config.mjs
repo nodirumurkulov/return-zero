@@ -25,6 +25,8 @@ export default tseslint.config(
       "e2e/**",
       "playwright.config.ts",
       "lib/supabase/database.types.ts",
+      "e2e/**",
+      "playwright.config.ts",
     ],
   },
   ...nextCoreWebVitals,
@@ -100,7 +102,22 @@ export default tseslint.config(
     },
   },
   {
-    files: ["lib/slack.ts", "app/error.tsx"],
+    files: [
+      "lib/agents/**/*.ts",
+      "lib/cron-auth.ts",
+      "lib/api-errors.ts",
+      "lib/llm.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+    },
+  },
+  {
+    files: ["lib/slack.ts", "app/error.tsx", "lib/api-errors.ts"],
     rules: { "no-console": "off" },
   },
 );

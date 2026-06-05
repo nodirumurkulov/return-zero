@@ -1,7 +1,7 @@
 /**
  * Assert imported row counts match the Pretty Fly data pack.
  *
- *   bun --env-file=.env.local run scripts/validate-counts.ts
+ *   bun run scripts/validate-counts.ts
  */
 import { createClient } from "@supabase/supabase-js";
 

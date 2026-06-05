@@ -2,34 +2,43 @@
 
 Incident domain — single source of truth for incident types and Supabase reads/writes. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
-## Files
+## Layout
 
-| File | Export |
+| Path | Role |
+|------|------|
+| `incident.ts`, `incident-action.ts`, … | One entity type per file (DB column shape) |
+| `queries.ts`, `approve.ts`, `schemas.ts`, `status.ts` | Server Supabase / shared logic |
+| `api/` | Client + TanStack query functions (exported via `api/index.ts` and root `index.ts`) |
+| `hooks/` | `"use client"` — `useMutation` / `useQuery` wrappers around `api/` only |
+
+## `api/`
+
+| File | Role |
+|------|------|
+| `incident-query-keys.ts` | `incidentKeys` |
+| `fetch-incident-detail.ts` | GET incident detail (browser) |
+| `post-approve-incident-actions.ts` | POST approve |
+| `update-incident-status.ts` | Server action wrapper |
+| `get-incident-detail-query-options.ts` | Server prefetch |
+| `get-incident-detail-client-query-options.ts` | Client `useQuery` |
+
+## `hooks/`
+
+| File | Wraps |
 |------|--------|
-| `types.ts` | `Incident`, `IncidentAction`, `AgentFinding`, `TimelineEvent` |
-| `queries.ts` | `listIncidents`, `getIncident`, `getIncidentDetail` |
-| `approve.ts` | `approveIncidentActions`, `listLowRiskProposedActionIds` |
-| `status.ts` | `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus` |
-| `schemas.ts` | `approveIncidentBodySchema` |
-| `index.ts` | Public API |
+| `use-approve-actions.ts` | `postApproveIncidentActions` |
+| `use-update-incident-status.ts` | `updateIncidentStatusApi` |
+
+Import hooks from `@/lib/incidents/hooks`, APIs from `@/lib/incidents/api` (also re-exported on `@/lib/incidents` for server-safe api surface).
 
 ## Usage
 
 ```typescript
-import {
-  getIncidentDetail,
-  approveIncidentActions,
-  type Incident,
-} from "@/lib/incidents";
+import { getIncidentDetail, type Incident } from "@/lib/incidents";
+import { useApproveActions } from "@/lib/incidents/hooks";
 ```
-
-## Best practices
-
-- Single source of truth for incident types and flows — **refactor consumers** when APIs change; no compatibility aliases.
-- Extend `approve.ts` / `queries.ts` instead of duplicating logic in routes, Slack, or components.
 
 ## Rules
 
-- Do not redefine `Incident` in pages or components.
-- Types match DB columns exactly — update `types.ts` when migrations add columns.
-- Approve flow is shared by API route and Slack webhook; extend `approve.ts`, not duplicate logic.
+- Hooks must not call `fetch` or server actions directly — go through `api/`.
+- API inputs/outputs use object entities (`{ incident: { id } }`, `{ approval: { … } }`).

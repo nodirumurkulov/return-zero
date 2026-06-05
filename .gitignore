@@ -24,3 +24,10 @@ npm-debug.log*
 # Misc
 .vercel
 scripts/node_modules/
+supabase/.temp/
+
+# Playwright
+frontend/e2e/.auth/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/

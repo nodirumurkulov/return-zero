@@ -14,7 +14,7 @@ cp ../.env.example .env.local   # if missing
 
 ```bash
 bun run dev              # dev server
-bun run check            # lint + typecheck
+bun run check            # lint + typecheck + test
 bun run build
 bun run db:lint
 ```
@@ -22,13 +22,14 @@ bun run db:lint
 | Script | Purpose |
 |--------|---------|
 | `dev` | Local server |
-| `check` | ESLint (`--max-warnings 0`) + `tsc` |
+| `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest |
 | `build` | Production build |
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
-| `e2e` / `e2e:ui` / `e2e:headed` | Playwright E2E ([e2e/README.md](e2e/README.md)) |
-| `e2e:install` | Install Chromium for Playwright |
+| `test` / `test:watch` | Vitest |
+| `e2e` / `test:e2e` / `e2e:ui` / `e2e:headed` | Playwright ([e2e/README.md](e2e/README.md)) |
+| `e2e:install` | Chromium for local runs |
 
 ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import order, IIFE ban.
 
@@ -42,12 +43,14 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 - Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
-- Auth: [proxy.ts](proxy.ts) (Clerk). Do not bypass without reason.
+- Auth: [proxy.ts](proxy.ts) (Supabase session). Do not bypass without reason.
 
 ## Testing
 
-- **E2E:** `supabase start` in `supabase/`, then `bun run seed && bun run build && CI=true bun run e2e` (see [e2e/README.md](e2e/README.md)).
-- **Static checks:** `bun run check` and `bun run build`.
+- `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
+- `bun run check` — lint, typecheck, and `test`.
+- `bun run e2e` / `test:e2e` — Playwright ([e2e/README.md](e2e/README.md)).
+- E2E path: `supabase start` → `seed` → `build` → `CI=true bun run e2e`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides
