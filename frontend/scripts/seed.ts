@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
+import { resolveDemoCredentials } from "../lib/auth/demo";
 
 type CsvRow = Record<string, string | number | boolean | null | undefined>;
 
@@ -638,6 +639,26 @@ async function seedDemoIncidents() {
   console.log("\n  Demo incidents seeded.\n");
 }
 
+async function ensureDemoUser() {
+  const credentials = resolveDemoCredentials();
+  if (!credentials) {
+    console.log("  demo user… skipped (set DEMO_USER_* in production)");
+    return;
+  }
+
+  console.log("  demo user…");
+  const { error } = await supabase.auth.admin.createUser({
+    email: credentials.email,
+    password: credentials.password,
+    email_confirm: true,
+  });
+  if (error && !/already|exists|registered/i.test(error.message)) {
+    console.error(`  ✗ demo user: ${error.message}`);
+    return;
+  }
+  console.log(`  ✓ demo user (${credentials.email})`);
+}
+
 // ---- Main ----------------------------------------------------
 async function main() {
   console.log("=== Resolve — seed script ===\n");
@@ -646,6 +667,7 @@ async function main() {
     await seedRawData();
     await seedProductKpiThresholds();
     await seedDemoIncidents();
+    await ensureDemoUser();
     console.log("=== Done ✓ ===\n");
   } catch (err) {
     console.error("Fatal:", err);
