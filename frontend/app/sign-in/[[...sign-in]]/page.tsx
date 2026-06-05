@@ -25,7 +25,7 @@ export default async function SignInPage({
       : null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-12">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-8 bg-background px-4 py-12">
       <BrandLogo variant="auth" />
       <AuthForm title="Sign in" action={signIn} initialError={authError} nextPath={nextPath} />
       <OAuthButtons />
