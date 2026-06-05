@@ -18,7 +18,3 @@ export function resolveDemoCredentials():
   }
   return null;
 }
-
-export function isDemoLoginConfigured(): boolean {
-  return resolveDemoCredentials() !== null;
-}

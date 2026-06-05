@@ -6,7 +6,6 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
-import { isDemoLoginConfigured } from "@/lib/auth/demo";
 
 export default async function SignInPage({
   searchParams,
@@ -18,7 +17,7 @@ export default async function SignInPage({
     params.error === "auth"
       ? "Could not complete sign-in. Try again."
       : params.error === "demo"
-        ? "Demo login failed. Copy DEMO_USER_* from .env.example into frontend/.env.local and run bun run seed."
+        ? "Demo sign-in is temporarily unavailable. Please use another sign-in method."
         : null;
   const nextPath =
     typeof params.next === "string" && params.next.startsWith("/") && !params.next.startsWith("//")
@@ -34,7 +33,7 @@ export default async function SignInPage({
       <AuthForm title="Sign in" action={signIn} initialError={authError} nextPath={nextPath} />
       <OAuthButtons />
       <ShopifyLoginButton />
-      <DemoLoginButton configured={isDemoLoginConfigured()} />
+      <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         New here?{" "}
         <Link href="/sign-up" className="text-primary hover:underline">
