@@ -17,7 +17,7 @@ test.describe("Navigation", () => {
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/catalog");
-    await expect(shell.sidebarToggleTrigger()).toBeVisible();
+    await expect(shell.desktopSidebarTrigger()).toBeVisible();
   });
 
   test("sidebar navigates between catalog and incidents", async ({ page }) => {
