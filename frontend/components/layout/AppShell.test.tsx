@@ -11,7 +11,7 @@ describe("AppShell", () => {
       email: "alex@prettyfly.test",
     });
     render(
-      <AppShell user={user}>
+      <AppShell user={user} searchTargets={[]}>
         <p>Page content</p>
       </AppShell>,
     );
@@ -33,7 +33,7 @@ describe("AppShell", () => {
     vi.mocked(navigation.usePathname).mockReturnValue("/catalog");
     const user = createShellUserFixture();
     render(
-      <AppShell user={user}>
+      <AppShell user={user} searchTargets={[]}>
         <span>child</span>
       </AppShell>,
     );

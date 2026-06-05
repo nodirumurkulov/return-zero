@@ -1,12 +1,12 @@
 "use client";
 
-import { Activity, LayoutGrid, LogOut, Receipt, Search, Siren } from "lucide-react";
+import { Activity, LayoutGrid, LogOut, Receipt, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
+import GlobalSearch from "@/components/layout/GlobalSearch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +22,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import type { SearchTarget } from "@/lib/search";
 
 const NAV = [
   { href: "/orders", label: "Orders", icon: Receipt },
@@ -54,11 +55,11 @@ function SignOutButton({ className }: { className?: string }) {
 export default function AppShell({
   children,
   user,
-  searchSlot,
+  searchTargets,
 }: {
   children: React.ReactNode;
   user: ShellUser;
-  searchSlot?: React.ReactNode;
+  searchTargets: SearchTarget[];
 }) {
   const pathname = usePathname();
   const displayName = user.name ?? user.email ?? "Account";
@@ -139,17 +140,7 @@ export default function AppShell({
           <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="relative max-w-md flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              {searchSlot ?? (
-                <Input
-                  placeholder="Search products or incidents…"
-                  className="pl-9"
-                  disabled
-                />
-              )}
-              <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border px-1 font-mono text-[10px] text-muted-foreground sm:block">
-                ⌘K
-              </kbd>
+              <GlobalSearch targets={searchTargets} />
             </div>
             <div className="md:hidden">
               <SignOutButton />
