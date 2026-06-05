@@ -7,11 +7,11 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock("@/lib/agents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/agents")>();
+vi.mock("@/lib/hugo", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/hugo")>();
   return {
     ...actual,
-    persistInvestigation: vi.fn(),
+    runIncidentInvestigation: vi.fn(),
   };
 });
 
@@ -24,11 +24,11 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/investigate/route";
-import { persistInvestigation } from "@/lib/agents";
+import { runIncidentInvestigation } from "@/lib/hugo";
 import { requireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const persistInvestigationMock = vi.mocked(persistInvestigation);
+const runIncidentInvestigationMock = vi.mocked(runIncidentInvestigation);
 const createClientMock = vi.mocked(createClient);
 const requireOrganizationIdMock = vi.mocked(requireOrganizationId);
 
@@ -53,7 +53,7 @@ describe("POST /api/investigate", () => {
       }),
     );
     expect(res.status).toBe(400);
-    expect(persistInvestigationMock).not.toHaveBeenCalled();
+    expect(runIncidentInvestigationMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 when user is not signed in", async () => {
@@ -71,7 +71,7 @@ describe("POST /api/investigate", () => {
     expect(res.status).toBe(401);
   });
 
-  it("persists investigation for authenticated user", async () => {
+  it("runs Hugo investigation for authenticated user", async () => {
     const supabase = {
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
       from: () => ({
@@ -82,13 +82,9 @@ describe("POST /api/investigate", () => {
     };
     createClientMock.mockResolvedValue(supabase as never);
     requireOrganizationIdMock.mockResolvedValue("org-1");
-    persistInvestigationMock.mockResolvedValue({
-      result: {
-        findings: [],
-        root_cause: "Supplier defect",
-        root_cause_confidence: 90,
-        actions: [],
-      },
+    runIncidentInvestigationMock.mockResolvedValue({
+      root_cause: "Supplier defect",
+      root_cause_confidence: 90,
       findings_count: 2,
       actions_count: 1,
     });
@@ -101,6 +97,6 @@ describe("POST /api/investigate", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(persistInvestigationMock).toHaveBeenCalledWith(supabase, INCIDENT_ID, PRODUCT_ID);
+    expect(runIncidentInvestigationMock).toHaveBeenCalledWith(supabase, INCIDENT_ID, PRODUCT_ID);
   });
 });

@@ -1,15 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/lib/supabase/database.types";
 
-/** LLM output from a single investigation agent (not the persisted DB row). */
-export type LlmAgentFinding = {
+export type HugoSupabase = SupabaseClient<Database>;
+
+/** LLM output from Hugo investigation (not the persisted DB row). */
+export type HugoFinding = {
   agent_name: string;
   agent_icon: string;
   summary: string;
   detail: Record<string, unknown>;
 };
 
-export type InvestigationAction = {
+export type HugoAction = {
   title: string;
   description: string;
   impact_level: "high" | "medium" | "low";
@@ -17,11 +20,15 @@ export type InvestigationAction = {
   auto_deploy: boolean;
 };
 
-export type InvestigationResult = {
-  findings: LlmAgentFinding[];
+export type HugoInvestigationResult = {
+  findings: HugoFinding[];
   root_cause: string;
   root_cause_confidence: number;
-  actions: InvestigationAction[];
+  actions: HugoAction[];
 };
 
-export type AgentSupabase = SupabaseClient<Database>;
+export type PersistInvestigationResult = {
+  result: HugoInvestigationResult;
+  findings_count: number;
+  actions_count: number;
+};

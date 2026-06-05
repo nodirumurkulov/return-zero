@@ -1,25 +1,22 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
-import { orderIdsForProduct } from "../product-orders";
-import type { AgentSupabase } from "../types";
 
-export async function fetchReturnsContext(
-  supabase: AgentSupabase,
-  organizationId: string,
-  productId: string,
-) {
-  const orderIds = await orderIdsForProduct(supabase, organizationId, productId);
+import { productIdInputSchema } from "../schemas";
+import type { HugoToolContext } from "./context";
+import { orderIdsForProduct } from "./orders";
+
+export async function fetchReturnsContext(ctx: HugoToolContext, productId: string) {
+  const orderIds = await orderIdsForProduct(ctx, productId);
 
   const refundData =
     orderIds.length === 0
       ? []
       : (
-          await supabase
+          await ctx.supabase
             .from("refunds")
             .select("id, amount, reason, created_at, order_id")
-            .eq("organization_id", organizationId)
+            .eq("organization_id", ctx.organizationId)
             .in("order_id", orderIds)
             .order("created_at", { ascending: false })
             .limit(500)
@@ -47,12 +44,12 @@ export async function fetchReturnsContext(
   };
 }
 
-export function createReturnsTools(supabase: AgentSupabase, organizationId: string) {
+export function createReturnsTools(ctx: HugoToolContext) {
   return {
-    listRefundsForProduct: tool({
-      description: "List refunds for all orders of a product with reason breakdown and totals",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchReturnsContext(supabase, organizationId, productId),
+    getReturnsForProduct: tool({
+      description: "Fetch refund totals, sizing-related refunds, and reason breakdown for a product",
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }) => fetchReturnsContext(ctx, productId),
     }),
   };
 }

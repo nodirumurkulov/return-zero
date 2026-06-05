@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
-import { investigateBodySchema, persistInvestigation } from "@/lib/agents";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { investigateBodySchema, runIncidentInvestigation } from "@/lib/hugo";
 import { requireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,11 +30,7 @@ export async function POST(req: NextRequest) {
   try {
     await requireOrganizationId(supabase);
 
-    const { result, findings_count, actions_count } = await persistInvestigation(
-      supabase,
-      incident_id,
-      product_id,
-    );
+    const result = await runIncidentInvestigation(supabase, incident_id, product_id);
 
     revalidatePath("/incidents");
     revalidatePath(`/incidents/${incident_id}`);
@@ -43,8 +39,8 @@ export async function POST(req: NextRequest) {
       success: true,
       root_cause: result.root_cause,
       root_cause_confidence: result.root_cause_confidence,
-      findings_count,
-      actions_count,
+      findings_count: result.findings_count,
+      actions_count: result.actions_count,
     });
   } catch (err) {
     logApiError("api/investigate", err);

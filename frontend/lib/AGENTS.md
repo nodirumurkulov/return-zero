@@ -30,8 +30,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `stores/analytics/forecast/` | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
 | `stores/analytics/search/` | `@/lib/stores/analytics/search` | Global search targets |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
-| `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
-| `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
+| `hugo/` | `@/lib/hugo` | Unified AI SDK Hugo agent (Slack + investigation); tools in `hugo/tools/` |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
 | `stores/` | `@/lib/stores` | `Store`, `StoreConnector`, connect + intelligence |
 | `stores/analytics/replay/` | `@/lib/stores/analytics/replay` | Replay cursor, bounds, orders feed |

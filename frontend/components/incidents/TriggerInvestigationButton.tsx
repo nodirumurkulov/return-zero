@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { useTriggerInvestigation } from "@/hooks/agents";
+import { useTriggerInvestigation } from "@/hooks/hugo";
 
 export default function TriggerInvestigationButton({
   incidentId,

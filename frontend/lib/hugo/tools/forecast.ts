@@ -1,10 +1,12 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
+
 import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
 import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
-import type { AgentSupabase } from "../types";
+
+import { productIdInputSchema } from "../schemas";
+import type { HugoToolContext } from "./context";
 
 type OutflowRow = {
   product_id: string;
@@ -12,18 +14,14 @@ type OutflowRow = {
   daily_outflow: number | null;
 };
 
-export async function fetchForecastContext(
-  supabase: AgentSupabase,
-  organizationId: string,
-  productId: string,
-) {
+export async function fetchForecastContext(ctx: HugoToolContext, productId: string) {
   const [series, { data: outflowRows }, { data: settingsRows }] = await Promise.all([
-    getProductSeries(supabase, organizationId, productId, 24),
-    supabase.rpc("product_daily_outflow", { p_organization_id: organizationId, p_days: 28 }),
-    supabase
+    getProductSeries(ctx.supabase, ctx.organizationId, productId, 24),
+    ctx.supabase.rpc("product_daily_outflow", { p_organization_id: ctx.organizationId, p_days: 28 }),
+    ctx.supabase
       .from("business_settings")
       .select("key, value")
-      .eq("organization_id", organizationId),
+      .eq("organization_id", ctx.organizationId),
   ]);
 
   const rows = (outflowRows ?? []) as OutflowRow[];
@@ -57,13 +55,13 @@ export async function fetchForecastContext(
   };
 }
 
-export function createForecastingTools(supabase: AgentSupabase, organizationId: string) {
+export function createForecastTools(ctx: HugoToolContext) {
   return {
-    getDeterministicForecast: tool({
+    getForecastForProduct: tool({
       description:
-        "Compute deterministic stockout, refund rate, ROAS, and revenue forecasts for a product (numbers are final — do not change them)",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchForecastContext(supabase, organizationId, productId),
+        "Compute deterministic stockout, refund rate, ROAS, and revenue forecasts for a product",
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }) => fetchForecastContext(ctx, productId),
     }),
   };
 }

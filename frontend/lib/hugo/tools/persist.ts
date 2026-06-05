@@ -1,33 +1,26 @@
 import "server-only";
+
+import { tool } from "ai";
+
 import { sendIncidentNotification } from "@/lib/slack";
 import type { Json } from "@/lib/supabase/database.types";
-import { runInvestigation } from "./run-investigation";
-import type { AgentSupabase, InvestigationResult } from "./types";
 
-export type PersistInvestigationResult = {
-  result: InvestigationResult;
-  findings_count: number;
-  actions_count: number;
-};
+import { persistInvestigationInputSchema } from "../schemas";
+import type { HugoSupabase, PersistInvestigationResult } from "../types";
+import type { HugoToolContext } from "./context";
 
-export async function persistInvestigation(
-  supabase: AgentSupabase,
+async function writeInvestigation(
+  supabase: HugoSupabase,
   incidentId: string,
-  productId: string,
+  organizationId: string,
+  affectedKpiKeys: string[],
+  input: {
+    findings: PersistInvestigationResult["result"]["findings"];
+    root_cause: string;
+    root_cause_confidence: number;
+    actions: PersistInvestigationResult["result"]["actions"];
+  },
 ): Promise<PersistInvestigationResult> {
-  const { data: incident, error: incLoadErr } = await supabase
-    .from("incidents")
-    .select("organization_id, product_id, affected_kpi_keys")
-    .eq("id", incidentId)
-    .single();
-  if (incLoadErr || !incident) {
-    throw new Error(`incident not found: ${incLoadErr?.message ?? "missing row"}`);
-  }
-
-  const organizationId = incident.organization_id;
-  const resolvedProductId = incident.product_id ?? productId;
-  const affectedKpiKeys = incident.affected_kpi_keys;
-
   await supabase
     .from("incidents")
     .update({ status: "investigating", investigation_started_at: new Date().toISOString() })
@@ -37,16 +30,15 @@ export async function persistInvestigation(
     incident_id: incidentId,
     organization_id: organizationId,
     event_type: "agent_assigned",
-    description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
+    description: "Hugo agent dispatched for investigation",
   });
 
-  const result = await runInvestigation(
-    supabase,
-    organizationId,
-    incidentId,
-    resolvedProductId,
-    affectedKpiKeys,
-  );
+  const result = {
+    findings: input.findings,
+    root_cause: input.root_cause,
+    root_cause_confidence: input.root_cause_confidence,
+    actions: input.actions,
+  };
 
   await supabase.from("agent_findings").insert(
     result.findings.map((f) => ({
@@ -111,10 +103,7 @@ export async function persistInvestigation(
       const ids = storedActions.map((a) => a.id);
       await supabase
         .from("incident_actions")
-        .update({
-          status: "deployed",
-          deployed_at: now,
-        })
+        .update({ status: "deployed", deployed_at: now })
         .in("id", ids);
 
       await supabase.from("incident_timeline").insert({
@@ -152,5 +141,58 @@ export async function persistInvestigation(
     result,
     findings_count: result.findings.length,
     actions_count: result.actions.length,
+  };
+}
+
+export async function persistInvestigation(
+  supabase: HugoSupabase,
+  incidentId: string,
+  investigation: {
+    findings: PersistInvestigationResult["result"]["findings"];
+    root_cause: string;
+    root_cause_confidence: number;
+    actions: PersistInvestigationResult["result"]["actions"];
+  },
+): Promise<PersistInvestigationResult> {
+  const { data: incident, error: incLoadErr } = await supabase
+    .from("incidents")
+    .select("organization_id, affected_kpi_keys")
+    .eq("id", incidentId)
+    .single();
+  if (incLoadErr || !incident) {
+    throw new Error(`incident not found: ${incLoadErr?.message ?? "missing row"}`);
+  }
+
+  return writeInvestigation(
+    supabase,
+    incidentId,
+    incident.organization_id,
+    incident.affected_kpi_keys,
+    investigation,
+  );
+}
+
+export function createPersistTools(ctx: HugoToolContext) {
+  return {
+    persistInvestigation: tool({
+      description:
+        "Save investigation findings, root cause narrative, confidence, and proposed fix actions to an incident",
+      inputSchema: persistInvestigationInputSchema,
+      execute: async (input) => {
+        const persisted = await persistInvestigation(ctx.supabase, input.incidentId, {
+          findings: input.findings,
+          root_cause: input.root_cause,
+          root_cause_confidence: input.root_cause_confidence,
+          actions: input.actions,
+        });
+        return {
+          success: true as const,
+          findings_count: persisted.findings_count,
+          actions_count: persisted.actions_count,
+          root_cause: persisted.result.root_cause,
+          root_cause_confidence: persisted.result.root_cause_confidence,
+        };
+      },
+    }),
   };
 }

@@ -7,7 +7,7 @@ const { mutate, mockError } = vi.hoisted(() => ({
   mockError: { current: null as Error | null },
 }));
 
-vi.mock("@/hooks/agents", () => ({
+vi.mock("@/hooks/hugo", () => ({
   useTriggerInvestigation: () => ({
     mutate,
     isPending: false,

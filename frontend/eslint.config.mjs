@@ -102,7 +102,7 @@ export default tseslint.config(
   },
   {
     files: [
-      "lib/agents/**/*.ts",
+      "lib/hugo/**/*.ts",
       "lib/cron-auth.ts",
       "lib/api-errors.ts",
       "lib/llm.ts",

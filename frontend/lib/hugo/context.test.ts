@@ -7,8 +7,6 @@ import {
   formatIncidentLine,
   isOpenIncident,
   resolveIncident,
-  wantsCatalog,
-  wantsInventory,
 } from "./context";
 
 const { listIncidentsMock } = vi.hoisted(() => ({ listIncidentsMock: vi.fn() }));
@@ -75,14 +73,6 @@ describe("formatIncidentLine", () => {
   });
 });
 
-describe("wantsCatalog", () => {
-  it("detects KPI/product keywords", () => {
-    expect(wantsCatalog("what's the return rate for hoodies?")).toBe(true);
-    expect(wantsCatalog("any KPI breaches?")).toBe(true);
-    expect(wantsCatalog("hey hugo how are you")).toBe(false);
-  });
-});
-
 describe("resolveIncident", () => {
   it("matches a single incident by title fragment", async () => {
     listIncidentsMock.mockResolvedValue([
@@ -127,15 +117,6 @@ describe("buildOpenIncidentsContext", () => {
     const ctx = await buildOpenIncidentsContext(supabase, orgId);
     expect(ctx).toContain("Open incidents (1 of 1");
     expect(ctx).toContain("Return rate spike");
-  });
-});
-
-describe("wantsInventory", () => {
-  it("detects stock/inventory keywords", () => {
-    expect(wantsInventory("how many units of the hoodie are in stock?")).toBe(true);
-    expect(wantsInventory("which products are running low on inventory?")).toBe(true);
-    expect(wantsInventory("anything out of stock?")).toBe(true);
-    expect(wantsInventory("what's the worst incident today?")).toBe(false);
   });
 });
 

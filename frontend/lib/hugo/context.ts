@@ -163,20 +163,6 @@ export async function buildCatalogContext(
     .join("\n");
 }
 
-const CATALOG_KEYWORDS =
-  /\b(kpi|kpis|metric|metrics|product|products|catalog|return rate|refund|roas|threshold|health|breach)\b/i;
-
-export function wantsCatalog(prompt: string): boolean {
-  return CATALOG_KEYWORDS.test(prompt);
-}
-
-const INVENTORY_KEYWORDS =
-  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|on hand|supply|left)\b/i;
-
-export function wantsInventory(prompt: string): boolean {
-  return INVENTORY_KEYWORDS.test(prompt);
-}
-
 function formatStockoutDays(days: number): string {
   if (!Number.isFinite(days)) return "no decline at current demand";
   return `~${Math.round(days)}d to stockout`;

@@ -1,39 +1,30 @@
 # AGENTS.md — lib/hugo
 
-`@hugo` Slack assistant: turns an `app_mention` into a chat reply, a data-grounded
-answer, or an investigate/approve action. **Parent:** [../AGENTS.md](../AGENTS.md)
+`@hugo` Slack assistant and unified AI SDK investigation agent. **Parent:** [../AGENTS.md](../AGENTS.md)
 
-## Files
+## Layout
 
-| File | Role |
+| Path | Role |
 |------|------|
-| `index.ts` | Public surface — `handleHugoMention` orchestrates classify → gather → act → post |
-| `schemas.ts` | `hugoIntentSchema` (Zod) for LLM intent classification |
-| `intent.ts` | `classifyHugoIntent` — LLM classification with keyword fallback |
-| `context.ts` | Incident resolution + model-friendly incident/KPI/inventory context strings |
-| `actions.ts` | `runHugoInvestigation`, `runHugoApproval` (reuse `agents` / `incidents`) |
-| `reply.ts` | `generateChatReply`, `generateDataReply` (free-form LLM text) |
+| `index.ts` | `handleHugoMention`, `runIncidentInvestigation`, schemas |
+| `core/agent.ts` | Single `ToolLoopAgent` for Slack + investigation |
+| `core/hugo-request.ts` / `hugo-response.ts` | Request/response types |
+| `tools/` | AI SDK tools (`resolve-reference`, `catalog`, `orders`, `forecast`, …) |
+| `context.ts` | Incident resolution helpers used by tools |
+| `schemas.ts` | Zod at boundaries (`investigateBodySchema`, persist input) |
 
 ## Flow
 
-`app/api/slack/events` verifies the signature, acks within Slack's 3s window, and
-calls `handleHugoMention` in `after()`. The handler:
+`app/api/slack/events` calls `handleHugoMention` in `after()`. One Hugo agent picks tools
+(no intent pre-classification) and ends with `finalResponse` for Slack.
 
-1. `classifyHugoIntent` → `chat` | `data_query` | `investigate` | `approve`.
-2. For actions, `resolveIncident` maps the free-text reference to one incident
-   (or asks the user to disambiguate from candidates).
-3. Runs the matching path and posts the reply in-thread via `postSlackMessage`.
+`POST /api/investigate` calls `runIncidentInvestigation` — same tool set, stops on `persistInvestigation`.
 
-For `data_query`, the context is assembled on demand from the prompt: open
-incidents always, the matched incident's detail when referenced, KPI/catalog
-health when `wantsCatalog`, and per-product stock levels (units on hand, daily
-outflow, days-to-stockout via `forecastStockout`) when `wantsInventory`.
+Client hook: `@/hooks/hugo` (`useTriggerInvestigation`).
 
 ## Rules
 
-- Slack delivers no user session, so this module uses `createAdminClient()`.
-- Transport primitives (signature verify, envelope parse, `postSlackMessage`)
-  stay in `@/lib/slack`; this module owns the conversational behaviour only.
-- `approve` only runs on an explicit approval intent; it approves low-risk
-  proposed actions, mirroring the in-app and button flows.
-- `handleHugoMention` never throws — failures are reported back in-thread.
+- Slack delivers no user session — use `createAdminClient()`.
+- Transport stays in `@/lib/slack`; conversational behaviour lives here.
+- Tools import store analytics/incidents public modules only.
+- `handleHugoMention` never throws — failures are reported in-thread.

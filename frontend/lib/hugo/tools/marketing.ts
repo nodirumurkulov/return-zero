@@ -1,21 +1,18 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
-import { campaignNamesForProduct } from "../product-orders";
-import type { AgentSupabase } from "../types";
 
-export async function fetchMarketingContext(
-  supabase: AgentSupabase,
-  organizationId: string,
-  productId: string,
-) {
-  const productCampaigns = await campaignNamesForProduct(supabase, organizationId, productId);
+import { productIdInputSchema } from "../schemas";
+import type { HugoToolContext } from "./context";
+import { campaignNamesForProduct } from "./orders";
 
-  const { data: metaAds } = await supabase
+export async function fetchMarketingContext(ctx: HugoToolContext, productId: string) {
+  const productCampaigns = await campaignNamesForProduct(ctx, productId);
+
+  const { data: metaAds } = await ctx.supabase
     .from("meta_ads_daily")
     .select("campaign_name, spend_gbp, conversions, conversion_value_gbp")
-    .eq("organization_id", organizationId)
+    .eq("organization_id", ctx.organizationId)
     .order("date", { ascending: false })
     .limit(1000);
 
@@ -44,10 +41,10 @@ export async function fetchMarketingContext(
     roas: data.spend > 0 ? +(data.revenue / data.spend).toFixed(2) : 0,
   }));
 
-  const { data: roasDef } = await supabase
+  const { data: roasDef } = await ctx.supabase
     .from("metric_definitions")
     .select("default_threshold")
-    .eq("organization_id", organizationId)
+    .eq("organization_id", ctx.organizationId)
     .eq("metric_key", "ad_roas")
     .single();
   const roasAlarm = Number(roasDef?.default_threshold ?? 1.5);
@@ -62,13 +59,12 @@ export async function fetchMarketingContext(
   };
 }
 
-export function createMarketingTools(supabase: AgentSupabase, organizationId: string) {
+export function createMarketingTools(ctx: HugoToolContext) {
   return {
-    getCampaignAttribution: tool({
-      description:
-        "Fetch Meta ad campaign attribution, spend, revenue, ROAS, and campaigns below alarm threshold",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchMarketingContext(supabase, organizationId, productId),
+    getMarketingForProduct: tool({
+      description: "Fetch Meta ad attribution, spend, revenue, ROAS, and campaigns below alarm threshold",
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }) => fetchMarketingContext(ctx, productId),
     }),
   };
 }

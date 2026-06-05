@@ -12,7 +12,7 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 | [`stores/incidents/`](stores/incidents/) | `@/lib/stores/incidents` | Incidents, detection, recovery |
 | [`stores/analytics/forecast/`](stores/analytics/forecast/) | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
 | [`stores/analytics/search/`](stores/analytics/search/) | `@/lib/stores/analytics/search` | Global search targets |
-| [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
+| [`hugo/`](hugo/) | `@/lib/hugo` | Unified Hugo AI SDK agent (Slack + investigation) |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |
 | [`supabase/`](supabase/) | `@/lib/supabase/server` | Service-role Supabase client |
 

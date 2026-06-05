@@ -1,79 +1,21 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { postSlackMessage } from "@/lib/slack";
-import { createIncidents, type Incident } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/database.types";
-import { runHugoApproval, runHugoInvestigation } from "./actions";
-import {
-  buildCatalogContext,
-  buildIncidentDetailContext,
-  buildInventoryContext,
-  buildOpenIncidentsContext,
-  formatIncidentLine,
-  resolveIncident,
-  wantsCatalog,
-  wantsInventory,
-} from "./context";
-import { classifyHugoIntent } from "./intent";
-import { generateChatReply, generateDataReply } from "./reply";
 
-export type HugoMention = {
-  prompt: string;
-  channel: string;
-  threadTs?: string;
-  userName?: string;
-  teamId?: string;
-};
+import { runHugoSlackAgent } from "./core/agent";
+import type { HugoMention } from "./mention";
 
-export { classifyHugoIntent } from "./intent";
+export type { HugoMention } from "./mention";
 export { resolveIncident } from "./context";
-
-function disambiguation(action: string, candidates: Incident[]): string {
-  if (candidates.length === 0) {
-    return `I couldn't find any open incident to ${action}. Ask me to "list incidents" to see what's open.`;
-  }
-  const lines = candidates.slice(0, 8).map((c) => `- ${formatIncidentLine(c)}`);
-  return [
-    `Which incident should I ${action}? A few candidates:`,
-    ...lines,
-    `Reply with the title or the id in brackets, e.g. "${action} ${candidates[0].title}".`,
-  ].join("\n");
-}
-
-async function answerDataQuery(
-  supabase: SupabaseClient<Database>,
-  mention: HugoMention,
-  organizationId: string,
-  incidentReference: string | null | undefined,
-): Promise<string> {
-  const parts = [await buildOpenIncidentsContext(supabase, organizationId)];
-
-  const ref = (incidentReference ?? "").trim();
-  if (ref) {
-    const { match } = await resolveIncident(supabase, ref, organizationId);
-    if (match) {
-      const detail = await createIncidents(supabase).getIncidentDetail(match.id, organizationId);
-      if (detail) parts.push(buildIncidentDetailContext(detail));
-    }
-  }
-
-  if (wantsCatalog(mention.prompt)) {
-    parts.push(await buildCatalogContext(supabase, organizationId));
-  }
-
-  if (wantsInventory(mention.prompt)) {
-    parts.push(await buildInventoryContext(supabase, organizationId));
-  }
-
-  return generateDataReply(mention.prompt, parts.join("\n\n"));
-}
+export { investigateBodySchema, type InvestigateBody } from "./schemas";
+export { runIncidentInvestigation } from "./core/agent";
+export type { HugoInvestigationResult, PersistInvestigationResult } from "./types";
 
 /**
- * Handle an `@hugo` mention end-to-end: classify the intent, gather any needed
- * incident/KPI data, run investigate/approve actions, and post the reply in the
- * Slack thread. Never throws — failures are reported back to the user.
+ * Handle an `@hugo` Slack mention end-to-end with a single tool-driven agent.
+ * Never throws — failures are reported back to the user.
  */
 export async function handleHugoMention(mention: HugoMention): Promise<void> {
   const post = (text: string) =>
@@ -89,40 +31,15 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       return;
     }
 
-    const intent = await classifyHugoIntent(mention.prompt);
-
-    if (intent.intent === "investigate" || intent.intent === "approve") {
-      const verb = intent.intent;
-      const { match, candidates } = await resolveIncident(
-        supabase,
-        intent.incident_reference,
+    const { text } = await runHugoSlackAgent(
+      { supabase, organizationId },
+      {
+        prompt: mention.prompt,
         organizationId,
-      );
-      if (!match) {
-        await post(disambiguation(verb, candidates));
-        return;
-      }
-
-      await post(
-        verb === "investigate"
-          ? `On it — investigating "${match.title}". I'll post the findings here shortly.`
-          : `On it — approving low-risk fixes for "${match.title}"…`,
-      );
-
-      const result =
-        verb === "investigate"
-          ? await runHugoInvestigation(supabase, match)
-          : await runHugoApproval(supabase, match, mention.userName ?? "slack-user");
-      await post(result);
-      return;
-    }
-
-    if (intent.intent === "data_query") {
-      await post(await answerDataQuery(supabase, mention, organizationId, intent.incident_reference));
-      return;
-    }
-
-    await post(await generateChatReply(mention.prompt));
+        userName: mention.userName,
+      },
+    );
+    await post(text);
   } catch (err) {
     console.error("[Hugo] handleHugoMention failed:", err);
     await post("Sorry, something went wrong handling that. Please try again in a moment.");

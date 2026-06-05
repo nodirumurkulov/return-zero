@@ -1,18 +1,47 @@
 import { z } from "zod";
 
-/**
- * Classified intent for an `@hugo` Slack mention.
- * - `chat` — general open-ended conversation (no app data needed).
- * - `data_query` — a question answered from incident / KPI data.
- * - `investigate` — run the AI investigation for an incident.
- * - `approve` — approve the low-risk proposed fixes for an incident.
- *
- * `incident_reference` is the free-text the user used to point at an incident
- * (a title fragment, product name, or id); we resolve it against the DB.
- */
-export const hugoIntentSchema = z.object({
-  intent: z.enum(["chat", "data_query", "investigate", "approve"]),
-  incident_reference: z.string().nullable().optional(),
+export const investigateBodySchema = z.object({
+  incident_id: z.uuid(),
+  product_id: z.uuid(),
 });
 
-export type HugoIntent = z.infer<typeof hugoIntentSchema>;
+export type InvestigateBody = z.infer<typeof investigateBodySchema>;
+
+export const hugoFindingSchema = z.object({
+  agent_name: z.string(),
+  agent_icon: z.string(),
+  summary: z.string(),
+  detail: z.record(z.string(), z.unknown()),
+});
+
+export const hugoActionSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  impact_level: z.enum(["high", "medium", "low"]),
+  risk_level: z.enum(["high", "medium", "low"]),
+  auto_deploy: z.boolean(),
+});
+
+export const persistInvestigationInputSchema = z.object({
+  incidentId: z.uuid(),
+  findings: z.array(hugoFindingSchema).min(1),
+  root_cause: z.string(),
+  root_cause_confidence: z.number().min(0).max(100),
+  actions: z.array(hugoActionSchema),
+});
+
+export const finalResponseInputSchema = z.object({
+  message: z.string().min(1),
+});
+
+export const resolveReferenceInputSchema = z.object({
+  reference: z.string().nullable().optional(),
+});
+
+export const productIdInputSchema = z.object({
+  productId: z.uuid(),
+});
+
+export const incidentIdInputSchema = z.object({
+  incidentId: z.uuid(),
+});
