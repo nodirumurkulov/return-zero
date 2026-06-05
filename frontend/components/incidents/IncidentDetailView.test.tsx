@@ -21,8 +21,8 @@ describe("IncidentDetailView", () => {
       isError: false,
       error: null,
     });
-    renderWithProviders(<IncidentDetailView incidentId="inc-1" />);
-    expect(screen.getByText("Loading incident…")).toBeInTheDocument();
+    const { container } = renderWithProviders(<IncidentDetailView incidentId="inc-1" />);
+    expect(container.querySelectorAll("[data-slot='skeleton']").length).toBeGreaterThan(0);
   });
 
   it("renders incident title and root cause when loaded", () => {

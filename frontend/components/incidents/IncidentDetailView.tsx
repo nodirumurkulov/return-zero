@@ -13,8 +13,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ImpactTag } from "@/components/ui/ImpactTag";
 import { SectionLabel } from "@/components/ui/section-label";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
 
 function IncidentDetailSkeleton() {
