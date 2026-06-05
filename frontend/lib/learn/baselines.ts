@@ -10,9 +10,9 @@
 // product_kpi_thresholds in the engine's override shape.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { streamStartDate } from "@/lib/detection/replay";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MonthlyPoint } from "@/lib/metrics/types";
+import { streamStartDate } from "@/lib/stores/analytics/replay";
 import type { Database } from "@/lib/supabase/database.types";
 
 // KPIs we can learn from the monthly series (ratio metrics with the inputs we

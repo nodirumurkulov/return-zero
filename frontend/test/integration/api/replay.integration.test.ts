@@ -3,10 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/detection/replay", () => ({
-  resetReplay: vi.fn(),
-  runReplay: vi.fn(),
-}));
+vi.mock("@/lib/stores/analytics/replay", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/stores/analytics/replay")>();
+  return {
+    ...actual,
+    resetReplay: vi.fn(),
+    runReplay: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -24,7 +28,7 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/replay/route";
-import { runReplay } from "@/lib/detection/replay";
+import { runReplay } from "@/lib/stores/analytics/replay";
 
 const runReplayMock = vi.mocked(runReplay);
 

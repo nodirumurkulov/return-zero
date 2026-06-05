@@ -1,6 +1,6 @@
 import { User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { OrderFeedItem } from "@/lib/orders/types";
+import type { OrderFeedItem } from "@/lib/stores/analytics/replay";
 
 const STATUS_TONE: Record<string, string> = {
   paid: "text-sev-resolved bg-sev-resolvedBg",

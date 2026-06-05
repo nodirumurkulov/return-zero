@@ -8,7 +8,7 @@ import { OrderRow } from "@/components/orders/OrderRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { OrderFeedItem } from "@/lib/orders/types";
+import type { OrderFeedItem } from "@/lib/stores/analytics/replay";
 
 function LiveStat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
   return (

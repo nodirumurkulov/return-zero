@@ -11,7 +11,7 @@ vi.mock("@/lib/learn/report", () => ({
   buildBusinessReport: vi.fn(),
 }));
 
-vi.mock("@/lib/detection/replay", () => ({
+vi.mock("@/lib/stores/analytics/replay", () => ({
   resetReplay: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/learn/route";
-import { resetReplay } from "@/lib/detection/replay";
+import { resetReplay } from "@/lib/stores/analytics/replay";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 
