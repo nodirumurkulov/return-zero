@@ -50,7 +50,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 
 ## Best practices (domain layer)
 
-- **Types = database truth.** One type per table/view in `types.ts`; no `*Row`, no `from*Row`, no DTO mappers “for compatibility.”
+- **Types = database truth.** Table rows use `Tables<"table_name">` from `@/lib/supabase/db`; enums use `Constants.public.Enums.*` from `database.types.ts`. No hand-copied column lists, no `*Row` mappers.
 - **Supabase = typed client only.** `supabase.from("products")`, `supabase.rpc("product_source_facts", args)` with `SupabaseClient<Database>`. Forbidden: dynamic table helpers, `as unknown as` query builders, and unknown-row string coercers — regenerate `database.types.ts` instead.
 - **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules. `lib/` owns domain logic and **shared** Zod schemas — not one-off 3-line utilities for a single server action.
 - **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.

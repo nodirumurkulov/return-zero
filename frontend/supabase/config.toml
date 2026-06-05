@@ -59,16 +59,28 @@ max_client_conn = 100
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
 enabled = true
-# Specifies an ordered list of schema files that describe your database.
-# Supports glob patterns relative to supabase directory: "./schemas/*.sql"
-schema_paths = []
+# Declarative schema source of truth — edit these files, then `bun run db:diff`.
+# https://supabase.com/docs/guides/local-development/declarative-database-schemas
+schema_paths = [
+  "./schemas/001_extensions_enums.sql",
+  "./schemas/002_tenancy.sql",
+  "./schemas/003_contract_schema.sql",
+  "./schemas/004_app_config_schema.sql",
+  "./schemas/005_incidents_schema.sql",
+  "./schemas/006_analytics_functions.sql",
+  "./schemas/007_rls_policies.sql",
+  "./schemas/008_triggers_defaults.sql",
+  "./schemas/009_org_integrity.sql",
+  "./schemas/010_security_hardening.sql",
+  "./schemas/011_business_profile.sql",
+  "./schemas/012_slack_team_mapping.sql",
+  "./schemas/013_analytics_statement_timeout.sql",
+]
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# Demo data is loaded via `bun run seed` (scripts/seed.ts), not SQL seed files.
+enabled = false
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -408,10 +420,10 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-# [experimental.pgdelta]
-# When enabled, pg-delta becomes the active engine for supported schema flows.
-# enabled = false
-# Directory under `supabase/` where declarative files are written.
-# declarative_schema_path = "./database"
+[experimental.pgdelta]
+# pg-delta diff engine — better RLS/function coverage than migra.
+# https://supabase.com/changelog/44938-public-alpha-declarative-schema-management-with-pg-delta
+enabled = true
+declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"

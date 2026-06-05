@@ -1,19 +1,12 @@
+import { Constants } from "@/lib/supabase/database.types";
+
 /** Kanban + workflow statuses for incidents. */
 
-export const INCIDENT_STATUSES = [
-  "detected",
-  "investigating",
-  "fix_proposed",
-  "awaiting_approval",
-  "deploying",
-  "monitoring",
-  "resolved",
-  "canceled",
-] as const;
+export const INCIDENT_STATUSES = Constants.public.Enums.incident_status;
 
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
 
-export const INCIDENT_SEVERITIES = ["critical", "high", "medium", "low"] as const;
+export const INCIDENT_SEVERITIES = Constants.public.Enums.incident_severity;
 
 export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
 

@@ -56,7 +56,7 @@ beforeEach(() => {
 });
 
 describe("isOpenIncident", () => {
-  it("treats resolved/closed as not open", () => {
+  it("treats resolved/canceled as not open", () => {
     expect(isOpenIncident(incident({ status: "detected" }))).toBe(true);
     expect(isOpenIncident(incident({ status: "resolved" }))).toBe(false);
     expect(isOpenIncident(incident({ status: "canceled" }))).toBe(false);

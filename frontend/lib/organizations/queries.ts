@@ -67,7 +67,7 @@ export async function listOrganizationsForUser(
 
   const { data, error } = await supabase
     .from("organizations")
-    .select("id, name, slug, created_at, updated_at")
+    .select("id, name, slug, slack_team_id, created_at, updated_at")
     .eq("id", organizationId);
 
   if (error) throw new OrganizationError(error.message);

@@ -17,8 +17,8 @@
 | `server.ts` | `createClient()` — RSC, server actions, user APIs (RLS) |
 | `admin.ts` | `createAdminClient()` — bypass RLS (server-only) |
 | `middleware.ts` | `updateSession()` — session refresh + `getUser()` |
-| `database.types.ts` | Generated `Database` type — `bun run db:types` after migrations |
-| `db.ts` | `Tables<>`, `Views<>` helpers |
+| `database.types.ts` | Generated `Database` type — `bun run db:types` after schema changes; CI enforces via `db:check-types` |
+| `db.ts` | `Tables<>`, `Views<>`, `Constants` — domain table types alias these, never redeclare columns |
 
 ## Query rules
 

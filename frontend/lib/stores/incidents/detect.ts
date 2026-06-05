@@ -1,10 +1,76 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { computeMetricsDetailed } from "@/lib/stores/analytics/metrics/engine";
+import { baselineStats, kpiRatioSeries } from "@/lib/stores/analytics/metrics/kpi-series";
+import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
 import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
 import type { ProductSourceFacts } from "@/lib/stores/analytics/metrics/source-facts";
-import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
+
+import {
+  confidenceFromN,
+  confidenceInterval,
+  zScore,
+  type Confidence,
+} from "./anomaly";
+import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank, zSeverityBoost } from "./severity";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
+
+type BaselineRow = { metric_key: string; mean: number; stddev: number; sample_n: number };
+
+interface QuantProfile {
+  metric_key: string;
+  value: number;
+  baseline_source: "learned" | "series" | "none";
+  mean: number | null;
+  sigma: number | null;
+  sample_n: number | null;
+  z_score: number | null;
+  ci: { lower: number; upper: number } | null;
+  confidence: Confidence;
+}
+
+function quantProfile(
+  metricKey: string,
+  value: number,
+  stored: BaselineRow | undefined,
+  series: MonthlyPoint[],
+): QuantProfile {
+  const fallback = stored
+    ? null
+    : (() => {
+        const s = baselineStats(kpiRatioSeries(series, metricKey));
+        return s.n > 0 ? s : null;
+      })();
+  const stats = stored
+    ? { mean: stored.mean, stddev: stored.stddev, n: stored.sample_n }
+    : fallback;
+  const source: QuantProfile["baseline_source"] = stored ? "learned" : fallback ? "series" : "none";
+
+  if (!stats) {
+    return {
+      metric_key: metricKey,
+      value,
+      baseline_source: "none",
+      mean: null,
+      sigma: null,
+      sample_n: null,
+      z_score: null,
+      ci: null,
+      confidence: "none",
+    };
+  }
+  return {
+    metric_key: metricKey,
+    value,
+    baseline_source: source,
+    mean: stats.mean,
+    sigma: stats.stddev,
+    sample_n: stats.n,
+    z_score: zScore(value, stats.mean, stats.stddev),
+    ci: confidenceInterval(stats.mean, stats.stddev, stats.n),
+    confidence: confidenceFromN(stats.n),
+  };
+}
 
 function factColumn(facts: ProductSourceFacts, source: string | null, field: string | null): number {
   if (!source || !field) return 0;
@@ -77,6 +143,33 @@ export class BreachDetector {
       months: 24,
     });
 
+    const { data: mdRows } = await this.supabase
+      .from("metric_definitions")
+      .select("id, metric_key")
+      .eq("organization_id", opts.organizationId);
+    const keyByDefId = new Map((mdRows ?? []).map((d) => [String(d.id), String(d.metric_key)]));
+    const { data: baselineRows } = await this.supabase
+      .from("product_baselines")
+      .select("product_id, metric_definition_id, mean, stddev, sample_n")
+      .eq("organization_id", opts.organizationId);
+    const baselineByKey = new Map<string, BaselineRow>(
+      (baselineRows ?? []).flatMap((r) => {
+        const metricKey = keyByDefId.get(String(r.metric_definition_id));
+        if (!metricKey) return [];
+        return [
+          [
+            `${r.product_id}:${metricKey}`,
+            {
+              metric_key: metricKey,
+              mean: Number(r.mean),
+              stddev: Number(r.stddev),
+              sample_n: Number(r.sample_n),
+            },
+          ] as const,
+        ];
+      }),
+    );
+
     const created: CreatedIncident[] = [];
     const skipped: DetectionResult["skipped"] = [];
     const productIds = Object.keys(metrics);
@@ -103,11 +196,18 @@ export class BreachDetector {
       const value = primary.m.value ?? 0;
       const fullSeries = seriesByProduct.get(productId) ?? [];
       const series = opts.asOf ? fullSeries.filter((p) => p.month <= opts.asOf!) : fullSeries;
+      const profile = quantProfile(
+        primary.m.metric_key,
+        value,
+        baselineByKey.get(`${productId}:${primary.m.metric_key}`),
+        series,
+      );
       const severity = scoreSeverity({
         baseSeverity: primary.def.severity,
         magnitude: breachMagnitude(value, primary.m.threshold, primary.m.direction),
         impactAmount: primary.impact,
         worsening: metricTrendWorsening(primary.m.metric_key, series, primary.m.direction),
+        zBoost: zSeverityBoost(profile.z_score, profile.confidence),
       });
 
       const productTitle = titleById.get(productId) ?? productId;
@@ -146,6 +246,7 @@ export class BreachDetector {
               threshold: r.m.threshold,
               direction: r.m.direction,
             })),
+            quant: profile,
           },
         },
         {
@@ -169,4 +270,3 @@ export class BreachDetector {
     return { scanned: productIds.length, created, skipped };
   }
 }
-

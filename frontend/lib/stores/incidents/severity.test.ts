@@ -5,6 +5,7 @@ import {
   metricTrendWorsening,
   scoreSeverity,
   severityRank,
+  zSeverityBoost,
 } from "./severity";
 
 describe("severityRank", () => {
@@ -33,6 +34,37 @@ describe("scoreSeverity", () => {
       worsening: true,
     });
     expect(severity).toBe("critical");
+  });
+
+  it("is unchanged when there is no baseline (zBoost 0)", () => {
+    const base = { baseSeverity: "medium", magnitude: 1.6, impactAmount: 6_000 };
+    expect(scoreSeverity(base)).toBe(scoreSeverity({ ...base, zBoost: 0 }));
+  });
+
+  it("an extreme, trustworthy z can lift severity a band", () => {
+    const base = { baseSeverity: "medium", magnitude: 1.6, impactAmount: 6_000 };
+    const without = scoreSeverity(base); // 1+1 = 2 → medium
+    const withBoost = scoreSeverity({ ...base, zBoost: zSeverityBoost(3.2, "high") }); // +1 → high
+    expect(without).toBe("medium");
+    expect(withBoost).toBe("high");
+  });
+});
+
+describe("zSeverityBoost", () => {
+  it("adds 1 for |z|≥3 with moderate+ confidence", () => {
+    expect(zSeverityBoost(3.1, "high")).toBe(1);
+    expect(zSeverityBoost(-3.5, "moderate")).toBe(1);
+  });
+
+  it("adds 0.5 for |z|≥2", () => {
+    expect(zSeverityBoost(2.2, "low")).toBe(0.5);
+    expect(zSeverityBoost(3.1, "low")).toBe(0.5); // not trustworthy enough for full point
+  });
+
+  it("adds nothing for small or absent z", () => {
+    expect(zSeverityBoost(1.5, "high")).toBe(0);
+    expect(zSeverityBoost(null, "high")).toBe(0);
+    expect(zSeverityBoost(undefined, "none")).toBe(0);
   });
 });
 

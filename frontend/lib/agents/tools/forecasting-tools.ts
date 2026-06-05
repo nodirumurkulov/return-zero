@@ -1,7 +1,5 @@
 import "server-only";
 
-import { tool } from "ai";
-import { z } from "zod";
 import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
 import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
 import type { AgentSupabase } from "../types";
@@ -54,16 +52,5 @@ export async function fetchForecastContext(
       refund: fc.refund_rate.method,
       revenue: fc.revenue.method,
     },
-  };
-}
-
-export function createForecastingTools(supabase: AgentSupabase, organizationId: string) {
-  return {
-    getDeterministicForecast: tool({
-      description:
-        "Compute deterministic stockout, refund rate, ROAS, and revenue forecasts for a product (numbers are final — do not change them)",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchForecastContext(supabase, organizationId, productId),
-    }),
   };
 }

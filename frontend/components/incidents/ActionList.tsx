@@ -31,6 +31,40 @@ const statusStyle: Record<string, string> = {
   monitoring: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
 };
 
+const confidenceStyle: Record<string, string> = {
+  high: "border-sev-resolvedBd bg-sev-resolvedBg text-sev-resolved",
+  moderate: "border-sev-monitorBd bg-sev-monitorBg text-sev-monitor",
+  low: "border-sev-criticalBd bg-sev-criticalBg text-sev-critical",
+  none: "border-border bg-muted text-muted-foreground",
+};
+
+/**
+ * The Operator folds extras into the action description (incident_actions has no
+ * JSON column): an optional "Why: …" rationale line and a trailing
+ * "Est. impact: £X · Confidence: y" line. Lift them back out for display.
+ */
+function parseDescription(raw: string | null): {
+  body: string;
+  rationale: string | null;
+  impactGbp: string | null;
+  confidence: string | null;
+} {
+  if (!raw) return { body: "", rationale: null, impactGbp: null, confidence: null };
+  const lines = raw.split("\n");
+  const rationale =
+    lines.find((l) => l.startsWith("Why: "))?.slice(5).trim() ?? null;
+  const metaLine = lines.find(
+    (l) => /Est\. impact: £[\d,]+/.test(l) || /Confidence: (high|moderate|low|none)/.test(l),
+  );
+  const impactGbp = metaLine?.match(/Est\. impact: £([\d,]+)/)?.[1] ?? null;
+  const confidence = metaLine?.match(/Confidence: (high|moderate|low|none)/)?.[1] ?? null;
+  const body = lines
+    .filter((l) => l !== metaLine && !l.startsWith("Why: "))
+    .join("\n")
+    .trim();
+  return { body, rationale, impactGbp, confidence };
+}
+
 export default function ActionList({
   actions,
   incidentId,
@@ -133,18 +167,50 @@ export default function ActionList({
                       </Badge>
                     ) : null}
                   </div>
-                  {action.description ? (
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      {action.description}
-                    </p>
-                  ) : null}
+                  {(() => {
+                    const parsed = parseDescription(action.description);
+                    return (
+                      <>
+                        {parsed.body ? (
+                          <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                            {parsed.body}
+                          </p>
+                        ) : null}
+                        {parsed.rationale ? (
+                          <p className="mt-1.5 text-xs leading-relaxed text-foreground/80">
+                            <span className="font-medium">Why:</span> {parsed.rationale}
+                          </p>
+                        ) : null}
+                        {parsed.impactGbp || parsed.confidence ? (
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            {parsed.impactGbp ? (
+                              <span className="tabnum rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                ~£{parsed.impactGbp}
+                              </span>
+                            ) : null}
+                            {parsed.confidence ? (
+                              <span
+                                className={cn(
+                                  "rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                                  confidenceStyle[parsed.confidence] ?? confidenceStyle.none,
+                                )}
+                              >
+                                {parsed.confidence} confidence
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                   <div className="mt-2 flex gap-4 text-xs">
                     <span>
                       Impact:{" "}
                       <span
                         className={
-                          (action.impact_level && impactColour[action.impact_level]) ??
-                          "text-muted-foreground"
+                          action.impact_level != null
+                            ? (impactColour[action.impact_level] ?? "text-muted-foreground")
+                            : "text-muted-foreground"
                         }
                       >
                         {action.impact_level}
@@ -154,8 +220,9 @@ export default function ActionList({
                       Risk:{" "}
                       <span
                         className={
-                          (action.risk_level && riskColour[action.risk_level]) ??
-                          "text-muted-foreground"
+                          action.risk_level != null
+                            ? (riskColour[action.risk_level] ?? "text-muted-foreground")
+                            : "text-muted-foreground"
                         }
                       >
                         {action.risk_level}

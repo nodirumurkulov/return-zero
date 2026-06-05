@@ -10,14 +10,16 @@
 // product_kpi_thresholds in the engine's override shape.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
+
+import {
+  baselineStats,
+  kpiRatioSeries,
+  LEARNABLE_KPIS,
+  type BaselineStats,
+} from "@/lib/stores/analytics/metrics/kpi-series";
 import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
 import { createReplay } from "@/lib/stores/analytics/replay";
 import type { Database } from "@/lib/supabase/database.types";
-
-// KPIs we can learn from the monthly series (ratio metrics with the inputs we
-// have per month). support_volume isn't in the series, so it keeps its default.
-const LEARNABLE = ["refund_rate", "return_rate", "ad_roas"] as const;
 
 // Bands: alert when a product strays K standard deviations from its own normal.
 const K = 2;
@@ -29,32 +31,7 @@ interface MetricDef {
   default_threshold: number;
 }
 
-interface Stats {
-  mean: number;
-  stddev: number;
-  n: number;
-}
-
-function stats(values: number[]): Stats {
-  const xs = values.filter((v) => Number.isFinite(v));
-  if (xs.length === 0) return { mean: 0, stddev: 0, n: 0 };
-  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
-  const variance = xs.reduce((a, b) => a + (b - mean) ** 2, 0) / xs.length;
-  return { mean, stddev: Math.sqrt(variance), n: xs.length };
-}
-
-// Per-month ratio for a KPI, skipping months where the denominator is zero
-// (no revenue / no units / no spend that month → the ratio is undefined, not 0).
-function kpiSeries(series: MonthlyPoint[], key: string): number[] {
-  return series
-    .map((p): number | null => {
-      if (key === "refund_rate") return p.revenue > 0 ? p.refund_amount / p.revenue : null;
-      if (key === "return_rate") return p.units > 0 ? p.refund_count / p.units : null;
-      if (key === "ad_roas") return p.ad_spend > 0 ? p.ad_revenue / p.ad_spend : null;
-      return null;
-    })
-    .filter((v): v is number => v !== null);
-}
+type Stats = BaselineStats;
 
 // Derived per-product threshold. For "above" metrics (refund/return rate) the
 // breach band is mean + K·σ, floored at the global default so we never alert
@@ -107,7 +84,7 @@ export async function learnBaselines(
       direction: d.direction === "below" ? ("below" as const) : ("above" as const),
       default_threshold: d.default_threshold,
     }))
-    .filter((d): d is MetricDef => (LEARNABLE as readonly string[]).includes(d.metric_key))
+    .filter((d): d is MetricDef => (LEARNABLE_KPIS as readonly string[]).includes(d.metric_key))
     .map((d) =>
       d.metric_key === "ad_roas" && minRoas !== undefined && Number.isFinite(minRoas)
         ? { ...d, default_threshold: minRoas }
@@ -123,7 +100,7 @@ export async function learnBaselines(
   const computed = Array.from(seriesByProduct.entries()).flatMap(([productId, series]) => {
     const baselineSeries = baselineEnd ? series.filter((p) => p.month < baselineEnd) : series;
     return defs
-      .map((def) => ({ productId, def, s: stats(kpiSeries(baselineSeries, def.metric_key)) }))
+      .map((def) => ({ productId, def, s: baselineStats(kpiRatioSeries(baselineSeries, def.metric_key)) }))
       .filter((e) => e.s.n >= 3);
   });
 
