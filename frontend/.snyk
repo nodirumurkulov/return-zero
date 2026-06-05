@@ -1,0 +1,26 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+ignore:
+  SNYK-JS-AI-16734889:
+    - '*':
+        reason: >-
+          CVE-2026-8768 SSRF in ai download helpers; no fixed release. Resolve uses
+          server-only ToolLoopAgent/generateText with trusted OpenAI/Anthropic providers
+          and does not accept user-supplied download URLs.
+        expires: 2027-06-05T00:00:00.000Z
+        created: 2026-06-05T00:00:00.000Z
+  SNYK-JS-AISDKPROVIDERUTILS-16734888:
+    - '*':
+        reason: >-
+          CVE-2026-8768 SSRF in @ai-sdk/provider-utils download helpers; no fixed release.
+          Transitive via ai; same server-only trusted-provider usage as above.
+        expires: 2027-06-05T00:00:00.000Z
+        created: 2026-06-05T00:00:00.000Z
+  SNYK-JS-AISDKPROVIDERUTILS-16735288:
+    - '*':
+        reason: >-
+          CVE-2026-8769 unbounded response buffering in @ai-sdk/provider-utils; no fixed
+          release. Resolve only calls configured LLM providers, not attacker-controlled
+          endpoints.
+        expires: 2027-06-05T00:00:00.000Z
+        created: 2026-06-05T00:00:00.000Z
