@@ -31,11 +31,10 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient();
   try {
+    // Upload/seed must have run stage_future_stream first so live tables hold
+    // history only and *_stream holds the future window.
     const learn = await learnBaselines(supabase);
     const report = await buildBusinessReport(supabase);
-    // Fix the stream start at the history end and seat the cursor there, so the
-    // incidents board stays empty until the user presses Start on the Orders
-    // stream (which then ingests the staged future rows day by day).
     const { cursor } = await initReplay(supabase);
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
   } catch (err) {

@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
+import { stageFutureStream } from "../lib/detection/replay";
 import { resolveDemoCredentials } from "../lib/auth/demo";
 
 type CsvRow = Record<string, string | number | boolean | null | undefined>;
@@ -48,7 +49,7 @@ async function upsert(
       .from(table)
       .upsert(chunk, { onConflict: conflictColumn });
     if (error) {
-      console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
+      throw new Error(`${table} upsert failed (${chunk.length} rows): ${error.message}`);
     }
   }
 }
@@ -290,6 +291,10 @@ async function seedRawData() {
     landed_cost_per_unit_gbp: r.landed_cost_per_unit_gbp,
   })), "po_line_id");
   console.log(`    → ${poLines.length} rows`);
+
+  console.log("  stage_future_stream…");
+  await stageFutureStream(supabase);
+  console.log("    → history in live tables, future in *_stream");
 
   console.log("\n  Raw data loaded.\n");
 }

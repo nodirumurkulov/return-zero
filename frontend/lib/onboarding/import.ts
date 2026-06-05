@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
 
+import { stageFutureStream } from "@/lib/detection/replay";
 import { TABLE_SPECS, type TableSpec } from "./schemas";
 
 // Import uploaded CSVs into the contract tables. Mirrors frontend/scripts/seed.ts
@@ -69,6 +70,10 @@ export async function importContractData(
   files: Record<string, string>,
   opts: { replace?: boolean } = {}
 ): Promise<ImportResult[]> {
+  if (files["orders.csv"] != null && files["customers.csv"] == null) {
+    throw new Error("orders.csv requires customers.csv — staged orders need customer rows for replay ingest");
+  }
+
   if (opts.replace) {
     const { error } = await supabase.rpc("reset_contract_data");
     if (error) throw new Error(`reset_contract_data: ${error.message}`);
@@ -79,5 +84,13 @@ export async function importContractData(
   for (const spec of specs) {
     results.push(await loadTable(supabase, spec, mapRows(spec, parseCsv(files[spec.file]))));
   }
+
+  const failed = results.find((r) => r.error);
+  if (failed) return results;
+
+  if (files["orders.csv"] != null) {
+    await stageFutureStream(supabase);
+  }
+
   return results;
 }
