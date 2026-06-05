@@ -2,11 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Incident } from "@/lib/incidents";
 import {
+  buildThreadTranscript,
   buildInventoryContext,
   buildOpenIncidentsContext,
   formatIncidentLine,
   isOpenIncident,
   resolveIncident,
+  resolveThreadIncidentReference,
   wantsCatalog,
   wantsInventory,
 } from "./context";
@@ -133,7 +135,51 @@ describe("wantsInventory", () => {
     expect(wantsInventory("how many units of the hoodie are in stock?")).toBe(true);
     expect(wantsInventory("which products are running low on inventory?")).toBe(true);
     expect(wantsInventory("anything out of stock?")).toBe(true);
+    expect(wantsInventory("how many days until that stocks out?")).toBe(true);
     expect(wantsInventory("what's the worst incident today?")).toBe(false);
+  });
+});
+
+describe("buildThreadTranscript", () => {
+  it("normalizes Slack thread messages into a compact Hugo transcript", () => {
+    const transcript = buildThreadTranscript([
+      { user: "U1", text: "<@UHUGO> show open incidents", ts: "1" },
+      { bot_id: "B1", text: "1. Return spike [aaaaaaaa]\n2. Stockout risk [bbbbbbbb]", ts: "2" },
+      { user: "U1", text: "investigate the second one", ts: "3" },
+      { user: "U1", text: "   ", ts: "4" },
+    ]);
+
+    expect(transcript).toBe(
+      [
+        "User: show open incidents",
+        "Hugo: 1. Return spike [aaaaaaaa]\n2. Stockout risk [bbbbbbbb]",
+        "User: investigate the second one",
+      ].join("\n"),
+    );
+  });
+});
+
+describe("resolveThreadIncidentReference", () => {
+  it("resolves ordinal references from Hugo's prior numbered incident list", () => {
+    const transcript = [
+      "User: show open incidents",
+      "Hugo: 1. Return spike [aaaaaaaa]\n2. Stockout risk [bbbbbbbb]\n3. ROAS drop [cccccccc]",
+      "User: investigate the second one",
+    ].join("\n");
+
+    expect(resolveThreadIncidentReference("investigate the second one", transcript)).toBe("bbbbbbbb");
+  });
+
+  it("resolves pronouns to the most recently mentioned incident", () => {
+    const transcript = [
+      "User: show stockout risk",
+      "Hugo: Stockout risk [bbbbbbbb] has ~3d to stockout.",
+      "User: how many days until that stocks out?",
+    ].join("\n");
+
+    expect(resolveThreadIncidentReference("how many days until that stocks out?", transcript)).toBe(
+      "bbbbbbbb",
+    );
   });
 });
 

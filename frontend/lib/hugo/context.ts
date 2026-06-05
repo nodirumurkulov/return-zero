@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
 import { forecastStockout } from "@/lib/forecast/predictors";
 import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
+import type { SlackThreadMessage } from "@/lib/slack";
 import type { Database } from "@/lib/supabase/database.types";
 
 // Mirror the reorder horizon defaults used by the detector/forecast modules.
@@ -171,10 +172,74 @@ export function wantsCatalog(prompt: string): boolean {
 }
 
 const INVENTORY_KEYWORDS =
-  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|on hand|supply|left)\b/i;
+  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|stocks out|stocked out|days to stockout|on hand|supply|left)\b/i;
 
 export function wantsInventory(prompt: string): boolean {
   return INVENTORY_KEYWORDS.test(prompt);
+}
+
+export function buildThreadTranscript(messages: SlackThreadMessage[]): string {
+  return messages
+    .map((message) => {
+      const text = (message.text ?? "")
+        .split("\n")
+        .map((line) => line.replace(/<@[A-Z0-9]+>/g, " ").replace(/[ \t]+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+      if (!text) return null;
+      const speaker = message.bot_id ? "Hugo" : "User";
+      return `${speaker}: ${text}`;
+    })
+    .filter((line): line is string => Boolean(line))
+    .slice(-12)
+    .join("\n");
+}
+
+const ORDINALS = new Map([
+  ["first", 1],
+  ["1st", 1],
+  ["second", 2],
+  ["2nd", 2],
+  ["third", 3],
+  ["3rd", 3],
+  ["fourth", 4],
+  ["4th", 4],
+  ["fifth", 5],
+  ["5th", 5],
+]);
+
+function extractIncidentIdsFromTranscript(transcript: string): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const match of transcript.matchAll(/\[([a-f0-9]{8})\]/gi)) {
+    const id = match[1].toLowerCase();
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+export function resolveThreadIncidentReference(prompt: string, transcript: string): string | null {
+  const clean = prompt.toLowerCase();
+  const ids = extractIncidentIdsFromTranscript(transcript);
+  if (ids.length === 0) return null;
+
+  for (const [word, position] of ORDINALS) {
+    if (new RegExp(`\\b${word}\\b`).test(clean)) {
+      return ids[position - 1] ?? null;
+    }
+  }
+
+  const numeric = clean.match(/\b(?:number|#)?\s*([1-5])\b/);
+  if (numeric) return ids[Number(numeric[1]) - 1] ?? null;
+
+  if (/\b(it|that|this|one|same)\b/.test(clean)) {
+    return ids.at(-1) ?? null;
+  }
+
+  return null;
 }
 
 function formatStockoutDays(days: number): string {
