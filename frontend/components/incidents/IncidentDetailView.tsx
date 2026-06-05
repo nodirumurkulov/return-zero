@@ -164,7 +164,7 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
                     <span className="tabnum text-[11px] font-medium text-sev-resolved">{recoveryPct}%</span>
                   </div>
                   <p className="mt-1 text-[13px] text-muted-foreground">{incident.monitoring_kpi}</p>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-sev-resolved transition-[width]"
                       style={{ width: `${recoveryPct}%` }}

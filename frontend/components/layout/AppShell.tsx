@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import GlobalSearch from "@/components/layout/GlobalSearch";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -141,6 +142,7 @@ export default function AppShell({
             <div className="relative max-w-md flex-1">
               <GlobalSearch targets={searchTargets} />
             </div>
+            <ThemeToggle />
             <div className="md:hidden">
               <SignOutButton />
             </div>

@@ -8,11 +8,11 @@ const STATUS_TONE: Record<string, string> = {
   processing: "text-sev-monitor bg-sev-monitorBg",
   refunded: "text-sev-critical bg-sev-criticalBg",
   partially_refunded: "text-sev-high bg-sev-highBg",
-  voided: "text-zinc-500 bg-zinc-100",
+  voided: "text-muted-foreground bg-muted",
 };
 
 function tone(status: string | null): string {
-  return STATUS_TONE[(status ?? "").toLowerCase()] ?? "text-zinc-500 bg-zinc-100";
+  return STATUS_TONE[(status ?? "").toLowerCase()] ?? "text-muted-foreground bg-muted";
 }
 
 function timeOf(iso: string): string {
