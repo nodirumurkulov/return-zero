@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
+import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { approveIncidentActions, getIncident, listLowRiskProposedActionIds } from "@/lib/incidents";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { parseSlackInteractionPayload, sendIncidentNotification, verifySlackRequest } from "@/lib/slack";
@@ -51,6 +52,24 @@ export async function POST(req: NextRequest) {
 
   const incidentId = action.value;
   const slackUser = payload.user?.name ?? "slack-user";
+
+  if (action.action_id === "cancel_hugo_action") {
+    return NextResponse.json({ text: "Canceled. No changes were made." });
+  }
+
+  if (action.action_id === "confirm_hugo_resolve" || action.action_id === "confirm_hugo_reject") {
+    const incident = await getIncident(supabase, incidentId, organizationId);
+    if (!incident) {
+      return NextResponse.json({ error: "Incident not found" }, { status: 404 });
+    }
+
+    const result =
+      action.action_id === "confirm_hugo_resolve"
+        ? await runHugoResolve(supabase, incident, { slack_user: slackUser })
+        : await runHugoRejectProposedActions(supabase, incident, { slack_user: slackUser });
+
+    return NextResponse.json({ text: result });
+  }
 
   if (action.action_id === "approve_low_risk") {
     const incident = await getIncident(supabase, incidentId, organizationId);

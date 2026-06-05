@@ -14,6 +14,11 @@ vi.mock("@/lib/detection/recover", () => ({
   captureRecoveryBaseline: vi.fn(),
 }));
 
+vi.mock("@/lib/hugo/actions", () => ({
+  runHugoRejectProposedActions: vi.fn(),
+  runHugoResolve: vi.fn(),
+}));
+
 vi.mock("@/lib/slack", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/slack")>();
   return {
@@ -37,10 +42,13 @@ import {
   getIncident,
   listLowRiskProposedActionIds,
 } from "@/lib/incidents";
+import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 
 const listLowRiskMock = vi.mocked(listLowRiskProposedActionIds);
 const approveMock = vi.mocked(approveIncidentActions);
 const getIncidentMock = vi.mocked(getIncident);
+const resolveMock = vi.mocked(runHugoResolve);
+const rejectMock = vi.mocked(runHugoRejectProposedActions);
 
 function signedBody(payload: object, secret = "slack-signing-secret") {
   const rawPayload = JSON.stringify(payload);
@@ -59,6 +67,8 @@ describe("POST /api/slack/webhook", () => {
     getIncidentMock.mockResolvedValue(
       createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
     );
+    resolveMock.mockResolvedValue("Resolved incident");
+    rejectMock.mockResolvedValue("Rejected fixes");
   });
 
   afterEach(() => {
@@ -102,5 +112,59 @@ describe("POST /api/slack/webhook", () => {
     );
     expect(res.status).toBe(200);
     expect(approveMock).toHaveBeenCalledWith({}, "inc-1", ["a1"], null, { slack_user: "slack-user" });
+  });
+
+  it("resolves incidents after Slack confirmation", async () => {
+    const { body, timestamp, signature, secret } = signedBody({
+      team: { id: "T123" },
+      actions: [{ action_id: "confirm_hugo_resolve", value: "inc-1" }],
+      user: { name: "slack-user" },
+    });
+    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/slack/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-slack-signature": signature,
+          "x-slack-request-timestamp": timestamp,
+        },
+        body,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(resolveMock).toHaveBeenCalledWith({}, expect.objectContaining({ id: "inc-1" }), {
+      slack_user: "slack-user",
+    });
+    await expect(res.json()).resolves.toEqual({ text: "Resolved incident" });
+  });
+
+  it("rejects proposed fixes after Slack confirmation", async () => {
+    const { body, timestamp, signature, secret } = signedBody({
+      team: { id: "T123" },
+      actions: [{ action_id: "confirm_hugo_reject", value: "inc-1" }],
+      user: { name: "slack-user" },
+    });
+    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/slack/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-slack-signature": signature,
+          "x-slack-request-timestamp": timestamp,
+        },
+        body,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(rejectMock).toHaveBeenCalledWith({}, expect.objectContaining({ id: "inc-1" }), {
+      slack_user: "slack-user",
+    });
+    await expect(res.json()).resolves.toEqual({ text: "Rejected fixes" });
   });
 });
