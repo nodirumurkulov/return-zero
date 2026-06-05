@@ -95,3 +95,4 @@ For manual local testing without a secret, sign in normally and POST while `CRON
 | 503 on `/api/detect` in production | Set `CRON_SECRET` in Vercel env. |
 | Slack buttons rejected | `SLACK_SIGNING_SECRET` missing or mismatched. |
 | Empty incidents board | Run migrations + `bun run seed` against the Supabase project. |
+| BYOD demo needs clean state | Run `select reset_contract_data();` (migrations 016/018) — see [hackathon/demo-verification.md](../hackathon/demo-verification.md). |
