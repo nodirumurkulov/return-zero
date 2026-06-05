@@ -6,6 +6,17 @@ Server-side domain logic. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Hu
 
 User-facing data uses `await createClient()` (RLS). Cron/seed use `createAdminClient()`. Do not import from `components/`.
 
+### `createAdminClient()` exceptions (session routes)
+
+Use the service role only when RLS cannot perform the write. Document new exceptions here:
+
+| Route / module | Why admin |
+|----------------|-----------|
+| `POST /api/onboarding/upload` | Bulk replace of contract tables after user auth |
+| `POST /api/replay` | Cron replay cursor; also accepts session user when not cron |
+| `POST /api/learn` | Cross-tenant learning writes (authenticated user required first) |
+| Cron schedulers (`detect`, `forecast`, `recover`, …) | No user session; `assertCronAuthorized` |
+
 ## Domain modules
 
 | Module | Import | Owns |

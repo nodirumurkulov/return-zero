@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { assertCronAuthorized } from "@/lib/cron-auth";
 import { resetReplay, runReplay } from "@/lib/detection/replay";
 import { replayBodySchema } from "@/lib/detection/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -10,12 +12,13 @@ export const maxDuration = 300;
 // cursor, opening incidents at the point in history a metric crosses its learned
 // threshold. Body: { advance_days?: number }. Schedulable via CRON_SECRET.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  const cronDenied = assertCronAuthorized(req);
+  if (cronDenied) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return cronDenied;
   }
 
   const raw = await req.json().catch(() => ({}));

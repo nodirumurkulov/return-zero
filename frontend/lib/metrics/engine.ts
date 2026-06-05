@@ -29,7 +29,12 @@ function evalValue(def: MetricDefinition, facts: ProductSourceFacts): number | n
   return numerator / denominator;
 }
 
-function statusFor(value: number | null, threshold: number, direction: Direction): MetricStatus {
+/** Pure KPI status from value vs threshold (exported for unit tests). */
+export function metricStatusFor(
+  value: number | null,
+  threshold: number,
+  direction: Direction,
+): MetricStatus {
   if (value === null) return "healthy";
   const breached = direction === "above" ? value > threshold : value < threshold;
   if (breached) return "critical";
@@ -106,7 +111,7 @@ export async function computeMetricsDetailed(
         value,
         threshold,
         direction,
-        status: statusFor(value, threshold, direction),
+        status: metricStatusFor(value, threshold, direction),
         severity: def.severity,
       });
     }

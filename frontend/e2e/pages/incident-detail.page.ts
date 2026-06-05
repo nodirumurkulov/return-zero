@@ -24,6 +24,10 @@ export class IncidentDetailPage {
     return this.page.getByTestId("approve-action");
   }
 
+  approveActionButton(actionTitle: string) {
+    return this.page.getByRole("button", { name: `Approve action: ${actionTitle}` });
+  }
+
   triggerInvestigationButton() {
     return this.page.getByRole("button", { name: "Trigger Investigation" });
   }

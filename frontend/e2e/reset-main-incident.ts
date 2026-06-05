@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { MAIN_INCIDENT_ID } from "./constants";
+import { MAIN_INCIDENT_ID, STATUS_CHANGE_INCIDENT_ID } from "./constants";
 import { requireSupabaseEnv } from "./env";
 
 /** Restore demo incident 1 action rows after approve E2E tests mutate them. */
@@ -89,4 +89,25 @@ export async function resetMainIncidentFixture() {
   if (actionsError) {
     throw new Error(`E2E reset main incident actions failed: ${actionsError.message}`);
   }
+}
+
+/** Restore stockout incident status after kanban E2E mutates it. */
+export async function resetStatusChangeIncidentFixture() {
+  const { url, serviceRoleKey } = requireSupabaseEnv();
+  const admin = createClient(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { error } = await admin
+    .from("incidents")
+    .update({ status: "fix_proposed" })
+    .eq("id", STATUS_CHANGE_INCIDENT_ID);
+  if (error) {
+    throw new Error(`E2E reset status-change incident failed: ${error.message}`);
+  }
+}
+
+export async function resetAllE2eFixtures() {
+  await resetMainIncidentFixture();
+  await resetStatusChangeIncidentFixture();
 }

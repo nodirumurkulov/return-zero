@@ -36,4 +36,20 @@ bun run e2e:install
 
 ## CI
 
-GitHub Actions runs **lint**, **typecheck**, **test**, and **build** in parallel, then **E2E** runs `bun run build` (shared `.next/cache` with the build job) before tests. Supabase starts with trimmed services (`--exclude studio,imgproxy,inbucket,edge-runtime`); migrations apply on first start — **no `db reset`**. Then: `seed` → Playwright (`CI=true`, 2 workers, guest auth runs after authenticated specs).
+GitHub Actions pipeline:
+
+1. **Parallel:** `lint`, `typecheck`, `test` (unit + `test:integration`), `build`
+2. **`integration-db`** (after build): Supabase start → `seed` → `bun run db:test:rls` → `bun run validate`
+3. **`e2e`** (needs `integration-db`): production server + Playwright (`CI=true`, **1 worker** for fixture stability)
+
+Supabase starts with trimmed services (`--exclude studio,imgproxy,mailpit,edge-runtime`); migrations apply on first start — **no `db reset`**.
+
+### Specs
+
+| Spec | Coverage |
+|------|----------|
+| `auth`, `catalog`, `incidents` | Core flows, threshold save persistence |
+| `incident-detail` | Approve low-risk → monitoring; deterministic fixtures via `reset-main-incident.ts` |
+| `orders` | Orders feed start control |
+| `onboarding` | Seeded product banner; mocked upload → learn → report |
+| `replay` | ReplayControl advance |

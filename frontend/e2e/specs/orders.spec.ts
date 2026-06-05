@@ -12,4 +12,11 @@ test.describe("Orders replay feed", () => {
 
     await expect(orders.orderFeedRows().first()).toBeVisible({ timeout: 20_000 });
   });
+
+  test("navigates from sidebar", async ({ page }) => {
+    await page.goto("/catalog");
+    await page.getByRole("link", { name: "Orders" }).click();
+    await expect(page).toHaveURL(/\/orders$/);
+    await expect(page.getByRole("heading", { name: "Orders" })).toBeVisible();
+  });
 });
