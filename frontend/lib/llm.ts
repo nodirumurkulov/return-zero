@@ -49,8 +49,34 @@ async function callAnthropic(messages: Message[]): Promise<string> {
   return json.content?.[0]?.text ?? "";
 }
 
+async function callOpenAIText(messages: Message[]): Promise<string> {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const model = process.env.OPENAI_MODEL ?? "gpt-5.5";
+  const base = { model, messages };
+  try {
+    const res = await client.chat.completions.create({ ...base, temperature: 0.4 });
+    return res.choices[0]?.message?.content ?? "";
+  } catch {
+    // Some models only allow the default temperature — retry without the override.
+    const res = await client.chat.completions.create(base);
+    return res.choices[0]?.message?.content ?? "";
+  }
+}
+
 async function callLLMRaw(messages: Message[]): Promise<string> {
   return provider === "anthropic" ? await callAnthropic(messages) : await callOpenAI(messages);
+}
+
+/**
+ * Call the LLM for a free-form text reply (no JSON mode). Returns an empty
+ * string on any failure so callers can fall back to a static message.
+ */
+export async function callLLMText(messages: Message[]): Promise<string> {
+  try {
+    return provider === "anthropic" ? await callAnthropic(messages) : await callOpenAIText(messages);
+  } catch {
+    return "";
+  }
 }
 
 /**
