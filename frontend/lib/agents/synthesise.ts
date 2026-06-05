@@ -10,7 +10,10 @@ Given findings from investigation agents, produce a concise root cause narrative
 Root cause should be 2-3 sentences, specific, mentioning exact numbers from the findings.
 Auto-deploy should only be true for low-risk, purely additive actions (e.g. adding content).`;
 
-export async function synthesiseRootCause(findings: LlmAgentFinding[]): Promise<{
+export async function synthesiseRootCause(
+  findings: LlmAgentFinding[],
+  affectedKpiKeys: string[] = [],
+): Promise<{
   root_cause: string;
   root_cause_confidence: number;
   actions: InvestigationAction[];
@@ -22,7 +25,7 @@ export async function synthesiseRootCause(findings: LlmAgentFinding[]): Promise<
   });
 
   const { output } = await synthesiser.generate({
-    prompt: `Agent findings:\n${JSON.stringify(findings, null, 2)}`,
+    prompt: `Breached KPIs: ${affectedKpiKeys.join(", ") || "unknown"}\n\nAgent findings:\n${JSON.stringify(findings, null, 2)}`,
   });
 
   if (!output) {

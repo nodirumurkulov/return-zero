@@ -8,6 +8,7 @@ export const INCIDENT_STATUSES = [
   "deploying",
   "monitoring",
   "resolved",
+  "canceled",
 ] as const;
 
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];

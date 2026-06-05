@@ -3,6 +3,7 @@ import { ReplayControl } from "@/components/incidents/ReplayControl";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionLabel } from "@/components/ui/section-label";
 import { listIncidents } from "@/lib/incidents";
+import { getCurrentOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +31,14 @@ export default async function IncidentsPage() {
   const totalImpact = rows.reduce((sum, i) => sum + (Number(i.impact_amount) || 0), 0);
   const open = rows.filter((i) => i.status !== "resolved").length;
 
-  // Replay cursor (defensive: null if the replay_state table isn't present yet).
-  const { data: replay } = await supabase
-    .from("replay_state")
-    .select("cursor")
-    .eq("id", true)
-    .maybeSingle();
+  const organizationId = await getCurrentOrganizationId(supabase);
+  const { data: replay } = organizationId
+    ? await supabase
+        .from("replay_state")
+        .select("cursor")
+        .eq("organization_id", organizationId)
+        .maybeSingle()
+    : { data: null };
   const replayCursor = replay?.cursor ? String(replay.cursor).slice(0, 10) : null;
 
   return (

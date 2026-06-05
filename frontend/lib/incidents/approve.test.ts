@@ -38,7 +38,7 @@ describe("listLowRiskProposedActionIds", () => {
 describe("approveIncidentActions", () => {
   it("returns zero when no action ids", async () => {
     const { supabase, from } = chainMock([]);
-    const result = await approveIncidentActions(supabase, "inc-1", [], "user@test");
+    const result = await approveIncidentActions(supabase, "inc-1", [], "user-uuid");
     expect(result).toEqual({ approved: 0 });
     expect(from).toHaveBeenCalledTimes(0);
   });
@@ -52,7 +52,7 @@ describe("approveIncidentActions", () => {
       { data: null, error: null },
       { data: null, error: null },
     ]);
-    const result = await approveIncidentActions(supabase, "inc-1", ["a1"], "user@test");
+    const result = await approveIncidentActions(supabase, "inc-1", ["a1"], "user-uuid");
     expect(result).toEqual({ approved: 1 });
     expect(from).toHaveBeenCalled();
   });
@@ -60,7 +60,7 @@ describe("approveIncidentActions", () => {
   it("throws when action update fails", async () => {
     const { supabase } = chainMock([{ data: null, error: { message: "db error" } }]);
     await expect(
-      approveIncidentActions(supabase, "inc-1", ["a1"], "user@test"),
+      approveIncidentActions(supabase, "inc-1", ["a1"], "user-uuid"),
     ).rejects.toThrow("db error");
   });
 });

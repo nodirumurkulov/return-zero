@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import AppShell from "@/components/layout/AppShell";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import { getCurrentOrganizationId } from "@/lib/organizations";
 import { listSearchTargets } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
@@ -34,9 +35,11 @@ export default async function RootLayout({
       }
     : null;
 
-  const searchTargets = shellUser
-    ? await listSearchTargets(supabase).catch(() => [])
-    : [];
+  const organizationId = shellUser ? await getCurrentOrganizationId(supabase) : null;
+  const searchTargets =
+    shellUser && organizationId
+      ? await listSearchTargets(supabase, organizationId).catch(() => [])
+      : [];
 
   return (
     <html lang="en" suppressHydrationWarning>

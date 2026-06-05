@@ -7,6 +7,7 @@ import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { computeProductHealth, getProductCatalogDetail } from "@/lib/catalog";
+import { requireOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,8 @@ type PageProps = {
 export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = await createClient();
-  const detail = await getProductCatalogDetail(supabase, params.productId);
+  const organizationId = await requireOrganizationId(supabase);
+  const detail = await getProductCatalogDetail(supabase, organizationId, params.productId);
 
   if (!detail) notFound();
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isIncidentStatus } from "@/lib/incidents";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
@@ -21,12 +22,33 @@ export async function updateThreshold(productId: string, formData: FormData) {
     return { ok: false, error: "Unauthorized" };
   }
 
-  const { error } = await supabase
-    .from("product_kpi_thresholds")
-    .upsert(
-      { product_id: productId, metric_key: metricKey, threshold, active: true },
-      { onConflict: "product_id,metric_key" },
-    );
+  const org = await tryRequireOrganizationId(supabase);
+  if (!org.ok) {
+    return { ok: false, error: org.error };
+  }
+  const { organizationId } = org;
+
+  const { data: metricDef, error: defErr } = await supabase
+    .from("metric_definitions")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("metric_key", metricKey)
+    .maybeSingle();
+
+  if (defErr || !metricDef) {
+    return { ok: false, error: defErr?.message ?? "Unknown metric" };
+  }
+
+  const { error } = await supabase.from("product_kpi_thresholds").upsert(
+    {
+      organization_id: organizationId,
+      product_id: productId,
+      metric_definition_id: metricDef.id,
+      threshold,
+      active: true,
+    },
+    { onConflict: "organization_id,product_id,metric_definition_id" },
+  );
 
   if (error) return { ok: false, error: error.message };
 
@@ -48,12 +70,22 @@ export async function updateIncidentStatus(incidentId: string, status: string) {
     return { ok: false, error: "Unauthorized" };
   }
 
-  const payload: { status: string; resolved_at: string | null } = {
+  const org = await tryRequireOrganizationId(supabase);
+  if (!org.ok) {
+    return { ok: false, error: org.error };
+  }
+  const { organizationId } = org;
+
+  const payload = {
     status,
     resolved_at: status === "resolved" ? new Date().toISOString() : null,
   };
 
-  const { error } = await supabase.from("incidents").update(payload).eq("id", incidentId);
+  const { error } = await supabase
+    .from("incidents")
+    .update(payload)
+    .eq("id", incidentId)
+    .eq("organization_id", organizationId);
 
   if (error) return { ok: false, error: error.message };
 

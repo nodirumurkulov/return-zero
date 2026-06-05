@@ -90,13 +90,13 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
             <StatusBadge status={incident.status} />
             <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
           </div>
-          {incident.status === "detected" && incident.affected_product ? (
-            <TriggerInvestigationButton incidentId={incident.id} productId={incident.affected_product} />
+          {incident.status === "detected" && incident.product_id ? (
+            <TriggerInvestigationButton incidentId={incident.id} productId={incident.product_id} />
           ) : null}
         </div>
-        {incident.affected_kpis && incident.affected_kpis.length > 0 ? (
+        {incident.affected_kpi_keys.length > 0 ? (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {incident.affected_kpis.map((kpi) => (
+            {incident.affected_kpi_keys.map((kpi) => (
               <span key={kpi} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                 {kpi}
               </span>

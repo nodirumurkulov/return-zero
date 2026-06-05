@@ -7,7 +7,7 @@ import type { AgentSupabase } from "../types";
 const movementSince = () =>
   new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-export function createInventoryTools(supabase: AgentSupabase) {
+export function createInventoryTools(supabase: AgentSupabase, _organizationId: string) {
   return {
     listVariantsWithStock: tool({
       description: "List variant stock levels and zero-stock size variants for a product",
@@ -15,7 +15,7 @@ export function createInventoryTools(supabase: AgentSupabase) {
       execute: async ({ productId }) => {
         const { data: variants } = await supabase
           .from("variants")
-          .select("variant_id, option1_value, inventory_quantity")
+          .select("id, option1_value, inventory_quantity")
           .eq("product_id", productId);
         const stockouts = variants?.filter((v) => (v.inventory_quantity ?? 0) <= 0) ?? [];
         return {
@@ -29,9 +29,9 @@ export function createInventoryTools(supabase: AgentSupabase) {
       execute: async ({ productId }) => {
         const { data: variants } = await supabase
           .from("variants")
-          .select("variant_id")
+          .select("id")
           .eq("product_id", productId);
-        const variantIds = variants?.map((v) => v.variant_id) ?? [];
+        const variantIds = variants?.map((v) => v.id) ?? [];
         if (variantIds.length === 0) {
           return { recent_movement_count: 0 };
         }

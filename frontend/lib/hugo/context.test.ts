@@ -20,21 +20,26 @@ vi.mock("@/lib/catalog", () => ({
 function incident(overrides: Partial<Incident>): Incident {
   return {
     id: "11111111-2222-3333-4444-555555555555",
+    organization_id: "00000000-0000-0000-0000-000000000100",
     title: "Return rate spike",
     status: "detected",
     severity: "high",
     impact_amount: 1234,
     impact_label: null,
-    affected_product: "SKU-1",
-    affected_kpis: ["return_rate"],
+    product_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    affected_kpi_keys: ["return_rate"],
     root_cause: null,
     root_cause_confidence: null,
     created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
     resolved_at: null,
+    investigation_started_at: null,
+    fix_proposed_at: null,
+    monitoring_started_at: null,
     monitoring_kpi: null,
     baseline_value: null,
     target_value: null,
-    recovery_pct: null,
+    recovery_pct: 0,
     ...overrides,
   };
 }
@@ -60,7 +65,7 @@ describe("formatIncidentLine", () => {
     expect(line).toContain("Return rate spike");
     expect(line).toContain("severity: high");
     expect(line).toContain("status: detected");
-    expect(line).toContain("product: SKU-1");
+    expect(line).toContain("product: aaaaaaaa");
     expect(line).toContain("£1,234");
   });
 });
@@ -85,10 +90,10 @@ describe("resolveIncident", () => {
 
   it("returns candidates when the reference is ambiguous", async () => {
     listIncidentsMock.mockResolvedValue([
-      incident({ id: "aaaaaaaa-0000", title: "Return rate spike", affected_product: "SKU-1" }),
-      incident({ id: "bbbbbbbb-0000", title: "Refund surge", affected_product: "SKU-1" }),
+      incident({ id: "aaaaaaaa-0000", title: "Return rate spike", product_id: "prod-a" }),
+      incident({ id: "bbbbbbbb-0000", title: "Refund surge", product_id: "prod-a" }),
     ]);
-    const { match, candidates } = await resolveIncident(supabase, "SKU-1");
+    const { match, candidates } = await resolveIncident(supabase, "prod-a");
     expect(match).toBeNull();
     expect(candidates).toHaveLength(2);
   });

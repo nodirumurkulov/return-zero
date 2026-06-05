@@ -1,20 +1,61 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { detectBreaches, type DetectionResult } from "./detect";
 import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
-import { asDate, REPLAY_START, streamEndDate, streamStartDate } from "./replay-clock";
 
-// The detector-coupled replay step. Each call ingests the day's newly-"arrived"
-// staging rows into the live tables, THEN runs the same detectors as of the
-// cursor — so incidents emerge from real data. Imports ./detect + ./forecast
-// (which pull in lib/slack, `server-only`), so keep this out of Bun scripts; the
-// pure clock primitives live in ./replay-clock.
+// BYOD Phase 3 — the replay clock (RUN-82).
+//
+// Advance a cursor through the uploaded history; at each step run the SAME
+// detectors as live operation, but anchored *as of* the cursor, so incidents
+// open at the point in history where a product first crosses its (learned)
+// threshold — the "alert before the loss" moment, streaming onto the Kanban.
+// Detection is deduped against open incidents, so re-runs are idempotent.
 
+// The live window = the last STREAM_WINDOW_MONTHS of the uploaded data. The agent
+// learns the baseline on everything before it, then streams/detects this window.
+// REPLAY_START is only a fallback for data with no orders.
+export const REPLAY_START = "2025-12-01";
+const STREAM_WINDOW_MONTHS = 3;
 const DEFAULT_ADVANCE_DAYS = 7;
+
+function asDate(value: string): string {
+  return value.slice(0, 10);
+}
 
 function addDays(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+function minusMonths(iso: string, months: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
+// Latest order date in the data — the replay never advances past it.
+export async function dataEndDate(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("orders")
+    .select("created_at")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.created_at ? asDate(String(data.created_at)) : null;
+}
+
+// Where the live stream begins: STREAM_WINDOW_MONTHS before the last order.
+// Null only when there are no orders (caller falls back to REPLAY_START).
+export async function streamStartDate(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<string | null> {
+  const end = await dataEndDate(supabase, organizationId);
+  return end ? minusMonths(end, STREAM_WINDOW_MONTHS) : null;
 }
 
 export interface ReplayResult {
@@ -25,36 +66,67 @@ export interface ReplayResult {
   forecast: ForecastDetectionResult;
 }
 
+export interface ReplayOpts {
+  organizationId: string;
+  advanceDays?: number;
+}
+
 export async function runReplay(
   supabase: SupabaseClient,
-  opts: { advanceDays?: number } = {},
+  opts: ReplayOpts,
 ): Promise<ReplayResult> {
   const advance = opts.advanceDays ?? DEFAULT_ADVANCE_DAYS;
 
-  const start = (await streamStartDate(supabase)) ?? REPLAY_START;
-  const end = (await streamEndDate(supabase)) ?? start;
+  const end = await dataEndDate(supabase, opts.organizationId);
+  const start = end ? minusMonths(end, STREAM_WINDOW_MONTHS) : REPLAY_START;
 
   const { data: stateRow } = await supabase
     .from("replay_state")
     .select("cursor")
-    .eq("id", true)
+    .eq("organization_id", opts.organizationId)
     .maybeSingle();
   const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : start;
 
   const advanced = addDays(previous, advance);
-  const cursor = advanced > end ? end : advanced;
+  const cursor = end && advanced > end ? end : advanced;
 
   const { error: upErr } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor }, { onConflict: "id" });
+    .upsert(
+      { organization_id: opts.organizationId, cursor },
+      { onConflict: "organization_id" },
+    );
   if (upErr) throw new Error(`replay_state upsert failed: ${upErr.message}`);
 
-  // Ingest the newly-"arrived" rows into the live tables, THEN detect as of the cursor.
-  const { error: ingErr } = await supabase.rpc("ingest_stream", { p_asof: cursor });
-  if (ingErr) throw new Error(`ingest_stream failed: ${ingErr.message}`);
+  // Same detectors as live, anchored to the cursor. Both dedup against open incidents.
+  const breaches = await detectBreaches(supabase, {
+    organizationId: opts.organizationId,
+    asOf: cursor,
+  });
+  const forecast = await detectForecastRisks(supabase, {
+    organizationId: opts.organizationId,
+    asOf: cursor,
+  });
 
-  const breaches = await detectBreaches(supabase, { asOf: cursor });
-  const forecast = await detectForecastRisks(supabase, { asOf: cursor });
+  return {
+    previous_cursor: previous,
+    cursor,
+    at_end: Boolean(end) && cursor >= end!,
+    breaches,
+    forecast,
+  };
+}
 
-  return { previous_cursor: previous, cursor, at_end: cursor >= end, breaches, forecast };
+// Reset the replay clock to the start of the live window (for re-running the demo,
+// and seeded right after an upload so the board starts empty).
+export async function resetReplay(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<{ cursor: string }> {
+  const cursor = (await streamStartDate(supabase, organizationId)) ?? REPLAY_START;
+  const { error } = await supabase
+    .from("replay_state")
+    .upsert({ organization_id: organizationId, cursor }, { onConflict: "organization_id" });
+  if (error) throw new Error(`replay_state reset failed: ${error.message}`);
+  return { cursor };
 }

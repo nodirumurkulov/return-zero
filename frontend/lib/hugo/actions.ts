@@ -26,7 +26,7 @@ export async function runHugoInvestigation(
   supabase: SupabaseClient,
   incident: Incident,
 ): Promise<string> {
-  if (!incident.affected_product) {
+  if (!incident.product_id) {
     return `I can't investigate "${incident.title}" — it has no affected product set, which the investigation needs.`;
   }
 
@@ -34,7 +34,7 @@ export async function runHugoInvestigation(
     const { result, findings_count, actions_count } = await persistInvestigation(
       supabase,
       incident.id,
-      incident.affected_product,
+      incident.product_id,
     );
 
     const confidence =
@@ -78,12 +78,13 @@ export async function runHugoApproval(
 
   const updated = await getIncident(supabase, incident.id);
   if (updated) {
-    if (updated.affected_product) {
+    if (updated.product_id) {
       await captureRecoveryBaseline(
         supabase,
+        updated.organization_id,
         updated.id,
-        updated.affected_product,
-        updated.affected_kpis,
+        updated.product_id,
+        updated.affected_kpi_keys,
       );
     }
     await sendIncidentNotification({

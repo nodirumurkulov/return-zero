@@ -12,11 +12,18 @@ type OutflowRow = {
   daily_outflow: number | null;
 };
 
-export async function fetchForecastContext(supabase: AgentSupabase, productId: string) {
+export async function fetchForecastContext(
+  supabase: AgentSupabase,
+  organizationId: string,
+  productId: string,
+) {
   const [series, { data: outflowRows }, { data: settingsRows }] = await Promise.all([
-    getProductSeries(supabase, productId, 24),
-    supabase.rpc("product_daily_outflow", { p_days: 28 }),
-    supabase.from("business_settings").select("key, value"),
+    getProductSeries(supabase, organizationId, productId, 24),
+    supabase.rpc("product_daily_outflow", { p_organization_id: organizationId, p_days: 28 }),
+    supabase
+      .from("business_settings")
+      .select("key, value")
+      .eq("organization_id", organizationId),
   ]);
 
   const rows = (outflowRows ?? []) as OutflowRow[];
@@ -50,13 +57,13 @@ export async function fetchForecastContext(supabase: AgentSupabase, productId: s
   };
 }
 
-export function createForecastingTools(supabase: AgentSupabase) {
+export function createForecastingTools(supabase: AgentSupabase, organizationId: string) {
   return {
     getDeterministicForecast: tool({
       description:
         "Compute deterministic stockout, refund rate, ROAS, and revenue forecasts for a product (numbers are final — do not change them)",
       inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchForecastContext(supabase, productId),
+      execute: async ({ productId }) => fetchForecastContext(supabase, organizationId, productId),
     }),
   };
 }

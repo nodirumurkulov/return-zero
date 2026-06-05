@@ -4,7 +4,8 @@ export function createProductMetricFixture(
   overrides?: Partial<ProductMetric>,
 ): ProductMetric {
   return {
-    product_id: "prod-00000000-0000-0000-0000-000000000001",
+    product_id: "00000000-0000-4000-8000-000000000001",
+    external_id: "classic-tee",
     title: "Classic Tee",
     product_type: "apparel",
     gender_segment: "unisex",
@@ -22,8 +23,9 @@ export function createKpiThresholdFixture(
   overrides?: Partial<KpiThreshold>,
 ): KpiThreshold {
   return {
-    id: "thr-00000000-0000-0000-0000-000000000001",
-    product_id: "prod-00000000-0000-0000-0000-000000000001",
+    id: "00000000-0000-4000-8000-000000000002",
+    product_id: "00000000-0000-4000-8000-000000000001",
+    metric_definition_id: "00000000-0000-4000-8000-000000000003",
     metric_key: "return_rate",
     threshold: 0.05,
     direction: "above",

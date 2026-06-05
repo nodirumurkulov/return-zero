@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
 import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
+import { getCurrentOrganizationId } from "@/lib/organizations/queries";
 
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
 
@@ -21,7 +22,7 @@ function formatMoney(amount: number | null, label: string | null): string {
 
 export function formatIncidentLine(incident: Incident): string {
   const meta = [`severity: ${incident.severity}`, `status: ${incident.status}`];
-  if (incident.affected_product) meta.push(`product: ${incident.affected_product}`);
+  if (incident.product_id) meta.push(`product: ${incident.product_id.slice(0, 8)}`);
   const impact = formatMoney(incident.impact_amount, incident.impact_label);
   if (impact !== "—") meta.push(`impact: ${impact}`);
   return `[${shortId(incident.id)}] ${incident.title} (${meta.join(", ")})`;
@@ -52,7 +53,7 @@ export async function resolveIncident(
       id.startsWith(ref) ||
       ref.includes(shortId(inc.id)) ||
       inc.title.toLowerCase().includes(ref) ||
-      (inc.affected_product?.toLowerCase().includes(ref) ?? false) ||
+      (inc.product_id?.toLowerCase().includes(ref) ?? false) ||
       ref.includes(inc.title.toLowerCase())
     );
   });
@@ -92,8 +93,8 @@ export function buildIncidentDetailContext(detail: IncidentDetail): string {
     `Incident [${shortId(incident.id)}] "${incident.title}"`,
     `- severity: ${incident.severity}, status: ${incident.status}`,
     `- impact: ${formatMoney(incident.impact_amount, incident.impact_label)}`,
-    `- affected product: ${incident.affected_product ?? "—"}`,
-    `- affected KPIs: ${(incident.affected_kpis ?? []).join(", ") || "—"}`,
+    `- affected product: ${incident.product_id ?? "—"}`,
+    `- affected KPIs: ${(incident.affected_kpi_keys ?? []).join(", ") || "—"}`,
     `- root cause: ${incident.root_cause ?? "not yet determined"}${
       incident.root_cause_confidence != null
         ? ` (confidence ${Math.round(incident.root_cause_confidence * 100)}%)`
@@ -118,7 +119,11 @@ export function buildIncidentDetailContext(detail: IncidentDetail): string {
 
 /** Summary of catalog KPI health, highlighting products that breach thresholds. */
 export async function buildCatalogContext(supabase: SupabaseClient): Promise<string> {
-  const { products, thresholdsByProduct } = await listCatalogWithThresholds(supabase);
+  const organizationId = await getCurrentOrganizationId(supabase);
+  if (!organizationId) {
+    return "No organization context — catalog KPIs unavailable.";
+  }
+  const { products, thresholdsByProduct } = await listCatalogWithThresholds(supabase, organizationId);
 
   const breaches = products
     .map((p) => ({

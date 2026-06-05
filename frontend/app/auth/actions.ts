@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { resolveDemoCredentials } from "@/lib/auth/demo";
 import { safeRedirectPath } from "@/lib/auth/redirect";
+import { createOrganizationWithOwner } from "@/lib/organizations";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -22,6 +24,16 @@ function readCredentials(formData: FormData) {
     email: formData.get("email"),
     password: formData.get("password"),
   });
+}
+
+function orgSlugFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "store";
+  const base =
+    local
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "store";
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export async function signIn(formData: FormData) {
@@ -55,8 +67,6 @@ export async function signUp(formData: FormData) {
   });
   if (error) return { ok: false as const, error: error.message };
 
-  // Supabase returns a user with an empty `identities` array when the email is
-  // already registered (it avoids leaking which emails exist). Nudge to sign in.
   if (data.user && data.user.identities && data.user.identities.length === 0) {
     return {
       ok: false as const,
@@ -64,14 +74,47 @@ export async function signUp(formData: FormData) {
     };
   }
 
-  // When email confirmation is enabled, sign-up creates no session. Redirecting
-  // into /onboarding would just bounce back to /sign-in (proxy sees no user), so
-  // surface a confirmation notice instead.
   if (!data.session) {
+    const userId = data.user?.id;
+    if (userId) {
+      const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
+      const admin = createAdminClient();
+      try {
+        await createOrganizationWithOwner(admin, {
+          userId,
+          name: storeName,
+          slug: orgSlugFromEmail(parsed.data.email),
+        });
+      } catch (orgErr) {
+        const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
+        return { ok: false as const, error: message };
+      }
+    }
     return {
       ok: true as const,
       message: `Account created. Check ${parsed.data.email} for a confirmation link to finish signing in.`,
     };
+  }
+
+  const userId = data.user?.id;
+  if (!userId) {
+    return {
+      ok: false as const,
+      error: "Account created but organization setup failed. Sign in and try again.",
+    };
+  }
+
+  const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
+  const admin = createAdminClient();
+  try {
+    await createOrganizationWithOwner(admin, {
+      userId,
+      name: storeName,
+      slug: orgSlugFromEmail(parsed.data.email),
+    });
+  } catch (orgErr) {
+    const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
+    return { ok: false as const, error: message };
   }
 
   redirect("/onboarding");

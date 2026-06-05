@@ -1,16 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { assertCronAuthorized } from "@/lib/cron-auth";
+import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
 import { runRecovery } from "@/lib/detection/recover";
 import { recoverBodySchema } from "@/lib/detection/schemas";
+import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/recover — advance projected recovery for monitoring incidents.
 export async function POST(req: NextRequest) {
-  const denied = assertCronAuthorized(req);
-  if (denied) return denied;
+  const cronDenied = assertCronAuthorized(req);
+  const cronMode =
+    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
 
   const raw = await req.json().catch(() => ({}));
   const parsed = recoverBodySchema.safeParse(raw);
@@ -21,11 +24,32 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabase = createAdminClient();
+  const supabase = cronMode ? createAdminClient() : await createClient();
+  if (!cronMode) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return cronDenied ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    const result = await runRecovery(supabase, { advanceDays: parsed.data.advance_days });
-    return NextResponse.json({ success: true, ...result });
+    const organizationIds = cronMode
+      ? await listAllOrganizationIds(supabase)
+      : [await requireOrganizationId(supabase)];
+
+    const results = await Promise.all(
+      organizationIds.map((organizationId) =>
+        runRecovery(supabase, {
+          organizationId,
+          advanceDays: parsed.data.advance_days,
+        }),
+      ),
+    );
+    const monitored = results.reduce((sum, r) => sum + r.monitored, 0);
+    const updated = results.reduce((sum, r) => sum + r.updated, 0);
+    const resolved = results.flatMap((r) => r.resolved);
+
+    return NextResponse.json({ success: true, monitored, updated, resolved });
   } catch (err) {
     logApiError("api/recover", err);
     return apiErrorResponse(err);

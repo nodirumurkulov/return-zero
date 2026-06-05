@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { computeHealthLevel, computeProductHealth } from "./health";
 import type { KpiThreshold, ProductMetric } from "./types";
 
+const PRODUCT_UUID = "11111111-1111-4111-8111-111111111111";
+
 describe("computeHealthLevel", () => {
   it.each([
     { value: 15, threshold: 10, direction: "above" as const, expected: "critical" },
@@ -16,7 +18,8 @@ describe("computeHealthLevel", () => {
 
 describe("computeProductHealth", () => {
   const metrics: ProductMetric = {
-    product_id: "p1",
+    product_id: PRODUCT_UUID,
+    external_id: "court-trainer",
     title: "Court Trainer",
     product_type: "shoes",
     gender_segment: "unisex",
@@ -31,7 +34,8 @@ describe("computeProductHealth", () => {
   const thresholds: KpiThreshold[] = [
     {
       id: "t1",
-      product_id: "p1",
+      product_id: PRODUCT_UUID,
+      metric_definition_id: "22222222-2222-4222-8222-222222222221",
       metric_key: "return_rate",
       threshold: 10,
       direction: "above",
@@ -40,7 +44,8 @@ describe("computeProductHealth", () => {
     },
     {
       id: "t2",
-      product_id: "p1",
+      product_id: PRODUCT_UUID,
+      metric_definition_id: "22222222-2222-4222-8222-222222222222",
       metric_key: "ad_roas",
       threshold: 3,
       direction: "below",

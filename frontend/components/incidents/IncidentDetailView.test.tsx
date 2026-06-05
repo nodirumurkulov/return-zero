@@ -31,7 +31,7 @@ describe("IncidentDetailView", () => {
         title: "Major return spike",
         root_cause: "Supplier defect in batch 12",
         root_cause_confidence: 90,
-        affected_kpis: ["return_rate"],
+        affected_kpi_keys: ["return_rate"],
       }),
       findings: [],
       actions: [],

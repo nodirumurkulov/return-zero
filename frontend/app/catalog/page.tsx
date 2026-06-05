@@ -1,13 +1,15 @@
 import CatalogGrid from "@/components/catalog/CatalogGrid";
 import { EmptyState } from "@/components/ui/empty-state";
 import { listCatalogWithThresholds } from "@/lib/catalog";
+import { requireOrganizationId } from "@/lib/organizations/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function CatalogPage() {
   const supabase = await createClient();
-  const result = await listCatalogWithThresholds(supabase).catch(
+  const organizationId = await requireOrganizationId(supabase);
+  const result = await listCatalogWithThresholds(supabase, organizationId).catch(
     (err: unknown): { error: string } => ({
       error: err instanceof Error ? err.message : "Unknown error",
     }),

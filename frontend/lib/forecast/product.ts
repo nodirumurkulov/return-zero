@@ -1,9 +1,54 @@
 // Per-product forecast bundle — assembles the monthly series into the business
 // forecasts the agent and predictive detector consume.
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { getProductSeries } from "@/lib/metrics/series";
+import type { Database } from "@/lib/supabase/database.types";
+
 import type { MonthlyPoint } from "../metrics/series";
 import { forecastRate, forecastStockout, forecastValue } from "./predictors";
 import type { PointForecast, StockoutForecast } from "./types";
+
+export interface ProductForecastInputs {
+  series: MonthlyPoint[];
+  currentUnits: number;
+  dailyOutflow: number;
+  leadDays: number;
+  bufferDays: number;
+}
+
+/** Load org-scoped series + inventory/outflow inputs for per-product forecasting. */
+export async function loadProductForecastInputs(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+  productId: string,
+  months = 24,
+): Promise<ProductForecastInputs> {
+  const [series, { data: outflowRows }, { data: settingsRows }] = await Promise.all([
+    getProductSeries(supabase, organizationId, productId, months),
+    supabase.rpc("product_daily_outflow", {
+      p_organization_id: organizationId,
+      p_days: 28,
+    }),
+    supabase
+      .from("business_settings")
+      .select("key, value")
+      .eq("organization_id", organizationId),
+  ]);
+
+  type OutflowRow = { product_id: string; current_balance: number | null; daily_outflow: number | null };
+  const row = ((outflowRows ?? []) as OutflowRow[]).find((r) => r.product_id === productId);
+  const settings = new Map((settingsRows ?? []).map((r) => [r.key, Number(r.value)]));
+
+  return {
+    series,
+    currentUnits: Number(row?.current_balance ?? 0),
+    dailyOutflow: Number(row?.daily_outflow ?? 0),
+    leadDays: settings.get("lead_time_days") ?? 71,
+    bufferDays: settings.get("buffer_days") ?? 14,
+  };
+}
 
 export interface ProductForecast {
   product_id: string;

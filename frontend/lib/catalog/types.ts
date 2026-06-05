@@ -1,7 +1,9 @@
 /** Catalog domain types — built from the metrics engine, not retired SQL views. */
 
 export type ProductMetric = {
+  /** Internal product uuid (products.id). */
   product_id: string;
+  external_id: string;
   title: string | null;
   product_type: string | null;
   gender_segment: string | null;
@@ -24,6 +26,7 @@ export type ProductMonthlyMetric = {
 export type KpiThreshold = {
   id: string;
   product_id: string | null;
+  metric_definition_id: string;
   metric_key: string;
   threshold: number;
   direction: string | null;

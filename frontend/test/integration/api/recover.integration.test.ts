@@ -11,6 +11,11 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
+vi.mock("@/lib/organizations", () => ({
+  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
+  requireOrganizationId: vi.fn(async () => "org-1"),
+}));
+
 import { POST } from "@/app/api/recover/route";
 import { runRecovery } from "@/lib/detection/recover";
 
@@ -55,6 +60,6 @@ describe("POST /api/recover", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runRecoveryMock).toHaveBeenCalledWith({}, { advanceDays: 7 });
+    expect(runRecoveryMock).toHaveBeenCalledWith({}, { organizationId: "org-1", advanceDays: 7 });
   });
 });

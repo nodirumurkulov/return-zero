@@ -43,7 +43,7 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Code style
 
-- Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
+- Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, no Supabase wrapper shims, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
 - Auth: [proxy.ts](proxy.ts) (Supabase session). Do not bypass without reason.
 

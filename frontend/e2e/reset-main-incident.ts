@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { MAIN_INCIDENT_ID, STATUS_CHANGE_INCIDENT_ID } from "./constants";
+import { DEMO_ORG_ID, MAIN_INCIDENT_ID, STATUS_CHANGE_INCIDENT_ID } from "./constants";
 import { requireSupabaseEnv } from "./env";
 
 /** Restore demo incident 1 action rows after approve E2E tests mutate them. */
@@ -27,6 +27,7 @@ export async function resetMainIncidentFixture() {
     [
       {
         id: "00000000-0000-0000-0002-000000000001",
+        organization_id: DEMO_ORG_ID,
         incident_id: MAIN_INCIDENT_ID,
         title: "Add sizing guidance to product page",
         description:
@@ -40,6 +41,7 @@ export async function resetMainIncidentFixture() {
       },
       {
         id: "00000000-0000-0000-0002-000000000002",
+        organization_id: DEMO_ORG_ID,
         incident_id: MAIN_INCIDENT_ID,
         title: "Enable fit assistant widget",
         description:
@@ -50,11 +52,12 @@ export async function resetMainIncidentFixture() {
         status: "proposed",
         deployed_at: null,
         approved_at: null,
-        approved_by: null,
+        approved_by_user_id: null,
         created_at: minus(38),
       },
       {
         id: "00000000-0000-0000-0002-000000000003",
+        organization_id: DEMO_ORG_ID,
         incident_id: MAIN_INCIDENT_ID,
         title: "Update support flow — exchange before refund",
         description:
@@ -65,11 +68,12 @@ export async function resetMainIncidentFixture() {
         status: "proposed",
         deployed_at: null,
         approved_at: null,
-        approved_by: null,
+        approved_by_user_id: null,
         created_at: minus(37),
       },
       {
         id: "00000000-0000-0000-0002-000000000004",
+        organization_id: DEMO_ORG_ID,
         incident_id: MAIN_INCIDENT_ID,
         title: "Pause cold-traffic Meta campaign",
         description:
@@ -80,7 +84,7 @@ export async function resetMainIncidentFixture() {
         status: "proposed",
         deployed_at: null,
         approved_at: null,
-        approved_by: null,
+        approved_by_user_id: null,
         created_at: minus(37),
       },
     ],
