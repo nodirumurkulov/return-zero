@@ -1,8 +1,15 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
+import { forecastStockout } from "@/lib/forecast/predictors";
 import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
 import type { Database } from "@/lib/supabase/database.types";
+
+// Mirror the reorder horizon defaults used by the detector/forecast modules.
+const LEAD_DAYS_DEFAULT = 71;
+const BUFFER_DAYS_DEFAULT = 14;
+const OUTFLOW_WINDOW_DAYS = 28;
+const INVENTORY_MAX_LINES = 25;
 
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
 
@@ -161,4 +168,77 @@ const CATALOG_KEYWORDS =
 
 export function wantsCatalog(prompt: string): boolean {
   return CATALOG_KEYWORDS.test(prompt);
+}
+
+const INVENTORY_KEYWORDS =
+  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|on hand|supply|left)\b/i;
+
+export function wantsInventory(prompt: string): boolean {
+  return INVENTORY_KEYWORDS.test(prompt);
+}
+
+function formatStockoutDays(days: number): string {
+  if (!Number.isFinite(days)) return "no decline at current demand";
+  return `~${Math.round(days)}d to stockout`;
+}
+
+/**
+ * Per-product stock levels: current units on hand, recent daily outflow, and the
+ * resulting days-to-stockout (reusing the forecast module's reorder logic).
+ * Most-urgent products are listed first so low/out-of-stock items always surface.
+ */
+export async function buildInventoryContext(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<string> {
+  const [{ data: outflowRows }, { data: productRows }, { data: settingsRows }] = await Promise.all([
+    supabase.rpc("product_daily_outflow", {
+      p_organization_id: organizationId,
+      p_days: OUTFLOW_WINDOW_DAYS,
+    }),
+    supabase.from("products").select("id, title").eq("organization_id", organizationId),
+    supabase.from("business_settings").select("key, value").eq("organization_id", organizationId),
+  ]);
+
+  const rows = outflowRows ?? [];
+  if (rows.length === 0) {
+    return "No inventory data is available for any product.";
+  }
+
+  const titleById = new Map((productRows ?? []).map((p) => [p.id, p.title]));
+  const settings = new Map((settingsRows ?? []).map((s) => [s.key, s.value]));
+  const leadDays = settings.get("lead_time_days") ?? LEAD_DAYS_DEFAULT;
+  const bufferDays = settings.get("buffer_days") ?? BUFFER_DAYS_DEFAULT;
+
+  const stock = rows
+    .map((r) => {
+      const currentUnits = Number(r.current_balance ?? 0);
+      const dailyOutflow = Number(r.daily_outflow ?? 0);
+      return {
+        title: titleById.get(r.product_id) ?? "(untitled product)",
+        productId: r.product_id,
+        currentUnits,
+        dailyOutflow,
+        forecast: forecastStockout({ currentUnits, dailyOutflow, leadDays, bufferDays }),
+      };
+    })
+    .sort((a, b) => a.forecast.days_to_stockout - b.forecast.days_to_stockout);
+
+  const outOfStock = stock.filter((s) => s.currentUnits <= 0).length;
+  const reorderUrgent = stock.filter((s) => s.forecast.reorder_urgent).length;
+
+  const lines = stock.slice(0, INVENTORY_MAX_LINES).map((s) => {
+    const flag = s.currentUnits <= 0 ? " — OUT OF STOCK" : s.forecast.reorder_urgent ? " — reorder urgent" : "";
+    return `- ${s.title} (${shortId(s.productId)}): ${Math.round(s.currentUnits)} units in stock, ~${s.dailyOutflow.toFixed(1)} units/day, ${formatStockoutDays(s.forecast.days_to_stockout)}${flag}`;
+  });
+
+  return [
+    `Inventory / stock (${stock.length} products; ${outOfStock} out of stock, ${reorderUrgent} need reorder within lead+buffer time):`,
+    ...lines,
+    stock.length > INVENTORY_MAX_LINES
+      ? `…and ${stock.length - INVENTORY_MAX_LINES} more — ask about a specific product for its exact stock.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

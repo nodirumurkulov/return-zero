@@ -9,10 +9,12 @@ import { runHugoApproval, runHugoInvestigation } from "./actions";
 import {
   buildCatalogContext,
   buildIncidentDetailContext,
+  buildInventoryContext,
   buildOpenIncidentsContext,
   formatIncidentLine,
   resolveIncident,
   wantsCatalog,
+  wantsInventory,
 } from "./context";
 import { classifyHugoIntent } from "./intent";
 import { generateChatReply, generateDataReply } from "./reply";
@@ -59,6 +61,10 @@ async function answerDataQuery(
 
   if (wantsCatalog(mention.prompt)) {
     parts.push(await buildCatalogContext(supabase, organizationId));
+  }
+
+  if (wantsInventory(mention.prompt)) {
+    parts.push(await buildInventoryContext(supabase, organizationId));
   }
 
   return generateDataReply(mention.prompt, parts.join("\n\n"));

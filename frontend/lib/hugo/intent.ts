@@ -12,7 +12,7 @@ const CLASSIFIER_PROMPT =
   "Rules: " +
   "- 'investigate' only when the user explicitly asks to run/start an investigation on an incident. " +
   "- 'approve' only when the user explicitly asks to approve/apply/deploy fixes for an incident. " +
-  "- 'data_query' when they ask about incidents, KPIs, metrics, products, status, or impact. " +
+  "- 'data_query' when they ask about incidents, KPIs, metrics, products, stock/inventory levels, status, or impact. " +
   "- 'chat' for greetings, small talk, or anything not about the app's data. " +
   "incident_reference is the text identifying the incident (title words, product, or id), else null.";
 

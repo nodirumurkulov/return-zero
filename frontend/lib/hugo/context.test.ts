@@ -2,11 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Incident } from "@/lib/incidents";
 import {
+  buildInventoryContext,
   buildOpenIncidentsContext,
   formatIncidentLine,
   isOpenIncident,
   resolveIncident,
   wantsCatalog,
+  wantsInventory,
 } from "./context";
 
 const { listIncidentsMock } = vi.hoisted(() => ({ listIncidentsMock: vi.fn() }));
@@ -123,5 +125,80 @@ describe("buildOpenIncidentsContext", () => {
     const ctx = await buildOpenIncidentsContext(supabase, orgId);
     expect(ctx).toContain("Open incidents (1 of 1");
     expect(ctx).toContain("Return rate spike");
+  });
+});
+
+describe("wantsInventory", () => {
+  it("detects stock/inventory keywords", () => {
+    expect(wantsInventory("how many units of the hoodie are in stock?")).toBe(true);
+    expect(wantsInventory("which products are running low on inventory?")).toBe(true);
+    expect(wantsInventory("anything out of stock?")).toBe(true);
+    expect(wantsInventory("what's the worst incident today?")).toBe(false);
+  });
+});
+
+type OutflowRow = { product_id: string; daily_outflow: number; current_balance: number };
+type ProductRow = { id: string; title: string | null };
+type SettingRow = { key: string; value: number };
+
+function inventorySupabase(opts: {
+  outflow: OutflowRow[];
+  products: ProductRow[];
+  settings: SettingRow[];
+}): SupabaseClient {
+  const tableData: Record<string, unknown[]> = {
+    products: opts.products,
+    business_settings: opts.settings,
+  };
+  return {
+    rpc: vi.fn().mockResolvedValue({ data: opts.outflow, error: null }),
+    from: (table: string) => ({
+      select: () => ({
+        eq: () => Promise.resolve({ data: tableData[table] ?? [], error: null }),
+      }),
+    }),
+  } as unknown as SupabaseClient;
+}
+
+describe("buildInventoryContext", () => {
+  it("reports when no inventory data exists", async () => {
+    const ctx = await buildInventoryContext(
+      inventorySupabase({ outflow: [], products: [], settings: [] }),
+      orgId,
+    );
+    expect(ctx).toContain("No inventory data");
+  });
+
+  it("lists stock, flags out-of-stock + reorder-urgent, sorts most-urgent first", async () => {
+    const ctx = await buildInventoryContext(
+      inventorySupabase({
+        outflow: [
+          { product_id: "cccccccc-0000", daily_outflow: 1, current_balance: 1000 },
+          { product_id: "aaaaaaaa-0000", daily_outflow: 5, current_balance: 10 },
+          { product_id: "bbbbbbbb-0000", daily_outflow: 2, current_balance: 0 },
+        ],
+        products: [
+          { id: "aaaaaaaa-0000", title: "Hoodie" },
+          { id: "bbbbbbbb-0000", title: "Cap" },
+          { id: "cccccccc-0000", title: "Socks" },
+        ],
+        settings: [
+          { key: "lead_time_days", value: 71 },
+          { key: "buffer_days", value: 14 },
+        ],
+      }),
+      orgId,
+    );
+
+    expect(ctx).toContain("3 products; 1 out of stock, 1 need reorder");
+    expect(ctx).toContain("Hoodie (aaaaaaaa): 10 units in stock, ~5.0 units/day, ~2d to stockout — reorder urgent");
+    expect(ctx).toContain("Cap (bbbbbbbb): 0 units in stock");
+    expect(ctx).toContain("OUT OF STOCK");
+    expect(ctx).toContain("Socks (cccccccc): 1000 units in stock");
+
+    // Out-of-stock (days_to_stockout = 0) sorts ahead of the urgent hoodie, which
+    // sorts ahead of well-stocked socks.
+    expect(ctx.indexOf("Cap")).toBeLessThan(ctx.indexOf("Hoodie"));
+    expect(ctx.indexOf("Hoodie")).toBeLessThan(ctx.indexOf("Socks"));
   });
 });

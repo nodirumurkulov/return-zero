@@ -10,7 +10,7 @@ answer, or an investigate/approve action. **Parent:** [../AGENTS.md](../AGENTS.m
 | `index.ts` | Public surface — `handleHugoMention` orchestrates classify → gather → act → post |
 | `schemas.ts` | `hugoIntentSchema` (Zod) for LLM intent classification |
 | `intent.ts` | `classifyHugoIntent` — LLM classification with keyword fallback |
-| `context.ts` | Incident resolution + model-friendly incident/KPI context strings |
+| `context.ts` | Incident resolution + model-friendly incident/KPI/inventory context strings |
 | `actions.ts` | `runHugoInvestigation`, `runHugoApproval` (reuse `agents` / `incidents`) |
 | `reply.ts` | `generateChatReply`, `generateDataReply` (free-form LLM text) |
 
@@ -23,6 +23,11 @@ calls `handleHugoMention` in `after()`. The handler:
 2. For actions, `resolveIncident` maps the free-text reference to one incident
    (or asks the user to disambiguate from candidates).
 3. Runs the matching path and posts the reply in-thread via `postSlackMessage`.
+
+For `data_query`, the context is assembled on demand from the prompt: open
+incidents always, the matched incident's detail when referenced, KPI/catalog
+health when `wantsCatalog`, and per-product stock levels (units on hand, daily
+outflow, days-to-stockout via `forecastStockout`) when `wantsInventory`.
 
 ## Rules
 
