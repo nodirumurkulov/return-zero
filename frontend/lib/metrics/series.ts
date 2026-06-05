@@ -27,7 +27,7 @@ function toPoint(r: SeriesRow): MonthlyPoint {
  */
 export async function getMonthlySeries(
   supabase: SupabaseClient<Database>,
-  opts: { productId?: string; months?: number } = {}
+  opts: { productId?: string; months?: number; ownerUserId?: string } = {},
 ): Promise<Map<string, MonthlyPoint[]>> {
   const months = opts.months ?? 24;
 
@@ -36,7 +36,10 @@ export async function getMonthlySeries(
   const pageSize = 1000;
   const fetchPage = async (from: number): Promise<SeriesRow[]> => {
     const { data, error } = await supabase
-      .rpc("product_monthly_series", { p_months: months })
+      .rpc("product_monthly_series", {
+        p_months: months,
+        ...(opts.ownerUserId ? { p_owner_user_id: opts.ownerUserId } : {}),
+      })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(`product_monthly_series failed: ${error.message}`);
     const page = data ?? [];

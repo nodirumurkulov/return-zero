@@ -24,8 +24,14 @@ export async function updateThreshold(productId: string, formData: FormData) {
   const { error } = await supabase
     .from("product_kpi_thresholds")
     .upsert(
-      { product_id: productId, metric_key: metricKey, threshold, active: true },
-      { onConflict: "product_id,metric_key" },
+      {
+        owner_user_id: user.id,
+        product_id: productId,
+        metric_key: metricKey,
+        threshold,
+        active: true,
+      },
+      { onConflict: "owner_user_id,product_id,metric_key" },
     );
 
   if (error) return { ok: false, error: error.message };

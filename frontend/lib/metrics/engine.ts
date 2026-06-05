@@ -49,6 +49,7 @@ export interface ComputeOpts {
   productId?: string; // restrict to one product
   windowDays?: number; // override each definition's own window
   asOf?: string; // anchor the rolling window to this date (replay cursor); default = latest order
+  ownerUserId?: string; // cron/admin: scope metrics to one tenant
 }
 
 export interface EngineRun {
@@ -68,9 +69,12 @@ export async function computeMetricsDetailed(
   supabase: SupabaseClient,
   opts: ComputeOpts = {}
 ): Promise<EngineRun> {
+  const thresholdsQuery = supabase.from("product_kpi_thresholds").select("*").eq("active", true);
   const [{ data: defsData, error: defsErr }, { data: ovrData, error: ovrErr }] = await Promise.all([
     supabase.from("metric_definitions").select("*").eq("enabled", true).order("sort_order"),
-    supabase.from("product_kpi_thresholds").select("*").eq("active", true),
+    opts.ownerUserId
+      ? thresholdsQuery.eq("owner_user_id", opts.ownerUserId)
+      : thresholdsQuery,
   ]);
   if (defsErr) throw new Error(`load metric_definitions: ${defsErr.message}`);
   if (ovrErr) throw new Error(`load product_kpi_thresholds: ${ovrErr.message}`);
@@ -92,7 +96,7 @@ export async function computeMetricsDetailed(
     : new Set(defs.map((d) => d.window_days));
   const factsByWindow = new Map<number, Map<string, ProductSourceFacts>>();
   for (const w of Array.from(windows)) {
-    factsByWindow.set(w, await getSourceFacts(supabase, w, opts.asOf));
+    factsByWindow.set(w, await getSourceFacts(supabase, w, opts.asOf, opts.ownerUserId));
   }
 
   const metrics: Record<string, MetricValue[]> = {};

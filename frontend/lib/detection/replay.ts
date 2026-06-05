@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 import { detectBreaches, type DetectionResult } from "./detect";
 import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
 
@@ -45,11 +46,15 @@ export async function dataEndDate(supabase: SupabaseClient): Promise<string | nu
 
 // The fixed start of the live window — the history end, stored at learn time.
 // Falls back to the current live end (before it's been initialised).
-export async function streamStartDate(supabase: SupabaseClient): Promise<string | null> {
+export async function streamStartDate(
+  supabase: SupabaseClient,
+  opts: { ownerUserId?: string } = {},
+): Promise<string | null> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const { data } = await supabase
     .from("replay_state")
     .select("stream_start")
-    .eq("id", true)
+    .eq("owner_user_id", ownerUserId)
     .maybeSingle();
   if (data?.stream_start) return asDate(String(data.stream_start));
   return dataEndDate(supabase);
@@ -69,19 +74,25 @@ export interface ReplayResult {
   forecast: ForecastDetectionResult;
 }
 
+export interface ReplayOpts {
+  advanceDays?: number;
+  ownerUserId?: string;
+}
+
 export async function runReplay(
   supabase: SupabaseClient,
-  opts: { advanceDays?: number } = {},
+  opts: ReplayOpts = {},
 ): Promise<ReplayResult> {
   const advance = opts.advanceDays ?? DEFAULT_ADVANCE_DAYS;
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
 
-  const start = (await streamStartDate(supabase)) ?? REPLAY_START;
+  const start = (await streamStartDate(supabase, { ownerUserId })) ?? REPLAY_START;
   const end = (await streamEndDate(supabase)) ?? start;
 
   const { data: stateRow } = await supabase
     .from("replay_state")
     .select("cursor")
-    .eq("id", true)
+    .eq("owner_user_id", ownerUserId)
     .maybeSingle();
   const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : start;
 
@@ -90,46 +101,63 @@ export async function runReplay(
 
   const { error: upErr } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor }, { onConflict: "id" });
+    .upsert({ owner_user_id: ownerUserId, cursor }, { onConflict: "owner_user_id" });
   if (upErr) throw new Error(`replay_state upsert failed: ${upErr.message}`);
 
   // Ingest the newly-"arrived" rows into the live tables, THEN detect as of the cursor.
   const { error: ingErr } = await supabase.rpc("ingest_stream", { p_asof: cursor });
   if (ingErr) throw new Error(`ingest_stream failed: ${ingErr.message}`);
 
-  const breaches = await detectBreaches(supabase, { asOf: cursor });
-  const forecast = await detectForecastRisks(supabase, { asOf: cursor });
+  const detectOpts = { asOf: cursor, ownerUserId };
+  const breaches = await detectBreaches(supabase, detectOpts);
+  const forecast = await detectForecastRisks(supabase, detectOpts);
 
   return { previous_cursor: previous, cursor, at_end: cursor >= end, breaches, forecast };
 }
 
 // Initialise the clock right after a fresh upload + learn: fix the stream start
 // at the history end and seat the cursor there (board empty until Start).
-export async function initReplay(supabase: SupabaseClient): Promise<{ cursor: string }> {
+export async function initReplay(
+  supabase: SupabaseClient,
+  opts: { ownerUserId?: string } = {},
+): Promise<{ cursor: string }> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const start = (await dataEndDate(supabase)) ?? REPLAY_START;
   const { error } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor: start, stream_start: start }, { onConflict: "id" });
+    .upsert(
+      { owner_user_id: ownerUserId, cursor: start, stream_start: start },
+      { onConflict: "owner_user_id" },
+    );
   if (error) throw new Error(`replay_state init failed: ${error.message}`);
   return { cursor: start };
 }
 
 // Rewind to the history end for a re-run: remove ingested future rows + the
 // incidents opened during the stream, and seat the cursor back at the start.
-export async function resetReplay(supabase: SupabaseClient): Promise<{ cursor: string }> {
+export async function resetReplay(
+  supabase: SupabaseClient,
+  opts: { ownerUserId?: string } = {},
+): Promise<{ cursor: string }> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const { data } = await supabase
     .from("replay_state")
     .select("stream_start")
-    .eq("id", true)
+    .eq("owner_user_id", ownerUserId)
     .maybeSingle();
-  const start = (data?.stream_start ? asDate(String(data.stream_start)) : await dataEndDate(supabase)) ?? REPLAY_START;
+  const start =
+    (data?.stream_start ? asDate(String(data.stream_start)) : await dataEndDate(supabase)) ??
+    REPLAY_START;
 
   const { error: rErr } = await supabase.rpc("reset_stream", { p_stream_start: start });
   if (rErr) throw new Error(`reset_stream failed: ${rErr.message}`);
 
   const { error } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor: start, stream_start: start }, { onConflict: "id" });
+    .upsert(
+      { owner_user_id: ownerUserId, cursor: start, stream_start: start },
+      { onConflict: "owner_user_id" },
+    );
   if (error) throw new Error(`replay_state reset failed: ${error.message}`);
   return { cursor: start };
 }

@@ -171,6 +171,9 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
 
       - run: bun run seed
+        env:
+          E2E_USER_EMAIL: e2e@resolve.local
+          E2E_USER_PASSWORD: e2e-test-password-12
       - run: bunx playwright install --with-deps chromium
       - run: bun run e2e
         env:

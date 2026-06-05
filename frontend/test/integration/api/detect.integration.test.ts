@@ -11,6 +11,10 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
+vi.mock("@/lib/tenant/owner-user-ids", () => ({
+  listOwnerUserIds: vi.fn(async () => ["owner-1"]),
+}));
+
 import { POST } from "@/app/api/detect/route";
 import { detectBreaches } from "@/lib/detection/detect";
 

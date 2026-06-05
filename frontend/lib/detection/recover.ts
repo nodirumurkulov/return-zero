@@ -50,15 +50,18 @@ export interface RecoveryResult {
  */
 export async function runRecovery(
   supabase: SupabaseClient,
-  opts: { advanceDays?: number } = {}
+  opts: { advanceDays?: number; ownerUserId?: string } = {},
 ): Promise<RecoveryResult> {
   const { data: setRows } = await supabase.from("business_settings").select("key, value");
   const horizon = Number((setRows ?? []).find((s) => s.key === "recovery_horizon_days")?.value ?? 21);
 
-  const { data: incidents } = await supabase
+  const incidentsQuery = supabase
     .from("incidents")
-    .select("id, monitoring_kpi, monitoring_started_at")
+    .select("id, owner_user_id, monitoring_kpi, monitoring_started_at")
     .eq("status", "monitoring");
+  const { data: incidents } = opts.ownerUserId
+    ? await incidentsQuery.eq("owner_user_id", opts.ownerUserId)
+    : await incidentsQuery;
 
   const resolved: string[] = [];
   const nowMs = Date.now();
@@ -77,11 +80,13 @@ export async function runRecovery(
       await supabase.from("incidents").update({ status: "resolved", resolved_at: now }).eq("id", inc.id);
       await supabase.from("incident_timeline").insert([
         {
+          owner_user_id: inc.owner_user_id as string,
           incident_id: inc.id,
           event_type: "monitoring",
           description: `Projected recovery reached 100% for ${inc.monitoring_kpi ?? "KPI"}`,
         },
         {
+          owner_user_id: inc.owner_user_id as string,
           incident_id: inc.id,
           event_type: "resolved",
           description: "Auto-resolved — KPI projected back within target",
@@ -90,6 +95,7 @@ export async function runRecovery(
       resolved.push(inc.id as string);
     } else {
       await supabase.from("incident_timeline").insert({
+        owner_user_id: inc.owner_user_id as string,
         incident_id: inc.id,
         event_type: "monitoring",
         description: `Projected recovery ${Math.round(pct * 100)}%`,

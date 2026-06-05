@@ -8,16 +8,20 @@ function chainMock(responses: QueryResult[]) {
   const queue = [...responses];
   const from = vi.fn(() => {
     const result = queue.shift() ?? { data: null, error: null };
+    const terminal = {
+      then: (
+        onfulfilled?: (v: QueryResult) => unknown,
+        onrejected?: (e: unknown) => unknown,
+      ) => Promise.resolve(result).then(onfulfilled, onrejected),
+    };
     const builder = {
       select: vi.fn(() => builder),
       eq: vi.fn(() => builder),
       in: vi.fn(() => builder),
       update: vi.fn(() => builder),
       insert: vi.fn(() => builder),
-      then: (
-        onfulfilled?: (v: QueryResult) => unknown,
-        onrejected?: (e: unknown) => unknown,
-      ) => Promise.resolve(result).then(onfulfilled, onrejected),
+      single: vi.fn(() => terminal),
+      then: terminal.then,
     };
     return builder;
   });
@@ -45,6 +49,7 @@ describe("approveIncidentActions", () => {
 
   it("updates actions and incident through monitoring", async () => {
     const { supabase, from } = chainMock([
+      { data: { owner_user_id: "owner-1" }, error: null },
       { data: null, error: null },
       { data: null, error: null },
       { data: null, error: null },
@@ -58,7 +63,10 @@ describe("approveIncidentActions", () => {
   });
 
   it("throws when action update fails", async () => {
-    const { supabase } = chainMock([{ data: null, error: { message: "db error" } }]);
+    const { supabase } = chainMock([
+      { data: { owner_user_id: "owner-1" }, error: null },
+      { data: null, error: { message: "db error" } },
+    ]);
     await expect(
       approveIncidentActions(supabase, "inc-1", ["a1"], "user@test"),
     ).rejects.toThrow("db error");

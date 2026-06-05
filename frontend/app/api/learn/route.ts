@@ -3,7 +3,6 @@ import { initReplay } from "@/lib/detection/replay";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 import { learnBodySchema } from "@/lib/learn/schemas";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 // BYOD Phase 2 — after upload, learn the store's baselines (knowledge base) and
@@ -29,13 +28,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   try {
     // Upload/seed must have run stage_future_stream first so live tables hold
     // history only and *_stream holds the future window.
-    const learn = await learnBaselines(supabase);
-    const report = await buildBusinessReport(supabase);
-    const { cursor } = await initReplay(supabase);
+    const learn = await learnBaselines(supabase, { ownerUserId: user.id });
+    const report = await buildBusinessReport(supabase, { ownerUserId: user.id });
+    const { cursor } = await initReplay(supabase, { ownerUserId: user.id });
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";

@@ -48,17 +48,35 @@ export interface ImportResult {
   error?: string;
 }
 
-async function loadTable(supabase: SupabaseClient, spec: TableSpec, rows: Row[]): Promise<ImportResult> {
-  const chunks = Array.from({ length: Math.ceil(rows.length / BATCH) }, (_, i) =>
-    rows.slice(i * BATCH, i * BATCH + BATCH)
+function upsertConflict(spec: TableSpec): string | undefined {
+  if (spec.key) return `owner_user_id,${spec.key}`;
+  if (spec.table === "meta_ads_daily") {
+    return "owner_user_id,date,campaign_name,ad_name,placement";
+  }
+  if (spec.table === "google_ads_daily") {
+    return "owner_user_id,date,campaign_name,ad_group";
+  }
+  return undefined;
+}
+
+async function loadTable(
+  supabase: SupabaseClient,
+  spec: TableSpec,
+  rows: Row[],
+  ownerUserId: string,
+): Promise<ImportResult> {
+  const stamped = rows.map((row) => ({ ...row, owner_user_id: ownerUserId }));
+  const chunks = Array.from({ length: Math.ceil(stamped.length / BATCH) }, (_, i) =>
+    stamped.slice(i * BATCH, i * BATCH + BATCH),
   );
+  const onConflict = upsertConflict(spec);
   for (const [idx, chunk] of chunks.entries()) {
-    const { error } = spec.key
-      ? await supabase.from(spec.table).upsert(chunk, { onConflict: spec.key })
+    const { error } = onConflict
+      ? await supabase.from(spec.table).upsert(chunk, { onConflict })
       : await supabase.from(spec.table).insert(chunk);
     if (error) return { table: spec.table, count: idx * BATCH, error: error.message };
   }
-  return { table: spec.table, count: rows.length };
+  return { table: spec.table, count: stamped.length };
 }
 
 /**
@@ -68,21 +86,30 @@ async function loadTable(supabase: SupabaseClient, spec: TableSpec, rows: Row[])
 export async function importContractData(
   supabase: SupabaseClient,
   files: Record<string, string>,
-  opts: { replace?: boolean } = {}
+  opts: { replace?: boolean; ownerUserId: string },
 ): Promise<ImportResult[]> {
   if (files["orders.csv"] != null && files["customers.csv"] == null) {
     throw new Error("orders.csv requires customers.csv — staged orders need customer rows for replay ingest");
   }
 
   if (opts.replace) {
-    const { error } = await supabase.rpc("reset_contract_data");
+    const { error } = await supabase.rpc("reset_contract_data", {
+      p_owner_user_id: opts.ownerUserId,
+    });
     if (error) throw new Error(`reset_contract_data: ${error.message}`);
   }
 
   const specs = TABLE_SPECS.filter((s) => files[s.file] != null);
   const results: ImportResult[] = [];
   for (const spec of specs) {
-    results.push(await loadTable(supabase, spec, mapRows(spec, parseCsv(files[spec.file]))));
+    results.push(
+      await loadTable(
+        supabase,
+        spec,
+        mapRows(spec, parseCsv(files[spec.file])),
+        opts.ownerUserId,
+      ),
+    );
   }
 
   const failed = results.find((r) => r.error);

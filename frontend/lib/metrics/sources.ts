@@ -28,11 +28,13 @@ function toFacts(row: SourceRow): ProductSourceFacts {
 export async function getSourceFacts(
   supabase: SupabaseClient<Database>,
   windowDays: number,
-  asOf?: string | null
+  asOf?: string | null,
+  ownerUserId?: string,
 ): Promise<Map<string, ProductSourceFacts>> {
   const { data, error } = await supabase.rpc("product_source_facts", {
     p_window_days: windowDays,
     ...(asOf ? { p_asof: asOf } : {}),
+    ...(ownerUserId ? { p_owner_user_id: ownerUserId } : {}),
   });
   if (error) {
     throw new Error(`product_source_facts(${windowDays}) failed: ${error.message}`);

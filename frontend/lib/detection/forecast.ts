@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 import { forecastForProduct, type ProductForecast } from "../forecast/product";
 import { getMonthlySeries } from "../metrics/series";
 import { notifyNewIncident } from "../slack";
@@ -93,19 +94,25 @@ function evaluateRule(rule: ForecastRule, fc: ProductForecast, leadDays: number)
 
 export interface ForecastDetectOpts {
   asOf?: string; // replay cursor — forecast as of this date instead of "now"
+  ownerUserId?: string; // cron/admin: scope detection to one tenant
 }
 
 export async function detectForecastRisks(
   supabase: SupabaseClient,
   opts: ForecastDetectOpts = {},
 ): Promise<ForecastDetectionResult> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const [{ data: ruleRows, error: ruleErr }, { data: setRows }, { data: outflowRows }, { data: incRows }, { data: prodRows }] =
     await Promise.all([
       supabase.from("forecast_rules").select("*").eq("enabled", true),
       supabase.from("business_settings").select("key, value"),
-      supabase.rpc("product_daily_outflow", { p_days: 28, ...(opts.asOf ? { p_asof: opts.asOf } : {}) }),
-      supabase.from("incidents").select("affected_product, status"),
-      supabase.from("products").select("product_id, title"),
+      supabase.rpc("product_daily_outflow", {
+        p_days: 28,
+        ...(opts.asOf ? { p_asof: opts.asOf } : {}),
+        p_owner_user_id: ownerUserId,
+      }),
+      supabase.from("incidents").select("affected_product, status").eq("owner_user_id", ownerUserId),
+      supabase.from("products").select("product_id, title").eq("owner_user_id", ownerUserId),
     ]);
   if (ruleErr) throw new Error(`load forecast_rules: ${ruleErr.message}`);
 
@@ -124,7 +131,7 @@ export async function detectForecastRisks(
   );
   const titleById = new Map((prodRows ?? []).map((p) => [p.product_id as string, (p.title as string) ?? (p.product_id as string)]));
 
-  const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
+  const seriesByProduct = await getMonthlySeries(supabase, { months: 24, ownerUserId });
 
   const created: CreatedForecastIncident[] = [];
   const skipped: ForecastDetectionResult["skipped"] = [];
@@ -150,6 +157,7 @@ export async function detectForecastRisks(
     const { data: inc, error: insErr } = await supabase
       .from("incidents")
       .insert({
+        owner_user_id: ownerUserId,
         title,
         status: "detected",
         severity: primary.severity,
@@ -167,12 +175,14 @@ export async function detectForecastRisks(
 
     await supabase.from("incident_timeline").insert([
       {
+        owner_user_id: ownerUserId,
         incident_id: inc.id,
         event_type: "anomaly_detected",
         description: `Predictive: ${risks.map((r) => r.message).join("; ")}`,
         metadata: { forecast: true, risks },
       },
       {
+        owner_user_id: ownerUserId,
         incident_id: inc.id,
         event_type: "incident_created",
         description: `Forward-looking incident opened for ${productTitle} (severity: ${primary.severity})`,

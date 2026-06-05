@@ -4,6 +4,7 @@ import { assertCronAuthorized } from "@/lib/cron-auth";
 import { runRecovery } from "@/lib/detection/recover";
 import { recoverBodySchema } from "@/lib/detection/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listOwnerUserIds } from "@/lib/tenant/owner-user-ids";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,21 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient();
 
   try {
-    const result = await runRecovery(supabase, { advanceDays: parsed.data.advance_days });
-    return NextResponse.json({ success: true, ...result });
+    const ownerIds = await listOwnerUserIds(supabase);
+    const results = await Promise.all(
+      ownerIds.map((ownerUserId) =>
+        runRecovery(supabase, { advanceDays: parsed.data.advance_days, ownerUserId }),
+      ),
+    );
+    const merged = results.reduce(
+      (acc, result) => ({
+        monitored: acc.monitored + result.monitored,
+        updated: acc.updated + result.updated,
+        resolved: [...acc.resolved, ...result.resolved],
+      }),
+      { monitored: 0, updated: 0, resolved: [] as string[] },
+    );
+    return NextResponse.json({ success: true, ...merged });
   } catch (err) {
     logApiError("api/recover", err);
     return apiErrorResponse(err);

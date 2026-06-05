@@ -5,7 +5,6 @@ import {
 } from "@/lib/onboarding/api-schemas";
 import { importContractData } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -40,9 +39,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No CSV files provided" }, { status: 400 });
   }
 
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   try {
-    const results = await importContractData(supabase, files, { replace });
+    const results = await importContractData(supabase, files, {
+      replace,
+      ownerUserId: user.id,
+    });
     const ok = results.every((r) => !r.error);
     const body = ok
       ? onboardingUploadSuccessResponseSchema.parse({ success: true, results })

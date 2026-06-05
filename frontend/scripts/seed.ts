@@ -35,19 +35,30 @@ function readCSV(filename: string): CsvRow[] {
   }) as CsvRow[];
 }
 
+function scopedConflict(conflictColumn: string, ownerUserId: string): string {
+  return conflictColumn.includes("owner_user_id")
+    ? conflictColumn
+    : `owner_user_id,${conflictColumn}`;
+}
+
 async function upsert(
   table: string,
   rows: Record<string, unknown>[],
   conflictColumn = "id",
+  ownerUserId?: string,
 ) {
   if (rows.length === 0) return;
+  const stamped = ownerUserId
+    ? rows.map((row) => ({ ...row, owner_user_id: ownerUserId }))
+    : rows;
+  const onConflict = ownerUserId ? scopedConflict(conflictColumn, ownerUserId) : conflictColumn;
   for (const chunk of Array.from(
-    { length: Math.ceil(rows.length / BATCH_SIZE) },
-    (_, i) => rows.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
+    { length: Math.ceil(stamped.length / BATCH_SIZE) },
+    (_, i) => stamped.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
   )) {
     const { error } = await supabase
       .from(table)
-      .upsert(chunk, { onConflict: conflictColumn });
+      .upsert(chunk, { onConflict });
     if (error) {
       throw new Error(`${table} upsert failed (${chunk.length} rows): ${error.message}`);
     }
@@ -61,7 +72,7 @@ function coerceBool(val: unknown): boolean {
 }
 
 // ---- Load raw data -------------------------------------------
-async function seedRawData() {
+async function seedRawData(ownerUserId: string) {
   console.log("\n── Loading raw Pretty Fly data ──────────────────────");
 
   // products
@@ -79,7 +90,7 @@ async function seedRawData() {
     tags: r.tags,
     status: r.status,
     created_at: r.created_at,
-  })), "product_id");
+  })), "product_id", ownerUserId);
   console.log(`    → ${products.length} rows`);
 
   // variants
@@ -98,7 +109,7 @@ async function seedRawData() {
     barcode: r.barcode,
     weight_grams: r.weight_grams,
     inventory_quantity: r.inventory_quantity,
-  })), "variant_id");
+  })), "variant_id", ownerUserId);
   console.log(`    → ${variants.length} rows`);
 
   // customers
@@ -117,7 +128,7 @@ async function seedRawData() {
     acquisition_date: r.acquisition_date || null,
     default_country: r.default_country,
     gender_segment_affinity: r.gender_segment_affinity,
-  })), "customer_id");
+  })), "customer_id", ownerUserId);
   console.log(`    → ${customers.length} rows`);
 
   // orders
@@ -143,7 +154,7 @@ async function seedRawData() {
     referring_site: r.referring_site,
     tags: r.tags,
     discount_code: r.discount_code,
-  })), "order_id");
+  })), "order_id", ownerUserId);
   console.log(`    → ${orders.length} rows`);
 
   // line_items
@@ -158,7 +169,7 @@ async function seedRawData() {
     quantity: r.quantity,
     price: r.price,
     total_discount: r.total_discount,
-  })), "line_item_id");
+  })), "line_item_id", ownerUserId);
   console.log(`    → ${lineItems.length} rows`);
 
   // refunds
@@ -171,7 +182,7 @@ async function seedRawData() {
     amount: r.amount,
     reason: r.reason,
     refund_line_items: r.refund_line_items,
-  })), "refund_id");
+  })), "refund_id", ownerUserId);
   console.log(`    → ${refunds.length} rows`);
 
   // collections
@@ -181,7 +192,7 @@ async function seedRawData() {
     collection_id: r.collection_id,
     title: r.title,
     created_at: r.created_at,
-  })), "collection_id");
+  })), "collection_id", ownerUserId);
   console.log(`    → ${collections.length} rows`);
 
   // meta_ads_daily
@@ -203,6 +214,7 @@ async function seedRawData() {
       conversion_value_gbp: r.conversion_value_gbp,
     })),
     "date,campaign_name,ad_name,placement",
+    ownerUserId,
   );
   console.log(`    → ${metaAds.length} rows`);
 
@@ -223,6 +235,7 @@ async function seedRawData() {
       conversion_value_gbp: r.conversion_value_gbp,
     })),
     "date,campaign_name,ad_group",
+    ownerUserId,
   );
   console.log(`    → ${googleAds.length} rows`);
 
@@ -237,7 +250,7 @@ async function seedRawData() {
     quantity_delta: r.quantity_delta,
     running_balance: r.running_balance,
     reference_id: r.reference_id,
-  })), "movement_id");
+  })), "movement_id", ownerUserId);
   console.log(`    → ${movements.length} rows`);
 
   // support_tickets
@@ -259,7 +272,7 @@ async function seedRawData() {
     resolution_time_minutes: r.resolution_time_minutes || null,
     satisfaction_rating: r.satisfaction_rating || null,
     resolved_by: r.resolved_by,
-  })), "ticket_id");
+  })), "ticket_id", ownerUserId);
   console.log(`    → ${tickets.length} rows`);
 
   // purchase_orders + po_line_items
@@ -276,7 +289,7 @@ async function seedRawData() {
     total_cost_gbp: r.total_cost_gbp,
     deposit_paid_at: r.deposit_paid_at || null,
     balance_paid_at: r.balance_paid_at || null,
-  })), "po_id");
+  })), "po_id", ownerUserId);
   console.log(`    → ${pos.length} rows`);
 
   console.log("  po_line_items…");
@@ -289,7 +302,7 @@ async function seedRawData() {
     quantity_received: r.quantity_received,
     unit_cost_supplier_ccy: r.unit_cost_supplier_ccy,
     landed_cost_per_unit_gbp: r.landed_cost_per_unit_gbp,
-  })), "po_line_id");
+  })), "po_line_id", ownerUserId);
   console.log(`    → ${poLines.length} rows`);
 
   console.log("  stage_future_stream…");
@@ -300,12 +313,13 @@ async function seedRawData() {
 }
 
 // ---- Per-product KPI thresholds (after products exist) --------
-async function seedProductKpiThresholds() {
+async function seedProductKpiThresholds(ownerUserId: string) {
   console.log("── Seeding product KPI thresholds ───────────────────");
 
   const { data: products, error: listError } = await supabase
     .from("products")
-    .select("product_id");
+    .select("product_id")
+    .eq("owner_user_id", ownerUserId);
   if (listError) {
     console.error("  ✗ list products:", listError.message);
     return;
@@ -330,13 +344,14 @@ async function seedProductKpiThresholds() {
     );
 
   if (defaultRows.length > 0) {
-    await upsert("product_kpi_thresholds", defaultRows, "product_id,metric_key");
+    await upsert("product_kpi_thresholds", defaultRows, "product_id,metric_key", ownerUserId);
     console.log(`  ✓ default thresholds for ${products?.length ?? 0} products`);
   }
 
   const { error: heroError } = await supabase.from("product_kpi_thresholds").upsert(
     [
       {
+        owner_user_id: ownerUserId,
         product_id: "prod_00005",
         metric_key: "return_rate",
         threshold: 0.2,
@@ -344,6 +359,7 @@ async function seedProductKpiThresholds() {
         active: true,
       },
       {
+        owner_user_id: ownerUserId,
         product_id: "prod_00005",
         metric_key: "refund_rate",
         threshold: 0.15,
@@ -351,6 +367,7 @@ async function seedProductKpiThresholds() {
         active: true,
       },
       {
+        owner_user_id: ownerUserId,
         product_id: "prod_00005",
         metric_key: "support_volume",
         threshold: 25,
@@ -358,7 +375,7 @@ async function seedProductKpiThresholds() {
         active: true,
       },
     ],
-    { onConflict: "product_id,metric_key" },
+    { onConflict: "owner_user_id,product_id,metric_key" },
   );
   if (heroError) {
     console.error("  ✗ Court Trainer thresholds:", heroError.message);
@@ -370,7 +387,7 @@ async function seedProductKpiThresholds() {
 }
 
 // ---- Seed demo incidents -------------------------------------
-async function seedDemoIncidents() {
+async function seedDemoIncidents(ownerUserId: string) {
   console.log("── Seeding demo incidents ────────────────────────────");
 
   const now = new Date();
@@ -383,6 +400,7 @@ async function seedDemoIncidents() {
     .upsert(
       {
         id: "00000000-0000-0000-0000-000000000001",
+        owner_user_id: ownerUserId,
         title: "Court Trainer Return Spike",
         status: "awaiting_approval",
         severity: "high",
@@ -414,6 +432,7 @@ async function seedDemoIncidents() {
   await supabase.from("agent_findings").upsert([
     {
       id: "00000000-0000-0000-0001-000000000001",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       agent_name: "Returns Agent",
       agent_icon: "📦",
@@ -429,6 +448,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000002",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       agent_name: "Merchandising Agent",
       agent_icon: "🛍️",
@@ -443,6 +463,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000003",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       agent_name: "Marketing Agent",
       agent_icon: "📣",
@@ -458,6 +479,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0001-000000000004",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       agent_name: "Inventory Agent",
       agent_icon: "🏭",
@@ -476,6 +498,7 @@ async function seedDemoIncidents() {
   await supabase.from("incident_actions").upsert([
     {
       id: "00000000-0000-0000-0002-000000000001",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       title: "Add sizing guidance to product page",
       description: "Publish size chart and fit notes (runs small — size up) to the Court Trainer PDP.",
@@ -488,6 +511,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000002",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       title: "Enable fit assistant widget",
       description: "Activate the AI fit recommendation widget on the product page — personalised size suggestion based on past orders.",
@@ -499,6 +523,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000003",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       title: "Update support flow — exchange before refund",
       description: "Route sizing-related support tickets to exchange offer first. Estimated to recover £8,200 in refunds.",
@@ -510,6 +535,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0002-000000000004",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       title: "Pause cold-traffic Meta campaign",
       description: "Pause 'Womens Launch Prospecting' (ROAS 1.1x) to stop driving unsized first-time buyers until fit assistant is live.",
@@ -525,6 +551,7 @@ async function seedDemoIncidents() {
   await supabase.from("incident_timeline").upsert([
     {
       id: "00000000-0000-0000-0003-000000000001",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "anomaly_detected",
       description: "Return rate for Court Trainer crossed 20% threshold (current: 22.5%)",
@@ -533,6 +560,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000002",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "incident_created",
       description: "Incident opened automatically — severity set to High, impact estimated at £66,235",
@@ -540,6 +568,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000003",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "agent_assigned",
       description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
@@ -547,6 +576,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000004",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "root_cause_found",
       description: "Root cause identified with 91% confidence — sizing-related returns from cold Meta traffic, no on-page guidance",
@@ -555,6 +585,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000005",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "action_proposed",
       description: "4 actions proposed: 1 auto-deploy, 3 requiring approval",
@@ -562,6 +593,7 @@ async function seedDemoIncidents() {
     },
     {
       id: "00000000-0000-0000-0003-000000000006",
+      owner_user_id: ownerUserId,
       incident_id: incidentId,
       event_type: "deployed",
       description: "Action auto-deployed: sizing guidance published to Court Trainer product page",
@@ -576,6 +608,7 @@ async function seedDemoIncidents() {
     .from("incidents")
     .upsert({
       id: "00000000-0000-0000-0000-000000000002",
+      owner_user_id: ownerUserId,
       title: "Wasted Ad Spend — Low-ROAS Campaigns",
       status: "monitoring",
       severity: "medium",
@@ -597,6 +630,7 @@ async function seedDemoIncidents() {
   // ── Incident 3: Inventory Stockout ──────────────────────────
   await supabase.from("incidents").upsert({
     id: "00000000-0000-0000-0000-000000000003",
+    owner_user_id: ownerUserId,
     title: "Court Trainer UK11/UK12 Stockout",
     status: "fix_proposed",
     severity: "critical",
@@ -617,6 +651,7 @@ async function seedDemoIncidents() {
   // ── Incident 4: Low Retention ────────────────────────────────
   await supabase.from("incidents").upsert({
     id: "00000000-0000-0000-0000-000000000004",
+    owner_user_id: ownerUserId,
     title: "M3 Customer Retention at 9.5%",
     status: "investigating",
     severity: "high",
@@ -634,24 +669,49 @@ async function seedDemoIncidents() {
   console.log("\n  Demo incidents seeded.\n");
 }
 
-async function ensureDemoUser() {
-  const credentials = resolveDemoCredentials();
-  if (!credentials) {
-    console.log("  demo user… skipped (set DEMO_USER_* in production)");
-    return;
-  }
-
-  console.log("  demo user…");
-  const { error } = await supabase.auth.admin.createUser({
-    email: credentials.email,
-    password: credentials.password,
+async function ensureAuthUser(email: string, password: string, label: string): Promise<string | null> {
+  console.log(`  ${label}…`);
+  const { data: created, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
     email_confirm: true,
   });
   if (error && !/already|exists|registered/i.test(error.message)) {
-    console.error(`  ✗ demo user: ${error.message}`);
-    return;
+    console.error(`  ✗ ${label}: ${error.message}`);
+    return null;
   }
-  console.log(`  ✓ demo user (${credentials.email})`);
+
+  const userId =
+    created.user?.id ??
+    (
+      await supabase.auth.admin.listUsers()
+    ).data.users.find((u) => u.email === email)?.id;
+
+  if (!userId) {
+    console.error(`  ✗ ${label}: could not resolve user id`);
+    return null;
+  }
+
+  console.log(`  ✓ ${label} (${email})`);
+  return userId;
+}
+
+async function ensureDemoUser(): Promise<string | null> {
+  const credentials = resolveDemoCredentials();
+  if (!credentials) {
+    console.log("  demo user… skipped (set DEMO_USER_* in production)");
+    return null;
+  }
+  return ensureAuthUser(credentials.email, credentials.password, "demo user");
+}
+
+async function resolveSeedOwnerUserId(): Promise<string | null> {
+  const e2eEmail = process.env.E2E_USER_EMAIL;
+  const e2ePassword = process.env.E2E_USER_PASSWORD;
+  if (e2eEmail && e2ePassword) {
+    return ensureAuthUser(e2eEmail, e2ePassword, "e2e seed owner");
+  }
+  return ensureDemoUser();
 }
 
 // ---- Main ----------------------------------------------------
@@ -659,10 +719,17 @@ async function main() {
   console.log("=== Resolve — seed script ===\n");
 
   try {
-    await seedRawData();
-    await seedProductKpiThresholds();
-    await seedDemoIncidents();
-    await ensureDemoUser();
+    const ownerUserId = await resolveSeedOwnerUserId();
+    if (!ownerUserId) {
+      console.error("Fatal: seed owner user required (DEMO_USER_* or E2E_USER_*)");
+      process.exit(1);
+    }
+    if (process.env.E2E_USER_EMAIL) {
+      await ensureDemoUser();
+    }
+    await seedRawData(ownerUserId);
+    await seedProductKpiThresholds(ownerUserId);
+    await seedDemoIncidents(ownerUserId);
     console.log("=== Done ✓ ===\n");
   } catch (err) {
     console.error("Fatal:", err);

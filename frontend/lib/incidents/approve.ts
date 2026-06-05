@@ -25,6 +25,15 @@ export async function approveIncidentActions(
   }
 
   const now = new Date().toISOString();
+  const { data: incidentRow, error: ownerErr } = await supabase
+    .from("incidents")
+    .select("owner_user_id")
+    .eq("id", incidentId)
+    .single();
+  if (ownerErr || !incidentRow?.owner_user_id) {
+    throw new Error(ownerErr?.message ?? "incident owner missing");
+  }
+  const ownerUserId = incidentRow.owner_user_id;
 
   const { error: actionErr } = await supabase
     .from("incident_actions")
@@ -36,6 +45,7 @@ export async function approveIncidentActions(
   await supabase.from("incidents").update({ status: "deploying" }).eq("id", incidentId);
 
   await supabase.from("incident_timeline").insert({
+    owner_user_id: ownerUserId,
     incident_id: incidentId,
     event_type: "approved",
     description: `${actionIds.length} action(s) approved by ${approvedBy}`,
@@ -50,6 +60,7 @@ export async function approveIncidentActions(
   await supabase.from("incidents").update({ status: "monitoring" }).eq("id", incidentId);
 
   await supabase.from("incident_timeline").insert({
+    owner_user_id: ownerUserId,
     incident_id: incidentId,
     event_type: "deployed",
     description: "Actions deployed — incident now in monitoring",

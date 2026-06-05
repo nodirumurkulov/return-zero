@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { streamStartDate } from "@/lib/detection/replay";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MonthlyPoint } from "@/lib/metrics/types";
+import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 
 // KPIs we can learn from the monthly series (ratio metrics with the inputs we
 // have per month). support_volume isn't in the series, so it keeps its default.
@@ -78,7 +79,11 @@ export interface LearnResult {
   products: number;
 }
 
-export async function learnBaselines(supabase: SupabaseClient): Promise<LearnResult> {
+export async function learnBaselines(
+  supabase: SupabaseClient,
+  opts: { ownerUserId?: string } = {},
+): Promise<LearnResult> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const [{ data: defRows, error: defErr }, { data: settingRows }] = await Promise.all([
     supabase.from("metric_definitions").select("metric_key, direction, default_threshold").eq("enabled", true),
     supabase.from("business_settings").select("key, value"),
@@ -115,6 +120,7 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
   });
 
   const baselineRows = computed.map(({ productId, def, s }) => ({
+    owner_user_id: ownerUserId,
     product_id: productId,
     metric_key: def.metric_key,
     mean: Number(s.mean.toFixed(6)),
@@ -123,6 +129,7 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
   }));
 
   const thresholdRows = computed.map(({ productId, def, s }) => ({
+    owner_user_id: ownerUserId,
     product_id: productId,
     metric_key: def.metric_key,
     threshold: derivedThreshold(def, s),
@@ -134,7 +141,7 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
     chunk(baselineRows, 500).map(async (rows) => {
       const { error } = await supabase
         .from("product_baselines")
-        .upsert(rows, { onConflict: "product_id,metric_key" });
+        .upsert(rows, { onConflict: "owner_user_id,product_id,metric_key" });
       if (error) throw new Error(`product_baselines upsert failed: ${error.message}`);
     }),
   );
@@ -143,7 +150,7 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
     chunk(thresholdRows, 500).map(async (rows) => {
       const { error } = await supabase
         .from("product_kpi_thresholds")
-        .upsert(rows, { onConflict: "product_id,metric_key" });
+        .upsert(rows, { onConflict: "owner_user_id,product_id,metric_key" });
       if (error) throw new Error(`product_kpi_thresholds upsert failed: ${error.message}`);
     }),
   );

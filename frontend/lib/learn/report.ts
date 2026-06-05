@@ -14,6 +14,7 @@ import { getModel } from "@/lib/ai/model";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MetricValue, MonthlyPoint } from "@/lib/metrics/types";
+import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 
 export interface TopProduct {
   product_id: string;
@@ -275,12 +276,16 @@ export interface BusinessReport {
   created_at: string;
 }
 
-export async function buildBusinessReport(supabase: SupabaseClient): Promise<BusinessReport> {
+export async function buildBusinessReport(
+  supabase: SupabaseClient,
+  opts: { ownerUserId?: string } = {},
+): Promise<BusinessReport> {
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
   const summary = await buildSummary(supabase);
   const narrative = await narrate(summary);
   const { data, error } = await supabase
     .from("business_reports")
-    .insert({ summary, narrative })
+    .insert({ owner_user_id: ownerUserId, summary, narrative })
     .select("id, summary, narrative, created_at")
     .single();
   if (error) throw new Error(`business_reports insert failed: ${error.message}`);

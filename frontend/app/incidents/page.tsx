@@ -30,12 +30,17 @@ export default async function IncidentsPage() {
   const totalImpact = rows.reduce((sum, i) => sum + (Number(i.impact_amount) || 0), 0);
   const open = rows.filter((i) => i.status !== "resolved").length;
 
-  // Replay cursor (defensive: null if the replay_state table isn't present yet).
-  const { data: replay } = await supabase
-    .from("replay_state")
-    .select("cursor")
-    .eq("id", true)
-    .maybeSingle();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: replay } = user
+    ? await supabase
+        .from("replay_state")
+        .select("cursor")
+        .eq("owner_user_id", user.id)
+        .maybeSingle()
+    : { data: null };
   const replayCursor = replay?.cursor ? String(replay.cursor).slice(0, 10) : null;
 
   return (

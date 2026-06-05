@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 import { computeMetricsDetailed } from "../metrics/engine";
 import { getMonthlySeries } from "../metrics/series";
 import type { ProductSourceFacts } from "../metrics/types";
@@ -41,19 +42,26 @@ export interface DetectionResult {
 
 export interface DetectOpts {
   asOf?: string; // replay cursor — compute metrics as of this date instead of "now"
+  ownerUserId?: string; // cron/admin: scope detection to one tenant
 }
 
 export async function detectBreaches(
   supabase: SupabaseClient,
   opts: DetectOpts = {},
 ): Promise<DetectionResult> {
-  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase, { asOf: opts.asOf });
+  const ownerUserId = await resolveOwnerUserId(supabase, opts.ownerUserId);
+  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase, {
+    asOf: opts.asOf,
+    ownerUserId,
+  });
   const defByKey = new Map(defs.map((d) => [d.metric_key, d]));
 
   // Dedup: products that already have an open incident.
-  const { data: incidentRows, error: incErr } = await supabase
-    .from("incidents")
-    .select("affected_product, status");
+  const incidentsQuery = supabase.from("incidents").select("affected_product, status");
+  const { data: incidentRows, error: incErr } = await incidentsQuery.eq(
+    "owner_user_id",
+    ownerUserId,
+  );
   if (incErr) throw new Error(`load incidents: ${incErr.message}`);
   const openProducts = new Set(
     (incidentRows ?? [])
@@ -62,13 +70,16 @@ export async function detectBreaches(
   );
 
   // Readable titles.
-  const { data: prodRows } = await supabase.from("products").select("product_id, title");
+  const { data: prodRows } = await supabase
+    .from("products")
+    .select("product_id, title")
+    .eq("owner_user_id", ownerUserId);
   const titleById = new Map(
     (prodRows ?? []).map((p) => [p.product_id as string, (p.title as string) ?? (p.product_id as string)])
   );
 
   // Monthly series for trend input to severity scoring.
-  const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
+  const seriesByProduct = await getMonthlySeries(supabase, { months: 24, ownerUserId });
 
   const created: CreatedIncident[] = [];
   const skipped: DetectionResult["skipped"] = [];
@@ -111,6 +122,7 @@ export async function detectBreaches(
     const { data: inc, error: insErr } = await supabase
       .from("incidents")
       .insert({
+        owner_user_id: ownerUserId,
         title,
         status: "detected",
         severity,
@@ -128,6 +140,7 @@ export async function detectBreaches(
 
     await supabase.from("incident_timeline").insert([
       {
+        owner_user_id: ownerUserId,
         incident_id: inc.id,
         event_type: "anomaly_detected",
         description: `${affected_kpis.length} KPI breach(es): ${affected_kpis.join(", ")}`,
@@ -141,6 +154,7 @@ export async function detectBreaches(
         },
       },
       {
+        owner_user_id: ownerUserId,
         incident_id: inc.id,
         event_type: "incident_created",
         description: `Incident opened for ${productTitle} (severity: ${severity})`,

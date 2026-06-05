@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     const [orders, dataEnd, cursorRow] = await Promise.all([
       listIncomingOrders(supabase, parsed.data),
       streamEndDate(supabase),
-      supabase.from("replay_state").select("cursor").eq("id", true).maybeSingle(),
+      supabase.from("replay_state").select("cursor").eq("owner_user_id", user.id).maybeSingle(),
     ]);
     return NextResponse.json({
       orders,
