@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { signUp } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
+import ComingSoonLoginButton from "@/components/auth/ComingSoonLoginButton";
 import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
-import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
+import { MicrosoftIcon, ShopifyIcon } from "@/components/auth/provider-icons";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 
@@ -16,7 +17,10 @@ export default function SignUpPage() {
       <BrandLogo variant="auth" />
       <AuthForm title="Create account" action={signUp} />
       <OAuthButtons />
-      <ShopifyLoginButton />
+      <div className="flex w-full max-w-sm flex-col gap-3">
+        <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
+        <ComingSoonLoginButton provider="Shopify" icon={<ShopifyIcon />} />
+      </div>
       <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         <Link href="/sign-in" className="text-primary hover:underline">
