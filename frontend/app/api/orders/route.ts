@@ -1,10 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import {
-  dataEndDate,
-  listIncomingOrders,
-  ordersQuerySchema,
-} from "@/lib/stores/analytics/replay";
+import { createReplay, ordersQuerySchema } from "@/lib/stores/analytics/replay";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -36,9 +32,10 @@ export async function GET(req: NextRequest) {
   const { organizationId } = org;
 
   try {
+    const replay = createReplay(supabase);
     const [orders, dataEnd, cursorRow] = await Promise.all([
-      listIncomingOrders(supabase, { organizationId, ...parsed.data }),
-      dataEndDate(supabase, organizationId),
+      replay.listIncomingOrders({ organizationId, ...parsed.data }),
+      replay.dataEndDate(organizationId),
       supabase
         .from("store_connections")
         .select("replay_cursor")

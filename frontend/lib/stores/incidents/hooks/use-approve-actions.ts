@@ -5,8 +5,8 @@ import {
   incidentKeys,
   postApproveIncidentActions,
   type PostApproveIncidentActionsInput,
-} from "@/lib/incidents/api";
-import type { IncidentRef } from "@/lib/incidents/incident";
+} from "../api";
+import type { IncidentRef } from "../types";
 
 export function useApproveActions(incident: IncidentRef) {
   const queryClient = useQueryClient();

@@ -12,7 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MonthlyPoint } from "@/lib/metrics/types";
-import { streamStartDate } from "@/lib/stores/analytics/replay";
+import { createReplay } from "@/lib/stores/analytics/replay";
 import type { Database } from "@/lib/supabase/database.types";
 
 // KPIs we can learn from the monthly series (ratio metrics with the inputs we
@@ -116,7 +116,7 @@ export async function learnBaselines(
 
   // Learn "normal" on the BASELINE period only — everything before the live
   // stream window — so the anomalies we're about to replay don't pollute it.
-  const baselineEnd = await streamStartDate(supabase, organizationId);
+  const baselineEnd = await createReplay(supabase).streamStartDate(organizationId);
   const seriesByProduct = await getMonthlySeries(supabase, { organizationId, months: 24 });
 
   // One (product, metric) entry per KPI that has enough history to be meaningful.

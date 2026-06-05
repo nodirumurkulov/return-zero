@@ -21,7 +21,7 @@ UI for the incident command center: kanban board, detail layout, approvals, and 
 ## Notes
 
 - Do not client-fetch `/api/incidents/[id]` for the detail page.
-- Types always from `@/lib/incidents`.
+- Types always from `@/lib/stores/incidents`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

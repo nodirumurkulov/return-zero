@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
 import { forecastStockout } from "@/lib/forecast/predictors";
-import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
+import { createIncidents, type Incident, type IncidentDetail } from "@/lib/stores/incidents";
 import type { Database } from "@/lib/supabase/database.types";
 
 // Mirror the reorder horizon defaults used by the detector/forecast modules.
@@ -11,7 +11,7 @@ const BUFFER_DAYS_DEFAULT = 14;
 const OUTFLOW_WINDOW_DAYS = 28;
 const INVENTORY_MAX_LINES = 25;
 
-const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+const RESOLVED_STATUSES = new Set(["resolved", "canceled"]);
 
 export function isOpenIncident(incident: Incident): boolean {
   return !RESOLVED_STATUSES.has(incident.status.toLowerCase());
@@ -46,7 +46,7 @@ export async function resolveIncident(
   reference: string | null | undefined,
   organizationId: string,
 ): Promise<{ match: Incident | null; candidates: Incident[] }> {
-  const incidents = await listIncidents(supabase, organizationId);
+  const incidents = await createIncidents(supabase).listIncidents(organizationId);
   const ref = (reference ?? "").trim().toLowerCase();
 
   if (!ref) {
@@ -81,12 +81,12 @@ export async function buildOpenIncidentsContext(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<string> {
-  const incidents = await listIncidents(supabase, organizationId);
+  const incidents = await createIncidents(supabase).listIncidents(organizationId);
   const open = incidents.filter(isOpenIncident);
   const resolvedCount = incidents.length - open.length;
 
   if (open.length === 0) {
-    return `There are no open incidents. (${resolvedCount} resolved/closed in total.)`;
+    return `There are no open incidents. (${resolvedCount} resolved/canceled in total.)`;
   }
 
   const lines = open.map((inc) => `- ${formatIncidentLine(inc)}`);

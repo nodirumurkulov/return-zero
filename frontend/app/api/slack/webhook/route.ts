@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { captureRecoveryBaseline } from "@/lib/detection/recover";
-import { approveIncidentActions, getIncident, listLowRiskProposedActionIds } from "@/lib/incidents";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { parseSlackInteractionPayload, sendIncidentNotification, verifySlackRequest } from "@/lib/slack";
+import { createIncidents } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -53,23 +52,28 @@ export async function POST(req: NextRequest) {
   const slackUser = payload.user?.name ?? "slack-user";
 
   if (action.action_id === "approve_low_risk") {
-    const incident = await getIncident(supabase, incidentId, organizationId);
+    const store = createIncidents(supabase);
+    const incident = await store.getIncident(incidentId, organizationId);
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
-    const actionIds = await listLowRiskProposedActionIds(supabase, incidentId, organizationId);
+    const actionIds = await store.listLowRiskProposedActionIds(incidentId, organizationId);
     if (actionIds.length > 0) {
       try {
-        await approveIncidentActions(supabase, incidentId, actionIds, null, { slack_user: slackUser });
+        await store.approveIncidentActions({
+          incidentId,
+          actionIds,
+          approvedByUserId: null,
+          extraMetadata: { slack_user: slackUser },
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
       }
 
       if (incident.product_id) {
-        await captureRecoveryBaseline(
-          supabase,
+        await store.captureRecoveryBaseline(
           incident.organization_id,
           incidentId,
           incident.product_id,

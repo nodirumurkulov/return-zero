@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isIncidentStatus } from "@/lib/incidents";
 import { tryRequireOrganizationId } from "@/lib/organizations";
+import { isIncidentStatus } from "@/lib/stores/incidents";
 import { createClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {

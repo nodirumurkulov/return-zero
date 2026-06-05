@@ -1,5 +1,5 @@
-import type { IncidentRef } from "../incident";
 import type { ApproveIncidentBody } from "../schemas";
+import type { IncidentRef } from "../types";
 
 export type ApproveIncidentActionsApproval =
   | { readonly kind: "all_low_risk" }

@@ -17,11 +17,12 @@ export const INCIDENT_SEVERITIES = ["critical", "high", "medium", "low"] as cons
 
 export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
 
+export const TERMINAL_INCIDENT_STATUSES = ["resolved", "canceled"] as const;
+
 export function isIncidentStatus(value: string): value is IncidentStatus {
   return (INCIDENT_STATUSES as readonly string[]).includes(value);
 }
 
-/** Columns shown on the incidents kanban (excludes deploying). */
 export const KANBAN_STATUSES = [
   "detected",
   "investigating",

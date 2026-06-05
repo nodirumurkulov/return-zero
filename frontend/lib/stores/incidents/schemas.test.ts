@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { approveIncidentBodySchema, updateIncidentBodySchema } from "./schemas";
+import {
+  approveIncidentBodySchema,
+  recoverBodySchema,
+  updateIncidentBodySchema,
+} from "./schemas";
 
 describe("updateIncidentBodySchema", () => {
   it("accepts partial updates", () => {
@@ -39,5 +43,19 @@ describe("approveIncidentBodySchema", () => {
   it("rejects empty action id strings", () => {
     const parsed = approveIncidentBodySchema.safeParse({ action_ids: [""] });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe("recoverBodySchema", () => {
+  it("accepts empty body", () => {
+    expect(recoverBodySchema.safeParse({}).success).toBe(true);
+  });
+
+  it("accepts advance_days", () => {
+    expect(recoverBodySchema.safeParse({ advance_days: 7 }).success).toBe(true);
+  });
+
+  it("rejects non-finite advance_days", () => {
+    expect(recoverBodySchema.safeParse({ advance_days: Number.NaN }).success).toBe(false);
   });
 });

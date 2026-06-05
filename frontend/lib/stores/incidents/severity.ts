@@ -1,5 +1,5 @@
-import { linearTrend } from "../forecast/methods";
-import type { Direction, MonthlyPoint } from "../metrics/types";
+import { linearTrend } from "@/lib/forecast/methods";
+import type { Direction, MonthlyPoint } from "@/lib/metrics/types";
 
 export type Severity = "critical" | "high" | "medium" | "low";
 

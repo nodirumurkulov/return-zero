@@ -5,7 +5,7 @@ React UI. **Parent:** [../../AGENTS.md](../../AGENTS.md) · **Humans:** [README.
 ## Scope
 
 - **No Supabase calls** — data arrives via props from server pages.
-- Import types from `@/lib/incidents`, `@/lib/catalog`, etc.
+- Import types from `@/lib/stores/incidents`, `@/lib/catalog`, etc.
 - **Never re-export** domain types from component files.
 
 ## Structure

@@ -1,5 +1,4 @@
-import type { DetectionResult } from "@/lib/detection/detect";
-import type { ForecastDetectionResult } from "@/lib/detection/forecast";
+import type { DetectionResult, ForecastDetectionResult } from "@/lib/stores/incidents";
 
 export interface ReplayResult {
   previous_cursor: string;

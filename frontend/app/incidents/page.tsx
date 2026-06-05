@@ -2,8 +2,8 @@ import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { ReplayControl } from "@/components/incidents/ReplayControl";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionLabel } from "@/components/ui/section-label";
-import { listIncidents } from "@/lib/incidents";
 import { tryRequireOrganizationId } from "@/lib/organizations";
+import { createIncidents } from "@/lib/stores/incidents";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function IncidentsPage() {
   const organizationId = orgResult.ok ? orgResult.organizationId : undefined;
 
   const [result, replayRes] = await Promise.all([
-    listIncidents(supabase, organizationId).then(
+    createIncidents(supabase).listIncidents(organizationId).then(
       (rows) => ({ ok: true as const, rows }),
       (err: unknown) => ({
         ok: false as const,

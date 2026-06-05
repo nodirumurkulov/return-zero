@@ -1,5 +1,13 @@
 import { z } from "zod";
+
 import { INCIDENT_SEVERITIES, INCIDENT_STATUSES } from "./status";
+
+export const approveIncidentBodySchema = z.object({
+  action_ids: z.array(z.string().min(1)).optional(),
+  approve_all_low_risk: z.boolean().optional(),
+});
+
+export type ApproveIncidentBody = z.infer<typeof approveIncidentBodySchema>;
 
 export const updateIncidentBodySchema = z
   .object({
@@ -23,9 +31,8 @@ export const updateIncidentBodySchema = z
 
 export type UpdateIncidentBody = z.infer<typeof updateIncidentBodySchema>;
 
-export const approveIncidentBodySchema = z.object({
-  action_ids: z.array(z.string().min(1)).optional(),
-  approve_all_low_risk: z.boolean().optional(),
+export const recoverBodySchema = z.object({
+  advance_days: z.number().finite().optional(),
 });
 
-export type ApproveIncidentBody = z.infer<typeof approveIncidentBodySchema>;
+export type RecoverBody = z.infer<typeof recoverBodySchema>;

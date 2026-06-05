@@ -3,12 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+const { replayStoreMock } = vi.hoisted(() => ({
+  replayStoreMock: { run: vi.fn(), reset: vi.fn() },
+}));
+
 vi.mock("@/lib/stores/analytics/replay", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/stores/analytics/replay")>();
   return {
     ...actual,
-    resetReplay: vi.fn(),
-    runReplay: vi.fn(),
+    createReplay: vi.fn(() => replayStoreMock),
   };
 });
 
@@ -28,9 +31,7 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/replay/route";
-import { runReplay } from "@/lib/stores/analytics/replay";
-
-const runReplayMock = vi.mocked(runReplay);
+const runReplayMock = replayStoreMock.run;
 
 const replayResult = {
   previous_cursor: "2024-01-01",
@@ -70,6 +71,6 @@ describe("POST /api/replay", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runReplayMock).toHaveBeenCalledWith({}, { organizationId: "org-1", advanceDays: 3 });
+    expect(runReplayMock).toHaveBeenCalledWith({ organizationId: "org-1", advanceDays: 3 });
   });
 });

@@ -1,8 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import IncidentDetailView from "@/components/incidents/IncidentDetailView";
-import { getIncidentDetailQueryOptions } from "@/lib/incidents/api";
 import { getQueryClient } from "@/lib/query/query-client";
+import { getIncidentDetailQueryOptions } from "@/lib/stores/incidents/api/get-incident-detail-query-options";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

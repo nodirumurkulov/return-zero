@@ -7,15 +7,22 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock("@/lib/incidents", () => ({
-  approveIncidentActions: vi.fn(),
-  getIncident: vi.fn(),
-  listLowRiskProposedActionIds: vi.fn(),
+const { incidentStoreMock } = vi.hoisted(() => ({
+  incidentStoreMock: {
+    approveIncidentActions: vi.fn(),
+    getIncident: vi.fn(),
+    listLowRiskProposedActionIds: vi.fn(),
+    captureRecoveryBaseline: vi.fn(),
+  },
 }));
 
-vi.mock("@/lib/detection/recover", () => ({
-  captureRecoveryBaseline: vi.fn(),
-}));
+vi.mock("@/lib/stores/incidents", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
+  return {
+    ...actual,
+    createIncidents: vi.fn(() => incidentStoreMock),
+  };
+});
 
 vi.mock("@/lib/slack", () => ({
   sendIncidentNotification: vi.fn(),
@@ -30,17 +37,12 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/incidents/[id]/approve/route";
-import {
-  approveIncidentActions,
-  getIncident,
-  listLowRiskProposedActionIds,
-} from "@/lib/incidents";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const approveMock = vi.mocked(approveIncidentActions);
-const getIncidentMock = vi.mocked(getIncident);
-const listLowRiskMock = vi.mocked(listLowRiskProposedActionIds);
+const approveMock = incidentStoreMock.approveIncidentActions;
+const getIncidentMock = incidentStoreMock.getIncident;
+const listLowRiskMock = incidentStoreMock.listLowRiskProposedActionIds;
 const createClientMock = vi.mocked(createClient);
 const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 
@@ -125,6 +127,10 @@ describe("POST /api/incidents/[id]/approve", () => {
       { params: Promise.resolve({ id: "inc-1" }) },
     );
     expect(res.status).toBe(200);
-    expect(approveMock).toHaveBeenCalledWith(supabase, "inc-1", ["low-1"], "user-1");
+    expect(approveMock).toHaveBeenCalledWith({
+      incidentId: "inc-1",
+      actionIds: ["low-1"],
+      approvedByUserId: "user-1",
+    });
   });
 });

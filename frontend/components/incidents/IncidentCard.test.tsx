@@ -3,8 +3,8 @@ import IncidentCard from "@/components/incidents/IncidentCard";
 import { createIncidentFixture } from "@/test/fixtures";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
-vi.mock("@/lib/incidents/hooks", async () => {
-  const actual = await vi.importActual("@/lib/incidents/hooks");
+vi.mock("@/lib/stores/incidents/hooks", async () => {
+  const actual = await vi.importActual("@/lib/stores/incidents/hooks");
   return {
     ...actual,
     useUpdateIncidentStatus: () => ({

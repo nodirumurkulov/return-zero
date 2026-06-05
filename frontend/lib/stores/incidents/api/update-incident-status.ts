@@ -1,5 +1,5 @@
 import { updateIncidentStatus } from "@/app/actions";
-import type { IncidentRef } from "../incident";
+import type { IncidentRef } from "../types";
 
 export type UpdateIncidentStatusInput = {
   readonly incident: IncidentRef;

@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
-import type { IncidentAction } from "@/lib/incidents";
-import { useApproveActions } from "@/lib/incidents/hooks";
+import type { IncidentAction } from "@/lib/stores/incidents";
+import { useApproveActions } from "@/lib/stores/incidents/hooks";
 import { cn } from "@/lib/utils";
 
 const impactColour: Record<string, string> = {
@@ -142,7 +142,10 @@ export default function ActionList({
                     <span>
                       Impact:{" "}
                       <span
-                        className={impactColour[action.impact_level] ?? "text-muted-foreground"}
+                        className={
+                          (action.impact_level && impactColour[action.impact_level]) ??
+                          "text-muted-foreground"
+                        }
                       >
                         {action.impact_level}
                       </span>
@@ -150,7 +153,10 @@ export default function ActionList({
                     <span>
                       Risk:{" "}
                       <span
-                        className={riskColour[action.risk_level] ?? "text-muted-foreground"}
+                        className={
+                          (action.risk_level && riskColour[action.risk_level]) ??
+                          "text-muted-foreground"
+                        }
                       >
                         {action.risk_level}
                       </span>

@@ -3,9 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/detection/forecast", () => ({
-  detectForecastRisks: vi.fn(),
-}));
+const { detectForecastRisksMock } = vi.hoisted(() => ({ detectForecastRisksMock: vi.fn() }));
+
+vi.mock("@/lib/stores/incidents", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
+  return {
+    ...actual,
+    createIncidents: vi.fn(() => ({ detectForecastRisks: detectForecastRisksMock })),
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -23,9 +29,6 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/forecast/route";
-import { detectForecastRisks } from "@/lib/detection/forecast";
-
-const detectForecastRisksMock = vi.mocked(detectForecastRisks);
 
 describe("POST /api/forecast", () => {
   beforeEach(() => {

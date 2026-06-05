@@ -5,8 +5,8 @@ import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const mutate = vi.fn();
 
-vi.mock("@/lib/incidents/hooks", async () => {
-  const actual = await vi.importActual("@/lib/incidents/hooks");
+vi.mock("@/lib/stores/incidents/hooks", async () => {
+  const actual = await vi.importActual("@/lib/stores/incidents/hooks");
   return {
     ...actual,
     useApproveActions: () => ({

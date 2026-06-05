@@ -1,15 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { captureRecoveryBaseline } from "@/lib/detection/recover";
-import {
-  approveIncidentActions,
-  getIncident,
-  listLowRiskProposedActionIds,
-} from "@/lib/incidents";
-import { approveIncidentBodySchema } from "@/lib/incidents/schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { sendIncidentNotification } from "@/lib/slack";
+import { approveIncidentBodySchema, createIncidents } from "@/lib/stores/incidents";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -40,9 +34,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
   const { organizationId } = org;
 
+  const store = createIncidents(supabase);
   const body = parsed.data;
   const lowRiskIds = body.approve_all_low_risk
-    ? await listLowRiskProposedActionIds(supabase, params.id)
+    ? await store.listLowRiskProposedActionIds(params.id)
     : [];
 
   const actionIds = [...(body.action_ids ?? []), ...lowRiskIds];
@@ -52,13 +47,17 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
 
   try {
-    await approveIncidentActions(supabase, params.id, actionIds, user.id);
+    await store.approveIncidentActions({
+      incidentId: params.id,
+      actionIds,
+      approvedByUserId: user.id,
+    });
   } catch (err) {
     logApiError("api/incidents/[id]/approve", err);
     return apiErrorResponse(err);
   }
 
-  const incident = await getIncident(supabase, params.id);
+  const incident = await store.getIncident(params.id);
   if (incident) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     await sendIncidentNotification({
@@ -74,8 +73,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     });
 
     if (incident.product_id) {
-      await captureRecoveryBaseline(
-        supabase,
+      await store.captureRecoveryBaseline(
         organizationId,
         params.id,
         incident.product_id,

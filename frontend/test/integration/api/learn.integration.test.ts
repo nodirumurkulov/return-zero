@@ -11,8 +11,12 @@ vi.mock("@/lib/learn/report", () => ({
   buildBusinessReport: vi.fn(),
 }));
 
+const { replayStoreMock } = vi.hoisted(() => ({
+  replayStoreMock: { reset: vi.fn() },
+}));
+
 vi.mock("@/lib/stores/analytics/replay", () => ({
-  resetReplay: vi.fn(),
+  createReplay: vi.fn(() => replayStoreMock),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -30,13 +34,12 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/learn/route";
-import { resetReplay } from "@/lib/stores/analytics/replay";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 
 const learnBaselinesMock = vi.mocked(learnBaselines);
 const buildBusinessReportMock = vi.mocked(buildBusinessReport);
-const resetReplayMock = vi.mocked(resetReplay);
+const resetReplayMock = replayStoreMock.reset;
 
 describe("POST /api/learn", () => {
   beforeEach(() => {

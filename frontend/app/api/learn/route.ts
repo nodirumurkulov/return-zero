@@ -3,7 +3,7 @@ import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 import { learnBodySchema } from "@/lib/learn/schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { resetReplay } from "@/lib/stores/analytics/replay";
+import { createReplay } from "@/lib/stores/analytics/replay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const report = await buildBusinessReport(supabase, organizationId);
     // Rewind the replay clock to the start of the live window so the incidents
     // board stays empty until the user presses Start on the Orders stream.
-    const { cursor } = await resetReplay(supabase, organizationId);
+    const { cursor } = await createReplay(supabase).reset(organizationId);
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";
