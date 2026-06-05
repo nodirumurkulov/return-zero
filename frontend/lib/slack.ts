@@ -335,3 +335,27 @@ export async function postSlackMessage(args: {
   }
 }
 
+/**
+ * Post Block Kit blocks to the incoming webhook channel.
+ * Used by the daily digest and any other rich-format notifications.
+ * Never throws — logs on failure.
+ */
+export async function postWebhookBlocks(blocks: object[]): Promise<void> {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.warn("[Slack] SLACK_WEBHOOK_URL not set — skipping webhook post");
+    return;
+  }
+
+  const res = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blocks }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[Slack] Webhook blocks failed: ${res.status} ${text}`);
+  }
+}
+

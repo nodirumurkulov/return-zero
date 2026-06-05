@@ -12,7 +12,7 @@ import { z } from "zod";
  */
 export const hugoIntentSchema = z.object({
   intent: z.enum(["chat", "data_query", "investigate", "approve"]),
-  incident_reference: z.string().nullable().optional(),
+  incident_reference: z.string().nullable(),
 });
 
 export type HugoIntent = z.infer<typeof hugoIntentSchema>;

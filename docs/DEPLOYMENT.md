@@ -89,20 +89,67 @@ For manual local testing without a secret, sign in normally and POST while `CRON
 
 ---
 
-## 4. Database migrations (Supabase)
+## 4. Database migrations (Supabase GitHub integration)
 
-Schema lives in [`frontend/supabase/`](../frontend/supabase/). Migrations apply automatically on push to `main` when GitHub secrets are configured.
+Schema lives in [`frontend/supabase/`](../frontend/supabase/). Git is the source of truth — do not apply schema changes in the Supabase Dashboard.
 
-### GitHub Actions secrets (for automatic `db push`)
+Migrations deploy via [Supabase GitHub integration](https://supabase.com/docs/guides/deployment/branching/github-integration):
 
-| Secret | Required | Where to get it |
-|--------|----------|-----------------|
-| `SUPABASE_ACCESS_TOKEN` | ✅ for auto-push | [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
-| `SUPABASE_PROJECT_REF` | ✅ for auto-push | Supabase → Project Settings → General → Reference ID |
+- **PRs** — Supabase creates a preview branch and runs migrations (posts **Supabase Preview** check on the PR)
+- **`main`** — migrations apply to production automatically on merge
 
-Workflow: [`.github/workflows/db-push.yml`](../.github/workflows/db-push.yml). If secrets are missing, the job skips with a message (deploy still succeeds; apply migrations manually).
+### One-time Dashboard setup
 
-### Manual migration apply
+In **Supabase Dashboard → Project Settings → Integrations → GitHub Integration**:
+
+1. **Authorize GitHub** and connect repo `nodirumurkulov/return-zero`
+2. **Working directory:** `frontend` (parent of `supabase/` — not the repo root)
+3. Enable:
+   - **Automatic branching**
+   - **Supabase changes only** (preview branches only when `frontend/supabase/**` changes)
+   - **Deploy to production**
+4. **Production branch:** `main`
+5. Subscribe to **email notifications** on the branch for migration failures
+
+### Bootstrap: align remote with repo (one time)
+
+Before enabling **Deploy to production**, confirm remote migration history matches git:
+
+```bash
+cd frontend/supabase
+supabase link --project-ref <your-project-ref>
+supabase migration list          # compare Local vs Remote columns
+```
+
+- Remote **behind** repo: first deploy applies pending migrations (expected).
+- Remote has **dashboard-only changes** not in git: run a one-time `supabase db pull --db-url <session-pooler-url>`, commit, then enable auto-deploy.
+
+Do **not** enable production deploy until histories match — otherwise migration conflicts block merges.
+
+### Branch protection (recommended)
+
+In **GitHub → Settings → Branches → `main` protection**:
+
+- Enable **Require status checks to pass before merging**
+- Add **Supabase Preview** as a required check (Supabase posts this check directly — no custom GitHub Action needed)
+
+### Local pre-PR checks (migration PRs)
+
+CI no longer runs schema drift, RLS, or type-sync checks. Run locally before opening a migration PR:
+
+```bash
+cd frontend/supabase && supabase start && cd ..
+bun run db:reset
+supabase db diff --use-pg-delta   # expect "No schema changes found"
+bun run db:lint && bun run db:test:rls && bun run db:check-types
+bun run seed && bun run validate
+```
+
+After schema changes locally: `cd frontend && bun run db:sync` (reset + regenerate `database.types.ts`).
+
+### Manual migration apply (fallback)
+
+If GitHub integration is unavailable:
 
 ```bash
 cd frontend/supabase
@@ -110,7 +157,9 @@ supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
-After schema changes locally: `cd frontend && bun run db:sync` (reset + regenerate `database.types.ts`).
+### Preview branches and demo data
+
+Preview branches do **not** copy production data. Demo data is loaded via `bun run seed` ([`frontend/scripts/`](../frontend/scripts/)), not `seed.sql`. Vercel preview deployments still point at production Supabase unless you wire preview env vars to the Supabase preview branch credentials from the PR comment.
 
 ---
 
@@ -123,5 +172,6 @@ After schema changes locally: `cd frontend && bun run db:sync` (reset + regenera
 | 401 on `/api/*` | Expected when unauthenticated. |
 | 503 on `/api/detect` in production | Set `CRON_SECRET` in Vercel env. |
 | Slack buttons rejected | `SLACK_SIGNING_SECRET` missing or mismatched. |
-| Empty incidents board | Ensure migrations applied (`supabase db push` or CI db-push workflow) + `bun run seed` against the Supabase project. |
-| Stale TypeScript DB types | Run `cd frontend && bun run db:sync` after pulling migration changes. CI `integration-db` fails if `database.types.ts` is out of date. |
+| Empty incidents board | Ensure migrations applied (Supabase GitHub integration or `supabase db push`) + `bun run seed` against the project. |
+| Stale TypeScript DB types | Run `cd frontend && bun run db:sync` after pulling migration changes; run `bun run db:check-types` locally before migration PRs. |
+| Supabase Preview check failed | See PR comment from Supabase; fix migration SQL and push again. |

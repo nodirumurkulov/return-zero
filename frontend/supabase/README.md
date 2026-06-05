@@ -90,9 +90,22 @@ Demo data: [`../scripts/README.md`](../scripts/README.md) (`bun run seed` — no
 - Changing RPC signatures requires updating `frontend/lib/stores/analytics/metrics` and `frontend/scripts/validate-metrics.ts`.
 - Diff tools may miss: DML (`insert`/`update`), some `alter policy` statements, publications, storage buckets. Use imperative migrations for those edge cases. See [known caveats](https://supabase.com/docs/guides/local-development/declarative-database-schemas#known-caveats).
 
+### Before opening a migration PR
+
+CI does not run schema drift, RLS, or type-sync checks — run locally:
+
+```bash
+cd frontend/supabase && supabase start && cd ..
+bun run db:reset
+supabase db diff --use-pg-delta   # expect "No schema changes found"
+bun run db:lint && bun run db:test:rls && bun run db:check-types
+```
+
 ## Remote deploy
 
-Migrations auto-push on `main` when GitHub secrets are set. See [`../../docs/DEPLOYMENT.md`](../../docs/DEPLOYMENT.md).
+Migrations deploy via **Supabase GitHub integration** (preview branches on PRs, production on merge to `main`). Working directory in the Dashboard must be `frontend`. See [`../../docs/DEPLOYMENT.md`](../../docs/DEPLOYMENT.md) §4.
+
+Preview branches do not copy production data. Demo data remains `bun run seed` against preview credentials from the PR comment, or local dev only.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)

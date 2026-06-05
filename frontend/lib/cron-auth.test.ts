@@ -22,12 +22,14 @@ describe("cron-auth", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lists scheduler API paths including replay", () => {
+  it("lists scheduler API paths including replay and digest", () => {
+    expect(CRON_API_PATHS).toContain("/api/digest");
     expect(CRON_API_PATHS).toContain("/api/stores/incidents/detect");
     expect(CRON_API_PATHS).toContain("/api/stores/analytics/replay");
   });
 
   it("matchesCronPath recognizes cron routes", () => {
+    expect(matchesCronPath("/api/digest")).toBe(true);
     expect(matchesCronPath("/api/stores/incidents/detect")).toBe(true);
     expect(matchesCronPath("/api/stores/analytics/replay")).toBe(true);
     expect(matchesCronPath("/api/incidents")).toBe(false);

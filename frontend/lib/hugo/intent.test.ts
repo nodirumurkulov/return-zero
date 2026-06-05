@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { classifyHugoIntent } from "./intent";
+import { hugoIntentSchema } from "./schemas";
 
 const { generateTextMock } = vi.hoisted(() => ({ generateTextMock: vi.fn() }));
 
@@ -33,5 +34,12 @@ describe("classifyHugoIntent", () => {
     const result = await classifyHugoIntent("   ");
     expect(result.intent).toBe("chat");
     expect(generateTextMock).not.toHaveBeenCalled();
+  });
+
+  it("requires null incident_reference when the classifier has no reference", () => {
+    expect(hugoIntentSchema.safeParse({ intent: "chat" }).success).toBe(false);
+    expect(hugoIntentSchema.safeParse({ intent: "chat", incident_reference: null }).success).toBe(
+      true,
+    );
   });
 });
