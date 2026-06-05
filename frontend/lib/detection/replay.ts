@@ -81,22 +81,20 @@ export async function runReplay(
   const start = end ? minusMonths(end, STREAM_WINDOW_MONTHS) : REPLAY_START;
 
   const { data: stateRow } = await supabase
-    .from("replay_state")
-    .select("cursor")
+    .from("store_connections")
+    .select("replay_cursor")
     .eq("organization_id", opts.organizationId)
     .maybeSingle();
-  const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : start;
+  const previous = stateRow?.replay_cursor ? asDate(String(stateRow.replay_cursor)) : start;
 
   const advanced = addDays(previous, advance);
   const cursor = end && advanced > end ? end : advanced;
 
   const { error: upErr } = await supabase
-    .from("replay_state")
-    .upsert(
-      { organization_id: opts.organizationId, cursor },
-      { onConflict: "organization_id" },
-    );
-  if (upErr) throw new Error(`replay_state upsert failed: ${upErr.message}`);
+    .from("store_connections")
+    .update({ replay_cursor: cursor, updated_at: new Date().toISOString() })
+    .eq("organization_id", opts.organizationId);
+  if (upErr) throw new Error(`store_connections replay_cursor update failed: ${upErr.message}`);
 
   // Same detectors as live, anchored to the cursor. Both dedup against open incidents.
   const breaches = await detectBreaches(supabase, {
@@ -125,8 +123,9 @@ export async function resetReplay(
 ): Promise<{ cursor: string }> {
   const cursor = (await streamStartDate(supabase, organizationId)) ?? REPLAY_START;
   const { error } = await supabase
-    .from("replay_state")
-    .upsert({ organization_id: organizationId, cursor }, { onConflict: "organization_id" });
-  if (error) throw new Error(`replay_state reset failed: ${error.message}`);
+    .from("store_connections")
+    .update({ replay_cursor: cursor, updated_at: new Date().toISOString() })
+    .eq("organization_id", organizationId);
+  if (error) throw new Error(`store_connections replay_cursor reset failed: ${error.message}`);
   return { cursor };
 }

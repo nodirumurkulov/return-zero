@@ -12,7 +12,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 
 | Route / module | Why admin |
 |----------------|-----------|
-| `POST /api/onboarding/upload` | Bulk replace of contract tables after user auth |
+| `POST /api/onboarding/connect` | Load Pretty Fly demo pack into contract tables after user auth |
 | `POST /api/replay` | Cron replay cursor; also accepts session user when not cron |
 | `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
@@ -33,6 +33,8 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
+| `stores/connect/` | `@/lib/stores/connect` | Store connectors (`mock_csv`, `shopify`) |
+| `onboarding/` | `@/lib/onboarding/api`, `@/lib/onboarding/hooks` | Connect flow client API + TanStack hooks |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
 Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client/TanStack code lives in `api/` (functions) and `hooks/` (thin wrappers around `api/`); import via `@/lib/<domain>/api` and `@/lib/<domain>/hooks`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.

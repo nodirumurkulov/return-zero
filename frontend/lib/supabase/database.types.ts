@@ -1,4 +1,4 @@
-// Generated from migrations 001–008. Regenerate with `bun run db:types` after schema changes.
+// Generated from migrations 001–011. Regenerate with `bun run db:types` after schema changes.
 
 export type Json =
   | string
@@ -9,13 +9,93 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
+          country: string | null
+          customer_id: string
+          external_id: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          organization_id: string
+          postcode: string | null
+          province: string | null
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string | null
+          customer_id: string
+          external_id: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id: string
+          postcode?: string | null
+          province?: string | null
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string | null
+          customer_id?: string
+          external_id?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id?: string
+          postcode?: string | null
+          province?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "addresses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_findings: {
         Row: {
           agent_icon: string | null
@@ -49,14 +129,61 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agent_findings_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "agent_findings_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "agent_findings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          amount_gbp: number | null
+          balance_gbp: number | null
+          category: string | null
+          counterparty: string | null
+          date: string
+          description: string | null
+          external_id: string
+          id: string
+          organization_id: string
+          raw_category: string | null
+        }
+        Insert: {
+          amount_gbp?: number | null
+          balance_gbp?: number | null
+          category?: string | null
+          counterparty?: string | null
+          date: string
+          description?: string | null
+          external_id: string
+          id?: string
+          organization_id: string
+          raw_category?: string | null
+        }
+        Update: {
+          amount_gbp?: number | null
+          balance_gbp?: number | null
+          category?: string | null
+          counterparty?: string | null
+          date?: string
+          description?: string | null
+          external_id?: string
+          id?: string
+          organization_id?: string
+          raw_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -251,6 +378,155 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          code: string
+          ends_at: string | null
+          external_id: string
+          id: string
+          organization_id: string
+          starts_at: string | null
+          type: string | null
+          usage_count: number | null
+          value: number | null
+        }
+        Insert: {
+          code: string
+          ends_at?: string | null
+          external_id: string
+          id?: string
+          organization_id: string
+          starts_at?: string | null
+          type?: string | null
+          usage_count?: number | null
+          value?: number | null
+        }
+        Update: {
+          code?: string
+          ends_at?: string | null
+          external_id?: string
+          id?: string
+          organization_id?: string
+          starts_at?: string | null
+          type?: string | null
+          usage_count?: number | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          attributed_orders: number | null
+          attributed_revenue_gbp: number | null
+          clicks: number | null
+          external_id: string
+          id: string
+          name: string | null
+          opens: number | null
+          organization_id: string
+          recipients: number | null
+          sent_at: string | null
+          type: string | null
+          unsubscribes: number | null
+        }
+        Insert: {
+          attributed_orders?: number | null
+          attributed_revenue_gbp?: number | null
+          clicks?: number | null
+          external_id: string
+          id?: string
+          name?: string | null
+          opens?: number | null
+          organization_id: string
+          recipients?: number | null
+          sent_at?: string | null
+          type?: string | null
+          unsubscribes?: number | null
+        }
+        Update: {
+          attributed_orders?: number | null
+          attributed_revenue_gbp?: number | null
+          clicks?: number | null
+          external_id?: string
+          id?: string
+          name?: string | null
+          opens?: number | null
+          organization_id?: string
+          recipients?: number | null
+          sent_at?: string | null
+          type?: string | null
+          unsubscribes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_events: {
+        Row: {
+          campaign_id: string | null
+          customer_id: string | null
+          event_type: string | null
+          external_id: string
+          id: string
+          organization_id: string
+          timestamp: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          customer_id?: string | null
+          event_type?: string | null
+          external_id: string
+          id?: string
+          organization_id: string
+          timestamp?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          customer_id?: string | null
+          event_type?: string | null
+          external_id?: string
+          id?: string
+          organization_id?: string
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_campaign_org_fkey"
+            columns: ["organization_id", "campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "email_events_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "email_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecast_rules: {
         Row: {
           created_at: string
@@ -393,11 +669,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "incident_actions_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "incident_actions_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "incident_actions_organization_id_fkey"
@@ -438,11 +714,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "incident_timeline_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "incident_timeline_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "incident_timeline_organization_id_fkey"
@@ -532,11 +808,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "incidents_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "incidents_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -583,11 +859,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inventory_movements_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "inventory_movements_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -630,11 +906,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "line_items_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "line_items_order_org_fkey"
+            columns: ["organization_id", "order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "line_items_organization_id_fkey"
@@ -644,18 +920,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "line_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "line_items_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "line_items_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "line_items_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -867,11 +1143,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "orders_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "orders_organization_id_fkey"
@@ -981,18 +1257,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "po_line_items_po_id_fkey"
-            columns: ["po_id"]
+            foreignKeyName: "po_line_items_po_org_fkey"
+            columns: ["organization_id", "po_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "po_line_items_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "po_line_items_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1026,11 +1302,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_baselines_metric_definition_id_fkey"
-            columns: ["metric_definition_id"]
+            foreignKeyName: "product_baselines_metric_org_fkey"
+            columns: ["organization_id", "metric_definition_id"]
             isOneToOne: false
             referencedRelation: "metric_definitions"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "product_baselines_organization_id_fkey"
@@ -1040,11 +1316,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_baselines_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "product_baselines_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
+      product_collections: {
+        Row: {
+          collection_id: string
+          id: string
+          organization_id: string
+          product_id: string
+        }
+        Insert: {
+          collection_id: string
+          id?: string
+          organization_id: string
+          product_id: string
+        }
+        Update: {
+          collection_id?: string
+          id?: string
+          organization_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_collections_collection_org_fkey"
+            columns: ["organization_id", "collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "product_collections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_collections_product_org_fkey"
+            columns: ["organization_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1117,11 +1436,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_kpi_thresholds_metric_definition_id_fkey"
-            columns: ["metric_definition_id"]
+            foreignKeyName: "product_kpi_thresholds_metric_org_fkey"
+            columns: ["organization_id", "metric_definition_id"]
             isOneToOne: false
             referencedRelation: "metric_definitions"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "product_kpi_thresholds_organization_id_fkey"
@@ -1131,11 +1450,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_kpi_thresholds_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "product_kpi_thresholds_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1187,11 +1506,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "products_collection_id_fkey"
-            columns: ["collection_id"]
+            foreignKeyName: "products_collection_org_fkey"
+            columns: ["organization_id", "collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "products_organization_id_fkey"
@@ -1288,11 +1607,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "refunds_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "refunds_order_org_fkey"
+            columns: ["organization_id", "order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "refunds_organization_id_fkey"
@@ -1303,26 +1622,133 @@ export type Database = {
           },
         ]
       }
-      replay_state: {
+      store_connections: {
         Row: {
-          cursor: string | null
+          connected_at: string | null
+          created_at: string
+          external_shop_id: string | null
+          last_synced_at: string | null
+          metadata: Json
           organization_id: string
+          platform: Database["public"]["Enums"]["store_platform"]
+          replay_cursor: string | null
+          status: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at: string
         }
         Insert: {
-          cursor?: string | null
+          connected_at?: string | null
+          created_at?: string
+          external_shop_id?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
           organization_id: string
+          platform?: Database["public"]["Enums"]["store_platform"]
+          replay_cursor?: string | null
+          status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at?: string
         }
         Update: {
-          cursor?: string | null
+          connected_at?: string | null
+          created_at?: string
+          external_shop_id?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
           organization_id?: string
+          platform?: Database["public"]["Enums"]["store_platform"]
+          replay_cursor?: string | null
+          status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "replay_state_organization_id_fkey"
+            foreignKeyName: "store_connections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          country: string | null
+          currency: string | null
+          external_id: string
+          id: string
+          lead_time_days: number | null
+          name: string | null
+          organization_id: string
+          payment_terms: string | null
+        }
+        Insert: {
+          country?: string | null
+          currency?: string | null
+          external_id: string
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          organization_id: string
+          payment_terms?: string | null
+        }
+        Update: {
+          country?: string | null
+          currency?: string | null
+          external_id?: string
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          organization_id?: string
+          payment_terms?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          external_id: string
+          id: string
+          messages: Json
+          organization_id: string
+          ticket_id: string
+        }
+        Insert: {
+          external_id: string
+          id?: string
+          messages?: Json
+          organization_id: string
+          ticket_id: string
+        }
+        Update: {
+          external_id?: string
+          id?: string
+          messages?: Json
+          organization_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_org_fkey"
+            columns: ["organization_id", "ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1386,11 +1812,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "support_tickets_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "support_tickets_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "support_tickets_organization_id_fkey"
@@ -1400,18 +1826,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "support_tickets_related_order_id_fkey"
-            columns: ["related_order_id"]
+            foreignKeyName: "support_tickets_related_order_org_fkey"
+            columns: ["organization_id", "related_order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "support_tickets_related_product_id_fkey"
-            columns: ["related_product_id"]
+            foreignKeyName: "support_tickets_related_product_org_fkey"
+            columns: ["organization_id", "related_product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1473,11 +1899,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "variants_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "variants_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1487,11 +1913,7 @@ export type Database = {
     }
     Functions: {
       product_daily_outflow: {
-        Args: {
-          p_asof?: string
-          p_days?: number
-          p_organization_id: string
-        }
+        Args: { p_asof?: string; p_days?: number; p_organization_id: string }
         Returns: {
           current_balance: number
           daily_outflow: number
@@ -1499,10 +1921,7 @@ export type Database = {
         }[]
       }
       product_monthly_series: {
-        Args: {
-          p_months?: number
-          p_organization_id: string
-        }
+        Args: { p_months?: number; p_organization_id: string }
         Returns: {
           ad_revenue: number
           ad_spend: number
@@ -1532,20 +1951,12 @@ export type Database = {
         }[]
       }
       reset_organization_data: {
-        Args: {
-          p_organization_id: string
-        }
+        Args: { p_organization_id: string }
         Returns: undefined
       }
       seed_organization_defaults: {
-        Args: {
-          p_organization_id: string
-        }
+        Args: { p_organization_id: string }
         Returns: undefined
-      }
-      user_organization_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
       }
     }
     Enums: {
@@ -1577,6 +1988,13 @@ export type Database = {
       metric_unit: "ratio" | "currency" | "count" | "percentage"
       organization_role: "owner" | "admin" | "member"
       risk_level: "high" | "medium" | "low"
+      store_connection_status:
+        | "pending"
+        | "connected"
+        | "error"
+        | "disconnected"
+      store_platform: "mock_csv" | "shopify"
+      store_sync_mode: "static" | "pull" | "push"
       timeline_event_type:
         | "anomaly_detected"
         | "incident_created"
@@ -1712,6 +2130,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       forecast_rule_kind: [
@@ -1745,6 +2166,14 @@ export const Constants = {
       metric_unit: ["ratio", "currency", "count", "percentage"],
       organization_role: ["owner", "admin", "member"],
       risk_level: ["high", "medium", "low"],
+      store_connection_status: [
+        "pending",
+        "connected",
+        "error",
+        "disconnected",
+      ],
+      store_platform: ["mock_csv", "shopify"],
+      store_sync_mode: ["static", "pull", "push"],
       timeline_event_type: [
         "anomaly_detected",
         "incident_created",
@@ -1759,3 +2188,4 @@ export const Constants = {
     },
   },
 } as const
+

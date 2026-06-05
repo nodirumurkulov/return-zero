@@ -305,7 +305,19 @@ begin
   delete from public.product_kpi_thresholds where organization_id = p_organization_id;
   delete from public.product_baselines where organization_id = p_organization_id;
   delete from public.business_reports where organization_id = p_organization_id;
-  delete from public.replay_state where organization_id = p_organization_id;
+
+  delete from public.support_messages where organization_id = p_organization_id;
+  delete from public.email_events where organization_id = p_organization_id;
+  delete from public.product_collections where organization_id = p_organization_id;
+  delete from public.addresses where organization_id = p_organization_id;
+  delete from public.discount_codes where organization_id = p_organization_id;
+  delete from public.suppliers where organization_id = p_organization_id;
+  delete from public.bank_transactions where organization_id = p_organization_id;
+  delete from public.email_campaigns where organization_id = p_organization_id;
+
+  update public.store_connections
+  set replay_cursor = date '2025-12-01', updated_at = now()
+  where organization_id = p_organization_id;
 
   delete from public.line_items where organization_id = p_organization_id;
   delete from public.refunds where organization_id = p_organization_id;

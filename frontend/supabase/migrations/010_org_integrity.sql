@@ -150,3 +150,53 @@ alter table public.incident_timeline
   foreign key (organization_id, incident_id)
   references public.incidents (organization_id, id)
   on delete cascade;
+
+-- ---- store contract tables (004) ------------------------------
+alter table public.suppliers
+  add constraint suppliers_org_id_id_unique unique (organization_id, id);
+
+alter table public.email_campaigns
+  add constraint email_campaigns_org_id_id_unique unique (organization_id, id);
+
+alter table public.support_tickets
+  add constraint support_tickets_org_id_id_unique unique (organization_id, id);
+
+alter table public.product_collections drop constraint if exists product_collections_product_id_fkey;
+alter table public.product_collections drop constraint if exists product_collections_collection_id_fkey;
+alter table public.product_collections
+  add constraint product_collections_product_org_fkey
+  foreign key (organization_id, product_id)
+  references public.products (organization_id, id)
+  on delete cascade;
+alter table public.product_collections
+  add constraint product_collections_collection_org_fkey
+  foreign key (organization_id, collection_id)
+  references public.collections (organization_id, id)
+  on delete cascade;
+
+alter table public.addresses drop constraint if exists addresses_customer_id_fkey;
+alter table public.addresses
+  add constraint addresses_customer_org_fkey
+  foreign key (organization_id, customer_id)
+  references public.customers (organization_id, id)
+  on delete cascade;
+
+alter table public.email_events drop constraint if exists email_events_campaign_id_fkey;
+alter table public.email_events drop constraint if exists email_events_customer_id_fkey;
+alter table public.email_events
+  add constraint email_events_campaign_org_fkey
+  foreign key (organization_id, campaign_id)
+  references public.email_campaigns (organization_id, id)
+  on delete cascade;
+alter table public.email_events
+  add constraint email_events_customer_org_fkey
+  foreign key (organization_id, customer_id)
+  references public.customers (organization_id, id)
+  on delete set null;
+
+alter table public.support_messages drop constraint if exists support_messages_ticket_id_fkey;
+alter table public.support_messages
+  add constraint support_messages_ticket_org_fkey
+  foreign key (organization_id, ticket_id)
+  references public.support_tickets (organization_id, id)
+  on delete cascade;

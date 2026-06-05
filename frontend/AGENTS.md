@@ -25,7 +25,7 @@ bun run db:lint
 | `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest + API integration |
 | `build` | Production build |
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
-| `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
+| `seed` | Demo org + auth user; store data via onboarding connect ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
 | `test` / `test:watch` | Vitest (components + `lib/**/*.test.ts`) |
 | `test:lib` | Vitest — `lib/**` only (fast iteration) |
