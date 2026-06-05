@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import AppShell from "@/components/layout/AppShell";
 import QueryProvider from "@/components/providers/QueryProvider";
+import { listSearchTargets } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -30,11 +31,21 @@ export default async function RootLayout({
       }
     : null;
 
+  const searchTargets = shellUser
+    ? await listSearchTargets(supabase).catch(() => [])
+    : [];
+
   return (
     <html lang="en">
       <body className={inter.className}>
         <QueryProvider>
-          {shellUser ? <AppShell user={shellUser}>{children}</AppShell> : children}
+          {shellUser ? (
+            <AppShell user={shellUser} searchTargets={searchTargets}>
+              {children}
+            </AppShell>
+          ) : (
+            children
+          )}
         </QueryProvider>
       </body>
     </html>

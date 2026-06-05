@@ -26,13 +26,24 @@ function PrettyFlyIcon() {
   );
 }
 
-export default function DemoLoginButton() {
+export default function DemoLoginButton({ configured }: { configured: boolean }) {
   return (
-    <form action={signInAsDemo} className="w-full max-w-sm">
-      <Button type="submit" size="lg" className="w-full gap-2">
-        <PrettyFlyIcon />
-        Continue as Pretty Fly
-      </Button>
-    </form>
+    <div className="flex w-full max-w-sm flex-col gap-2">
+      <form action={signInAsDemo} className="w-full">
+        <Button type="submit" size="lg" className="w-full gap-2" disabled={!configured}>
+          <PrettyFlyIcon />
+          Continue as Pretty Fly
+        </Button>
+      </form>
+      {!configured ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Set <code className="text-foreground">DEMO_USER_EMAIL</code> and{" "}
+          <code className="text-foreground">DEMO_USER_PASSWORD</code> in{" "}
+          <code className="text-foreground">frontend/.env.local</code> (see{" "}
+          <code className="text-foreground">.env.example</code>), then run{" "}
+          <code className="text-foreground">bun run seed</code>.
+        </p>
+      ) : null}
+    </div>
   );
 }

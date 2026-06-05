@@ -4,6 +4,7 @@ import AuthForm from "@/components/auth/AuthForm";
 import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
+import { isDemoLoginConfigured } from "@/lib/auth/demo";
 
 export default function SignUpPage() {
   return (
@@ -15,7 +16,7 @@ export default function SignUpPage() {
       <AuthForm title="Create account" action={signUp} />
       <OAuthButtons />
       <ShopifyLoginButton />
-      <DemoLoginButton />
+      <DemoLoginButton configured={isDemoLoginConfigured()} />
       <p className="text-sm text-muted-foreground">
         <Link href="/sign-in" className="text-primary hover:underline">
           Already have an account? Sign in
