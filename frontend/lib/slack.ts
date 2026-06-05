@@ -345,6 +345,7 @@ export async function postSlackMessage(args: {
   channel: string;
   text: string;
   threadTs?: string;
+  blocks?: object[];
 }): Promise<void> {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) {
@@ -362,6 +363,7 @@ export async function postSlackMessage(args: {
       channel: args.channel,
       text: args.text,
       ...(args.threadTs ? { thread_ts: args.threadTs } : {}),
+      ...(args.blocks ? { blocks: args.blocks } : {}),
     }),
   });
 
