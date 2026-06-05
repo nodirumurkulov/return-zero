@@ -2,6 +2,8 @@
 
 Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** or run locally ([../README.md](../README.md#local-development)).
 
+For the full BYOD journey (signup → upload + profile → stream → agent), see [demo-verification.md](./demo-verification.md) (RUN-113).
+
 1. **Sign in** at `/sign-in` (Supabase Auth) — you land on **Catalog**.
 2. Open **Court Trainer** (`/catalog/prod_00005`) — note elevated return rate vs thresholds.
 3. Go to **Incidents** — open **Court Trainer Return Spike** (pre-seeded, £66,235 exposure, often `awaiting_approval`).
