@@ -9,8 +9,8 @@ vi.mock("@/app/auth/actions", () => ({
 describe("DemoLoginButton", () => {
   it("renders demo sign-in submit button", () => {
     render(<DemoLoginButton />);
-    expect(
-      screen.getByRole("button", { name: /Continue as Pretty Fly \(demo\)/i }),
-    ).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: /Continue as Pretty Fly/i });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveTextContent("Continue as Pretty Fly (demo)");
   });
 });

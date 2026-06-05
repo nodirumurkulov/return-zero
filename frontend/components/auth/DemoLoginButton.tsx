@@ -31,7 +31,7 @@ export default function DemoLoginButton() {
     <form action={signInAsDemo} className="w-full max-w-sm">
       <Button type="submit" size="lg" className="w-full gap-2">
         <PrettyFlyIcon />
-        Continue as Pretty Fly (demo)
+        {"Continue as Pretty Fly (demo)"}
       </Button>
     </form>
   );
