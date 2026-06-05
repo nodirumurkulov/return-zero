@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       agent_findings: {
@@ -47,11 +42,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agent_findings_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "agent_findings_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "agent_findings_organization_id_fkey"
@@ -391,11 +386,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "incident_actions_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "incident_actions_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "incident_actions_organization_id_fkey"
@@ -436,11 +431,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "incident_timeline_incident_id_fkey"
-            columns: ["incident_id"]
+            foreignKeyName: "incident_timeline_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
             isOneToOne: false
             referencedRelation: "incidents"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "incident_timeline_organization_id_fkey"
@@ -530,11 +525,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "incidents_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "incidents_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -581,11 +576,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inventory_movements_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "inventory_movements_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -628,11 +623,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "line_items_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "line_items_order_org_fkey"
+            columns: ["organization_id", "order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "line_items_organization_id_fkey"
@@ -642,18 +637,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "line_items_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "line_items_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "line_items_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "line_items_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -865,11 +860,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "orders_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "orders_organization_id_fkey"
@@ -979,18 +974,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "po_line_items_po_id_fkey"
-            columns: ["po_id"]
+            foreignKeyName: "po_line_items_po_org_fkey"
+            columns: ["organization_id", "po_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "po_line_items_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "po_line_items_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
             isOneToOne: false
             referencedRelation: "variants"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1024,11 +1019,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_baselines_metric_definition_id_fkey"
-            columns: ["metric_definition_id"]
+            foreignKeyName: "product_baselines_metric_org_fkey"
+            columns: ["organization_id", "metric_definition_id"]
             isOneToOne: false
             referencedRelation: "metric_definitions"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "product_baselines_organization_id_fkey"
@@ -1038,11 +1033,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_baselines_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "product_baselines_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1115,11 +1110,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_kpi_thresholds_metric_definition_id_fkey"
-            columns: ["metric_definition_id"]
+            foreignKeyName: "product_kpi_thresholds_metric_org_fkey"
+            columns: ["organization_id", "metric_definition_id"]
             isOneToOne: false
             referencedRelation: "metric_definitions"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "product_kpi_thresholds_organization_id_fkey"
@@ -1129,11 +1124,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_kpi_thresholds_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "product_kpi_thresholds_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1185,11 +1180,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "products_collection_id_fkey"
-            columns: ["collection_id"]
+            foreignKeyName: "products_collection_org_fkey"
+            columns: ["organization_id", "collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "products_organization_id_fkey"
@@ -1286,11 +1281,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "refunds_order_id_fkey"
-            columns: ["order_id"]
+            foreignKeyName: "refunds_order_org_fkey"
+            columns: ["organization_id", "order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "refunds_organization_id_fkey"
@@ -1384,11 +1379,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "support_tickets_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "support_tickets_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
             foreignKeyName: "support_tickets_organization_id_fkey"
@@ -1398,18 +1393,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "support_tickets_related_order_id_fkey"
-            columns: ["related_order_id"]
+            foreignKeyName: "support_tickets_related_order_org_fkey"
+            columns: ["organization_id", "related_order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
           {
-            foreignKeyName: "support_tickets_related_product_id_fkey"
-            columns: ["related_product_id"]
+            foreignKeyName: "support_tickets_related_product_org_fkey"
+            columns: ["organization_id", "related_product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1471,11 +1466,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "variants_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "variants_product_org_fkey"
+            columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
