@@ -1,6 +1,3 @@
-// Generated from local Postgres schema. Regenerate with `bun run db:types` after schema changes.
-// CI fails if this file is stale (`bun run db:check-types`).
-
 export type Json =
   | string
   | number

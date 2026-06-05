@@ -29,7 +29,7 @@
     "validate:counts": "bun run scripts/validate-counts.ts",
     "validate:metrics": "bun run scripts/validate-metrics.ts",
     "validate": "bun run validate:counts && bun run validate:metrics",
-    "db:types": "supabase gen types typescript --local -o lib/supabase/database.types.ts",
+    "db:types": "supabase gen types typescript --local --schema public > lib/supabase/database.types.ts",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
