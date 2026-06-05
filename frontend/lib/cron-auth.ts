@@ -31,6 +31,11 @@ export function matchesCronPath(pathname: string): boolean {
   return CRON_API_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** True when the request is an authenticated cron invocation (all-org admin mode). */
+export function isCronInvocation(req: NextRequest, cronDenied: NextResponse | null): boolean {
+  return cronDenied === null && isCronSecretConfigured() && hasCronAuth(req);
+}
+
 /** Returns a 401/503 response when cron auth fails; null when the request may proceed. */
 export function assertCronAuthorized(req: NextRequest): NextResponse | null {
   if (process.env.NODE_ENV === "production" && !isCronSecretConfigured()) {

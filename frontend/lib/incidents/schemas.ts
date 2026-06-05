@@ -1,14 +1,13 @@
 import { z } from "zod";
-import { INCIDENT_STATUSES } from "./status";
+import { INCIDENT_SEVERITIES, INCIDENT_STATUSES } from "./status";
 
 export const updateIncidentBodySchema = z
   .object({
     title: z.string().min(1),
     status: z.enum(INCIDENT_STATUSES),
-    severity: z.string().min(1),
+    severity: z.enum(INCIDENT_SEVERITIES),
     impact_amount: z.number().nullable(),
     impact_label: z.string().nullable(),
-    organization_id: z.string().uuid().optional(),
     product_id: z.string().uuid().nullable(),
     affected_kpi_keys: z.array(z.string()).optional(),
     root_cause: z.string().nullable(),

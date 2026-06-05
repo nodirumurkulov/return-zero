@@ -1,5 +1,8 @@
 import Link from "next/link";
 import UploadForm from "@/components/onboarding/UploadForm";
+import { tryRequireOrganizationId } from "@/lib/organizations";
+import { loadBusinessProfile, loadProductCostRows } from "@/lib/settings/queries";
+import { businessProfileResponseSchema } from "@/lib/settings/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +11,23 @@ export default async function OnboardingPage() {
   const supabase = await createClient();
   const { count } = await supabase.from("products").select("*", { count: "exact", head: true });
   const productCount = count ?? 0;
+
+  const orgResult = await tryRequireOrganizationId(supabase);
+  const resolvedProfile = orgResult.ok
+    ? businessProfileResponseSchema.parse({
+        profile: await loadBusinessProfile(supabase, orgResult.organizationId).then((profile) => ({
+          platform: profile.platform,
+          storeName: profile.storeName,
+          primaryGoal: profile.primaryGoal,
+          targetMarginPct: profile.targetMarginPct,
+          minRoas: profile.minRoas,
+          leadTimeDays: profile.leadTimeDays,
+          bufferDays: profile.bufferDays,
+          heroProductIds: profile.heroProductIds,
+        })),
+        productCosts: await loadProductCostRows(supabase, orgResult.organizationId),
+      })
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -28,7 +48,7 @@ export default async function OnboardingPage() {
         </div>
       )}
 
-      <UploadForm />
+      <UploadForm initialProfile={resolvedProfile} />
     </div>
   );
 }

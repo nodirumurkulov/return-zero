@@ -13,6 +13,10 @@ export const INCIDENT_STATUSES = [
 
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
 
+export const INCIDENT_SEVERITIES = ["critical", "high", "medium", "low"] as const;
+
+export type IncidentSeverity = (typeof INCIDENT_SEVERITIES)[number];
+
 export function isIncidentStatus(value: string): value is IncidentStatus {
   return (INCIDENT_STATUSES as readonly string[]).includes(value);
 }

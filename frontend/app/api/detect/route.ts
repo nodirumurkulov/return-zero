@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
+import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { detectBreaches } from "@/lib/detection/detect";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -11,8 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 // dedups against products that already have an open incident.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
-  const cronMode =
-    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
+  const cronMode = isCronInvocation(req, cronDenied);
 
   const supabase = cronMode ? createAdminClient() : await createClient();
   if (!cronMode) {

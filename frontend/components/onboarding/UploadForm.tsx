@@ -10,13 +10,13 @@ import { learnResponseSchema } from "@/lib/learn/schemas";
 import { onboardingUploadResponseSchema } from "@/lib/onboarding/api-schemas";
 import type { ImportResult } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
-
+import type { BusinessProfileResponse } from "@/lib/settings/schemas";
 type Step = "upload" | "profile";
 
 const EXPECTED = new Set(CONTRACT_FILES);
 const baseName = (f: File): string => (f.name.split(/[\\/]/).pop() ?? f.name).toLowerCase();
 
-export default function UploadForm() {
+export default function UploadForm({ initialProfile }: { initialProfile: BusinessProfileResponse | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
@@ -106,6 +106,7 @@ export default function UploadForm() {
           </div>
         )}
         <BusinessProfileForm
+          initialProfile={initialProfile}
           onSaved={async () => {
             setError(null);
             await runLearn();

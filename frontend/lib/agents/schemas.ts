@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const investigateBodySchema = z.object({
-  incident_id: z.string().min(1),
-  product_id: z.string().min(1),
+  incident_id: z.uuid(),
+  product_id: z.uuid(),
 });
 
 export type InvestigateBody = z.infer<typeof investigateBodySchema>;

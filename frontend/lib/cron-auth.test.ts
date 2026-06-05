@@ -6,6 +6,7 @@ import {
   cronAuthRequired,
   getCronSecret,
   hasCronAuth,
+  isCronInvocation,
   isCronSecretConfigured,
   matchesCronPath,
 } from "./cron-auth";
@@ -64,5 +65,20 @@ describe("cron-auth", () => {
     expect(getCronSecret()).toBe("abc");
     expect(isCronSecretConfigured()).toBe(true);
     expect(cronAuthRequired()).toBe(true);
+  });
+
+  it("isCronInvocation is false when secret unset even if assert allows through", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CRON_SECRET", "");
+    const denied = assertCronAuthorized(requestWithAuth(null));
+    expect(denied).toBeNull();
+    expect(isCronInvocation(requestWithAuth(null), denied)).toBe(false);
+  });
+
+  it("isCronInvocation is true with valid cron credentials", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CRON_SECRET", "test-secret");
+    const denied = assertCronAuthorized(requestWithAuth("Bearer test-secret"));
+    expect(isCronInvocation(requestWithAuth("Bearer test-secret"), denied)).toBe(true);
   });
 });

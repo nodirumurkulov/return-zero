@@ -12,6 +12,13 @@ describe("updateIncidentBodySchema", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("rejects organization_id mass-assignment", () => {
+    const parsed = updateIncidentBodySchema.safeParse({
+      organization_id: "00000000-0000-0000-0000-000000000001",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it("rejects invalid status", () => {
     const parsed = updateIncidentBodySchema.safeParse({ status: "not-a-status" });
     expect(parsed.success).toBe(false);

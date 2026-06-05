@@ -4,6 +4,7 @@ import type { Json } from "@/lib/supabase/database.types";
 export type AgentFinding = {
   id: string;
   incident_id: string;
+  organization_id: string;
   agent_name: string;
   agent_icon: string | null;
   summary: string;

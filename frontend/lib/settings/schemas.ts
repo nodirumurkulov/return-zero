@@ -51,3 +51,4 @@ export const saveProfileSuccessSchema = z.object({
 });
 
 export type BusinessProfileInput = z.infer<typeof businessProfileInputSchema>;
+export type BusinessProfileResponse = z.infer<typeof businessProfileResponseSchema>;

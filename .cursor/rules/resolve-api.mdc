@@ -1,0 +1,17 @@
+---
+description: Thin API route handlers with Zod and cron auth
+globs: frontend/app/api/**/route.ts
+alwaysApply: false
+---
+
+# API routes (Resolve)
+
+See [frontend/app/api/AGENTS.md](../../frontend/app/api/AGENTS.md).
+
+- Thin handlers: parse → delegate to `lib/<domain>/`.
+- Zod `safeParse` inline on JSON bodies; no generic JSON helpers or `as Type` casts.
+- User routes: `createClient()` + `getUser()`; org via `requireOrganizationId` / `tryRequireOrganizationId`.
+- Cron routes: `assertCronAuthorized` then `isCronInvocation` for admin mode.
+- Slack routes: `verifySlackRequest` before any mutation.
+- Errors: `{ error: string }` JSON with correct status codes.
+- No backward-compatible dual request shapes; delete obsolete endpoints instead.

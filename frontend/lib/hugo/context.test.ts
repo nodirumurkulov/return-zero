@@ -45,6 +45,7 @@ function incident(overrides: Partial<Incident>): Incident {
 }
 
 const supabase = {} as SupabaseClient;
+const orgId = "00000000-0000-0000-0000-000000000100";
 
 beforeEach(() => {
   listIncidentsMock.mockReset();
@@ -84,7 +85,7 @@ describe("resolveIncident", () => {
       incident({ id: "aaaaaaaa-0000", title: "Return rate spike" }),
       incident({ id: "bbbbbbbb-0000", title: "ROAS collapse" }),
     ]);
-    const { match } = await resolveIncident(supabase, "roas");
+    const { match } = await resolveIncident(supabase, "roas", orgId);
     expect(match?.title).toBe("ROAS collapse");
   });
 
@@ -93,7 +94,7 @@ describe("resolveIncident", () => {
       incident({ id: "aaaaaaaa-0000", title: "Return rate spike", product_id: "prod-a" }),
       incident({ id: "bbbbbbbb-0000", title: "Refund surge", product_id: "prod-a" }),
     ]);
-    const { match, candidates } = await resolveIncident(supabase, "prod-a");
+    const { match, candidates } = await resolveIncident(supabase, "prod-a", orgId);
     expect(match).toBeNull();
     expect(candidates).toHaveLength(2);
   });
@@ -103,7 +104,7 @@ describe("resolveIncident", () => {
       incident({ id: "aaaaaaaa-0000", status: "detected" }),
       incident({ id: "bbbbbbbb-0000", status: "resolved" }),
     ]);
-    const { match } = await resolveIncident(supabase, "");
+    const { match } = await resolveIncident(supabase, "", orgId);
     expect(match?.id).toBe("aaaaaaaa-0000");
   });
 });
@@ -111,7 +112,7 @@ describe("resolveIncident", () => {
 describe("buildOpenIncidentsContext", () => {
   it("reports when there are no open incidents", async () => {
     listIncidentsMock.mockResolvedValue([incident({ status: "resolved" })]);
-    const ctx = await buildOpenIncidentsContext(supabase);
+    const ctx = await buildOpenIncidentsContext(supabase, orgId);
     expect(ctx).toContain("no open incidents");
   });
 
@@ -119,7 +120,7 @@ describe("buildOpenIncidentsContext", () => {
     listIncidentsMock.mockResolvedValue([
       incident({ id: "aaaaaaaa-0000", title: "Return rate spike", status: "detected" }),
     ]);
-    const ctx = await buildOpenIncidentsContext(supabase);
+    const ctx = await buildOpenIncidentsContext(supabase, orgId);
     expect(ctx).toContain("Open incidents (1 of 1");
     expect(ctx).toContain("Return rate spike");
   });

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
+import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { detectForecastRisks } from "@/lib/detection/forecast";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,8 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 // POST /api/forecast — run predictive (forecast-based) detection over the catalogue.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
-  const cronMode =
-    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
+  const cronMode = isCronInvocation(req, cronDenied);
 
   const supabase = cronMode ? createAdminClient() : await createClient();
   if (!cronMode) {

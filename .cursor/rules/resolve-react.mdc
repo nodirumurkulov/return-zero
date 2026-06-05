@@ -1,0 +1,17 @@
+---
+description: React composition, client islands, and a11y for interactive flows
+globs: frontend/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React UI (Resolve)
+
+See [frontend/components/AGENTS.md](../../frontend/components/AGENTS.md).
+
+- No Supabase calls in components — data via props from RSC pages.
+- Import domain types from `@/lib/<domain>`; never re-export from components.
+- shadcn/ui primitives under `ui/`; composition over boolean prop soup.
+- No domain logic in UI — severity, health, approval rules stay in `lib/`.
+- Async clicks: `onClick={() => { void handler(); }}`.
+- After client mutations: `router.refresh()` or TanStack `invalidateQueries` as appropriate.
+- Interactive flows (approve, investigate, dialogs): labels, focus, keyboard paths.

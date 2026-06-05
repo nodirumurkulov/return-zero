@@ -7,7 +7,7 @@ import type { AgentSupabase } from "../types";
 const movementSince = () =>
   new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-export function createInventoryTools(supabase: AgentSupabase, _organizationId: string) {
+export function createInventoryTools(supabase: AgentSupabase, organizationId: string) {
   return {
     listVariantsWithStock: tool({
       description: "List variant stock levels and zero-stock size variants for a product",
@@ -16,6 +16,7 @@ export function createInventoryTools(supabase: AgentSupabase, _organizationId: s
         const { data: variants } = await supabase
           .from("variants")
           .select("id, option1_value, inventory_quantity")
+          .eq("organization_id", organizationId)
           .eq("product_id", productId);
         const stockouts = variants?.filter((v) => (v.inventory_quantity ?? 0) <= 0) ?? [];
         return {
@@ -30,6 +31,7 @@ export function createInventoryTools(supabase: AgentSupabase, _organizationId: s
         const { data: variants } = await supabase
           .from("variants")
           .select("id")
+          .eq("organization_id", organizationId)
           .eq("product_id", productId);
         const variantIds = variants?.map((v) => v.id) ?? [];
         if (variantIds.length === 0) {
@@ -38,6 +40,7 @@ export function createInventoryTools(supabase: AgentSupabase, _organizationId: s
         const { data: movements } = await supabase
           .from("inventory_movements")
           .select("variant_id, type, quantity_delta, date")
+          .eq("organization_id", organizationId)
           .in("variant_id", variantIds)
           .gte("date", movementSince())
           .order("date", { ascending: false });

@@ -1,0 +1,17 @@
+---
+description: Supabase tenancy, RLS, and admin client exceptions
+globs: frontend/lib/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Supabase (Resolve)
+
+See [frontend/lib/AGENTS.md](../../frontend/lib/AGENTS.md) and [frontend/supabase/](../../frontend/supabase/).
+
+- User routes: `await createClient()` (RLS). Pass `organizationId` into every query/mutation.
+- `createAdminClient()` only for documented exceptions (cron with `isCronInvocation`, bulk upload, learn, Slack).
+- Resolve org via `requireOrganizationId` or `tryRequireOrganizationId` before admin writes.
+- RLS policies: `TO authenticated` + ownership predicate; UPDATE needs `USING` and `WITH CHECK`.
+- Never use `user_metadata` for authorization. Never expose service role to client/`NEXT_PUBLIC_*`.
+- Types match `database.types.ts`; one type per table in domain modules.
+- Migrations: `supabase migration new <name>`; enable RLS on all tenant tables.

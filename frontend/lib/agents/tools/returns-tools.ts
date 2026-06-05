@@ -19,6 +19,7 @@ export async function fetchReturnsContext(
           await supabase
             .from("refunds")
             .select("id, amount, reason, created_at, order_id")
+            .eq("organization_id", organizationId)
             .in("order_id", orderIds)
             .order("created_at", { ascending: false })
             .limit(500)

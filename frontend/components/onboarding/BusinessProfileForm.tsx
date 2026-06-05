@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { SectionLabel } from "@/components/ui/section-label";
 import {
   businessProfileInputSchema,
-  businessProfileResponseSchema,
   type BusinessProfileInput,
+  type BusinessProfileResponse,
 } from "@/lib/settings/schemas";
 import type { ProductCostRow } from "@/lib/settings/types";
 
@@ -26,56 +26,49 @@ const GOAL_OPTIONS = [
 ] as const;
 
 interface BusinessProfileFormProps {
+  initialProfile: BusinessProfileResponse | null;
   onSaved: () => void | Promise<void>;
 }
 
-export default function BusinessProfileForm({ onSaved }: BusinessProfileFormProps) {
-  const [pending, startTransition] = useTransition();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [platform, setPlatform] = useState<BusinessProfileInput["platform"]>("shopify");
-  const [storeName, setStoreName] = useState("");
-  const [primaryGoal, setPrimaryGoal] = useState<BusinessProfileInput["primaryGoal"]>("growth");
-  const [targetMarginPct, setTargetMarginPct] = useState(55);
-  const [minRoas, setMinRoas] = useState(3);
-  const [leadTimeDays, setLeadTimeDays] = useState(71);
-  const [bufferDays, setBufferDays] = useState(14);
-  const [heroProductIds, setHeroProductIds] = useState("");
-  const [productCosts, setProductCosts] = useState<ProductCostRow[]>([]);
+function profileToState({ profile, productCosts }: BusinessProfileResponse) {
+  return {
+    platform: profile.platform,
+    storeName: profile.storeName,
+    primaryGoal: profile.primaryGoal,
+    targetMarginPct: profile.targetMarginPct,
+    minRoas: profile.minRoas,
+    leadTimeDays: profile.leadTimeDays,
+    bufferDays: profile.bufferDays,
+    heroProductIds: profile.heroProductIds.join(", "),
+    productCosts,
+  };
+}
 
-  useEffect(() => {
-    const controller = new AbortController();
-    void (async () => {
-      try {
-        const res = await fetch("/api/onboarding/profile", { signal: controller.signal });
-        const json: unknown = await res.json();
-        if (!res.ok) {
-          const msg = typeof json === "object" && json && "error" in json ? String(json.error) : "Failed to load profile";
-          throw new Error(msg);
-        }
-        const parsed = businessProfileResponseSchema.safeParse(json);
-        if (!parsed.success) throw new Error("Invalid profile response");
-        if (controller.signal.aborted) return;
-        const { profile, productCosts: costs } = parsed.data;
-        setPlatform(profile.platform);
-        setStoreName(profile.storeName);
-        setPrimaryGoal(profile.primaryGoal);
-        setTargetMarginPct(profile.targetMarginPct);
-        setMinRoas(profile.minRoas);
-        setLeadTimeDays(profile.leadTimeDays);
-        setBufferDays(profile.bufferDays);
-        setHeroProductIds(profile.heroProductIds.join(", "));
-        setProductCosts(costs);
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError(err instanceof Error ? err.message : "Failed to load profile");
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    })();
-    return () => controller.abort();
-  }, []);
+const EMPTY_STATE = {
+  platform: "shopify" as BusinessProfileInput["platform"],
+  storeName: "",
+  primaryGoal: "growth" as BusinessProfileInput["primaryGoal"],
+  targetMarginPct: 55,
+  minRoas: 3,
+  leadTimeDays: 71,
+  bufferDays: 14,
+  heroProductIds: "",
+  productCosts: [] as ProductCostRow[],
+};
+
+export default function BusinessProfileForm({ initialProfile, onSaved }: BusinessProfileFormProps) {
+  const seeded = initialProfile ? profileToState(initialProfile) : EMPTY_STATE;
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [platform, setPlatform] = useState(seeded.platform);
+  const [storeName, setStoreName] = useState(seeded.storeName);
+  const [primaryGoal, setPrimaryGoal] = useState(seeded.primaryGoal);
+  const [targetMarginPct, setTargetMarginPct] = useState(seeded.targetMarginPct);
+  const [minRoas, setMinRoas] = useState(seeded.minRoas);
+  const [leadTimeDays, setLeadTimeDays] = useState(seeded.leadTimeDays);
+  const [bufferDays, setBufferDays] = useState(seeded.bufferDays);
+  const [heroProductIds, setHeroProductIds] = useState(seeded.heroProductIds);
+  const [productCosts, setProductCosts] = useState<ProductCostRow[]>(seeded.productCosts);
 
   function updateCost(productId: string, value: string) {
     const costPerUnit = Number(value);
@@ -125,14 +118,6 @@ export default function BusinessProfileForm({ onSaved }: BusinessProfileFormProp
         setError(err instanceof Error ? err.message : "Save failed");
       }
     });
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-4 text-sm text-muted-foreground">Loading business profile…</CardContent>
-      </Card>
-    );
   }
 
   return (

@@ -6,11 +6,12 @@ import type { IncidentDetail } from "@/lib/incidents/incident-detail";
 import type { UpdateIncidentBody } from "@/lib/incidents/schemas";
 import type { TimelineEvent } from "@/lib/incidents/timeline-event";
 import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import type { Database } from "@/lib/supabase/database.types";
 
 export type { IncidentDetail } from "@/lib/incidents/incident-detail";
 
 async function resolveOrganizationId(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   organizationId?: string,
 ): Promise<string | null> {
   return organizationId ?? (await getCurrentOrganizationId(supabase));
@@ -24,7 +25,7 @@ function withOrgFilter<T extends { eq: (col: string, val: string) => T }>(
 }
 
 export async function listIncidents(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   organizationId?: string,
 ): Promise<Incident[]> {
   const orgId = await resolveOrganizationId(supabase, organizationId);
@@ -35,11 +36,11 @@ export async function listIncidents(
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data ?? []) as Incident[];
+  return data ?? [];
 }
 
 export async function getIncident(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   id: string,
   organizationId?: string,
 ): Promise<Incident | null> {
@@ -48,11 +49,11 @@ export async function getIncident(
 
   const { data, error } = await query.single();
   if (error || !data) return null;
-  return data as Incident;
+  return data;
 }
 
 export async function getIncidentDetail(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   id: string,
   organizationId?: string,
 ): Promise<IncidentDetail | null> {
@@ -62,29 +63,23 @@ export async function getIncidentDetail(
     orgId,
   );
 
+  const childFilter = orgId
+    ? (table: "agent_findings" | "incident_actions" | "incident_timeline") =>
+        supabase.from(table).select("*").eq("incident_id", id).eq("organization_id", orgId)
+    : (table: "agent_findings" | "incident_actions" | "incident_timeline") =>
+        supabase.from(table).select("*").eq("incident_id", id);
+
   const [incidentRes, findingsRes, actionsRes, timelineRes] = await Promise.all([
     incidentQuery.single(),
-    supabase
-      .from("agent_findings")
-      .select("*")
-      .eq("incident_id", id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("incident_actions")
-      .select("*")
-      .eq("incident_id", id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("incident_timeline")
-      .select("*")
-      .eq("incident_id", id)
-      .order("created_at", { ascending: true }),
+    childFilter("agent_findings").order("created_at", { ascending: true }),
+    childFilter("incident_actions").order("created_at", { ascending: true }),
+    childFilter("incident_timeline").order("created_at", { ascending: true }),
   ]);
 
   if (incidentRes.error) return null;
 
   return {
-    incident: incidentRes.data as Incident,
+    incident: incidentRes.data,
     findings: (findingsRes.data ?? []) as AgentFinding[],
     actions: (actionsRes.data ?? []) as IncidentAction[],
     timeline: (timelineRes.data ?? []) as TimelineEvent[],
@@ -92,7 +87,7 @@ export async function getIncidentDetail(
 }
 
 export async function patchIncident(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   id: string,
   patch: UpdateIncidentBody,
   organizationId?: string,
@@ -102,5 +97,5 @@ export async function patchIncident(
 
   const { data, error } = await query.select().single();
   if (error) throw new Error(error.message);
-  return data as Incident;
+  return data;
 }

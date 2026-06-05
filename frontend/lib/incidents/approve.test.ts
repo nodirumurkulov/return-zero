@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
+import type { Database } from "@/lib/supabase/database.types";
 import { approveIncidentActions, listLowRiskProposedActionIds } from "./approve";
 
 type QueryResult = { data: unknown; error: { message: string } | null };
@@ -14,6 +15,7 @@ function chainMock(responses: QueryResult[]) {
       in: vi.fn(() => builder),
       update: vi.fn(() => builder),
       insert: vi.fn(() => builder),
+      single: vi.fn(() => Promise.resolve(result)),
       then: (
         onfulfilled?: (v: QueryResult) => unknown,
         onrejected?: (e: unknown) => unknown,
@@ -21,7 +23,7 @@ function chainMock(responses: QueryResult[]) {
     };
     return builder;
   });
-  const supabase = { from } as unknown as SupabaseClient;
+  const supabase = { from } as unknown as SupabaseClient<Database>;
   return { supabase, from };
 }
 
@@ -30,7 +32,7 @@ describe("listLowRiskProposedActionIds", () => {
     const { supabase } = chainMock([
       { data: [{ id: "low-1" }, { id: "low-2" }], error: null },
     ]);
-    const ids = await listLowRiskProposedActionIds(supabase, "inc-1");
+    const ids = await listLowRiskProposedActionIds(supabase, "inc-1", "org-1");
     expect(ids).toEqual(["low-1", "low-2"]);
   });
 });
@@ -45,6 +47,7 @@ describe("approveIncidentActions", () => {
 
   it("updates actions and incident through monitoring", async () => {
     const { supabase, from } = chainMock([
+      { data: { organization_id: "org-1" }, error: null },
       { data: null, error: null },
       { data: null, error: null },
       { data: null, error: null },
@@ -57,10 +60,10 @@ describe("approveIncidentActions", () => {
     expect(from).toHaveBeenCalled();
   });
 
-  it("throws when action update fails", async () => {
-    const { supabase } = chainMock([{ data: null, error: { message: "db error" } }]);
+  it("throws when incident is missing", async () => {
+    const { supabase } = chainMock([{ data: null, error: { message: "not found" } }]);
     await expect(
       approveIncidentActions(supabase, "inc-1", ["a1"], "user-uuid"),
-    ).rejects.toThrow("db error");
+    ).rejects.toThrow("not found");
   });
 });

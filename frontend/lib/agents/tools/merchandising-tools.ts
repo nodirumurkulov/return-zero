@@ -4,7 +4,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { AgentSupabase } from "../types";
 
-export function createMerchandisingTools(supabase: AgentSupabase, _organizationId: string) {
+export function createMerchandisingTools(supabase: AgentSupabase, organizationId: string) {
   return {
     getProductDetails: tool({
       description: "Fetch product catalog record for a product",
@@ -13,6 +13,7 @@ export function createMerchandisingTools(supabase: AgentSupabase, _organizationI
         const { data: product } = await supabase
           .from("products")
           .select("*")
+          .eq("organization_id", organizationId)
           .eq("id", productId)
           .single();
         return { product, has_size_guide: false };
@@ -25,6 +26,7 @@ export function createMerchandisingTools(supabase: AgentSupabase, _organizationI
         const { data: variants } = await supabase
           .from("variants")
           .select("id, option1_value, option2_value, inventory_quantity, price")
+          .eq("organization_id", organizationId)
           .eq("product_id", productId);
         const stockouts = variants?.filter((v) => (v.inventory_quantity ?? 0) < 0) ?? [];
         return {

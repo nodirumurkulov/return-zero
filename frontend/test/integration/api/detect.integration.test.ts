@@ -58,6 +58,13 @@ describe("POST /api/detect", () => {
     expect(detectBreachesMock).not.toHaveBeenCalled();
   });
 
+  it("returns 401 without session when CRON_SECRET is unset in development", async () => {
+    vi.stubEnv("CRON_SECRET", "");
+    const res = await POST(new NextRequest("http://localhost/api/detect", { method: "POST" }));
+    expect(res.status).toBe(401);
+    expect(detectBreachesMock).not.toHaveBeenCalled();
+  });
+
   it("runs detection when cron auth is valid", async () => {
     const res = await POST(
       new NextRequest("http://localhost/api/detect", {

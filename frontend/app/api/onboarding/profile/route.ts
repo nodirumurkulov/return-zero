@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireOrganizationId } from "@/lib/organizations";
 import { saveBusinessProfile } from "@/lib/settings/mutations";
 import { loadBusinessProfile, loadProductCostRows } from "@/lib/settings/queries";
 import {
@@ -6,25 +7,24 @@ import {
   businessProfileResponseSchema,
   saveProfileSuccessSchema,
 } from "@/lib/settings/schemas";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const auth = await createClient();
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await auth.auth.getUser();
+  } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createAdminClient();
   try {
+    const organizationId = await requireOrganizationId(supabase);
     const [profile, productCosts] = await Promise.all([
-      loadBusinessProfile(supabase),
-      loadProductCostRows(supabase),
+      loadBusinessProfile(supabase, organizationId),
+      loadProductCostRows(supabase, organizationId),
     ]);
     const body = businessProfileResponseSchema.parse({
       profile: {
@@ -47,10 +47,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const auth = await createClient();
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await auth.auth.getUser();
+  } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -64,9 +64,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const supabase = createAdminClient();
   try {
-    await saveBusinessProfile(supabase, parsed.data);
+    const organizationId = await requireOrganizationId(supabase);
+    await saveBusinessProfile(supabase, organizationId, parsed.data);
     return NextResponse.json(saveProfileSuccessSchema.parse({ success: true }));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save profile";
