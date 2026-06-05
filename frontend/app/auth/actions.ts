@@ -11,7 +11,7 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
-export type OAuthProvider = "google" | "azure";
+export type OAuthProvider = "google";
 
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

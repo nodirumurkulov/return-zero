@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { signIn } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
+import ComingSoonLoginButton from "@/components/auth/ComingSoonLoginButton";
 import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
-import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
+import { MicrosoftIcon, ShopifyIcon } from "@/components/auth/provider-icons";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 
@@ -32,7 +33,10 @@ export default async function SignInPage({
       <BrandLogo variant="auth" />
       <AuthForm title="Sign in" action={signIn} initialError={authError} nextPath={nextPath} />
       <OAuthButtons />
-      <ShopifyLoginButton />
+      <div className="flex w-full max-w-sm flex-col gap-3">
+        <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
+        <ComingSoonLoginButton provider="Shopify" icon={<ShopifyIcon />} />
+      </div>
       <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         New here?{" "}
