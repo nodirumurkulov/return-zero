@@ -24,6 +24,7 @@ describe("AppShell", () => {
       "href",
       "/incidents",
     );
+    expect(screen.getByText("Pretty Fly")).toBeInTheDocument();
     expect(screen.getByText("Alex Ops")).toBeInTheDocument();
     expect(screen.getByText("alex@prettyfly.test")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeInTheDocument();

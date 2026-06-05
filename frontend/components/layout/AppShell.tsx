@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import GlobalSearch from "@/components/layout/GlobalSearch";
+import { ShopSwitcher } from "@/components/layout/ShopSwitcher";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { SearchTarget } from "@/lib/search";
+import { DEMO_SHOPS } from "@/lib/shops";
 
 const NAV = [
   { href: "/orders", label: "Orders", icon: Receipt },
@@ -77,8 +79,9 @@ export default function AppShell({
       </a>
       <SidebarProvider>
         <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="border-b border-sidebar-border p-4">
+          <SidebarHeader className="gap-3 border-b border-sidebar-border p-4">
             <BrandLogo />
+            <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
           </SidebarHeader>
 
           <SidebarContent>
