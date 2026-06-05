@@ -1,6 +1,6 @@
 # Playwright E2E
 
-End-to-end tests for Resolve (auth, catalog, incidents) against local Supabase + seeded data.
+End-to-end tests for Resolve (auth, catalog, incidents, orders replay, onboarding) against local Supabase + seeded data.
 
 ## Environment
 
@@ -51,5 +51,5 @@ Supabase starts with trimmed services (`--exclude studio,imgproxy,inbucket,edge-
 | `auth`, `catalog`, `incidents` | Core flows, threshold save persistence |
 | `incident-detail` | Approve low-risk → monitoring; deterministic fixtures via `reset-main-incident.ts` |
 | `orders` | Orders feed start control |
-| `onboarding` | Upload (mocked API) → report |
+| `onboarding` | Seeded product banner; mocked upload → learn → report |
 | `replay` | ReplayControl advance |

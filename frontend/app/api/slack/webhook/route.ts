@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { approveIncidentActions, listLowRiskProposedActionIds } from "@/lib/incidents";
-import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
+import { captureRecoveryBaseline } from "@/lib/detection/recover";
+import { approveIncidentActions, getIncident, listLowRiskProposedActionIds } from "@/lib/incidents";
+import { parseSlackInteractionPayload, sendIncidentNotification, verifySlackRequest } from "@/lib/slack";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,31 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
+      }
+
+      const incident = await getIncident(supabase, incidentId);
+      if (incident) {
+        if (incident.affected_product) {
+          await captureRecoveryBaseline(
+            supabase,
+            incidentId,
+            incident.affected_product,
+            incident.affected_kpis,
+          );
+        }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        await sendIncidentNotification({
+          title: incident.title,
+          severity: incident.severity,
+          status: "monitoring",
+          impact_amount: incident.impact_amount,
+          impact_label: incident.impact_label,
+          root_cause: incident.root_cause,
+          root_cause_confidence: incident.root_cause_confidence,
+          incident_id: incidentId,
+          app_url: appUrl,
+        });
       }
     }
   }

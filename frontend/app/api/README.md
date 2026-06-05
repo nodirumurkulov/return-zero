@@ -16,9 +16,13 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/replay` | Advance replay clock (cron or signed-in user) |
 | `POST` | `/api/learn` | Learn baselines + business report after upload |
 | `POST` | `/api/onboarding/upload` | Multipart CSV import |
-| `POST` | `/api/slack/webhook` | Slack interactive button callbacks |
+| `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 
 When `CRON_SECRET` is set, scheduler routes (`detect`, `forecast`, `recover`, `replay`) require `Authorization: Bearer <secret>` or `x-cron-secret`.
+
+## Slack approval cards (RUN-51)
+
+Configure `SLACK_WEBHOOK_URL` for outbound incident cards and `SLACK_SIGNING_SECRET` for inbound button clicks on `POST /api/slack/webhook`. **Approve Low-Risk Actions** moves the incident to `monitoring`, captures the recovery baseline, and posts a monitoring update — same outcome as `POST /api/incidents/[id]/approve`.
 
 ## Usage
 
