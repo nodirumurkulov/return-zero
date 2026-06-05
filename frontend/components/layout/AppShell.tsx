@@ -4,6 +4,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { LayoutGrid, Search, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +29,7 @@ export default function AppShell({
     <div className="flex min-h-screen bg-background text-foreground">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-card md:flex md:flex-col">
         <div className="border-b border-border p-5">
-          <p className="text-lg font-semibold tracking-tight">Pretty Fly</p>
-          <p className="text-xs text-muted-foreground">Resolve · Commerce IR</p>
+          <BrandLogo />
         </div>
 
         <nav className="flex-1 space-y-1 p-3">

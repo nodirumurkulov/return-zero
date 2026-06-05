@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Resolve",
   description: "Commerce Incident Response Platform",
+  icons: {
+    icon: "/catLogo.png",
+  },
 };
 
 export default function RootLayout({
