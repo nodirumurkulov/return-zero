@@ -47,7 +47,10 @@ export async function signUp(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     ...parsed.data,
     options: {
-      emailRedirectTo: `${appUrl()}/auth/callback`,
+      // New accounts go straight to onboarding — both when a session is created
+      // immediately (the redirect below) and after email confirmation (the
+      // callback reads ?next), so account creation always lands on /onboarding.
+      emailRedirectTo: `${appUrl()}/auth/callback?next=/onboarding`,
     },
   });
   if (error) return { ok: false as const, error: error.message };
