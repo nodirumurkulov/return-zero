@@ -11,7 +11,7 @@ const BUFFER_DAYS_DEFAULT = 14;
 const OUTFLOW_WINDOW_DAYS = 28;
 const INVENTORY_MAX_LINES = 25;
 
-const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+const RESOLVED_STATUSES = new Set(["resolved", "canceled"]);
 
 export function isOpenIncident(incident: Incident): boolean {
   return !RESOLVED_STATUSES.has(incident.status.toLowerCase());
@@ -86,7 +86,7 @@ export async function buildOpenIncidentsContext(
   const resolvedCount = incidents.length - open.length;
 
   if (open.length === 0) {
-    return `There are no open incidents. (${resolvedCount} resolved/closed in total.)`;
+    return `There are no open incidents. (${resolvedCount} resolved/canceled in total.)`;
   }
 
   const lines = open.map((inc) => `- ${formatIncidentLine(inc)}`);
