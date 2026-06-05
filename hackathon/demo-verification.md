@@ -4,7 +4,7 @@ Final gate for the RUN-107 BYOD epic. Run on the **live Vercel deploy** or local
 
 ## Prerequisites
 
-- Migrations through `018_business_profile.sql` applied
+- Migrations through `019_business_profile.sql` applied
 - `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY`) set on Vercel for agent narration
 - Optional: `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` for one-click Pretty Fly sign-in
 
