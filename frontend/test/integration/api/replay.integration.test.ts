@@ -30,7 +30,7 @@ vi.mock("@/lib/organizations", () => ({
   requireOrganizationId: vi.fn(async () => "org-1"),
 }));
 
-import { POST } from "@/app/api/replay/route";
+import { POST } from "@/app/api/stores/analytics/replay/route";
 const runReplayMock = replayStoreMock.run;
 
 const replayResult = {
@@ -41,7 +41,7 @@ const replayResult = {
   forecast: { scanned: 1, created: [], skipped: [] },
 };
 
-describe("POST /api/replay", () => {
+describe("POST /api/stores/analytics/replay", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
@@ -54,14 +54,14 @@ describe("POST /api/replay", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/replay", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/analytics/replay", { method: "POST" }));
     expect(res.status).toBe(401);
     expect(runReplayMock).not.toHaveBeenCalled();
   });
 
   it("delegates to runReplay with parsed advance_days", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/replay", {
+      new NextRequest("http://localhost/api/stores/analytics/replay", {
         method: "POST",
         headers: {
           authorization: "Bearer cron-test-secret",

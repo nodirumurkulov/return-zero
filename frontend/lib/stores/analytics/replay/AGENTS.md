@@ -8,7 +8,7 @@ Analytics time-travel: replay cursor + live orders feed. **Parent:** [../../../A
 |------|------|
 | `replay.ts` | **`Replay`** — sole public API (`run`, `reset`, `listIncomingOrders`, bounds) |
 | `cursor.ts`, `replay-bounds.ts` | Internal cursor/bounds helpers |
-| `replay-request.ts` | `ReplayOpts`, `replayBodySchema` for `/api/replay` |
+| `replay-request.ts` | `ReplayOpts`, `replayBodySchema` for `/api/stores/analytics/replay` |
 | `replay-result.ts` | `ReplayResult` |
 | `feed/` | `ordersQuerySchema`, `OrderFeedItem` types |
 

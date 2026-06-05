@@ -28,9 +28,9 @@ vi.mock("@/lib/organizations", () => ({
   requireOrganizationId: vi.fn(async () => "org-1"),
 }));
 
-import { POST } from "@/app/api/detect/route";
+import { POST } from "@/app/api/stores/incidents/detect/route";
 
-describe("POST /api/detect", () => {
+describe("POST /api/stores/incidents/detect", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
@@ -56,21 +56,21 @@ describe("POST /api/detect", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/detect", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
     expect(detectBreachesMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 without session when CRON_SECRET is unset in development", async () => {
     vi.stubEnv("CRON_SECRET", "");
-    const res = await POST(new NextRequest("http://localhost/api/detect", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
     expect(detectBreachesMock).not.toHaveBeenCalled();
   });
 
   it("runs detection when cron auth is valid", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/detect", {
+      new NextRequest("http://localhost/api/stores/incidents/detect", {
         method: "POST",
         headers: { authorization: "Bearer cron-test-secret" },
       }),

@@ -6,7 +6,7 @@ Onboarding connect flow client API. **Parent:** [../AGENTS.md](../AGENTS.md)
 
 | Path | Role |
 |------|------|
-| `api-schemas.ts` | Zod for `POST /api/onboarding/connect` responses |
+| `api-schemas.ts` | Zod for `POST /api/stores/connect/*` responses |
 | `api/` | Browser `fetch` functions |
 | `hooks/` | TanStack Query wrappers around `api/` |
 

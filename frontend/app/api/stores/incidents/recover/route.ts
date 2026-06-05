@@ -1,16 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server";
+
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
-import { createIncidents } from "@/lib/stores/incidents";
-import { notifyNewIncidents } from "@/lib/stores/incidents/notify-new-incidents";
+import { createIncidents, recoverBodySchema } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// POST /api/forecast — run predictive (forecast-based) detection over the catalogue.
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
   const cronMode = isCronInvocation(req, cronDenied);
+
+  const raw = await req.json().catch(() => ({}));
+  const parsed = recoverBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
+  }
 
   const supabase = cronMode ? createAdminClient() : await createClient();
   if (!cronMode) {
@@ -27,23 +37,20 @@ export async function POST(req: NextRequest) {
 
     const store = createIncidents(supabase);
     const results = await Promise.all(
-      organizationIds.map((organizationId) => store.detectForecastRisks({ organizationId })),
+      organizationIds.map((organizationId) =>
+        store.runRecovery({
+          organizationId,
+          advanceDays: parsed.data.advance_days,
+        }),
+      ),
     );
-    await notifyNewIncidents(results.flatMap((r) => r.created));
+    const monitored = results.reduce((sum, r) => sum + r.monitored, 0);
+    const updated = results.reduce((sum, r) => sum + r.updated, 0);
+    const resolved = results.flatMap((r) => r.resolved);
 
-    const scanned = results.reduce((sum, r) => sum + r.scanned, 0);
-    const created = results.flatMap((r) => r.created);
-    const skipped = results.flatMap((r) => r.skipped);
-
-    return NextResponse.json({
-      success: true,
-      scanned,
-      created: created.length,
-      skipped: skipped.length,
-      incidents: created,
-    });
+    return NextResponse.json({ success: true, monitored, updated, resolved });
   } catch (err) {
-    logApiError("api/forecast", err);
+    logApiError("api/stores/incidents/recover", err);
     return apiErrorResponse(err);
   }
 }

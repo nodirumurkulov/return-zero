@@ -2,10 +2,13 @@
 
 import { useMutation } from "@tanstack/react-query";
 
-import { postConnectStore } from "./api";
+import { postConnectMockStore, postConnectShopifyStore } from "./api";
+
+export type StorePlatform = "mock_csv" | "shopify";
 
 export function useConnectStore() {
   return useMutation({
-    mutationFn: postConnectStore,
+    mutationFn: (platform: StorePlatform) =>
+      platform === "mock_csv" ? postConnectMockStore() : postConnectShopifyStore(),
   });
 }

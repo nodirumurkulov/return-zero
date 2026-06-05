@@ -1,13 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createReplay, ordersQuerySchema } from "@/lib/stores/analytics/replay";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/orders?after=<iso>&limit=<n> — the next batch of orders arriving after
-// a timestamp (the replay stream's buffer source), plus the current replay cursor
-// and the data end so the feed knows when to stop.
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const {
@@ -29,25 +27,20 @@ export async function GET(req: NextRequest) {
   if (!org.ok) {
     return NextResponse.json({ error: org.error }, { status: 403 });
   }
-  const { organizationId } = org;
 
   try {
     const replay = createReplay(supabase);
     const [orders, dataEnd, cursorRow] = await Promise.all([
-      replay.listIncomingOrders({ organizationId, ...parsed.data }),
-      replay.dataEndDate(organizationId),
+      replay.listIncomingOrders({ organizationId: org.organizationId, ...parsed.data }),
+      replay.dataEndDate(org.organizationId),
       supabase
         .from("store_connections")
         .select("replay_cursor")
-        .eq("organization_id", organizationId)
+        .eq("organization_id", org.organizationId)
         .maybeSingle(),
     ]);
     const cursor = cursorRow.data?.replay_cursor?.slice(0, 10) ?? null;
-    return NextResponse.json({
-      orders,
-      cursor,
-      data_end: dataEnd,
-    });
+    return NextResponse.json({ orders, cursor, data_end: dataEnd });
   } catch (err) {
     const message = err instanceof Error ? err.message : "orders feed failed";
     return NextResponse.json({ error: message }, { status: 500 });

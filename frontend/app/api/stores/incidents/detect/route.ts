@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
@@ -7,9 +8,6 @@ import { notifyNewIncidents } from "@/lib/stores/incidents/notify-new-incidents"
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// POST /api/detect — run deterministic KPI breach detection over the catalogue
-// and open incidents for newly-breached products. Safe to call repeatedly: it
-// dedups against products that already have an open incident.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
   const cronMode = isCronInvocation(req, cronDenied);
@@ -45,7 +43,7 @@ export async function POST(req: NextRequest) {
       incidents: created,
     });
   } catch (err) {
-    logApiError("api/detect", err);
+    logApiError("api/stores/incidents/detect", err);
     return apiErrorResponse(err);
   }
 }

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createReplay, replayBodySchema } from "@/lib/stores/analytics/replay";
@@ -9,9 +10,6 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// POST /api/replay — advance the replay clock and detect anomalies AS OF the new
-// cursor, opening incidents at the point in history a metric crosses its learned
-// threshold. Body: { advance_days?: number }. Schedulable via CRON_SECRET.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
   const cronMode = isCronInvocation(req, cronDenied);
@@ -62,7 +60,13 @@ export async function POST(req: NextRequest) {
     );
     const result = results[0];
     if (!result) {
-      return NextResponse.json({ success: true, cursor: null, previous_cursor: null, at_end: true, created: 0 });
+      return NextResponse.json({
+        success: true,
+        cursor: null,
+        previous_cursor: null,
+        at_end: true,
+        created: 0,
+      });
     }
 
     await notifyNewIncidents([
