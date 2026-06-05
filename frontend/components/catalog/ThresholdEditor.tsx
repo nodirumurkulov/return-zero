@@ -74,7 +74,7 @@ export default function ThresholdEditor({
               <Input
                 name="threshold"
                 type="number"
-                step="0.01"
+                step="any"
                 defaultValue={threshold.threshold}
                 required
               />

@@ -31,6 +31,10 @@ describe("ThresholdEditor", () => {
     );
 
     expect(screen.getByText("Return rate")).toBeInTheDocument();
+    const input = screen.getByRole("spinbutton");
+    expect(input).toHaveAttribute("step", "any");
+    fireEvent.change(input, { target: { value: "0.20" } });
+    expect(input).toHaveValue(0.2);
     fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
 
     await waitFor(() => {
