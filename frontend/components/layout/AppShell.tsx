@@ -68,6 +68,12 @@ export default function AppShell({
 
   return (
     <TooltipProvider>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-pop focus:outline-none focus:ring-3 focus:ring-ring/50"
+      >
+        Skip to main content
+      </a>
       <SidebarProvider>
         <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
           <SidebarHeader className="border-b border-sidebar-border p-4">
@@ -129,7 +135,7 @@ export default function AppShell({
           </SidebarFooter>
         </Sidebar>
 
-        <SidebarInset>
+        <SidebarInset id="main">
           <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="relative max-w-md flex-1">
