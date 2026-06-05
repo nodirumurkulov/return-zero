@@ -1,5 +1,5 @@
 -- =============================================================
--- 016_reset_full_on_upload.sql  (RUN-87)
+-- 017_reset_full_on_upload.sql  (RUN-87)
 -- Make an onboarding upload a CLEAN SLATE: in addition to the raw contract data,
 -- also wipe everything the agent derived from a previous dataset — incidents and
 -- their children, the learned knowledge base, prior reports, and the replay clock.
