@@ -61,7 +61,7 @@ describe("recommendReorder", () => {
 
   it("grades confidence from observed (non-zero) demand days, not window length", () => {
     // A 90-day window with only 3 actual sales days is low confidence, not high.
-    const sparse = [5, 0, 0, 8, 0, 0, 0, 6, ...Array(82).fill(0)];
+    const sparse: number[] = [5, 0, 0, 8, 0, 0, 0, 6, ...Array.from({ length: 82 }, (): number => 0)];
     const plan = recommendReorder({
       dailyDemand: sparse,
       currentUnits: 0,
@@ -72,7 +72,21 @@ describe("recommendReorder", () => {
     expect(plan.observed_days).toBe(3);
     expect(plan.confidence).toBe("low");
 
-    expect(recommendReorder({ dailyDemand: Array(12).fill(1), currentUnits: 0, leadDays: 1, bufferDays: 0 }).confidence).toBe("high");
-    expect(recommendReorder({ dailyDemand: Array(2).fill(1), currentUnits: 0, leadDays: 1, bufferDays: 0 }).confidence).toBe("none");
+    expect(
+      recommendReorder({
+        dailyDemand: Array.from({ length: 12 }, (): number => 1),
+        currentUnits: 0,
+        leadDays: 1,
+        bufferDays: 0,
+      }).confidence,
+    ).toBe("high");
+    expect(
+      recommendReorder({
+        dailyDemand: Array.from({ length: 2 }, (): number => 1),
+        currentUnits: 0,
+        leadDays: 1,
+        bufferDays: 0,
+      }).confidence,
+    ).toBe("none");
   });
 });

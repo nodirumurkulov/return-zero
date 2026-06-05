@@ -75,7 +75,7 @@ export class BreachDetector {
       .select("id, title")
       .eq("organization_id", opts.organizationId);
     const titleById = new Map(
-      (prodRows ?? []).map((p) => [p.id as string, (p.title as string) ?? (p.id as string)]),
+      (prodRows ?? []).map((p) => [p.id, p.title ?? p.id]),
     );
 
     const created: CreatedIncident[] = [];
@@ -152,7 +152,7 @@ export class BreachDetector {
       ]);
 
       created.push({
-        incident_id: inc.id as string,
+        incident_id: inc.id,
         product_id: productId,
         title,
         severity,

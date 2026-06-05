@@ -1,13 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/lib/supabase/database.types";
+
 import { COURT_TRAINER_PRODUCT_EXTERNAL_ID } from "../constants";
 
 const HERO_PRODUCT_EXTERNAL_ID = COURT_TRAINER_PRODUCT_EXTERNAL_ID;
 const BATCH_SIZE = 500;
 
 async function upsert(
-  supabase: SupabaseClient,
-  table: string,
+  supabase: SupabaseClient<Database>,
+  table: "product_kpi_thresholds",
   rows: Record<string, unknown>[],
   conflictColumn = "id",
 ) {
@@ -23,7 +25,10 @@ async function upsert(
   }
 }
 
-export async function seedProductKpiThresholds(supabase: SupabaseClient, organizationId: string) {
+export async function seedProductKpiThresholds(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+) {
   const [{ data: products, error: listError }, { data: defs, error: defsError }] = await Promise.all([
     supabase.from("products").select("id, external_id").eq("organization_id", organizationId),
     supabase.from("metric_definitions").select("id, metric_key").eq("organization_id", organizationId),
@@ -32,7 +37,9 @@ export async function seedProductKpiThresholds(supabase: SupabaseClient, organiz
   if (listError) throw new Error(`list products: ${listError.message}`);
   if (defsError) throw new Error(`list metric_definitions: ${defsError.message}`);
 
-  const defByKey = new Map((defs ?? []).map((def) => [def.metric_key, def.id]));
+  const defByKey = new Map(
+    (defs ?? []).map((def) => [def.metric_key, def.id] as [string, string]),
+  );
   const defaultMetrics = [
     { metric_key: "return_rate", threshold: 0.12, direction: "above" as const },
     { metric_key: "refund_rate", threshold: 0.08, direction: "above" as const },
@@ -93,7 +100,7 @@ export async function seedProductKpiThresholds(supabase: SupabaseClient, organiz
 }
 
 export async function seedDemoIncidents(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   organizationId: string,
   productIdByExternalId: Map<string, string>,
 ) {
@@ -129,7 +136,7 @@ export async function seedDemoIncidents(
     .single();
   if (e1 || !inc1) throw new Error(`incident 1: ${e1?.message ?? "no row"}`);
 
-  const incidentId = inc1.id as string;
+  const incidentId = inc1.id;
 
   await supabase.from("agent_findings").upsert(
     [
@@ -387,7 +394,7 @@ export async function seedDemoIncidents(
 }
 
 export async function seedDemoKanbanData(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   organizationId: string,
   productIdByExternalId: Map<string, string>,
 ) {

@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
+import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { getStore, notifyNewIncidents } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Incident } from "@/lib/stores";
+import type { Database } from "@/lib/supabase/database.types";
 import {
   buildInventoryContext,
   buildOpenIncidentsContext,
@@ -52,7 +53,7 @@ function incident(overrides: Partial<Incident>): Incident {
   };
 }
 
-const supabase = {} as SupabaseClient;
+const supabase = {} as SupabaseClient<Database>;
 const orgId = "org-1";
 
 describe("hugo context helpers", () => {
@@ -179,7 +180,7 @@ function inventorySupabase(opts: {
   outflow: OutflowRow[];
   products: ProductRow[];
   settings: SettingRow[];
-}): SupabaseClient {
+}): SupabaseClient<Database> {
   const tableData: Record<string, unknown[]> = {
     products: opts.products,
     business_settings: opts.settings,
@@ -191,7 +192,7 @@ function inventorySupabase(opts: {
         eq: () => Promise.resolve({ data: tableData[table] ?? [], error: null }),
       }),
     }),
-  } as unknown as SupabaseClient;
+  } as unknown as SupabaseClient<Database>;
 }
 
 describe("buildInventoryContext", () => {

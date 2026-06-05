@@ -5,6 +5,10 @@ import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const mutate = vi.fn();
 
+type ApproveMutateOptions = {
+  onSuccess?: (result: { approval: { approvedCount: number } }) => void;
+};
+
 vi.mock("@/hooks/stores/incidents", async () => {
   const actual = await vi.importActual("@/hooks/stores/incidents");
   return {
@@ -23,7 +27,7 @@ describe("ActionList", () => {
   });
 
   it("calls approve mutation for a proposed action", async () => {
-    mutate.mockImplementation((_input, options) => {
+    mutate.mockImplementation((_input: unknown, options?: ApproveMutateOptions) => {
       options?.onSuccess?.({ approval: { approvedCount: 1 } });
     });
 

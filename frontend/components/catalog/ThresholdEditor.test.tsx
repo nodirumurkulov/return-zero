@@ -6,6 +6,11 @@ import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const mutate = vi.fn();
 
+type MutateOptions = {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+};
+
 vi.mock("@/hooks/stores/catalog", () => ({
   useUpdateThreshold: () => ({
     mutate,
@@ -22,7 +27,7 @@ describe("ThresholdEditor", () => {
   });
 
   it("renders threshold form and shows Saved on success", async () => {
-    mutate.mockImplementation((_formData, options) => {
+    mutate.mockImplementation((_formData: unknown, options?: MutateOptions) => {
       options?.onSuccess?.();
     });
     const threshold = createKpiThresholdFixture({ metric_key: "return_rate" });
@@ -44,7 +49,7 @@ describe("ThresholdEditor", () => {
   });
 
   it("shows error message when save fails", async () => {
-    mutate.mockImplementation((_formData, options) => {
+    mutate.mockImplementation((_formData: unknown, options?: MutateOptions) => {
       options?.onError?.(new Error("Validation failed"));
     });
     const threshold = createKpiThresholdFixture();
