@@ -169,8 +169,14 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
           echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+          echo "DB_URL=${DB_URL}" >> "$GITHUB_ENV"
 
       - run: bun run seed
+      # Refresh planner statistics after the bulk seed. Without this, Postgres has
+      # no stats and picks nested-loop plans for the heavy 24-month analytics RPCs
+      # (product_monthly_series), which then exceed the gateway timeout in validate.
+      - name: Analyze (refresh planner stats)
+        run: psql "${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}" -c 'analyze;'
       - run: bun run validate
       - run: bunx playwright install --with-deps chromium
       - run: bun run e2e
