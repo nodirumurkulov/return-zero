@@ -6,7 +6,7 @@ Incident domain — single source of truth for incident types and Supabase reads
 
 | Path | Role |
 |------|------|
-| `incident.ts`, `incident-action.ts`, … | One entity type per file (DB column shape) |
+| `incident.ts`, `incident-action.ts`, … | `Tables<>` aliases — one entity type per table file |
 | `queries.ts`, `approve.ts`, `schemas.ts`, `status.ts` | Server Supabase / shared logic |
 | `api/` | Client + TanStack query functions (exported via `api/index.ts` and root `index.ts`) |
 | `hooks/` | `"use client"` — `useMutation` / `useQuery` wrappers around `api/` only |

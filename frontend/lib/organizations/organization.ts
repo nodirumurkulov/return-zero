@@ -1,8 +1,3 @@
-/** Organization row — matches Supabase `organizations` table columns. */
-export type Organization = {
-  id: string;
-  name: string;
-  slug: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Tables } from "@/lib/supabase/db";
+
+export type Organization = Tables<"organizations">;

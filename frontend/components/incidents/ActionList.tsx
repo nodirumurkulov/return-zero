@@ -207,7 +207,11 @@ export default function ActionList({
                     <span>
                       Impact:{" "}
                       <span
-                        className={impactColour[action.impact_level] ?? "text-muted-foreground"}
+                        className={
+                          action.impact_level != null
+                            ? (impactColour[action.impact_level] ?? "text-muted-foreground")
+                            : "text-muted-foreground"
+                        }
                       >
                         {action.impact_level}
                       </span>
@@ -215,7 +219,11 @@ export default function ActionList({
                     <span>
                       Risk:{" "}
                       <span
-                        className={riskColour[action.risk_level] ?? "text-muted-foreground"}
+                        className={
+                          action.risk_level != null
+                            ? (riskColour[action.risk_level] ?? "text-muted-foreground")
+                            : "text-muted-foreground"
+                        }
                       >
                         {action.risk_level}
                       </span>

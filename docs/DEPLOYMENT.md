@@ -89,7 +89,32 @@ For manual local testing without a secret, sign in normally and POST while `CRON
 
 ---
 
-## 4. Troubleshooting
+## 4. Database migrations (Supabase)
+
+Schema lives in [`frontend/supabase/`](../frontend/supabase/). Migrations apply automatically on push to `main` when GitHub secrets are configured.
+
+### GitHub Actions secrets (for automatic `db push`)
+
+| Secret | Required | Where to get it |
+|--------|----------|-----------------|
+| `SUPABASE_ACCESS_TOKEN` | ✅ for auto-push | [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens) |
+| `SUPABASE_PROJECT_REF` | ✅ for auto-push | Supabase → Project Settings → General → Reference ID |
+
+Workflow: [`.github/workflows/db-push.yml`](../.github/workflows/db-push.yml). If secrets are missing, the job skips with a message (deploy still succeeds; apply migrations manually).
+
+### Manual migration apply
+
+```bash
+cd frontend/supabase
+supabase link --project-ref <your-project-ref>
+supabase db push
+```
+
+After schema changes locally: `cd frontend && bun run db:sync` (reset + regenerate `database.types.ts`).
+
+---
+
+## 5. Troubleshooting
 
 | Symptom | Cause / fix |
 |---------|-------------|
@@ -98,4 +123,5 @@ For manual local testing without a secret, sign in normally and POST while `CRON
 | 401 on `/api/*` | Expected when unauthenticated. |
 | 503 on `/api/detect` in production | Set `CRON_SECRET` in Vercel env. |
 | Slack buttons rejected | `SLACK_SIGNING_SECRET` missing or mismatched. |
-| Empty incidents board | Run migrations + `bun run seed` against the Supabase project. |
+| Empty incidents board | Ensure migrations applied (`supabase db push` or CI db-push workflow) + `bun run seed` against the Supabase project. |
+| Stale TypeScript DB types | Run `cd frontend && bun run db:sync` after pulling migration changes. CI `integration-db` fails if `database.types.ts` is out of date. |
