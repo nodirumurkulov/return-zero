@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { resolveDemoCredentials } from "@/lib/auth/demo";
-import { safeRedirectPath } from "@/lib/auth/redirect";
+import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
 import { createOrganizationWithOwner } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -46,7 +46,8 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { ok: false as const, error: error.message };
 
-  redirect(safeRedirectPath(formData.get("next")));
+  const nextParsed = authNextPathSchema.safeParse(formData.get("next"));
+  redirect(nextParsed.success ? nextParsed.data : AUTH_NEXT_DEFAULT);
 }
 
 export async function signUp(formData: FormData) {

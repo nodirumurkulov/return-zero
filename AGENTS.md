@@ -81,6 +81,17 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 - **Domain modules** under `frontend/lib/<domain>/`: types match Supabase columns, queries, mutations, Zod `schemas.ts`.
 - Import from `@/lib/incidents`, `@/lib/catalog`, etc. Never re-export domain types from `components/`.
 - **API JSON:** Zod in `lib/<domain>/schemas.ts`; routes use `schema.safeParse(await req.json().catch(...))` inline.
+- **No trivial utility wrappers.** Do not add single-function files or exported helpers whose only job is a few lines of validation, coercion, or renaming that belongs at the call site. Validate at boundaries with Zod (`safeParse` inline in server actions, route handlers, API routes). Narrow types at parse time (e.g. `z.string().startsWith("/").refine(...)`) instead of widening to `FormDataEntryValue`, `unknown`, or `string` and “fixing” in a helper. Put shared schemas in `lib/<domain>/schemas.ts` only when **two or more** modules need the same shape; delete wrapper files and update all imports in the same change.
+
+  ```typescript
+  // Bad — lib/auth/redirect.ts wrapper
+  redirect(safeRedirectPath(formData.get("next")));
+
+  // Good — shared schema, parse at boundary
+  const nextParsed = authNextPathSchema.safeParse(formData.get("next"));
+  redirect(nextParsed.success ? nextParsed.data : AUTH_NEXT_DEFAULT);
+  ```
+
 - **React:** Server Components fetch data; small `"use client"` islands for mutations; use `router.refresh()` after client mutations.
 - JSX async handlers: `onClick={() => { void handler(); }}` for `no-misused-promises`.
 

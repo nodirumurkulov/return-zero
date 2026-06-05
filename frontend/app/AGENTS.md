@@ -39,6 +39,8 @@ Next.js App Router: pages, layouts, server actions. **Parent:** [../../AGENTS.md
 
 Supabase Auth via [../proxy.ts](../proxy.ts). Public routes: sign-in/up, auth callback, Slack webhook.
 
+Post-auth `next` paths: validate with `authNextPathSchema` from `@/lib/auth/schemas` via `safeParse` at each boundary (sign-in page, `app/auth/actions.ts`, `app/auth/callback/route.ts`). Never add a standalone redirect helper — callback and sign-in must share the same schema.
+
 ## Code style
 
 - Import domain types from `@/lib/<domain>`; never redefine in page files.

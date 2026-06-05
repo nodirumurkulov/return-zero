@@ -7,6 +7,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import { MicrosoftIcon, ShopifyIcon } from "@/components/auth/provider-icons";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { authNextPathSchema } from "@/lib/auth/schemas";
 
 export default async function SignInPage({
   searchParams,
@@ -20,10 +21,8 @@ export default async function SignInPage({
       : params.error === "demo"
         ? "Demo sign-in is temporarily unavailable. Please use another sign-in method."
         : null;
-  const nextPath =
-    typeof params.next === "string" && params.next.startsWith("/") && !params.next.startsWith("//")
-      ? params.next
-      : null;
+  const nextParsed = authNextPathSchema.safeParse(params.next);
+  const nextPath = nextParsed.success ? nextParsed.data : null;
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center justify-center gap-8 bg-background px-4 py-12">
