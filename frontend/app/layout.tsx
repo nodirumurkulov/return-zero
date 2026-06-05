@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Hugo",
   description: "Commerce Incident Response Platform",
+  icons: {
+    icon: "/catLogo.png",
+  },
 };
 
 export default async function RootLayout({

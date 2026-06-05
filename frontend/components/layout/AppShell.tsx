@@ -1,9 +1,10 @@
 "use client";
 
-import { Activity, LayoutGrid, LogOut, Receipt, Siren } from "lucide-react";
+import { LayoutGrid, LogOut, Receipt, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import GlobalSearch from "@/components/layout/GlobalSearch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -70,15 +71,7 @@ export default function AppShell({
       <SidebarProvider>
         <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
           <SidebarHeader className="border-b border-sidebar-border p-4">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-card">
-                <Activity className="size-4" strokeWidth={2.5} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold leading-tight tracking-tight">Hugo</p>
-                <p className="text-[11px] text-muted-foreground">Pretty Fly · Commerce IR</p>
-              </div>
-            </div>
+            <BrandLogo />
           </SidebarHeader>
 
           <SidebarContent>
