@@ -22,6 +22,8 @@ export default tseslint.config(
       "next.config.mjs",
       "postcss.config.mjs",
       "scripts/**/*.ts",
+      "e2e/**",
+      "playwright.config.ts",
       "lib/supabase/database.types.ts",
       "e2e/**",
       "playwright.config.ts",

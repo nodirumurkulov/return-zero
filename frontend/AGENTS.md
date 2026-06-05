@@ -14,7 +14,7 @@ cp ../.env.example .env.local   # if missing
 
 ```bash
 bun run dev              # dev server
-bun run check            # lint + typecheck
+bun run check            # lint + typecheck + test
 bun run build
 bun run db:lint
 ```
@@ -22,7 +22,7 @@ bun run db:lint
 | Script | Purpose |
 |--------|---------|
 | `dev` | Local server |
-| `check` | ESLint (`--max-warnings 0`) + `tsc` |
+| `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest |
 | `build` | Production build |
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
@@ -48,10 +48,9 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 ## Testing
 
 - `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
-- `bun run test:watch` — Vitest watch mode.
 - `bun run check` — lint, typecheck, and `test`.
 - `bun run e2e` / `test:e2e` — Playwright ([e2e/README.md](e2e/README.md)).
-- E2E path: `supabase start` → `db:reset` → `seed` → `build` → `CI=true bun run e2e`.
+- E2E path: `supabase start` → `seed` → `build` → `CI=true bun run e2e`.
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

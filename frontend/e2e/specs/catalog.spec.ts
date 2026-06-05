@@ -3,6 +3,8 @@ import { COURT_TRAINER_TITLE } from "../constants";
 import { CatalogPage } from "../pages/catalog.page";
 import { ProductPage } from "../pages/product.page";
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("Catalog", () => {
   test("lists seeded products and supports search", async ({ page }) => {
     const catalog = new CatalogPage(page);
