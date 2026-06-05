@@ -40,11 +40,7 @@ test.describe("Incident detail", () => {
     const detail = new IncidentDetailPage(page);
     await detail.goto(MAIN_INCIDENT_ID);
 
-    const fitAssistantRow = page
-      .locator("div")
-      .filter({ hasText: "Enable fit assistant widget" })
-      .filter({ has: detail.approveButtons() });
-    const approve = fitAssistantRow.getByTestId("approve-action");
+    const approve = detail.approveActionButton("Enable fit assistant widget");
     await expect(approve).toBeVisible();
     await approve.click();
     await expect(detail.successAlert()).toBeVisible();
