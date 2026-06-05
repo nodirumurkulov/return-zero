@@ -9,14 +9,14 @@ export class OnboardingPage {
   }
 
   heading() {
-    return this.page.getByRole("heading", { name: "Connect your store" });
+    return this.page.getByRole("heading", { name: "Analyze your store" });
   }
 
-  connectButton() {
-    return this.page.getByRole("button", { name: /Connect Pretty Fly demo store/i });
+  runAnalysisButton() {
+    return this.page.getByRole("button", { name: /Run analysis/i });
   }
 
-  seededProductBanner(count: number) {
-    return this.page.getByText(new RegExp(`${count} products loaded`, "i"));
+  recoveryButton() {
+    return this.page.getByRole("button", { name: /Load demo store and analyze/i });
   }
 }

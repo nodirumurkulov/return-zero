@@ -20,4 +20,4 @@ Catalog metrics, thresholds, health. **Parent:** [../../AGENTS.md](../../AGENTS.
 ## Rules
 
 - Pages call **queries** — do not cast raw Supabase rows in `app/catalog/*`.
-- Threshold updates go through `app/actions.ts` (`updateThreshold`).
+- Threshold updates go through `PATCH /api/catalog/[productId]/threshold` via `@/lib/api/stores/analytics/catalog` and `@/hooks/stores/analytics/catalog`.

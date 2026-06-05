@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createReplay, ordersQuerySchema } from "@/lib/stores/analytics/replay";
 import { createClient } from "@/lib/supabase/server";
@@ -25,24 +26,24 @@ export async function GET(req: NextRequest) {
 
   const org = await tryRequireOrganizationId(supabase);
   if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+    logApiError("api/stores/analytics/replay/orders", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
   }
 
   try {
     const replay = createReplay(supabase);
-    const [orders, dataEnd, cursorRow] = await Promise.all([
+    const [orders, dataEnd, cursor] = await Promise.all([
       replay.listIncomingOrders({ organizationId: org.organizationId, ...parsed.data }),
       replay.dataEndDate(org.organizationId),
-      supabase
-        .from("store_connections")
-        .select("replay_cursor")
-        .eq("organization_id", org.organizationId)
-        .maybeSingle(),
+      replay.readCursor(org.organizationId),
     ]);
-    const cursor = cursorRow.data?.replay_cursor?.slice(0, 10) ?? null;
-    return NextResponse.json({ orders, cursor, data_end: dataEnd });
+    return NextResponse.json({
+      orders,
+      cursor: cursor?.slice(0, 10) ?? null,
+      data_end: dataEnd,
+    });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "orders feed failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/stores/analytics/replay/orders", err);
+    return apiErrorResponse(err);
   }
 }

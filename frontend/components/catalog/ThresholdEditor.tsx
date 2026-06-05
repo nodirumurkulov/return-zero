@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SectionLabel } from "@/components/ui/section-label";
-import { useUpdateThreshold } from "@/hooks/catalog";
+import { useUpdateThreshold } from "@/hooks/stores/analytics/catalog";
 import type { KpiThreshold } from "@/types/catalog";
 
 const METRIC_LABELS: Record<string, string> = {
@@ -28,8 +28,8 @@ export default function ThresholdEditor({
   function onSave(formData: FormData) {
     setMessage(null);
     updateThreshold.mutate(formData, {
-      onSuccess: (result) => {
-        setMessage(result.ok ? "Saved" : (result.error ?? "Failed to save"));
+      onSuccess: () => {
+        setMessage("Saved");
       },
       onError: () => {
         setMessage("Failed to save");

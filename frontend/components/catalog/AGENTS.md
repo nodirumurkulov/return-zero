@@ -4,7 +4,7 @@ Catalog UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 ## Data flow
 
-Server pages pass props from `@/lib/stores/analytics/catalog` queries. `ThresholdEditor` calls server action `updateThreshold` in `app/actions.ts`.
+Server pages pass props from `@/lib/stores/analytics/catalog` queries. `ThresholdEditor` uses `useUpdateThreshold` from `@/hooks/stores/analytics/catalog` (`PATCH /api/catalog/[productId]/threshold`).
 
 ## Types
 

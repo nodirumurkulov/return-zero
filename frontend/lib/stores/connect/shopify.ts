@@ -13,6 +13,6 @@ export class ShopifyStoreConnector implements StoreConnector {
     _source: unknown,
     _opts?: StoreLoadOpts,
   ): Promise<LoadResult[]> {
-    return Promise.reject(new Error("Shopify is not implemented yet"));
+    return Promise.reject(new Error("Shopify is not available yet"));
   }
 }

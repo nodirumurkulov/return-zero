@@ -13,7 +13,7 @@ Incident lifecycle, detection, and recovery. **Parent:** [../../AGENTS.md](../..
 | `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation (not re-exported) |
 | `api/` | Server query options + client fetch helpers |
 
-Client hooks: `@/hooks/incidents` (approve, status updates, detail queries).
+Client hooks: `@/hooks/stores/incidents` (approve, status updates, detail queries).
 
 ## Public API
 
@@ -40,5 +40,5 @@ export type Incident = Database["public"]["Tables"]["incidents"]["Row"];
 
 ```typescript
 import { createIncidents, type Incident } from "@/lib/stores/incidents";
-import { useApproveActions } from "@/hooks/incidents";
+import { useApproveActions } from "@/hooks/stores/incidents";
 ```

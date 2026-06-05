@@ -6,7 +6,7 @@ import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const mutate = vi.fn();
 
-vi.mock("@/hooks/catalog", () => ({
+vi.mock("@/hooks/stores/analytics/catalog", () => ({
   useUpdateThreshold: () => ({
     mutate,
     isPending: false,
@@ -23,7 +23,7 @@ describe("ThresholdEditor", () => {
 
   it("renders threshold form and shows Saved on success", async () => {
     mutate.mockImplementation((_formData, options) => {
-      options?.onSuccess?.({ ok: true });
+      options?.onSuccess?.();
     });
     const threshold = createKpiThresholdFixture({ metric_key: "return_rate" });
     renderWithProviders(
@@ -45,7 +45,7 @@ describe("ThresholdEditor", () => {
 
   it("shows error message when save fails", async () => {
     mutate.mockImplementation((_formData, options) => {
-      options?.onSuccess?.({ ok: false, error: "Validation failed" });
+      options?.onError?.(new Error("Validation failed"));
     });
     const threshold = createKpiThresholdFixture();
     renderWithProviders(
@@ -55,7 +55,7 @@ describe("ThresholdEditor", () => {
     fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
 
     await waitFor(() => {
-      expect(screen.getByText("Validation failed")).toBeInTheDocument();
+      expect(screen.getByText("Failed to save")).toBeInTheDocument();
     });
   });
 });

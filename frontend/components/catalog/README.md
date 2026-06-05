@@ -20,7 +20,7 @@ Types: `ProductMetric`, `KpiThreshold`, `HealthLevel` from `@/lib/stores/analyti
 
 ## Notes
 
-- Threshold saves go through `updateThreshold` in `app/actions.ts`.
+- Threshold saves go through `PATCH /api/catalog/[productId]/threshold` via `@/hooks/stores/analytics/catalog`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useUpdateIncidentStatus } from "@/hooks/incidents";
+import { useUpdateIncidentStatus } from "@/hooks/stores/incidents";
 import { INCIDENT_STATUSES, type Incident } from "@/types/incidents";
 
 function timeAgo(dateStr: string) {

@@ -50,5 +50,5 @@ Supabase starts with trimmed services (`--exclude studio,imgproxy,mailpit,edge-r
 | `auth`, `catalog`, `incidents` | Core flows, threshold save persistence |
 | `incident-detail` | Approve low-risk → monitoring; deterministic fixtures via `reset-main-incident.ts` |
 | `orders` | Orders feed start control |
-| `onboarding` | Seeded product banner; mocked upload → learn → report |
+| `onboarding` | Signup-provisioned store; mocked learn → report |
 | `replay` | ReplayControl advance |

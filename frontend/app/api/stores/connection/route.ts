@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { StoreConnections } from "@/lib/stores";
 import { createClient } from "@/lib/supabase/server";
@@ -17,14 +18,15 @@ export async function GET() {
 
   const org = await tryRequireOrganizationId(supabase);
   if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+    logApiError("api/stores/connection", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
   }
 
   try {
     const connection = await new StoreConnections().get(supabase, org.organizationId);
     return NextResponse.json({ connection });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load store connection";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/stores/connection", err);
+    return apiErrorResponse(err);
   }
 }

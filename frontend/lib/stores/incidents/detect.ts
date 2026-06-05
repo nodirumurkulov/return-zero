@@ -11,7 +11,7 @@ import {
   confidenceInterval,
   zScore,
   type Confidence,
-} from "./anomaly";
+} from "@/lib/stores/analytics/metrics/spc";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank, zSeverityBoost } from "./severity";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 

@@ -8,6 +8,7 @@ import { OrderRow } from "@/components/orders/OrderRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAdvanceReplay, useReplayOrders } from "@/hooks/stores/analytics/replay";
 import type { OrderFeedItem } from "@/types/orders";
 
 function LiveStat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
@@ -63,6 +64,8 @@ export function OrdersFeed({
   initialOrders: OrderFeedItem[];
 }) {
   const router = useRouter();
+  const { mutateAsync: advanceReplayMutate } = useAdvanceReplay();
+  const fetchReplayOrders = useReplayOrders();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(8);
@@ -94,11 +97,7 @@ export function OrdersFeed({
     if (fetchingRef.current || atEndRef.current) return [];
     fetchingRef.current = true;
     try {
-      const res = await fetch(
-        `/api/stores/analytics/replay/orders?after=${encodeURIComponent(playheadRef.current)}&limit=${PAGE}`,
-      );
-      if (!res.ok) return [];
-      const body = (await res.json()) as { orders: OrderFeedItem[] };
+      const body = await fetchReplayOrders({ after: playheadRef.current, limit: PAGE });
       const fresh = body.orders.filter((o) => !seenRef.current.has(o.order_id));
       fresh.forEach((o) => seenRef.current.add(o.order_id));
       if (fresh.length === 0) atEndRef.current = true;
@@ -106,7 +105,7 @@ export function OrdersFeed({
     } finally {
       fetchingRef.current = false;
     }
-  }, []);
+  }, [fetchReplayOrders]);
 
   // Day-boundary checkpoint: advance the replay clock and surface new incidents.
   const runCheckpoint = useCallback(
@@ -114,18 +113,11 @@ export function OrdersFeed({
       lockRef.current = true;
       setBusy(true);
       try {
-        const res = await fetch("/api/stores/analytics/replay", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ advance_days: advanceDays }),
-        });
-        const body = (await res.json()) as {
-          cursor?: string;
-          at_end?: boolean;
-          breaches?: { created: { title: string; severity: string }[] };
-          forecast?: { created: { title: string; severity: string }[] };
-        };
-        const incidents = [...(body.breaches?.created ?? []), ...(body.forecast?.created ?? [])];
+        const body = await advanceReplayMutate({ advanceDays });
+        const incidents = [
+          ...(body.breaches?.created ?? []),
+          ...(body.forecast?.created ?? []),
+        ];
         const cursor = body.cursor ?? checkpointDayRef.current;
         checkpointDayRef.current = cursor;
         setClock(cursor);
@@ -138,7 +130,7 @@ export function OrdersFeed({
         setBusy(false);
       }
     },
-    [prepend, router],
+    [prepend, router, advanceReplayMutate],
   );
 
   const resetFeedState = useCallback(() => {
@@ -153,15 +145,11 @@ export function OrdersFeed({
 
   // Rewind the replay clock to the start and reload the buffer.
   const align = useCallback(async () => {
-    await fetch("/api/stores/analytics/replay", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reset: true }),
-    });
+    await advanceReplayMutate({ reset: true });
     resetFeedState();
     bufferRef.current = await fetchMore();
     alignedRef.current = true;
-  }, [fetchMore, resetFeedState]);
+  }, [fetchMore, resetFeedState, advanceReplayMutate]);
 
   const ensureAligned = useCallback(async () => {
     if (!alignedRef.current) await align();

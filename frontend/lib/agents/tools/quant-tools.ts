@@ -12,7 +12,7 @@ import {
   confidenceFromN,
   confidenceInterval,
   zScore,
-} from "@/lib/stores/incidents/anomaly";
+} from "@/lib/stores/analytics/metrics/spc";
 import type { AgentSupabase } from "../types";
 import { fetchForecastContext } from "./forecasting-tools";
 import { fetchMarketingContext } from "./marketing-tools";

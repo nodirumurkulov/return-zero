@@ -1,6 +1,6 @@
 # Scripts
 
-Bun CLI utilities to bootstrap the demo org and validate the database. Store data is loaded by users via onboarding connect (`POST /api/onboarding/connect`). Same package as the app — reads Supabase env from `process.env` (or `.env.local` when Bun loads it locally).
+Bun CLI utilities to bootstrap the demo org and validate the database. New signups auto-provision the Pretty Fly demo store at account creation; `seed.ts` creates org + demo user only. Load store fixtures for E2E via `demo-fixtures.ts` or sign up through the app.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ No separate `scripts/` package at repo root; `createClient()` from `@supabase/su
 
 ## Notes
 
-- Validators need store data loaded (onboarding connect or E2E `demo-fixtures`); CI does not run these.
+- Validators need store data loaded (signup provisioning, E2E `demo-fixtures`, or `/onboarding` learn flow); CI does not run these.
 
 **Agents:** [../AGENTS.md](../AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
+
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { learnBaselines } from "@/lib/stores/analytics/learn/baselines";
+import { seedBusinessProfileFromStore } from "@/lib/stores/analytics/learn/business-profile";
 import { buildBusinessReport } from "@/lib/stores/analytics/learn/report";
 import { learnBodySchema } from "@/lib/stores/analytics/learn/schemas";
 import { createReplay } from "@/lib/stores/analytics/replay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// BYOD Phase 2 — after upload, learn the store's baselines (knowledge base) and
-// build the business report. Heavy read pass over the full history, so allow time.
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
@@ -32,18 +33,20 @@ export async function POST(req: NextRequest) {
 
   const org = await tryRequireOrganizationId(auth);
   if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+    logApiError("api/learn", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
   }
   const { organizationId } = org;
 
   const supabase = createAdminClient();
   try {
+    await seedBusinessProfileFromStore(supabase, organizationId);
     const learn = await learnBaselines(supabase, organizationId);
     const report = await buildBusinessReport(supabase, organizationId);
     const { cursor: replayCursor } = await createReplay(supabase).reset(organizationId);
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "learn failed";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    logApiError("api/learn", err);
+    return apiErrorResponse(err);
   }
 }

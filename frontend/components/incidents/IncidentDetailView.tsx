@@ -17,7 +17,7 @@ import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useTriggerInvestigation } from "@/hooks/agents";
-import { getIncidentDetailClientQueryOptions } from "@/hooks/incidents";
+import { getIncidentDetailClientQueryOptions } from "@/hooks/stores/incidents";
 
 function IncidentDetailSkeleton() {
   return (

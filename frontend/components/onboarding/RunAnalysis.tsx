@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { useRunLearn } from "@/hooks/onboarding";
+import { useRunLearn } from "@/hooks/stores/learn";
 
 export function RunAnalysis({ label = "Run analysis" }: { label?: string }) {
   const router = useRouter();

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { ShopifyStore } from "@/lib/stores";
 import {
@@ -23,7 +24,8 @@ export async function POST() {
 
   const org = await tryRequireOrganizationId(auth);
   if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+    logApiError("api/stores/connect/shopify", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
   }
 
   const supabase = createAdminClient();
@@ -35,8 +37,9 @@ export async function POST() {
       : connectPartialResponseSchema.parse({ success: false, results });
     return NextResponse.json(body, { status: success ? 200 : 207 });
   } catch (err) {
+    logApiError("api/stores/connect/shopify", err);
     const message = err instanceof Error ? err.message : "Connect failed";
     const status = message.includes("Shopify") ? 501 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return apiErrorResponse(err, status);
   }
 }

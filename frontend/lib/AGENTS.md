@@ -30,6 +30,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `stores/analytics/forecast/` | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
 | `stores/analytics/search/` | `@/lib/stores/analytics/search` | Global search targets |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
+| `api/` | `@/lib/api/*` | Client HTTP boundary (`@better-fetch/fetch`); see [api/AGENTS.md](api/AGENTS.md) |
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
@@ -39,7 +40,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `stores/connect/` | `@/lib/stores/connect` | Connect Zod schemas + store connectors |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
-Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client TanStack hooks live under `frontend/hooks/<domain>/`; server query options may live in `lib/stores/<domain>/api/`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
+Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client TanStack hooks live under `frontend/hooks/stores/<domain>/` and call `@/lib/api/*`; server query options live in `hooks/stores/<domain>/query-options.server.ts`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
 
 ### Multi-tenant organization context
 

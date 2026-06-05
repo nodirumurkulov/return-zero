@@ -36,3 +36,32 @@ export const recoverBodySchema = z.object({
 });
 
 export type RecoverBody = z.infer<typeof recoverBodySchema>;
+
+export const patchIncidentStatusBodySchema = z
+  .object({
+    status: z.enum(INCIDENT_STATUSES),
+    resolved_at: z.string().nullable().optional(),
+  })
+  .strict();
+
+export type PatchIncidentStatusBody = z.infer<typeof patchIncidentStatusBodySchema>;
+
+export const approveIncidentResponseSchema = z
+  .object({
+    success: z.literal(true),
+    approved: z.number(),
+  })
+  .strict();
+
+export type ApproveIncidentResponse = z.infer<typeof approveIncidentResponseSchema>;
+
+const incidentRowSchema = z.record(z.string(), z.unknown());
+
+export const incidentDetailSchema = z
+  .object({
+    incident: incidentRowSchema,
+    findings: z.array(incidentRowSchema),
+    actions: z.array(incidentRowSchema),
+    timeline: z.array(incidentRowSchema),
+  })
+  .strict();

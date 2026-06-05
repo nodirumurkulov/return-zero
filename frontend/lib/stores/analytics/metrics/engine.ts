@@ -54,8 +54,6 @@ export interface EngineRun {
   metrics: Record<string, MetricValue[]>;
 }
 
-type MetricDefinitionRow = Database["public"]["Tables"]["metric_definitions"]["Row"];
-
 /**
  * Core engine pass — evaluates the enabled metric_definitions against source
  * facts (applying per-product threshold overrides) and returns the metrics PLUS
@@ -83,27 +81,7 @@ export async function computeMetricsDetailed(
   if (defsErr) throw new Error(`load metric_definitions: ${defsErr.message}`);
   if (ovrErr) throw new Error(`load product_kpi_thresholds: ${ovrErr.message}`);
 
-  const defs: MetricDefinition[] = (defsData ?? []).map((row: MetricDefinitionRow) => ({
-    id: row.id,
-    metric_key: row.metric_key,
-    display_name: row.display_name,
-    description: row.description,
-    unit: row.unit,
-    numerator_source: row.numerator_source,
-    numerator_field: row.numerator_field,
-    denominator_source: row.denominator_source,
-    denominator_field: row.denominator_field,
-    operation: row.operation,
-    window_days: row.window_days,
-    direction: row.direction,
-    default_threshold: row.default_threshold,
-    severity: row.severity,
-    enabled: row.enabled,
-    sort_order: row.sort_order,
-    impact_source: row.impact_source,
-    impact_field: row.impact_field,
-    impact_label: row.impact_label,
-  }));
+  const defs: MetricDefinition[] = defsData ?? [];
 
   const overrides = new Map<string, ThresholdOverride>();
   for (const o of ovrData ?? []) {
