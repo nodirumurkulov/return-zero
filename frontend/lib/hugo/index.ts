@@ -49,8 +49,12 @@ function disambiguation(action: string, candidates: Incident[]): string {
   ].join("\n");
 }
 
-function needsThreadHistory(prompt: string): boolean {
-  return /\b(it|that|this|first|second|third|fourth|fifth|one|same)\b/i.test(prompt);
+export function needsThreadHistory(prompt: string): boolean {
+  const clean = prompt.trim();
+  if (/\b(first|second|third|fourth|fifth)\b/i.test(clean)) return true;
+
+  const wordCount = clean.split(/\s+/).filter(Boolean).length;
+  return wordCount <= 8 && /\b(it|that|this|one|same)\b/i.test(clean);
 }
 
 function isHistoryScopeError(error: string): boolean {
