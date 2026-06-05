@@ -1,18 +1,17 @@
 import { OrdersFeed } from "@/components/orders/OrdersFeed";
-import { dataEndDate, REPLAY_START, streamStartDate } from "@/lib/detection/replay";
+import { REPLAY_START, streamEndDate, streamStartDate } from "@/lib/detection/replay";
 import { listIncomingOrders } from "@/lib/orders/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// The orders stream begins at the live-window start derived from the uploaded
-// data (last 3 months); Start aligns the replay clock to the same point so
-// detection runs as orders arrive.
+// The stream begins at the history end (the live data's last day) and runs forward
+// to the staging end as orders are ingested. Start drives the ingest + detection.
 export default async function OrdersPage() {
   const supabase = await createClient();
   const [startDate, dataEnd] = await Promise.all([
     streamStartDate(supabase),
-    dataEndDate(supabase),
+    streamEndDate(supabase),
   ]);
   const start = startDate ?? REPLAY_START;
   const initialOrders = await listIncomingOrders(supabase, { after: `${start}T00:00:00Z`, limit: 30 });

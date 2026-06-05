@@ -34,24 +34,12 @@ type Entry = OrderEntry | MarkerEntry;
 
 const TICK_MS = 450;
 const MAX_ENTRIES = 300;
-const PAGE = 60;
+const PAGE = 80;
 const SPEEDS = [
   { label: "1×", value: 1 },
   { label: "8×", value: 8 },
   { label: "Turbo", value: 25 },
 ];
-
-const dayOf = (iso: string): string => iso.slice(0, 10);
-
-function addDays(day: string, n: number): string {
-  const d = new Date(`${day}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-function daysBetween(from: string, to: string): number {
-  const ms = new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime();
-  return Math.max(1, Math.round(ms / 86_400_000));
-}
 
 export function OrdersFeed({
   startDate,
@@ -72,11 +60,11 @@ export function OrdersFeed({
   const bufferRef = useRef<OrderFeedItem[]>([...initialOrders]);
   const seenRef = useRef<Set<string>>(new Set(initialOrders.map((o) => o.order_id)));
   const playheadRef = useRef<string>(`${startDate}T00:00:00Z`);
-  const checkpointDayRef = useRef<string>(startDate);
-  const fetchingRef = useRef(false);
-  const lockRef = useRef(false); // a checkpoint is in flight
+  const cursorRef = useRef<string>(startDate);
+  const lockRef = useRef(false); // an advance/ingest is in flight
   const atEndRef = useRef(false);
   const alignedRef = useRef(false);
+  const markerSeqRef = useRef(0);
 
   const speedRef = useRef(speed);
   const playingRef = useRef(playing);
@@ -89,77 +77,92 @@ export function OrdersFeed({
     setEntries((prev) => [...next, ...prev].slice(0, MAX_ENTRIES));
   }, []);
 
-  // Fetch the next page of orders after the playhead, de-duped against seen.
-  const fetchMore = useCallback(async (): Promise<OrderFeedItem[]> => {
-    if (fetchingRef.current || atEndRef.current) return [];
-    fetchingRef.current = true;
-    try {
-      const res = await fetch(`/api/orders?after=${encodeURIComponent(playheadRef.current)}&limit=${PAGE}`);
-      if (!res.ok) return [];
-      const body = (await res.json()) as { orders: OrderFeedItem[] };
-      const fresh = body.orders.filter((o) => !seenRef.current.has(o.order_id));
-      fresh.forEach((o) => seenRef.current.add(o.order_id));
-      if (fresh.length === 0) atEndRef.current = true;
-      return fresh;
-    } finally {
-      fetchingRef.current = false;
-    }
+  // Orders already ingested into the live tables, after the playhead.
+  const fetchAfter = useCallback(async (): Promise<OrderFeedItem[]> => {
+    const res = await fetch(`/api/orders?after=${encodeURIComponent(playheadRef.current)}&limit=${PAGE}`);
+    if (!res.ok) return [];
+    const body = (await res.json()) as { orders: OrderFeedItem[] };
+    const fresh = body.orders.filter((o) => !seenRef.current.has(o.order_id));
+    fresh.forEach((o) => seenRef.current.add(o.order_id));
+    return fresh;
   }, []);
 
-  // Day-boundary checkpoint: advance the replay clock and surface new incidents.
-  const runCheckpoint = useCallback(
-    async (advanceDays: number) => {
-      lockRef.current = true;
-      setBusy(true);
-      try {
-        const res = await fetch("/api/replay", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ advance_days: advanceDays }),
-        });
-        const body = (await res.json()) as {
-          cursor?: string;
-          at_end?: boolean;
-          breaches?: { created: { title: string; severity: string }[] };
-          forecast?: { created: { title: string; severity: string }[] };
-        };
-        const incidents = [...(body.breaches?.created ?? []), ...(body.forecast?.created ?? [])];
-        const cursor = body.cursor ?? checkpointDayRef.current;
-        checkpointDayRef.current = cursor;
-        setClock(cursor);
-        if (incidents.length > 0) {
-          prepend([{ kind: "marker", id: `m-${cursor}-${incidents.length}`, cursor, incidents }]);
-          router.refresh();
-        }
-      } finally {
-        lockRef.current = false;
-        setBusy(false);
+  // Advance the clock: ingest the next day(s) of staging rows + run detection.
+  const step = useCallback(
+    async (days: number): Promise<{ atEnd: boolean }> => {
+      const res = await fetch("/api/replay", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ advance_days: days }),
+      });
+      const body = (await res.json()) as {
+        cursor?: string;
+        at_end?: boolean;
+        breaches?: { created: { title: string; severity: string }[] };
+        forecast?: { created: { title: string; severity: string }[] };
+      };
+      const cursor = body.cursor ?? cursorRef.current;
+      cursorRef.current = cursor;
+      setClock(cursor);
+      const incidents = [...(body.breaches?.created ?? []), ...(body.forecast?.created ?? [])];
+      if (incidents.length > 0) {
+        prepend([{ kind: "marker", id: `m-${cursor}-${markerSeqRef.current++}`, cursor, incidents }]);
+        router.refresh();
       }
+      return { atEnd: Boolean(body.at_end) };
     },
     [prepend, router],
   );
+
+  // Keep the buffer fed: reveal already-ingested orders, else ingest the next day.
+  const refill = useCallback(async () => {
+    if (lockRef.current || atEndRef.current) return;
+    lockRef.current = true;
+    setBusy(true);
+    try {
+      const first = await fetchAfter();
+      if (first.length > 0) {
+        bufferRef.current = [...bufferRef.current, ...first];
+        return;
+      }
+      const { atEnd } = await step(1);
+      const second = await fetchAfter();
+      if (second.length > 0) {
+        bufferRef.current = [...bufferRef.current, ...second];
+        return;
+      }
+      if (atEnd) atEndRef.current = true;
+    } finally {
+      lockRef.current = false;
+      setBusy(false);
+    }
+  }, [fetchAfter, step]);
 
   const resetFeedState = useCallback(() => {
     setEntries([]);
     seenRef.current = new Set();
     bufferRef.current = [];
     playheadRef.current = `${startDate}T00:00:00Z`;
-    checkpointDayRef.current = startDate;
+    cursorRef.current = startDate;
     atEndRef.current = false;
     setClock(startDate);
   }, [startDate]);
 
-  // Rewind the replay clock to the start and reload the buffer.
+  // Rewind: remove ingested future rows + stream incidents, seat the cursor at start.
   const align = useCallback(async () => {
-    await fetch("/api/replay", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reset: true }),
-    });
-    resetFeedState();
-    bufferRef.current = await fetchMore();
-    alignedRef.current = true;
-  }, [fetchMore, resetFeedState]);
+    setBusy(true);
+    try {
+      await fetch("/api/replay", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reset: true }),
+      });
+      resetFeedState();
+      alignedRef.current = true;
+    } finally {
+      setBusy(false);
+    }
+  }, [resetFeedState]);
 
   const ensureAligned = useCallback(async () => {
     if (!alignedRef.current) await align();
@@ -170,70 +173,47 @@ export function OrdersFeed({
       setPlaying(false);
       return;
     }
-    setBusy(true);
-    try {
-      await ensureAligned();
-    } finally {
-      setBusy(false);
-    }
+    await ensureAligned();
     setPlaying(true);
   }, [playing, ensureAligned]);
 
   const reset = useCallback(async () => {
     setPlaying(false);
-    setBusy(true);
-    try {
-      await align();
-    } finally {
-      setBusy(false);
-    }
+    await align();
   }, [align]);
 
-  // Fast-forward by whole days/weeks: advance the clock once and reveal a sample.
+  // Fast-forward: bulk-advance the clock (one ingest+detect), then buffer a page.
   const jump = useCallback(
     async (days: number) => {
       if (lockRef.current) return;
       setPlaying(false);
+      await ensureAligned();
+      lockRef.current = true;
       setBusy(true);
       try {
-        await ensureAligned();
-        const target = addDays(checkpointDayRef.current, days);
-        playheadRef.current = `${target}T00:00:00Z`;
-        bufferRef.current = [];
-        atEndRef.current = false;
-        await runCheckpoint(days);
-        const fresh = await fetchMore();
-        prepend(
-          fresh
-            .slice(0, 12)
-            .reverse()
-            .map((o): Entry => ({ kind: "order", order: o })),
-        );
-        bufferRef.current = fresh.slice(12);
+        const { atEnd } = await step(days);
+        if (atEnd) atEndRef.current = true;
+        const fresh = await fetchAfter();
+        bufferRef.current = [...bufferRef.current, ...fresh];
       } finally {
+        lockRef.current = false;
         setBusy(false);
       }
     },
-    [ensureAligned, runCheckpoint, fetchMore, prepend],
+    [ensureAligned, step, fetchAfter],
   );
 
-  // The ticker: reveal orders one batch per tick, checkpoint on day boundaries.
+  // The ticker: reveal buffered orders; refill (fetch or ingest) when it runs low.
   useEffect(() => {
     const interval = setInterval(() => {
       if (!playingRef.current || lockRef.current) return;
-
-      if (bufferRef.current.length < 10 && !fetchingRef.current && !atEndRef.current) {
-        void fetchMore().then((fresh) => {
-          bufferRef.current = [...bufferRef.current, ...fresh];
-        });
-      }
+      if (bufferRef.current.length < 10 && !atEndRef.current) void refill();
 
       const take = Math.min(speedRef.current, bufferRef.current.length);
       if (take === 0) {
         if (atEndRef.current) setPlaying(false);
         return;
       }
-
       const revealed = bufferRef.current.slice(0, take);
       bufferRef.current = bufferRef.current.slice(take);
       playheadRef.current = revealed[revealed.length - 1].created_at;
@@ -243,14 +223,9 @@ export function OrdersFeed({
           .reverse()
           .map((o): Entry => ({ kind: "order", order: o })),
       );
-
-      const newDay = dayOf(playheadRef.current);
-      if (newDay > checkpointDayRef.current) {
-        void runCheckpoint(daysBetween(checkpointDayRef.current, newDay));
-      }
     }, TICK_MS);
     return () => clearInterval(interval);
-  }, [fetchMore, prepend, runCheckpoint]);
+  }, [refill, prepend]);
 
   const primaryLabel = playing ? "Pause" : entries.length > 0 ? "Resume" : "Start";
   const ordersShown = entries.reduce((n, e) => n + (e.kind === "order" ? 1 : 0), 0);
@@ -279,10 +254,10 @@ export function OrdersFeed({
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Replaying from {startDate}
+            Streaming from {startDate}
             {dataEnd ? ` → ${dataEnd}` : ""} · clock{" "}
             <span className="font-medium text-foreground">{clock}</span>
-            {busy ? " · working…" : ""}
+            {busy ? " · ingesting…" : ""}
           </p>
         </div>
 
@@ -318,13 +293,13 @@ export function OrdersFeed({
       {/* Live stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <LiveStat
-          label="Orders shown"
+          label="Orders streamed"
           value={ordersShown.toLocaleString()}
           sub={`${incidentsOpened} incident${incidentsOpened === 1 ? "" : "s"} caught`}
         />
-        <LiveStat label="Revenue shown" value={`£${Math.round(revenueShown).toLocaleString()}`} accent="text-sev-resolved" />
+        <LiveStat label="Revenue streamed" value={`£${Math.round(revenueShown).toLocaleString()}`} accent="text-sev-resolved" />
         <LiveStat label="Avg order value" value={`£${aov.toLocaleString()}`} />
-        <LiveStat label="Replay clock" value={clock} sub={dataEnd ? `ends ${dataEnd}` : undefined} />
+        <LiveStat label="Clock" value={clock} sub={dataEnd ? `ends ${dataEnd}` : undefined} />
       </div>
 
       {/* Stream */}
