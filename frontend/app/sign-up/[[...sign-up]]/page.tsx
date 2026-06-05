@@ -15,7 +15,7 @@ export default function SignUpPage() {
         <ThemeToggle />
       </div>
       <BrandLogo variant="auth" />
-      <AuthForm title="Create account" action={signUp} />
+      <AuthForm title="Create account" action={signUp} passwordAutoComplete="new-password" />
       <OAuthButtons />
       <div className="flex w-full max-w-sm flex-col gap-3">
         <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
