@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { resolveDemoCredentials } from "@/lib/auth/demo";
 import { safeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -55,14 +56,13 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signInAsDemo() {
-  const email = process.env.DEMO_USER_EMAIL;
-  const password = process.env.DEMO_USER_PASSWORD;
-  if (!email || !password) {
+  const credentials = resolveDemoCredentials();
+  if (!credentials) {
     redirect("/sign-in?error=demo");
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword(credentials);
   if (error) {
     redirect("/sign-in?error=demo");
   }
