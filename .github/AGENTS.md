@@ -7,7 +7,8 @@ CI configuration. **Parent:** [../AGENTS.md](../AGENTS.md) · **Humans:** [READM
 [workflows/ci.yml](workflows/ci.yml) on every PR and `main` push:
 
 - **Parallel:** `lint`, `typecheck`, `test` (Vitest unit + `test:integration`), and `build` jobs (shared Bun cache; build caches `frontend/.next/cache`)
-- **E2E:** after parallel jobs — Supabase start, `seed`, Playwright against production build (`CI=true`, 1 worker)
+- **`integration-db`:** after `build` — Supabase start, `db:lint`, `db:types:check`, `db:reset`, `db:test:rls`, `validate`
+- **E2E:** after `integration-db` — Supabase start, `seed`, Playwright against production build (`CI=true`, 1 worker)
 - **Concurrency:** cancels superseded runs on the same branch
 
 ```bash
@@ -25,7 +26,7 @@ Supabase keys are exported to `$GITHUB_ENV` in the E2E job (not `.env.local`).
 
 - Do not disable or weaken CI checks without explicit user request.
 - Do not add `continue-on-error` to lint/typecheck/test/build/e2e steps.
-- `validate` and RLS tests are **local-only** (seeded Supabase); run before schema/metrics PRs.
+- `validate`, RLS tests, `db:lint`, and `db:types:check` run in the **`integration-db`** job.
 
 ## Before pushing
 

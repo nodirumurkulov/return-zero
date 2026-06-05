@@ -36,7 +36,7 @@ No separate `scripts/` package at repo root; `createClient()` from `@supabase/su
 
 ## Notes
 
-- Validators need a **real** seeded project; CI does not run these.
+- Validators need a **real** seeded project; CI runs `validate` in the `integration-db` job after `db:reset`.
 - Batched writes in `seed.ts` use inline `Array.from` slices (500 rows per request).
 
 **Agents:** [../AGENTS.md](../AGENTS.md)  

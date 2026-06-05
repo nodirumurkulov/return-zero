@@ -20,10 +20,13 @@ export function createIncidentFixture(overrides?: Partial<Incident>): Incident {
     root_cause_confidence: 85,
     created_at: new Date(Date.now() - 3600000).toISOString(),
     resolved_at: null,
+    investigation_started_at: null,
+    fix_proposed_at: null,
+    monitoring_started_at: null,
     monitoring_kpi: null,
     baseline_value: null,
     target_value: null,
-    recovery_pct: null,
+    recovery_pct: 0,
     ...overrides,
   };
 }

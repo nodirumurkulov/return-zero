@@ -45,10 +45,10 @@ cp .env.example frontend/.env.local   # fill Supabase (URL, anon, service role),
 cd frontend && bun install
 ```
 
-Apply DB migrations (Supabase CLI) before seeding. See [frontend/supabase/](frontend/supabase/) and [frontend/scripts/README.md](frontend/scripts/README.md).
+Apply DB migrations and seed via `db:reset`. See [frontend/supabase/](frontend/supabase/) and [frontend/scripts/README.md](frontend/scripts/README.md).
 
 ```bash
-cd frontend && bun run seed
+cd frontend/supabase && supabase start && cd .. && bun run db:reset
 ```
 
 ## Development workflow
@@ -65,8 +65,8 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 ## Testing instructions
 
 - **Unit:** `cd frontend && bun run test` (Vitest + React Testing Library; co-located `*.test.tsx`).
-- **E2E:** `supabase start`, then `bun run seed`, `bun run build`, `CI=true bun run e2e`. See [frontend/e2e/README.md](frontend/e2e/README.md).
-- **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — parallel lint/typecheck/test/build → Supabase → seed → Playwright.
+- **E2E:** `supabase start`, then `bun run db:reset`, `bun run build`, `CI=true bun run e2e`. See [frontend/e2e/README.md](frontend/e2e/README.md).
+- **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — parallel lint/typecheck/test/build → `integration-db` (lint, types, RLS, validate) → Playwright.
 - After schema or metrics changes: `cd frontend && bun run validate` against a seeded Supabase project.
 - RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.

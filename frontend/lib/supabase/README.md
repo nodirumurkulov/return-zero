@@ -16,7 +16,9 @@ No browser client file yet — add `client.ts` with `createBrowserClient` only w
 `database.types.ts` is generated from the live schema — **do not edit by hand**. Regenerate after migrations:
 
 ```bash
-cd frontend && supabase db reset && bun run db:types
+cd frontend && bun run db:reset && bun run db:types
+# CI / pre-PR: fail if committed types drift from schema
+bun run db:types:check
 ```
 
 Or against a remote project:

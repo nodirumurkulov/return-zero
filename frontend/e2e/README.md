@@ -21,7 +21,7 @@ cd frontend/supabase && supabase start && cd ..
 # Option A: .env.local (Bun/Next load it automatically)
 cp ../.env.example .env.local   # fill from `supabase status`
 # Option B: export vars in your shell from `supabase status -o env`
-bun run db:reset && bun run seed && bun run build
+bun run db:reset && bun run build
 bun run e2e:install && CI=true bun run e2e
 ```
 

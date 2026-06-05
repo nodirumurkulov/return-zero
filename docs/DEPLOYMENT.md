@@ -24,7 +24,14 @@ Directory**.
 5. Add the environment variables in §2 (Production **and** Preview).
 6. In **Supabase → Authentication → URL configuration**, add your Vercel domain(s) to
    redirect URLs (production domain and `*.vercel.app` previews if needed).
-7. **Deploy.**
+7. **Apply database migrations** to the linked Supabase project (from `frontend/supabase/`):
+
+   ```bash
+   supabase link          # once per machine
+   supabase db push       # apply pending migrations to remote
+   ```
+
+8. **Deploy.**
 
 ---
 
@@ -98,4 +105,4 @@ For manual local testing without a secret, sign in normally and POST while `CRON
 | 401 on `/api/*` | Expected when unauthenticated. |
 | 503 on `/api/detect` in production | Set `CRON_SECRET` in Vercel env. |
 | Slack buttons rejected | `SLACK_SIGNING_SECRET` missing or mismatched. |
-| Empty incidents board | Run migrations + `bun run seed` against the Supabase project. |
+| Empty incidents board | Apply migrations (`supabase db push` from `frontend/supabase/`) then `bun run seed` against the Supabase project. |

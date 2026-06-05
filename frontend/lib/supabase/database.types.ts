@@ -1066,6 +1066,10 @@ export type Database = {
           support_count: number
         }[]
       }
+      reset_contract_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -7,7 +7,7 @@ Next.js 16 App Router application for Resolve: catalog KPIs, incident workflow, 
 - Bun 1.3+
 - `frontend/.env.local` from repo [`.env.example`](../.env.example)
 
-After `supabase start`, copy Supabase URL/keys from `supabase status` into `.env.local`, then also copy the **Demo login** block (`DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`) from `.env.example`. Run `bun run seed` to load Pretty Fly data and create the demo account.
+After `supabase start`, copy Supabase URL/keys from `supabase status` into `.env.local`, then also copy the **Demo login** block (`DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`) from `.env.example`. Run `bun run db:reset` to apply migrations and load Pretty Fly data (includes demo account via Bun seed).
 
 ## Usage
 
@@ -24,9 +24,10 @@ bun run db:reset       # requires supabase start
 | `dev` | Local dev server |
 | `check` | ESLint (`--max-warnings 0`) + `tsc` |
 | `build` | Production build |
-| `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI — migrations and RLS tests |
-| `seed` | Load CSVs, demo incidents, and demo auth user |
-| `db:types` | Regenerate `lib/supabase/database.types.ts` |
+| `db:reset` | Replay migrations + Bun seed (CSVs, demo incidents, demo auth user) |
+| `db:lint` / `db:test:rls` | Supabase CLI — migration lint and RLS tests |
+| `seed` | Bun seed only (also runs as part of `db:reset`) |
+| `db:types` / `db:types:check` | Regenerate / verify `lib/supabase/database.types.ts` |
 
 ## What's here
 

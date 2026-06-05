@@ -24,8 +24,9 @@ bun run db:lint
 | `dev` | Local server |
 | `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest + API integration |
 | `build` | Production build |
-| `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
-| `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
+| `db:reset` | Replay migrations + Bun seed ([supabase/README.md](supabase/README.md)) |
+| `db:lint` / `db:test:rls` / `db:types:check` | Migration lint, RLS tests, types drift check |
+| `seed` | Bun seed only (also part of `db:reset`) |
 | `validate` | Row counts + metrics RPC checks |
 | `test` / `test:watch` | Vitest (components + `lib/**/*.test.ts`) |
 | `test:lib` | Vitest — `lib/**` only (fast iteration) |
@@ -56,11 +57,11 @@ Test pyramid (fast → slow):
 | Unit — `lib/` | `bun run test:lib` | Pure domain logic (detection, metrics, approve, slack, cron-auth) |
 | Unit — UI | `bun run test` | Co-located `components/**/*.test.tsx` + all Vitest includes |
 | API integration | `bun run test:integration` | Cron/auth + Zod on selected routes (mocked Supabase) |
-| DB integration | `bun run db:test:rls` + `bun run validate` | RLS SQL + seed validators (local only) |
+| DB integration | `bun run db:test:rls` + `bun run validate` | RLS SQL + seed validators (CI `integration-db` job) |
 | E2E | `CI=true bun run e2e` | Playwright against seeded Supabase + production build |
 
 - `bun run check` — lint, typecheck, unit tests, and API integration.
-- E2E path: `supabase start` → `seed` → `build` → `CI=true bun run e2e` (CI uses 1 worker for stability).
+- E2E path: `supabase start` → `db:reset` → `build` → `CI=true bun run e2e` (CI uses 1 worker for stability).
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

@@ -12,10 +12,13 @@ export type Incident = {
   root_cause_confidence: number | null;
   created_at: string;
   resolved_at: string | null;
+  investigation_started_at: string | null;
+  fix_proposed_at: string | null;
+  monitoring_started_at: string | null;
   monitoring_kpi: string | null;
   baseline_value: number | null;
   target_value: number | null;
-  recovery_pct: number | null;
+  recovery_pct: number;
 };
 
 export type IncidentRef = {

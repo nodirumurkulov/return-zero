@@ -31,10 +31,13 @@ function incident(overrides: Partial<Incident>): Incident {
     root_cause_confidence: null,
     created_at: "2024-01-01T00:00:00Z",
     resolved_at: null,
+    investigation_started_at: null,
+    fix_proposed_at: null,
+    monitoring_started_at: null,
     monitoring_kpi: null,
     baseline_value: null,
     target_value: null,
-    recovery_pct: null,
+    recovery_pct: 0,
     ...overrides,
   };
 }
