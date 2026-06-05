@@ -12,7 +12,8 @@ export class IncidentDetailPage {
   }
 
   sectionHeading(name: string) {
-    return this.page.getByRole("heading", { name });
+    // Section labels in the Hugo design are styled <Label>s, not <h*> headings.
+    return this.page.getByText(name, { exact: true });
   }
 
   approveAllLowRiskButton() {

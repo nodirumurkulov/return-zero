@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AgentMonitor from "@/components/catalog/AgentMonitor";
 import { HealthBadge } from "@/components/catalog/HealthBadge";
 import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
@@ -74,7 +75,10 @@ export default async function ProductDetailPage(props: PageProps) {
         />
       </div>
 
-      <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AgentMonitor kpis={thresholdRows} />
+        <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
+      </div>
     </div>
   );
 }

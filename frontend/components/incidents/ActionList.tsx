@@ -12,23 +12,23 @@ import { useApproveActions } from "@/lib/incidents/hooks";
 import { cn } from "@/lib/utils";
 
 const impactColour: Record<string, string> = {
-  high: "text-green-400",
-  medium: "text-yellow-400",
-  low: "text-zinc-500",
+  high: "text-sev-resolved",
+  medium: "text-sev-monitor",
+  low: "text-muted-foreground",
 };
 
 const riskColour: Record<string, string> = {
-  high: "text-red-400",
-  medium: "text-yellow-400",
-  low: "text-green-400",
+  high: "text-sev-critical",
+  medium: "text-sev-monitor",
+  low: "text-sev-resolved",
 };
 
 const statusStyle: Record<string, string> = {
-  proposed: "bg-zinc-800 text-zinc-400 border-zinc-700",
-  approved: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  deployed: "bg-green-500/20 text-green-400 border-green-500/30",
-  rejected: "bg-red-500/20 text-red-400 border-red-500/30",
-  monitoring: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  proposed: "bg-muted text-muted-foreground border-border",
+  approved: "bg-primary-subtle text-primary border-primary/20",
+  deployed: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",
+  rejected: "bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
+  monitoring: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
 };
 
 export default function ActionList({
@@ -105,7 +105,7 @@ export default function ActionList({
 
       {message ? (
         <Alert
-          className="border-green-500/20 bg-green-500/10 text-green-400"
+          className="border-sev-resolvedBd bg-sev-resolvedBg text-sev-resolved"
           role="status"
           aria-live="polite"
         >
@@ -127,7 +127,7 @@ export default function ActionList({
                     {action.auto_deploy ? (
                       <Badge
                         variant="outline"
-                        className="text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30"
+                        className="border-primary/20 bg-primary-subtle text-[10px] text-primary"
                       >
                         Auto-deploy
                       </Badge>

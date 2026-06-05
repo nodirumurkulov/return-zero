@@ -24,6 +24,8 @@ const config: Config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
+          subtle: "hsl(var(--primary-subtle))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -43,7 +45,10 @@ const config: Config = {
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+        ring: {
+          DEFAULT: "hsl(var(--ring))",
+          primary: "hsl(var(--primary-ring))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -54,9 +59,25 @@ const config: Config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Severity tints — flat camelCase keys so prototype classes resolve
+        // exactly: text-sev-critical / bg-sev-criticalBg / border-sev-criticalBd.
         sev: {
           critical: "hsl(var(--sev-critical))",
+          criticalBg: "#fef2f2",
+          criticalBd: "#fecaca",
           high: "hsl(var(--sev-high))",
+          highBg: "#fff7ed",
+          highBd: "#fed7aa",
+          monitor: "hsl(var(--sev-medium))",
+          monitorBg: "#fffbeb",
+          monitorBd: "#fde68a",
+          resolved: "hsl(var(--sev-low))",
+          resolvedBg: "#f0fdf4",
+          resolvedBd: "#bbf7d0",
+          idle: "hsl(var(--sev-idle))",
+          idleBg: "#f4f4f5",
+          idleBd: "#e4e4e7",
+          // legacy aliases (untouched components)
           medium: "hsl(var(--sev-medium))",
           low: "hsl(var(--sev-low))",
         },
@@ -68,6 +89,7 @@ const config: Config = {
       },
       boxShadow: {
         card: "var(--shadow-card)",
+        pop: "var(--shadow-pop)",
       },
     },
   },

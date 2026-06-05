@@ -20,9 +20,9 @@ export default function KpiCard({
 }: KpiCardProps) {
   const accentClass =
     accent === "danger"
-      ? "text-red-400"
+      ? "text-sev-critical"
       : accent === "success"
-        ? "text-green-400"
+        ? "text-sev-resolved"
         : "text-foreground";
 
   return (

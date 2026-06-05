@@ -19,8 +19,8 @@ test.describe("Incident detail", () => {
     await detail.goto(MAIN_INCIDENT_ID);
 
     await expect(page.getByRole("heading", { name: MAIN_INCIDENT_TITLE })).toBeVisible();
-    await expect(detail.sectionHeading("Agent Findings")).toBeVisible();
-    await expect(detail.sectionHeading("Proposed Actions")).toBeVisible();
+    await expect(detail.sectionHeading("Agent findings")).toBeVisible();
+    await expect(detail.sectionHeading("Recommended actions")).toBeVisible();
     await expect(page.getByText("Returns Agent")).toBeVisible();
   });
 
