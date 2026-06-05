@@ -1,5 +1,5 @@
 import { OrdersFeed } from "@/components/orders/OrdersFeed";
-import { REPLAY_START, streamEndDate, streamStartDate } from "@/lib/detection/replay";
+import { REPLAY_START, streamEndDate, streamStartDate } from "@/lib/detection/replay-clock";
 import { listIncomingOrders } from "@/lib/orders/queries";
 import { createClient } from "@/lib/supabase/server";
 

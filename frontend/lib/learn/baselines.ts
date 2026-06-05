@@ -10,7 +10,7 @@
 // product_kpi_thresholds in the engine's override shape.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { streamStartDate } from "@/lib/detection/replay";
+import { streamStartDate } from "@/lib/detection/replay-clock";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MonthlyPoint } from "@/lib/metrics/types";
 

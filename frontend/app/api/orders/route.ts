@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { streamEndDate } from "@/lib/detection/replay";
+import { streamEndDate } from "@/lib/detection/replay-clock";
 import { listIncomingOrders } from "@/lib/orders/queries";
 import { ordersQuerySchema } from "@/lib/orders/schemas";
 import { createClient } from "@/lib/supabase/server";
