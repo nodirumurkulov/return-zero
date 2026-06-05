@@ -1,12 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import type { IncidentRef } from "@/types/incidents";
+
 import {
-  incidentKeys,
   postApproveIncidentActions,
   type PostApproveIncidentActionsInput,
-} from "../api";
-import type { IncidentRef } from "../types";
+} from "./api";
+import { incidentKeys } from "./keys";
 
 export function useApproveActions(incident: IncidentRef) {
   const queryClient = useQueryClient();

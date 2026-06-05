@@ -2,7 +2,9 @@ import {
   onboardingConnectBodySchema,
   onboardingConnectResponseSchema,
 } from "@/lib/onboarding/api-schemas";
-import type { LoadResult, StorePlatform } from "@/lib/stores";
+import type { LoadResult } from "@/lib/stores/connect";
+
+export type StorePlatform = "mock_csv" | "shopify";
 
 export type PostConnectStoreInput = {
   readonly platform: StorePlatform;

@@ -15,7 +15,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getIncidentDetailClientQueryOptions } from "@/lib/stores/incidents/api";
+import { getIncidentDetailClientQueryOptions } from "@/hooks/incidents";
 
 function IncidentDetailSkeleton() {
   return (

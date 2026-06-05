@@ -4,7 +4,7 @@ import { Check, ShoppingBag, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
-import { useConnectStore, useRunLearn } from "@/lib/onboarding/hooks";
+import { useConnectStore, useRunLearn } from "@/hooks/onboarding";
 import { cn } from "@/lib/utils";
 
 type StoreConnectFormProps = {

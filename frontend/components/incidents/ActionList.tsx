@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
-import type { IncidentAction } from "@/lib/stores/incidents";
-import { useApproveActions } from "@/lib/stores/incidents/hooks";
+import { useApproveActions } from "@/hooks/incidents";
 import { cn } from "@/lib/utils";
+import type { IncidentAction } from "@/types/incidents";
 
 const impactColour: Record<string, string> = {
   high: "text-sev-resolved",

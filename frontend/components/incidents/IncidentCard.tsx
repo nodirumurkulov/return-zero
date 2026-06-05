@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { INCIDENT_STATUSES, type Incident } from "@/lib/stores/incidents";
-import { useUpdateIncidentStatus } from "@/lib/stores/incidents/hooks";
+import { useUpdateIncidentStatus } from "@/hooks/incidents";
+import { INCIDENT_STATUSES, type Incident } from "@/types/incidents";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();

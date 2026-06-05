@@ -1,8 +1,8 @@
 export type { Organization } from "./organization";
 export type { OrganizationMember } from "./organization-member";
+export { createOrganizationWithOwner } from "./create";
 export {
   OrganizationError,
-  createOrganizationWithOwner,
   getCurrentOrganizationId,
   listAllOrganizationIds,
   listOrganizationsForUser,

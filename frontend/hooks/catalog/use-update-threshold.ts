@@ -2,9 +2,10 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { updateThresholdApi, type ProductRef } from "@/lib/catalog/api";
 
-export type { ProductRef } from "@/lib/catalog/api";
+import { updateThresholdApi, type ProductRef } from "./api";
+
+export type { ProductRef };
 
 export function useUpdateThreshold(product: ProductRef) {
   const router = useRouter();

@@ -1,10 +1,8 @@
 import { z } from "zod";
 
-import type { StorePlatform } from "@/lib/stores";
-
 export const onboardingConnectBodySchema = z
   .object({
-    platform: z.enum(["mock_csv", "shopify"] satisfies [StorePlatform, StorePlatform]),
+    platform: z.enum(["mock_csv", "shopify"]),
   })
   .strict();
 
