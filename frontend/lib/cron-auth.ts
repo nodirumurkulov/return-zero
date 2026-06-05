@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-export const CRON_API_PATHS = ["/api/detect", "/api/forecast", "/api/recover"] as const;
+export const CRON_API_PATHS = [
+  "/api/detect",
+  "/api/forecast",
+  "/api/recover",
+  "/api/replay",
+] as const;
 
 export function getCronSecret(): string | undefined {
   const secret = process.env.CRON_SECRET?.trim();

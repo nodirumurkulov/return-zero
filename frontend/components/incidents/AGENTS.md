@@ -6,7 +6,7 @@ Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 | File | Server/client | Role |
 |------|---------------|------|
-| `IncidentDetailView.tsx` | server | Detail layout |
+| `IncidentDetailView.tsx` | client | Detail layout; `useQuery` on server-prefetched incident detail |
 | `TriggerInvestigationButton.tsx` | client | POST `/api/investigate` → `router.refresh()` |
 | `IncidentKanban.tsx`, `IncidentCard.tsx` | client | Kanban |
 | `ActionList.tsx` | client | Approve → `router.refresh()` |
@@ -14,9 +14,10 @@ Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 ## Best practices
 
-- Detail page is **RSC-driven** — remove client fetches to incident APIs; use props + `router.refresh()` on mutations only.
+- **Incident detail:** `app/incidents/[incidentId]/page.tsx` prefetches with `getIncidentDetailQueryOptions` + `HydrationBoundary`. `IncidentDetailView` uses `useQuery` from `@/lib/incidents/hooks` (same query key) — not a standalone `fetch` to `GET /api/incidents/[id]`.
+- Mutations (approve, investigate) go through `@/lib/incidents/hooks` → API routes; invalidate detail queries and/or `router.refresh()` after success.
 
 ## Rules
 
 - Types from `@/lib/incidents` only.
-- Do **not** client-fetch `GET /api/incidents/[id]` for the detail page.
+- Do **not** add raw `fetch("/api/incidents/...")` in components — use `lib/incidents/api` + hooks.

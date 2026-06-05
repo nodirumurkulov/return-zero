@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { learnResponseSchema } from "@/lib/learn/schemas";
+import { onboardingUploadResponseSchema } from "@/lib/onboarding/api-schemas";
+import type { ImportResult } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
 
-type ImportResult = { table: string; count: number; error?: string };
 type Phase = "idle" | "uploading" | "learning";
 
 const EXPECTED = new Set(CONTRACT_FILES);
@@ -48,19 +50,35 @@ export default function UploadForm() {
       try {
         setPhase("uploading");
         const res = await fetch("/api/onboarding/upload", { method: "POST", body: fd });
-        const json = (await res.json()) as { error?: string; results?: ImportResult[] };
-        if (!json.results) {
-          setError(json.error ?? "Upload failed");
+        const uploadJson: unknown = await res.json();
+        const uploadParsed = onboardingUploadResponseSchema.safeParse(uploadJson);
+        if (!uploadParsed.success) {
+          setError("Upload failed");
           setPhase("idle");
           return;
         }
-        setResults(json.results);
+        if ("error" in uploadParsed.data) {
+          setError(uploadParsed.data.error);
+          setPhase("idle");
+          return;
+        }
+        if (!uploadParsed.data.success) {
+          setError("Upload failed");
+          setPhase("idle");
+          return;
+        }
+        setResults(uploadParsed.data.results);
 
         setPhase("learning");
         const learnRes = await fetch("/api/learn", { method: "POST" });
-        const learnJson = (await learnRes.json()) as { success?: boolean; error?: string };
-        if (!learnRes.ok || !learnJson.success) {
-          setError(learnJson.error ?? "Analysis failed");
+        const learnJson: unknown = await learnRes.json();
+        const learnParsed = learnResponseSchema.safeParse(learnJson);
+        if (!learnRes.ok || !learnParsed.success || !("success" in learnParsed.data && learnParsed.data.success)) {
+          const message =
+            learnParsed.success && "error" in learnParsed.data
+              ? learnParsed.data.error
+              : "Analysis failed";
+          setError(message);
           setPhase("idle");
           return;
         }

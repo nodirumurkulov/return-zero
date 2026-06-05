@@ -23,10 +23,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
-  workers: isCI ? 2 : undefined,
+  workers: isCI ? 1 : undefined,
   timeout: 60_000,
   expect: { timeout: 15_000 },
-  reporter: isCI ? [["github"], ["blob"]] : [["list"]],
+  reporter: isCI
+    ? [["github"], ["html", { outputFolder: "playwright-report", open: "never" }], ["blob"]]
+    : [["list"]],
   globalSetup: "./e2e/global-setup.ts",
   outputDir: "test-results",
   use: {

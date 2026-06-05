@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  onboardingUploadPartialResponseSchema,
+  onboardingUploadSuccessResponseSchema,
+} from "@/lib/onboarding/api-schemas";
 import { importContractData } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -40,7 +44,10 @@ export async function POST(req: NextRequest) {
   try {
     const results = await importContractData(supabase, files, { replace });
     const ok = results.every((r) => !r.error);
-    return NextResponse.json({ success: ok, results }, { status: ok ? 200 : 207 });
+    const body = ok
+      ? onboardingUploadSuccessResponseSchema.parse({ success: true, results })
+      : onboardingUploadPartialResponseSchema.parse({ success: false, results });
+    return NextResponse.json(body, { status: ok ? 200 : 207 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Import failed";
     return NextResponse.json({ error: message }, { status: 500 });

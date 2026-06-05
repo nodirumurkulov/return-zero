@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { getIncidentDetail, updateIncidentBodySchema } from "@/lib/incidents";
+import { getIncidentDetail, patchIncident, updateIncidentBodySchema } from "@/lib/incidents";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -43,17 +43,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     );
   }
 
-  const { data, error } = await supabase
-    .from("incidents")
-    .update(parsed.data)
-    .eq("id", params.id)
-    .select()
-    .single();
-
-  if (error) {
-    logApiError("api/incidents/[id] PATCH", error);
-    return apiErrorResponse(error);
+  try {
+    const data = await patchIncident(supabase, params.id, parsed.data);
+    return NextResponse.json(data);
+  } catch (err) {
+    logApiError("api/incidents/[id] PATCH", err);
+    return apiErrorResponse(err);
   }
-
-  return NextResponse.json(data);
 }

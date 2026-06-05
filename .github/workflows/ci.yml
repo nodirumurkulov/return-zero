@@ -83,6 +83,7 @@ jobs:
 
       - run: bun ci
       - run: bun run test
+      - run: bun run test:integration
 
   build:
     runs-on: ubuntu-latest
@@ -110,10 +111,67 @@ jobs:
       - run: bun ci
       - run: bun run build
 
+  integration-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [build]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.105.0
+
+      - name: Supabase
+        working-directory: frontend/supabase
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          eval "$(supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+
+      - run: bun run seed
+        env:
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+
+      - name: Install psql (RLS test runner)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - run: bun run db:test:rls
+      - run: bun run validate
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [lint, typecheck, test, build]
+    needs: [lint, typecheck, test, build, integration-db]
     defaults:
       run:
         working-directory: frontend
@@ -152,7 +210,18 @@ jobs:
       - name: Supabase
         working-directory: frontend/supabase
         run: |
-          supabase start --exclude studio,imgproxy,inbucket,edge-runtime
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
           eval "$(supabase status -o env)"
           echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
