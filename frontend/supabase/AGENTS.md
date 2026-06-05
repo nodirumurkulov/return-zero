@@ -46,3 +46,7 @@ cd .. && bun run db:reset && bun run db:lint && bun run db:test:rls && bun run d
 ```
 
 After seed: `cd .. && bun run validate`
+
+## Remote deploy
+
+Supabase GitHub integration (working directory `frontend`) — preview on PRs, production on `main`. See [../../docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md) §4. Run the local pre-PR checklist in [README.md](README.md) before migration PRs.

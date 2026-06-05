@@ -168,11 +168,9 @@ Open **http://localhost:3000** → sign in → **Catalog** / **Incidents**.
 
 ### Seed demo data
 
-Apply SQL in [`supabase/migrations/`](./supabase/migrations/) in filename order, then:
-
 ```bash
-cd frontend && bun install
-bun run seed
+cd frontend/supabase && supabase start && cd ..
+cd frontend && bun install && bun run db:reset && bun run seed
 ```
 
 Validators need a seeded project: `bun run validate` (see [`frontend/scripts/README.md`](frontend/scripts/README.md)).
@@ -181,7 +179,15 @@ Validators need a seeded project: `bun run validate` (see [`frontend/scripts/REA
 
 ```bash
 cd frontend && bun run check && bun run build
-cd frontend/supabase && supabase start && cd .. && bun run db:reset && bun run db:lint
+```
+
+For migration PRs (`frontend/supabase/**`), also run locally:
+
+```bash
+cd frontend/supabase && supabase start && cd ..
+bun run db:reset
+supabase db diff --use-pg-delta   # expect "No schema changes found"
+bun run db:lint && bun run db:test:rls && bun run db:check-types
 ```
 
 ---
