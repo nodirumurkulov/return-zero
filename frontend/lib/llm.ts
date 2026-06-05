@@ -15,18 +15,14 @@ const provider = process.env.LLM_PROVIDER ?? "openai";
 async function callOpenAI(messages: Message[]): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const model = process.env.OPENAI_MODEL ?? "gpt-5.5";
+  const base = { model, messages, response_format: { type: "json_object" as const } };
   try {
-    const res = await client.chat.completions.create({
-      model,
-      messages,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    });
+    const res = await client.chat.completions.create({ ...base, temperature: 0.2 });
     return res.choices[0]?.message?.content ?? "";
   } catch {
-    // Some newer models reject a custom temperature / response_format. Retry with
-    // defaults so JSON-capable models still work (prompts already ask for JSON).
-    const res = await client.chat.completions.create({ model, messages });
+    // Some models (e.g. gpt-5.5) only allow the default temperature — retry
+    // without the override, keeping JSON mode so output stays valid JSON.
+    const res = await client.chat.completions.create(base);
     return res.choices[0]?.message?.content ?? "";
   }
 }
