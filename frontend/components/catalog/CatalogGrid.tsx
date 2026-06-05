@@ -14,6 +14,7 @@ import {
   type KpiThreshold,
   type ProductMetric,
 } from "@/lib/catalog";
+import { cn } from "@/lib/utils";
 
 function ProductRow({ product, health }: { product: ProductMetric; health: HealthLevel }) {
   return (
@@ -48,7 +49,7 @@ export default function CatalogGrid({
   thresholdsByProduct: Record<string, KpiThreshold[]>;
 }) {
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -83,6 +84,7 @@ export default function CatalogGrid({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search products…"
+            aria-label="Search products"
             className="max-w-xs"
           />
           <div className="flex items-center gap-0.5 rounded-lg border border-border bg-muted p-0.5">
@@ -99,9 +101,16 @@ export default function CatalogGrid({
       {filtered.length === 0 ? (
         <CatalogEmpty />
       ) : view === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((product) => (
-            <ProductCatalogCard key={product.product_id} product={product} health={healthOf(product)} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          {filtered.map((product, index) => (
+            <div
+              key={product.product_id}
+              className={cn(
+                index === 0 && "md:col-span-2 lg:col-span-1 lg:row-span-2",
+              )}
+            >
+              <ProductCatalogCard product={product} health={healthOf(product)} />
+            </div>
           ))}
         </div>
       ) : (
