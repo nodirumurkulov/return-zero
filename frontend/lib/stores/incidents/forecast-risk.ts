@@ -2,8 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { forecastForProduct, type ProductForecast } from "@/lib/forecast/product";
 import { getMonthlySeries } from "@/lib/metrics/series";
-import { notifyNewIncident } from "@/lib/slack";
-
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 
 const SEV_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -30,6 +28,8 @@ export interface CreatedForecastIncident {
   title: string;
   severity: string;
   kinds: string[];
+  impact_amount: number;
+  impact_label: string | null;
 }
 
 export interface ForecastDetectionResult {
@@ -215,12 +215,6 @@ export class ForecastRiskDetector {
         title,
         severity: primary.severity,
         kinds: risks.map((r) => r.kind),
-      });
-
-      await notifyNewIncident({
-        incident_id: inc.id as string,
-        title,
-        severity: primary.severity,
         impact_amount: primary.impact_amount,
         impact_label: "forecast risk",
       });

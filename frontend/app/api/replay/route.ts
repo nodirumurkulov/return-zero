@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createReplay, replayBodySchema } from "@/lib/stores/analytics/replay";
+import { notifyNewIncidents } from "@/lib/stores/incidents/notify-new-incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -63,6 +64,11 @@ export async function POST(req: NextRequest) {
     if (!result) {
       return NextResponse.json({ success: true, cursor: null, previous_cursor: null, at_end: true, created: 0 });
     }
+
+    await notifyNewIncidents([
+      ...results.flatMap((r) => r.breaches.created),
+      ...results.flatMap((r) => r.forecast.created),
+    ]);
 
     const created = results.reduce(
       (sum, r) => sum + r.breaches.created.length + r.forecast.created.length,

@@ -3,8 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { ProductSourceFacts } from "@/lib/metrics/types";
-import { notifyNewIncident } from "@/lib/slack";
-
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 
@@ -28,6 +26,7 @@ export interface CreatedIncident {
   severity: string;
   affected_kpi_keys: string[];
   impact_amount: number;
+  impact_label: string | null;
 }
 
 export interface DetectionResult {
@@ -162,13 +161,6 @@ export class BreachDetector {
         title,
         severity,
         affected_kpi_keys,
-        impact_amount: Math.round(primary.impact),
-      });
-
-      await notifyNewIncident({
-        incident_id: inc.id as string,
-        title,
-        severity,
         impact_amount: Math.round(primary.impact),
         impact_label: primary.def.impact_label,
       });
