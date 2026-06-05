@@ -1,15 +1,12 @@
-import type { StoreConnector } from "./connect";
-
 export type {
   LoadResult,
+  Store,
   StoreConnection,
   StoreConnector,
   StoreLoadOpts,
   StorePlatform,
 } from "./connect";
-
-export interface Store {
-  readonly connector: StoreConnector;
-}
-
-export { connectStore, getStoreConnection, stores } from "./connect";
+export { StoreConnections } from "./connect";
+export { MockStore, MockStoreConnector } from "./connect/mock";
+export type { PrettyFlyFile, PrettyFlyFiles } from "./connect/mock";
+export { ShopifyStore, ShopifyStoreConnector } from "./connect/shopify";

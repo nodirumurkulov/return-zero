@@ -6,7 +6,7 @@ import {
   onboardingConnectSuccessResponseSchema,
 } from "@/lib/onboarding/api-schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { connectStore } from "@/lib/stores";
+import { MockStore, ShopifyStore } from "@/lib/stores";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,7 +39,8 @@ export async function POST(req: Request) {
   const supabase = createAdminClient();
 
   try {
-    const { results, success } = await connectStore(supabase, organizationId, platform);
+    const store = platform === "mock_csv" ? new MockStore() : new ShopifyStore();
+    const { results, success } = await store.connect(supabase, organizationId);
     const body = success
       ? onboardingConnectSuccessResponseSchema.parse({ success: true, results })
       : onboardingConnectPartialResponseSchema.parse({ success: false, results });

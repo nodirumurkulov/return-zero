@@ -1,18 +1,19 @@
 # AGENTS.md — lib/stores/connect
 
-Store connector implementations. **Parent:** [../AGENTS.md](../AGENTS.md)
+Store platform implementations. **Parent:** [../AGENTS.md](../AGENTS.md)
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `index.ts` | `StoreConnector`, registry, `connectStore`, `store_connections` helpers |
+| `index.ts` | `Store`, `StoreConnector`, `StoreConnections` |
+| `mock.ts` | `MockStore`, `MockStoreConnector` |
+| `shopify.ts` | `ShopifyStore`, `ShopifyStoreConnector` (stub) |
 | `loaders/csv.ts` | Shared CSV/JSON parse + batched upsert |
-| `mock/` | Pretty Fly demo (`mock_csv` platform) |
-| `shopify/` | Shopify connector (stub) |
+| `mock/` | Pretty Fly pack, rows, id-maps |
 
 ## Rules
 
-- Each platform class implements `StoreConnector` from `./index.ts`.
-- Public exports live on `@/lib/stores`.
-- `mock/pack.ts` is server-only (reads `hackathon/data-pack/data`).
+- Platform stores implement `Store` and dispatch to `connector` + `connections`.
+- Callers instantiate `new MockStore()` or `new ShopifyStore()` — no registry.
+- Public API: `@/lib/stores`.

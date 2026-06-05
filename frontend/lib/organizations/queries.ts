@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { connectStore } from "@/lib/stores";
+import { MockStore } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { Organization } from "./organization";
@@ -97,7 +97,7 @@ export async function createOrganizationWithOwner(
     throw new OrganizationError(memberErr.message);
   }
 
-  const provisioned = await connectStore(supabase, org.id, "mock_csv");
+  const provisioned = await new MockStore().connect(supabase, org.id);
   if (!provisioned.success) {
     const failed = provisioned.results.filter((result) => result.error).map((result) => result.table);
     throw new OrganizationError(

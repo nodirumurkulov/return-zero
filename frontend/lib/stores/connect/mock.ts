@@ -3,21 +3,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/db";
 
 
+import { type ExternalIdTable, csvLoader } from "./loaders/csv";
+import { IdMapCache } from "./mock/id-maps";
+import { prettyFlyPack, type PrettyFlyFiles } from "./mock/pack";
+import { type IdMaps, prettyFlyRows } from "./mock/rows";
 import {
-  connectorConnect,
-  markStoreConnected,
+  StoreConnections,
   type LoadResult,
+  type Store,
   type StoreConnector,
   type StoreLoadOpts,
-} from "..";
-import { type ExternalIdTable, csvLoader } from "../loaders/csv";
-import { IdMapCache } from "./id-maps";
-import type { PrettyFlyFiles } from "./pack";
-import { type IdMaps, prettyFlyRows } from "./rows";
+} from ".";
 
-export type { PrettyFlyFile, PrettyFlyFiles } from "./pack";
+export type { PrettyFlyFile, PrettyFlyFiles } from "./mock/pack";
 
-export class MockStore implements StoreConnector {
+export class MockStoreConnector implements StoreConnector {
   readonly platform = "mock_csv" as const;
 
   private readonly loader = csvLoader;
@@ -41,18 +41,6 @@ export class MockStore implements StoreConnector {
     const parents = await this.loadParents(supabase, organizationId, files, maps);
     const children = await this.loadChildren(supabase, organizationId, files, maps);
     return [...parents, ...children];
-  }
-
-  async markConnected(supabase: SupabaseClient<Database>, organizationId: string): Promise<void> {
-    await markStoreConnected(supabase, organizationId, "mock_csv");
-  }
-
-  connect(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-    source: unknown,
-  ): Promise<{ results: LoadResult[]; success: boolean }> {
-    return connectorConnect(this, supabase, organizationId, source);
   }
 
   fetchExternalIdMap(
@@ -428,4 +416,31 @@ export class MockStore implements StoreConnector {
   }
 }
 
-export const mockStore = new MockStore();
+export class MockStore implements Store {
+  readonly platform = "mock_csv" as const;
+  readonly connector = new MockStoreConnector();
+  readonly connections = new StoreConnections();
+
+  async connect(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    source?: unknown,
+  ): Promise<{ results: LoadResult[]; success: boolean }> {
+    const payload = source ?? prettyFlyPack.read();
+    const results = await this.connector.load(supabase, organizationId, payload, { replace: true });
+    await this.connections.markConnected(supabase, organizationId, this.platform);
+    return { results, success: results.every((r) => !r.error) };
+  }
+
+  getConnection(supabase: SupabaseClient<Database>, organizationId: string) {
+    return this.connections.get(supabase, organizationId);
+  }
+
+  fetchExternalIdMap(
+    supabase: SupabaseClient<Database>,
+    table: ExternalIdTable,
+    organizationId: string,
+  ): Promise<Map<string, string>> {
+    return this.connector.fetchExternalIdMap(supabase, table, organizationId);
+  }
+}

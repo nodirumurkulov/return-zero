@@ -1,6 +1,6 @@
 import StoreConnectForm from "@/components/onboarding/StoreConnectForm";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { getStoreConnection } from "@/lib/stores";
+import { MockStore } from "@/lib/stores";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function OnboardingPage() {
 
   const [{ count }, connection] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }),
-    org.ok ? getStoreConnection(supabase, org.organizationId) : Promise.resolve(null),
+    org.ok ? new MockStore().getConnection(supabase, org.organizationId) : Promise.resolve(null),
   ]);
 
   const productCount = count ?? 0;
