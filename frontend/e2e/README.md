@@ -39,8 +39,7 @@ bun run e2e:install
 GitHub Actions pipeline:
 
 1. **Parallel:** `lint`, `typecheck`, `test` (unit + `test:integration`), `build`
-2. **`integration-db`** (after build): Supabase start → `seed` → `bun run db:test:rls` → `bun run validate`
-3. **`e2e`** (needs `integration-db`): production server + Playwright (`CI=true`, **1 worker** for fixture stability)
+2. **`e2e`** (after parallel jobs): Supabase start → `seed` → production server + Playwright (`CI=true`, **1 worker** for fixture stability)
 
 Supabase starts with trimmed services (`--exclude studio,imgproxy,mailpit,edge-runtime`); migrations apply on first start — **no `db reset`**.
 

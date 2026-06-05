@@ -22,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -78,15 +79,17 @@ export default function AppShell({
         Skip to main content
       </a>
       <SidebarProvider>
-        <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="gap-0 border-b border-sidebar-border p-0">
-            <div className="px-4 py-3">
+        <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+          <SidebarHeader className="gap-0 border-b border-sidebar-border p-0 group-data-[collapsible=icon]:p-2">
+            <div className="flex items-center gap-2 px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
               <BrandLogo />
+              <SidebarTrigger className="ml-auto hidden group-data-[collapsible=icon]:hidden md:inline-flex" />
             </div>
-            <div className="border-t border-sidebar-border px-2 py-2">
+            <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
               <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
             </div>
           </SidebarHeader>
+          <SidebarRail />
 
           <SidebarContent>
             <SidebarGroup>
@@ -118,7 +121,7 @@ export default function AppShell({
                   {initial}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">
                   {displayName}
                 </p>
