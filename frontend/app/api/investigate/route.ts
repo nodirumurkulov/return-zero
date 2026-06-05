@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   await supabase.from("incident_timeline").insert({
     incident_id,
     event_type: "agent_assigned",
-    description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
+    description: "5 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory, Forecasting",
   });
 
   try {

@@ -392,7 +392,7 @@ async function seedDemoIncidents() {
         severity: "high",
         impact_amount: 66235,
         impact_label: "refund exposure",
-        affected_product: "prod_court_trainer",
+        affected_product: "prod_00005",
         affected_kpis: ["return_rate", "support_volume", "inventory"],
         root_cause:
           "Sizing-related returns driven by first-time buyers from cold Meta traffic. " +
@@ -441,7 +441,7 @@ async function seedDemoIncidents() {
         has_size_guide: false,
         has_fit_assistant: false,
         return_rate_vs_category: { court_trainer: 0.225, category_avg: 0.13 },
-        product_id: "prod_court_trainer",
+        product_id: "prod_00005",
       },
       created_at: minus(41),
     },
@@ -606,7 +606,7 @@ async function seedDemoIncidents() {
     severity: "critical",
     impact_amount: 24800,
     impact_label: "lost revenue",
-    affected_product: "prod_court_trainer",
+    affected_product: "prod_00005",
     affected_kpis: ["inventory", "lost_sales", "fulfillment_rate"],
     root_cause:
       "UK11 (-153 units) and UK12 (-150 units) are exhausted. Rebuyers post-sizing-return " +
