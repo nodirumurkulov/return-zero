@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export const CRON_API_PATHS = [
   "/api/detect",
+  "/api/digest",
   "/api/forecast",
   "/api/recover",
   "/api/replay",
