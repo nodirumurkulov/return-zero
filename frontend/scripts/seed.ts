@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
+import { resolveDemoCredentials } from "../lib/auth/demo";
 
 type CsvRow = Record<string, string | number | boolean | null | undefined>;
 
@@ -46,18 +47,6 @@ async function upsert(
     const { error } = await supabase
       .from(table)
       .upsert(chunk, { onConflict: conflictColumn });
-    if (error) {
-      console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
-    }
-  }
-}
-
-async function insertInChunks(table: string, rows: Record<string, unknown>[]) {
-  for (const chunk of Array.from(
-    { length: Math.ceil(rows.length / BATCH_SIZE) },
-    (_, i) => rows.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
-  )) {
-    const { error } = await supabase.from(table).insert(chunk);
     if (error) {
       console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
     }
@@ -197,7 +186,7 @@ async function seedRawData() {
   // meta_ads_daily
   console.log("  meta_ads_daily…");
   const metaAds = readCSV("meta_ads_daily.csv");
-  await insertInChunks(
+  await upsert(
     "meta_ads_daily",
     metaAds.map((r) => ({
       date: r.date,
@@ -212,13 +201,14 @@ async function seedRawData() {
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
     })),
+    "date,campaign_name,ad_name,placement",
   );
   console.log(`    → ${metaAds.length} rows`);
 
   // google_ads_daily
   console.log("  google_ads_daily…");
   const googleAds = readCSV("google_ads_daily.csv");
-  await insertInChunks(
+  await upsert(
     "google_ads_daily",
     googleAds.map((r) => ({
       date: r.date,
@@ -231,6 +221,7 @@ async function seedRawData() {
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
     })),
+    "date,campaign_name,ad_group",
   );
   console.log(`    → ${googleAds.length} rows`);
 
@@ -638,6 +629,26 @@ async function seedDemoIncidents() {
   console.log("\n  Demo incidents seeded.\n");
 }
 
+async function ensureDemoUser() {
+  const credentials = resolveDemoCredentials();
+  if (!credentials) {
+    console.log("  demo user… skipped (set DEMO_USER_* in production)");
+    return;
+  }
+
+  console.log("  demo user…");
+  const { error } = await supabase.auth.admin.createUser({
+    email: credentials.email,
+    password: credentials.password,
+    email_confirm: true,
+  });
+  if (error && !/already|exists|registered/i.test(error.message)) {
+    console.error(`  ✗ demo user: ${error.message}`);
+    return;
+  }
+  console.log(`  ✓ demo user (${credentials.email})`);
+}
+
 // ---- Main ----------------------------------------------------
 async function main() {
   console.log("=== Resolve — seed script ===\n");
@@ -646,6 +657,7 @@ async function main() {
     await seedRawData();
     await seedProductKpiThresholds();
     await seedDemoIncidents();
+    await ensureDemoUser();
     console.log("=== Done ✓ ===\n");
   } catch (err) {
     console.error("Fatal:", err);

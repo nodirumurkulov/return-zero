@@ -1,14 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
 
 type ImportResult = { table: string; count: number; error?: string };
+type Phase = "idle" | "uploading" | "learning";
 
 export default function UploadForm() {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [phase, setPhase] = useState<Phase>("idle");
   const [results, setResults] = useState<ImportResult[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,22 +23,46 @@ export default function UploadForm() {
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       try {
+        setPhase("uploading");
         const res = await fetch("/api/onboarding/upload", { method: "POST", body: formData });
         const json = (await res.json()) as { error?: string; results?: ImportResult[] };
-        if (json.results) setResults(json.results);
-        else setError(json.error ?? "Upload failed");
+        if (!json.results) {
+          setError(json.error ?? "Upload failed");
+          setPhase("idle");
+          return;
+        }
+        setResults(json.results);
+
+        // Build the knowledge base + business report, then land on the report.
+        setPhase("learning");
+        const learnRes = await fetch("/api/learn", { method: "POST" });
+        const learnJson = (await learnRes.json()) as { success?: boolean; error?: string };
+        if (!learnRes.ok || !learnJson.success) {
+          setError(learnJson.error ?? "Analysis failed");
+          setPhase("idle");
+          return;
+        }
+        router.push("/onboarding/report");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
+        setPhase("idle");
       }
     });
   }
+
+  const label = !pending
+    ? "Upload & analyse"
+    : phase === "learning"
+      ? "Learning your baselines & building report…"
+      : "Uploading…";
 
   return (
     <Card>
       <CardContent className="p-4">
         <form onSubmit={onSubmit} className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Upload the CSVs you have — the more you provide, the richer the analysis. Existing data is replaced.
+            Upload the CSVs you have — the more you provide, the richer the analysis. This replaces any
+            existing data and starts a fresh slate (no incidents yet — they appear once you play the stream).
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -52,7 +80,7 @@ export default function UploadForm() {
           </div>
 
           <Button type="submit" disabled={pending}>
-            {pending ? "Uploading & analysing…" : "Upload & analyse"}
+            {label}
           </Button>
         </form>
 
