@@ -3,9 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/db";
 
 
+import {
+  connectorConnect,
+  markStoreConnected,
+  type LoadResult,
+  type StoreConnector,
+  type StoreLoadOpts,
+} from "..";
 import { type ExternalIdTable, csvLoader } from "../loaders/csv";
-import { markStoreConnected } from "../setup";
-import type { LoadResult, StoreConnector, StoreLoadOpts } from "../store-connector";
 import { IdMapCache } from "./id-maps";
 import type { PrettyFlyFiles } from "./pack";
 import { type IdMaps, prettyFlyRows } from "./rows";
@@ -40,6 +45,14 @@ export class MockStore implements StoreConnector {
 
   async markConnected(supabase: SupabaseClient<Database>, organizationId: string): Promise<void> {
     await markStoreConnected(supabase, organizationId, "mock_csv");
+  }
+
+  connect(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    source: unknown,
+  ): Promise<{ results: LoadResult[]; success: boolean }> {
+    return connectorConnect(this, supabase, organizationId, source);
   }
 
   fetchExternalIdMap(

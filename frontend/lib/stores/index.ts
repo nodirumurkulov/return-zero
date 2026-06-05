@@ -1,4 +1,4 @@
-import type { StoreConnector } from "./connect/store-connector";
+import type { StoreConnector } from "./connect";
 
 export type {
   LoadResult,
@@ -6,15 +6,10 @@ export type {
   StoreConnector,
   StoreLoadOpts,
   StorePlatform,
-} from "./connect/store-connector";
+} from "./connect";
 
 export interface Store {
   readonly connector: StoreConnector;
 }
 
-export {
-  connectStore,
-  getStoreConnection,
-  runStoreIntelligence,
-  stores,
-} from "./connect/setup";
+export { connectStore, getStoreConnection, stores } from "./connect";

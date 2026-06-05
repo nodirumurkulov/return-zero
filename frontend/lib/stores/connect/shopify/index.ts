@@ -3,8 +3,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/db";
 
 
-import { markStoreConnected } from "../setup";
-import type { LoadResult, StoreConnector, StoreLoadOpts } from "../store-connector";
+import {
+  connectorConnect,
+  markStoreConnected,
+  type LoadResult,
+  type StoreConnector,
+  type StoreLoadOpts,
+} from "..";
 
 export class ShopifyStore implements StoreConnector {
   readonly platform = "shopify" as const;
@@ -20,6 +25,14 @@ export class ShopifyStore implements StoreConnector {
 
   async markConnected(supabase: SupabaseClient<Database>, organizationId: string): Promise<void> {
     await markStoreConnected(supabase, organizationId, "shopify");
+  }
+
+  connect(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    source: unknown,
+  ): Promise<{ results: LoadResult[]; success: boolean }> {
+    return connectorConnect(this, supabase, organizationId, source);
   }
 }
 
