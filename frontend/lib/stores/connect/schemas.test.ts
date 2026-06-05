@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  onboardingConnectPartialResponseSchema,
-  onboardingConnectResponseSchema,
-  onboardingConnectSuccessResponseSchema,
-} from "./api-schemas";
+  connectPartialResponseSchema,
+  connectResponseSchema,
+  connectSuccessResponseSchema,
+} from "./schemas";
 
-describe("onboardingConnectResponseSchema", () => {
+describe("connectResponseSchema", () => {
   it("accepts success responses", () => {
-    const parsed = onboardingConnectSuccessResponseSchema.safeParse({
+    const parsed = connectSuccessResponseSchema.safeParse({
       success: true,
       results: [{ table: "orders", count: 10 }],
     });
@@ -16,7 +16,7 @@ describe("onboardingConnectResponseSchema", () => {
   });
 
   it("accepts partial failure responses", () => {
-    const parsed = onboardingConnectPartialResponseSchema.safeParse({
+    const parsed = connectPartialResponseSchema.safeParse({
       success: false,
       results: [{ table: "orders", count: 0, error: "bad row" }],
     });
@@ -24,12 +24,12 @@ describe("onboardingConnectResponseSchema", () => {
   });
 
   it("accepts error-only responses", () => {
-    const parsed = onboardingConnectResponseSchema.safeParse({ error: "Connect failed" });
+    const parsed = connectResponseSchema.safeParse({ error: "Connect failed" });
     expect(parsed.success).toBe(true);
   });
 
   it("rejects unknown keys on success body", () => {
-    const parsed = onboardingConnectSuccessResponseSchema.safeParse({
+    const parsed = connectSuccessResponseSchema.safeParse({
       success: true,
       results: [],
       extra: true,

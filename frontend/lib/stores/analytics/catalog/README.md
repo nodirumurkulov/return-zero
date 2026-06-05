@@ -17,7 +17,7 @@ import {
   computeProductHealth,
   listCatalogWithThresholds,
   type ProductMetric,
-} from "@/lib/catalog";
+} from "@/lib/stores/analytics/catalog";
 ```
 
 Catalog pages should call **queries** instead of casting raw Supabase rows.

@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { Shop } from "@/lib/shops";
+import type { DemoShop } from "@/lib/organizations/demo-shops";
 import { cn } from "@/lib/utils";
 
 function shopInitials(name: string): string {
@@ -34,7 +34,7 @@ function ShopAvatar({
   className,
   textClassName,
 }: {
-  shop: Shop;
+  shop: DemoShop;
   className?: string;
   textClassName?: string;
 }) {
@@ -76,7 +76,7 @@ export function ShopSwitcher({
   activeShopId,
   switchingEnabled = false,
 }: {
-  shops: Shop[];
+  shops: DemoShop[];
   activeShopId?: string;
   switchingEnabled?: boolean;
 }) {

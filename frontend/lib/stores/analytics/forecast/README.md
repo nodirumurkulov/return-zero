@@ -14,7 +14,7 @@ Used by detection forecast rules and the forecasting investigation agent.
 ## Usage
 
 ```typescript
-import { forecastForProduct } from "@/lib/forecast/product";
+import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
 ```
 
 ## Notes

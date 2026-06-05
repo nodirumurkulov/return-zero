@@ -21,11 +21,11 @@ API handlers are under [`api/`](api/) — separate from page routes.
 Pages use `export const dynamic = "force-dynamic"` where Supabase data must be fresh.
 
 ```typescript
-import { listIncidents } from "@/lib/stores/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createIncidents } from "@/lib/stores/incidents";
+import { createClient } from "@/lib/supabase/server";
 
-const supabase = createServiceClient();
-const incidents = await listIncidents(supabase);
+const supabase = await createClient();
+const incidents = await createIncidents(supabase).listIncidents(organizationId);
 ```
 
 ## Notes

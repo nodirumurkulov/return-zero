@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { learnBaselines } from "@/lib/learn/baselines";
-import { buildBusinessReport } from "@/lib/learn/report";
-import { learnBodySchema } from "@/lib/learn/schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
+import { learnBaselines } from "@/lib/stores/analytics/learn/baselines";
+import { buildBusinessReport } from "@/lib/stores/analytics/learn/report";
+import { learnBodySchema } from "@/lib/stores/analytics/learn/schemas";
 import { createReplay } from "@/lib/stores/analytics/replay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";

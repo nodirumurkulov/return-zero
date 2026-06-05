@@ -26,7 +26,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DEMO_SHOPS } from "@/lib/shops";
+import { DEMO_SHOPS } from "@/lib/organizations/demo-shops";
 import type { SearchTarget } from "@/lib/stores/analytics/search";
 
 const NAV = [

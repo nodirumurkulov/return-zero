@@ -30,7 +30,7 @@ Migrations live in `migrations/`. Seed data: [`../scripts/README.md`](../scripts
 ## Notes
 
 - Service role bypasses RLS — used only via `createAdminClient()` (cron, seed, Slack webhook).
-- Changing RPC signatures requires updating `frontend/lib/metrics` and `frontend/scripts/validate-metrics.ts`.
+- Changing RPC signatures requires updating `frontend/lib/stores/analytics/metrics` and `frontend/scripts/validate-metrics.ts`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

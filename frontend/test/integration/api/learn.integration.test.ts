@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/learn/baselines", () => ({
+vi.mock("@/lib/stores/analytics/learn/baselines", () => ({
   learnBaselines: vi.fn(),
 }));
 
-vi.mock("@/lib/learn/report", () => ({
+vi.mock("@/lib/stores/analytics/learn/report", () => ({
   buildBusinessReport: vi.fn(),
 }));
 
@@ -34,8 +34,8 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/learn/route";
-import { learnBaselines } from "@/lib/learn/baselines";
-import { buildBusinessReport } from "@/lib/learn/report";
+import { learnBaselines } from "@/lib/stores/analytics/learn/baselines";
+import { buildBusinessReport } from "@/lib/stores/analytics/learn/report";
 
 const learnBaselinesMock = vi.mocked(learnBaselines);
 const buildBusinessReportMock = vi.mocked(buildBusinessReport);
