@@ -13,8 +13,34 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ImpactTag } from "@/components/ui/ImpactTag";
 import { SectionLabel } from "@/components/ui/section-label";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
+
+function IncidentDetailSkeleton() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border bg-card px-6 py-3.5">
+        <Skeleton className="h-3 w-32" />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Skeleton className="h-7 w-64 max-w-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-24 rounded-full" />
+        </div>
+      </div>
+      <div className="flex-1 bg-muted/30 p-6">
+        <div className="mx-auto max-w-[1040px] space-y-5">
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+          </div>
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function IncidentDetailView({ incidentId }: { incidentId: string }) {
   const incidentRef = { id: incidentId };
@@ -23,11 +49,7 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
   );
 
   if (isPending && !detail) {
-    return (
-      <div className="p-6">
-        <p className="text-sm text-muted-foreground">Loading incident…</p>
-      </div>
-    );
+    return <IncidentDetailSkeleton />;
   }
 
   if (isError || !detail) {
@@ -142,9 +164,9 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
                     <span className="tabnum text-[11px] font-medium text-sev-resolved">{recoveryPct}%</span>
                   </div>
                   <p className="mt-1 text-[13px] text-muted-foreground">{incident.monitoring_kpi}</p>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-sev-resolved transition-all"
+                      className="h-full rounded-full bg-sev-resolved transition-[width]"
                       style={{ width: `${recoveryPct}%` }}
                     />
                   </div>

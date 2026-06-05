@@ -2,7 +2,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { hasCronAuth, matchesCronPath } from "@/lib/cron-auth";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const PUBLIC_PREFIXES = ["/sign-in", "/sign-up", "/auth/callback", "/api/slack/webhook"];
+const PUBLIC_PREFIXES = [
+  "/sign-in",
+  "/sign-up",
+  "/auth/callback",
+  "/api/slack/webhook",
+  "/api/slack/events",
+];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));

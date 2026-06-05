@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    color-scheme: light;
+
     /* Hugo light design system (from the Resolve prototype) */
     --background: 0 0% 100%;
     --foreground: 240 6% 10%; /* zinc-900 */
@@ -47,8 +49,71 @@
     --sev-low: 142 72% 29%; /* green/resolved #15803d */
     --sev-idle: 240 4% 40%; /* gray/idle #52525b */
 
+    /* Severity tint surfaces */
+    --sev-critical-bg: 0 93% 94%;
+    --sev-critical-bd: 0 96% 89%;
+    --sev-high-bg: 33 100% 96%;
+    --sev-high-bd: 32 98% 83%;
+    --sev-monitor-bg: 48 100% 96%;
+    --sev-monitor-bd: 46 97% 77%;
+    --sev-resolved-bg: 138 76% 97%;
+    --sev-resolved-bd: 141 79% 85%;
+    --sev-idle-bg: 240 5% 96%;
+    --sev-idle-bd: 240 6% 90%;
+
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
     --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.16), 0 2px 6px -2px rgb(0 0 0 / 0.1);
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 192 55% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 192 50% 48%;
+
+    --sidebar: 240 6% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 192 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 14%;
+    --sidebar-ring: 192 50% 48%;
+
+    --primary-hover: 192 55% 50%;
+    --primary-subtle: 192 30% 14%;
+    --primary-ring: 192 50% 48%;
+
+    --sev-critical-bg: 0 45% 14%;
+    --sev-critical-bd: 0 40% 22%;
+    --sev-high-bg: 21 45% 14%;
+    --sev-high-bd: 21 40% 22%;
+    --sev-monitor-bg: 32 45% 14%;
+    --sev-monitor-bd: 32 40% 22%;
+    --sev-resolved-bg: 142 35% 14%;
+    --sev-resolved-bd: 142 30% 22%;
+    --sev-idle-bg: 240 4% 14%;
+    --sev-idle-bd: 240 4% 22%;
+
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.45), 0 2px 6px -2px rgb(0 0 0 / 0.35);
   }
 
   * {

@@ -273,7 +273,7 @@ export function OrdersFeed({
               }
             >
               <span
-                className={`size-1.5 rounded-full ${playing ? "animate-pulse bg-sev-resolved" : "bg-zinc-400"}`}
+                className={`size-1.5 rounded-full ${playing ? "motion-safe:animate-pulse bg-sev-resolved" : "bg-muted-foreground"}`}
               />
               {playing ? "Live" : entries.length > 0 ? "Paused" : "Idle"}
             </Badge>
@@ -303,6 +303,9 @@ export function OrdersFeed({
             {SPEEDS.map((s) => (
               <button
                 key={s.value}
+                type="button"
+                aria-label={`Replay speed ${s.label}`}
+                aria-pressed={speed === s.value}
                 onClick={() => setSpeed(s.value)}
                 className={`px-2.5 py-1 text-xs ${
                   speed === s.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
