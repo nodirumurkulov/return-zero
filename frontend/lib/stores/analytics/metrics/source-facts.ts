@@ -1,10 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/lib/supabase/database.types";
-import type { ProductSourceFacts } from "./types";
+
+export interface ProductSourceFacts {
+  product_id: string;
+  sales_revenue: number;
+  sales_units: number;
+  refunds_amount: number;
+  refunds_count: number;
+  ads_spend: number;
+  ads_revenue: number;
+  support_count: number;
+}
+
+export interface SourceFactsOpts {
+  organizationId: string;
+  windowDays: number;
+  asOf?: string | null;
+}
 
 type SourceRow = Database["public"]["Functions"]["product_source_facts"]["Returns"][number];
 
-// PostgREST returns numeric columns as strings; coerce to numbers.
 function toFacts(row: SourceRow): ProductSourceFacts {
   return {
     product_id: String(row.product_id),
@@ -18,13 +34,6 @@ function toFacts(row: SourceRow): ProductSourceFacts {
   };
 }
 
-/**
- * Per-product source facts for a rolling window, indexed by product_id.
- *
- * Backed by the product_source_facts() SQL function — the generic, KPI-neutral
- * source layer. No business logic here; this is purely "what does the contract
- * data say about each product in this window."
- */
 export async function getSourceFacts(
   supabase: SupabaseClient<Database>,
   organizationId: string,

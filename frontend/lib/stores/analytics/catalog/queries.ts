@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { computeMetricsDetailed } from "@/lib/metrics/engine";
-import { getProductSeries } from "@/lib/metrics/series";
-import type { MetricValue, ProductSourceFacts } from "@/lib/metrics/types";
+import { computeMetricsDetailed } from "@/lib/stores/analytics/metrics/engine";
+import type { MetricValue } from "@/lib/stores/analytics/metrics/metric-definition";
+import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
+import type { ProductSourceFacts } from "@/lib/stores/analytics/metrics/source-facts";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { KpiThreshold, ProductMetric, ProductMonthlyMetric } from "./types";

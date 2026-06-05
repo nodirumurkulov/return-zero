@@ -6,8 +6,8 @@ import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
-import { computeProductHealth, getProductCatalogDetail } from "@/lib/catalog";
 import { requireOrganizationId } from "@/lib/organizations/queries";
+import { computeProductHealth, getProductCatalogDetail } from "@/lib/stores/analytics/catalog";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

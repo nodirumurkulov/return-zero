@@ -7,10 +7,11 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 | Module | Import | Responsibility |
 |--------|--------|----------------|
 | [`incidents/`](incidents/) | `@/lib/stores/incidents` | Incidents, actions, findings, timeline |
-| [`catalog/`](catalog/) | `@/lib/catalog` | Product metrics, thresholds, health |
-| [`metrics/`](metrics/) | `@/lib/metrics/*` | KPI definitions, engine, series |
+| [`stores/analytics/catalog/`](stores/analytics/catalog/) | `@/lib/stores/analytics/catalog` | Product metrics, thresholds, health |
+| [`stores/analytics/metrics/`](stores/analytics/metrics/) | `@/lib/stores/analytics/metrics` | KPI definitions, engine, series |
 | [`stores/incidents/`](stores/incidents/) | `@/lib/stores/incidents` | Incidents, detection, recovery |
-| [`forecast/`](forecast/) | `@/lib/forecast` | Deterministic forecasts |
+| [`stores/analytics/forecast/`](stores/analytics/forecast/) | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
+| [`stores/analytics/search/`](stores/analytics/search/) | `@/lib/stores/analytics/search` | Global search targets |
 | [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |
 | [`supabase/`](supabase/) | `@/lib/supabase/server` | Service-role Supabase client |

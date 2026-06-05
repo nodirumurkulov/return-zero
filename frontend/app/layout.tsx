@@ -5,7 +5,7 @@ import AppShell from "@/components/layout/AppShell";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import { getCurrentOrganizationId } from "@/lib/organizations";
-import { listSearchTargets } from "@/lib/search";
+import { listSearchTargets } from "@/lib/stores/analytics/search";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 

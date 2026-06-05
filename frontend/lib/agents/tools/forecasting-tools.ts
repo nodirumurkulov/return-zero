@@ -2,8 +2,8 @@ import "server-only";
 
 import { tool } from "ai";
 import { z } from "zod";
-import { forecastForProduct } from "@/lib/forecast/product";
-import { getProductSeries } from "@/lib/metrics/series";
+import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
+import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
 import type { AgentSupabase } from "../types";
 
 type OutflowRow = {

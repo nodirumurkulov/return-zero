@@ -11,7 +11,12 @@ Ecommerce store product domain. **Parent:** [../AGENTS.md](../AGENTS.md)
 | `mock.ts` | `MockStore` |
 | `shopify.ts` | `ShopifyStore` |
 | `connect/` | `StoreConnector` types and platform connectors |
-| `analytics/` | Replay time-travel, orders feed |
+| `analytics/` | Metrics engine, source domains, catalog, forecast, search, replay |
+| `analytics/metrics/` | KPI engine, series, source facts |
+| `analytics/sources/` | Ecommerce source domain slices (commerce, marketing, …) |
+| `analytics/catalog/` | Product metrics, thresholds, health |
+| `analytics/forecast/` | Deterministic forecasts |
+| `analytics/search/` | Global search targets |
 | `incidents/` | Detection and incident lifecycle |
 
 ## Rules

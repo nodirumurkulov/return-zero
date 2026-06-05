@@ -1,4 +1,4 @@
-# AGENTS.md — lib/forecast
+# AGENTS.md — lib/stores/analytics/forecast
 
 Deterministic time-series forecasts (no ML). **Parent:** [../../AGENTS.md](../../AGENTS.md)
 

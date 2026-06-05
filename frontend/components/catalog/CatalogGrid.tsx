@@ -8,7 +8,7 @@ import { HealthBadge } from "@/components/catalog/HealthBadge";
 import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { computeProductHealth } from "@/lib/catalog/health";
+import { computeProductHealth } from "@/lib/stores/analytics/catalog/health";
 import { cn } from "@/lib/utils";
 import type { HealthLevel, KpiThreshold, ProductMetric } from "@/types/catalog";
 

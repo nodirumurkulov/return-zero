@@ -1,4 +1,4 @@
-# AGENTS.md — lib/catalog
+# AGENTS.md — lib/stores/analytics/catalog
 
 Catalog metrics, thresholds, health. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 

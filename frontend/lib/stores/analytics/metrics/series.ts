@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
-import type { MonthlyPoint, SeriesOpts } from "./types";
+
+import type { MonthlyPoint, SeriesOpts } from "./monthly-point";
 
 export type { MonthlyPoint, SeriesOpts };
 
@@ -20,19 +21,12 @@ function toPoint(r: SeriesRow): MonthlyPoint {
   };
 }
 
-/**
- * Per-product monthly time series, indexed by product_id and sorted ascending
- * by month (zero-filled — every product has a complete series). Generic over the
- * contract; this is the substrate the forecasting engine consumes.
- */
 export async function getMonthlySeries(
   supabase: SupabaseClient<Database>,
   opts: SeriesOpts,
 ): Promise<Map<string, MonthlyPoint[]>> {
   const months = opts.months ?? 24;
 
-  // PostgREST caps RPC results (default 1000 rows); the full series is
-  // products x months (~1488), so page through it to avoid silent truncation.
   const pageSize = 1000;
   const fetchPage = async (from: number): Promise<SeriesRow[]> => {
     const args: Database["public"]["Functions"]["product_monthly_series"]["Args"] = {
@@ -61,7 +55,6 @@ export async function getMonthlySeries(
   return byProduct;
 }
 
-/** A single product's monthly series, ascending by month. */
 export async function getProductSeries(
   supabase: SupabaseClient<Database>,
   organizationId: string,
