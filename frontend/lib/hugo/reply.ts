@@ -1,5 +1,7 @@
 import "server-only";
-import { callLLMText, type Message } from "@/lib/llm";
+
+import { generateText, type ModelMessage } from "ai";
+import { getModel } from "@/lib/ai/model";
 
 const SLACK_STYLE =
   "You are chatting inside Slack. Be concise, friendly, and use plain language. " +
@@ -15,8 +17,14 @@ const DATA_PROMPT =
   "If the data does not contain the answer, say so plainly instead of guessing. " +
   "When referring to an incident, use its title (the [id] prefix is for your reference).";
 
-const UNAVAILABLE =
-  "Sorry, I couldn't generate a reply right now. Please try again in a moment.";
+async function generateReply(messages: ModelMessage[]): Promise<string> {
+  const { text } = await generateText({ model: getModel(), messages });
+  const reply = text.trim();
+  if (!reply) {
+    throw new Error("Hugo reply: empty model response");
+  }
+  return reply;
+}
 
 /** Free-form chat reply (no app data). */
 export async function generateChatReply(userText: string): Promise<string> {
@@ -25,20 +33,16 @@ export async function generateChatReply(userText: string): Promise<string> {
     return "Hi! I'm Hugo 👋 — ask me about your incidents or KPIs, or say 'investigate <incident>' and I'll dig in.";
   }
 
-  const messages: Message[] = [
+  return generateReply([
     { role: "system", content: CHAT_PROMPT },
     { role: "user", content: prompt },
-  ];
-  const reply = await callLLMText(messages);
-  return reply.trim() || UNAVAILABLE;
+  ]);
 }
 
 /** Data-grounded reply: answers `userText` using the supplied app `context`. */
 export async function generateDataReply(userText: string, context: string): Promise<string> {
-  const messages: Message[] = [
+  return generateReply([
     { role: "system", content: DATA_PROMPT },
     { role: "user", content: `Live app data:\n${context}\n\nQuestion: ${userText}` },
-  ];
-  const reply = await callLLMText(messages);
-  return reply.trim() || UNAVAILABLE;
+  ]);
 }

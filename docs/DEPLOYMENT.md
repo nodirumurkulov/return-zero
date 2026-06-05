@@ -50,11 +50,15 @@ Enable **Email** (or your chosen provider) under Authentication → Providers fo
 
 ### LLM (agent investigation)
 
+Uses [Vercel AI SDK](https://sdk.vercel.ai/) (`ToolLoopAgent` + `@ai-sdk/openai` / `@ai-sdk/anthropic`). Local dev wraps the model with `@ai-sdk/devtools` when `NODE_ENV=development` — run `cd frontend && bun run ai:devtools` and open http://localhost:4983 to inspect tool calls.
+
 | Variable | Scope | Required | Notes |
 |----------|-------|----------|-------|
 | `LLM_PROVIDER` | server | ✅ | `openai` or `anthropic` |
 | `OPENAI_API_KEY` | server | ✅ if `LLM_PROVIDER=openai` | OpenAI dashboard |
 | `ANTHROPIC_API_KEY` | server | ✅ if `LLM_PROVIDER=anthropic` | Anthropic console |
+| `OPENAI_MODEL` | server | optional | Default `gpt-5.5` |
+| `ANTHROPIC_MODEL` | server | optional | Default `claude-opus-4-5` |
 
 ### Slack (notifications + inbound actions)
 

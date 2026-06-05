@@ -26,7 +26,8 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `metrics/` | `@/lib/metrics/*` | KPI engine, definitions, series |
 | `detection/` | `@/lib/detection/*` | Detect, severity, recover |
 | `forecast/` | `@/lib/forecast` | Deterministic forecasts |
-| `agents/` | `@/lib/agents` | LLM investigation (`LlmAgentFinding` ≠ DB `AgentFinding`) |
+| `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
+| `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |

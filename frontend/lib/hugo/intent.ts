@@ -1,5 +1,7 @@
 import "server-only";
-import { callLLMJson } from "@/lib/llm";
+
+import { generateText, Output } from "ai";
+import { getModel } from "@/lib/ai/model";
 import { hugoIntentSchema, type HugoIntent } from "./schemas";
 
 const CLASSIFIER_PROMPT =
@@ -14,41 +16,23 @@ const CLASSIFIER_PROMPT =
   "- 'chat' for greetings, small talk, or anything not about the app's data. " +
   "incident_reference is the text identifying the incident (title words, product, or id), else null.";
 
-/** Heuristic fallback used when the LLM classifier is unavailable. */
-function fallbackIntent(prompt: string): HugoIntent {
-  const text = prompt.toLowerCase();
-  if (/\b(investigate|investigation|look into|diagnose)\b/.test(text)) {
-    return { intent: "investigate", incident_reference: prompt };
-  }
-  if (/\b(approve|apply|deploy|accept)\b/.test(text)) {
-    return { intent: "approve", incident_reference: prompt };
-  }
-  if (
-    /\b(incident|incidents|kpi|kpis|metric|metrics|product|products|catalog|status|impact|severity|breach|return rate|refund|roas|threshold|health)\b/.test(
-      text,
-    )
-  ) {
-    return { intent: "data_query", incident_reference: prompt };
-  }
-  return { intent: "chat", incident_reference: null };
-}
-
-/**
- * Classify a Slack mention into a Hugo intent. Uses the LLM with a JSON schema
- * and falls back to keyword heuristics when the model is unavailable so the bot
- * always routes to a sensible handler.
- */
+/** Classify a Slack mention into a Hugo intent. */
 export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
   const clean = prompt.trim();
   if (!clean) return { intent: "chat", incident_reference: null };
 
-  const parsed = await callLLMJson(
-    [
+  const { output } = await generateText({
+    model: getModel(),
+    output: Output.object({ schema: hugoIntentSchema }),
+    messages: [
       { role: "system", content: CLASSIFIER_PROMPT },
       { role: "user", content: clean },
     ],
-    hugoIntentSchema,
-  );
+  });
 
-  return parsed ?? fallbackIntent(clean);
+  if (!output) {
+    throw new Error("Hugo intent classifier: missing structured output");
+  }
+
+  return output;
 }
