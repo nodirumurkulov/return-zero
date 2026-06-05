@@ -151,6 +151,9 @@ jobs:
         env:
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
 
+      - name: Install psql (RLS test runner)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
       - run: bun run db:test:rls
       - run: bun run validate
 

@@ -19,7 +19,7 @@
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint",
-    "db:test:rls": "supabase db execute --local -f supabase/tests/rls_policies_test.sql",
+    "db:test:rls": "bun run scripts/test-rls.ts",
     "seed": "bun run scripts/seed.ts",
     "validate:counts": "bun run scripts/validate-counts.ts",
     "validate:metrics": "bun run scripts/validate-metrics.ts",
