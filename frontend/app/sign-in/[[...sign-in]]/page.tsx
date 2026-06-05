@@ -3,6 +3,7 @@ import { signIn } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
 import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
+import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 
 export default async function SignInPage({
   searchParams,
@@ -29,6 +30,7 @@ export default async function SignInPage({
       </div>
       <AuthForm title="Sign in" action={signIn} initialError={authError} nextPath={nextPath} />
       <OAuthButtons />
+      <ShopifyLoginButton />
       <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         New here?{" "}

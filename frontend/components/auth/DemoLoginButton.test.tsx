@@ -11,6 +11,6 @@ describe("DemoLoginButton", () => {
     render(<DemoLoginButton />);
     const button = screen.getByRole("button", { name: /Continue as Pretty Fly/i });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveTextContent("Continue as Pretty Fly (demo)");
+    expect(button).toHaveTextContent("Continue as Pretty Fly");
   });
 });
