@@ -33,6 +33,8 @@ test.describe("Onboarding upload", () => {
 
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
+    // The button enables once at least one file matches a contract table by name.
+    await onboarding.chooseFiles(["products.csv", "orders.csv"]);
     await onboarding.uploadButton().click();
     await expect(page).toHaveURL(/\/onboarding\/report$/, { timeout: 15_000 });
   });

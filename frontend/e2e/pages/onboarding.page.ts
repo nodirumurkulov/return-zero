@@ -16,6 +16,17 @@ export class OnboardingPage {
     return this.page.getByRole("button", { name: /Upload & analyse/i });
   }
 
+  fileInput() {
+    return this.page.locator('input[type="file"]');
+  }
+
+  // Select CSVs by name (content is irrelevant when the upload API is mocked).
+  async chooseFiles(names: string[]) {
+    await this.fileInput().setInputFiles(
+      names.map((name) => ({ name, mimeType: "text/csv", buffer: Buffer.from("id\n1\n") })),
+    );
+  }
+
   seededProductBanner(count: number) {
     return this.page.getByText(new RegExp(`${count} products loaded`, "i"));
   }
