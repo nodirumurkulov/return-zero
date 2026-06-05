@@ -20,15 +20,13 @@ const webServerEnv = Object.fromEntries(
 );
 
 export default defineConfig({
-  fullyParallel: !isCI,
+  fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  retries: isCI ? 1 : 0,
+  workers: isCI ? 2 : undefined,
   timeout: 60_000,
   expect: { timeout: 15_000 },
-  reporter: isCI
-    ? [["github"], ["html", { open: "never" }]]
-    : [["list"]],
+  reporter: isCI ? [["github"], ["blob"]] : [["list"]],
   globalSetup: "./e2e/global-setup.ts",
   outputDir: "test-results",
   use: {
@@ -62,7 +60,7 @@ export default defineConfig({
       testDir: "./e2e",
       testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
-      dependencies: ["setup"],
+      dependencies: ["chromium"],
     },
   ],
 });

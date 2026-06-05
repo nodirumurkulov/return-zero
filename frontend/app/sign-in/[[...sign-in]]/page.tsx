@@ -5,10 +5,14 @@ import AuthForm from "@/components/auth/AuthForm";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const params = await searchParams;
   const authError = params.error === "auth" ? "Could not complete sign-in. Try again." : null;
+  const nextPath =
+    typeof params.next === "string" && params.next.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-12">
@@ -16,7 +20,7 @@ export default async function SignInPage({
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Resolve</h1>
         <p className="mt-1 text-sm text-muted-foreground">Commerce Incident Response</p>
       </div>
-      <AuthForm title="Sign in" action={signIn} initialError={authError} />
+      <AuthForm title="Sign in" action={signIn} initialError={authError} nextPath={nextPath} />
       <p className="text-sm text-muted-foreground">
         <Link href="/sign-up" className="text-primary hover:underline">
           Create an account

@@ -64,8 +64,10 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Testing instructions
 
-- No automated test suite yet; CI runs lint, typecheck, and build only.
-- After schema or metrics changes: `cd scripts && npm run validate` against a seeded Supabase project.
+- **Unit:** `cd frontend && bun run check` (lint + typecheck).
+- **E2E:** `supabase start`, then `bun run seed`, `bun run build`, `CI=true bun run e2e`. See [frontend/e2e/README.md](frontend/e2e/README.md).
+- **CI:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — parallel lint/typecheck/build → Supabase → seed → Playwright.
+- After schema or metrics changes: `cd frontend && bun run validate` against a seeded Supabase project.
 - RLS: `cd frontend && bun run db:reset && bun run db:test:rls` (Supabase CLI).
 - When adding behavior, prefer extending existing domain modules with clear types over ad-hoc route logic.
 

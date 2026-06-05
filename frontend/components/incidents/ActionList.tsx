@@ -86,6 +86,7 @@ export default function ActionList({
             {proposed.length} action(s) awaiting approval
           </span>
           <button
+            data-testid="approve-all-low-risk"
             onClick={() => {
               void approveAll();
             }}
@@ -97,11 +98,14 @@ export default function ActionList({
         </div>
       )}
 
-      {message && (
-        <p className="text-xs text-green-400 bg-green-500/10 rounded px-3 py-2 border border-green-500/20">
+      {message ? (
+        <p
+          className="text-xs text-green-400 bg-green-500/10 rounded px-3 py-2 border border-green-500/20"
+          role="status"
+        >
           {message}
         </p>
-      )}
+      ) : null}
 
       {actions.map((action) => (
         <div
@@ -144,6 +148,7 @@ export default function ActionList({
               </span>
               {action.status === "proposed" && !action.auto_deploy && (
                 <button
+                  data-testid="approve-action"
                   onClick={() => {
                     void approveOne(action.id);
                   }}
