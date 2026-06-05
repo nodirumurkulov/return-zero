@@ -10,6 +10,7 @@
 // product_kpi_thresholds in the engine's override shape.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { streamStartDate } from "@/lib/detection/replay";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MonthlyPoint } from "@/lib/metrics/types";
 
@@ -92,14 +93,18 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
     }))
     .filter((d): d is MetricDef => (LEARNABLE as readonly string[]).includes(d.metric_key));
 
+  // Learn "normal" on the BASELINE period only — everything before the live
+  // stream window — so the anomalies we're about to replay don't pollute it.
+  const baselineEnd = await streamStartDate(supabase);
   const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
 
   // One (product, metric) entry per KPI that has enough history to be meaningful.
-  const computed = Array.from(seriesByProduct.entries()).flatMap(([productId, series]) =>
-    defs
-      .map((def) => ({ productId, def, s: stats(kpiSeries(series, def.metric_key)) }))
-      .filter((e) => e.s.n >= 3),
-  );
+  const computed = Array.from(seriesByProduct.entries()).flatMap(([productId, series]) => {
+    const baselineSeries = baselineEnd ? series.filter((p) => p.month < baselineEnd) : series;
+    return defs
+      .map((def) => ({ productId, def, s: stats(kpiSeries(baselineSeries, def.metric_key)) }))
+      .filter((e) => e.s.n >= 3);
+  });
 
   const baselineRows = computed.map(({ productId, def, s }) => ({
     product_id: productId,
