@@ -10,8 +10,11 @@ import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
 // threshold — the "alert before the loss" moment, streaming onto the Kanban.
 // Detection is deduped against open incidents, so re-runs are idempotent.
 
-export const REPLAY_START = "2025-12-01"; // BASELINE_END — replay streams the post-baseline window
-const DEFAULT_START = REPLAY_START;
+// The live window = the last STREAM_WINDOW_MONTHS of the uploaded data. The agent
+// learns the baseline on everything before it, then streams/detects this window.
+// REPLAY_START is only a fallback for data with no orders.
+export const REPLAY_START = "2025-12-01";
+const STREAM_WINDOW_MONTHS = 3;
 const DEFAULT_ADVANCE_DAYS = 7;
 
 function asDate(value: string): string {
@@ -24,6 +27,12 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function minusMonths(iso: string, months: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - months);
+  return d.toISOString().slice(0, 10);
+}
+
 // Latest order date in the data — the replay never advances past it.
 export async function dataEndDate(supabase: SupabaseClient): Promise<string | null> {
   const { data } = await supabase
@@ -33,6 +42,13 @@ export async function dataEndDate(supabase: SupabaseClient): Promise<string | nu
     .limit(1)
     .maybeSingle();
   return data?.created_at ? asDate(String(data.created_at)) : null;
+}
+
+// Where the live stream begins: STREAM_WINDOW_MONTHS before the last order.
+// Null only when there are no orders (caller falls back to REPLAY_START).
+export async function streamStartDate(supabase: SupabaseClient): Promise<string | null> {
+  const end = await dataEndDate(supabase);
+  return end ? minusMonths(end, STREAM_WINDOW_MONTHS) : null;
 }
 
 export interface ReplayResult {
@@ -49,14 +65,16 @@ export async function runReplay(
 ): Promise<ReplayResult> {
   const advance = opts.advanceDays ?? DEFAULT_ADVANCE_DAYS;
 
+  const end = await dataEndDate(supabase);
+  const start = end ? minusMonths(end, STREAM_WINDOW_MONTHS) : REPLAY_START;
+
   const { data: stateRow } = await supabase
     .from("replay_state")
     .select("cursor")
     .eq("id", true)
     .maybeSingle();
-  const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : DEFAULT_START;
+  const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : start;
 
-  const end = await dataEndDate(supabase);
   const advanced = addDays(previous, advance);
   const cursor = end && advanced > end ? end : advanced;
 
@@ -78,11 +96,13 @@ export async function runReplay(
   };
 }
 
-// Reset the replay clock back to the start (for re-running the demo).
+// Reset the replay clock to the start of the live window (for re-running the demo,
+// and seeded right after an upload so the board starts empty).
 export async function resetReplay(supabase: SupabaseClient): Promise<{ cursor: string }> {
+  const cursor = (await streamStartDate(supabase)) ?? REPLAY_START;
   const { error } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor: DEFAULT_START }, { onConflict: "id" });
+    .upsert({ id: true, cursor }, { onConflict: "id" });
   if (error) throw new Error(`replay_state reset failed: ${error.message}`);
-  return { cursor: DEFAULT_START };
+  return { cursor };
 }
