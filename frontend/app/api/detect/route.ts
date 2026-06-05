@@ -6,10 +6,11 @@ import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizatio
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// POST /api/detect — run deterministic KPI breach detection over the catalogue
-// and open incidents for newly-breached products. Safe to call repeatedly: it
-// dedups against products that already have an open incident.
-export async function POST(req: NextRequest) {
+// POST|GET /api/detect — run deterministic KPI breach detection over the
+// catalogue and open incidents for newly-breached products. Safe to call
+// repeatedly: it dedups against products that already have an open incident.
+// GET is exposed for Vercel cron jobs (which only send GET requests).
+async function handler(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
   const cronMode = isCronInvocation(req, cronDenied);
 
@@ -45,3 +46,5 @@ export async function POST(req: NextRequest) {
     return apiErrorResponse(err);
   }
 }
+
+export { handler as GET, handler as POST };

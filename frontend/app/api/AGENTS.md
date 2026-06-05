@@ -21,7 +21,8 @@ if (!parsed.success) {
 
 | Route | Domain module |
 |-------|----------------|
-| `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
+| `GET/POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover). GET on detect for Vercel cron. |
+| `GET /api/digest` | `hugo/digest` — daily digest to Slack (cron-only) |
 | `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
 | `POST /api/learn` | `learn/schemas.ts` |
 | `POST /api/onboarding/upload` | `onboarding/import` + `onboarding/api-schemas.ts` (multipart; admin after auth) |
