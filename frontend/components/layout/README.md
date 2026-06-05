@@ -1,17 +1,18 @@
 # Layout
 
-Shell chrome for authenticated pages: shadcn sidebar navigation, header search slot, and account sign-out.
+Shell chrome for authenticated pages: shadcn sidebar navigation, global search, and account sign-out.
 
 ## Components
 
 | Component | Role |
 |-----------|------|
-| `AppShell` | `SidebarProvider` + nav + header wrapper used in root layout |
+| `AppShell` | `SidebarProvider` + nav + `GlobalSearch` wrapper used in root layout |
+| `GlobalSearch` | ⌘K palette for products and incidents |
 
 ## Usage
 
 ```tsx
-<AppShell user={shellUser} searchSlot={optionalSlot}>
+<AppShell user={shellUser} searchTargets={targets}>
   {children}
 </AppShell>
 ```
