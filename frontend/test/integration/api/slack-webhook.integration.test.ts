@@ -93,6 +93,6 @@ describe("POST /api/slack/webhook", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(approveMock).toHaveBeenCalledWith({}, "inc-1", ["a1"], "slack-user");
+    expect(approveMock).toHaveBeenCalledWith({}, "inc-1", ["a1"], null, { slack_user: "slack-user" });
   });
 });

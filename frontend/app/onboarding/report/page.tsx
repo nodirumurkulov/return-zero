@@ -2,7 +2,7 @@ import Link from "next/link";
 import { RunAnalysis } from "@/components/onboarding/RunAnalysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Sparkline from "@/components/ui/sparkline";
-import type { ReportSummary } from "@/lib/learn/report";
+import { parseReportSummary } from "@/lib/learn/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +47,21 @@ export default async function ReportPage() {
     );
   }
 
-  const summary = data.summary as unknown as ReportSummary;
+  const summary = parseReportSummary(data.summary);
+  if (!summary) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        <h1 className="text-2xl font-semibold tracking-tight">Your business report</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The stored report could not be read. Re-run analysis to regenerate it.
+        </p>
+        <div className="mt-6">
+          <RunAnalysis label="Re-run analysis" />
+        </div>
+      </div>
+    );
+  }
+
   const t = summary.totals;
   const trendLabel =
     summary.trend.revenue_direction === "rising"

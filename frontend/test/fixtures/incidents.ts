@@ -6,24 +6,31 @@ import type {
   TimelineEvent,
 } from "@/lib/incidents";
 
+const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
+
 export function createIncidentFixture(overrides?: Partial<Incident>): Incident {
   return {
     id: "inc-00000000-0000-0000-0000-000000000001",
+    organization_id: DEMO_ORG_ID,
     title: "Return rate spike on SKU-42",
     status: "detected",
     severity: "high",
     impact_amount: 12500,
     impact_label: "estimated loss",
-    affected_product: "prod-1",
-    affected_kpis: ["return_rate", "refund_rate"],
+    product_id: "00000000-0000-0000-0000-000000000005",
+    affected_kpi_keys: ["return_rate", "refund_rate"],
     root_cause: "Supplier batch defect",
     root_cause_confidence: 85,
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    resolved_at: null,
     monitoring_kpi: null,
     baseline_value: null,
     target_value: null,
-    recovery_pct: null,
+    recovery_pct: 0,
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 3600000).toISOString(),
+    resolved_at: null,
+    investigation_started_at: null,
+    fix_proposed_at: null,
+    monitoring_started_at: null,
     ...overrides,
   };
 }
@@ -33,6 +40,7 @@ export function createIncidentActionFixture(
 ): IncidentAction {
   return {
     id: "act-00000000-0000-0000-0000-000000000001",
+    organization_id: DEMO_ORG_ID,
     incident_id: "inc-00000000-0000-0000-0000-000000000001",
     title: "Pause ads for affected SKU",
     description: "Reduce spend until returns normalize",
@@ -40,7 +48,7 @@ export function createIncidentActionFixture(
     risk_level: "low",
     auto_deploy: false,
     status: "proposed",
-    approved_by: null,
+    approved_by_user_id: null,
     approved_at: null,
     deployed_at: null,
     created_at: new Date().toISOString(),

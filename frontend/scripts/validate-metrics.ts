@@ -23,6 +23,30 @@ const check = (name: string, cond: boolean, detail: string) => {
   }
 };
 
+const { data: orgRow, error: orgErr } = await supabase
+  .from("organizations")
+  .select("id")
+  .order("created_at", { ascending: true })
+  .limit(1)
+  .maybeSingle();
+if (orgErr || !orgRow?.id) {
+  console.error(orgErr?.message ?? "No organization found — seed the database first");
+  process.exit(1);
+}
+const organizationId = orgRow.id as string;
+
+const { data: courtTrainer, error: ctErr } = await supabase
+  .from("products")
+  .select("id")
+  .eq("organization_id", organizationId)
+  .eq("external_id", "prod_00005")
+  .maybeSingle();
+if (ctErr) {
+  console.error(ctErr.message);
+  process.exit(1);
+}
+const courtTrainerId = courtTrainer?.id as string | undefined;
+
 async function fetchAllMonthlySeries(): Promise<
   { product_id: string; units: number }[]
 > {
@@ -32,7 +56,10 @@ async function fetchAllMonthlySeries(): Promise<
     acc: { product_id: string; units: number }[],
   ): Promise<{ product_id: string; units: number }[]> => {
     const { data, error } = await supabase
-      .rpc("product_monthly_series", { p_months: 24 })
+      .rpc("product_monthly_series", {
+        p_organization_id: organizationId,
+        p_months: 24,
+      })
       .range(from, from + pageSize - 1);
     if (error) throw error;
     const page = (data ?? []) as { product_id: string; units: number }[];
@@ -44,6 +71,7 @@ async function fetchAllMonthlySeries(): Promise<
 }
 
 const { data: facts, error: fErr } = await supabase.rpc("product_source_facts", {
+  p_organization_id: organizationId,
   p_window_days: 30,
 });
 if (fErr) {
@@ -58,9 +86,9 @@ check(
   `got ${factRows.length}`,
 );
 
-const ct = factRows.find(
-  (r: { product_id: string }) => r.product_id === "prod_00005",
-);
+const ct = courtTrainerId
+  ? factRows.find((r: { product_id: string }) => r.product_id === courtTrainerId)
+  : undefined;
 check("Court Trainer present", !!ct, "prod_00005 missing");
 if (ct) {
   const row = ct as {
@@ -79,7 +107,9 @@ if (ct) {
 
 const series = await fetchAllMonthlySeries();
 check("monthly series is 62 x 24", series.length === 62 * 24, `got ${series.length}`);
-const ctMonths = series.filter((r) => r.product_id === "prod_00005");
+const ctMonths = courtTrainerId
+  ? series.filter((r) => r.product_id === courtTrainerId)
+  : [];
 check("Court Trainer has 24 monthly points", ctMonths.length === 24, `got ${ctMonths.length}`);
 check(
   "Court Trainer monthly units are non-negative",

@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { assertCronAuthorized } from "@/lib/cron-auth";
-import { runReplay } from "@/lib/detection/replay";
-import { resetReplay } from "@/lib/detection/replay-clock";
+import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
+import { resetReplay, runReplay } from "@/lib/detection/replay";
 import { replayBodySchema } from "@/lib/detection/schemas";
+import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,12 +14,15 @@ export const maxDuration = 300;
 // threshold. Body: { advance_days?: number }. Schedulable via CRON_SECRET.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
-  if (cronDenied) {
-    const supabase = await createClient();
+  const cronMode =
+    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
+
+  const session = cronMode ? null : await createClient();
+  if (!cronMode && session) {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return cronDenied;
+    } = await session.auth.getUser();
+    if (!user) return cronDenied ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const raw = await req.json().catch(() => ({}));
@@ -31,11 +34,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabase = createAdminClient();
+  const supabase = cronMode ? createAdminClient() : session!;
   try {
-    // Reset rewinds the clock to the start (for re-running the orders-feed demo).
+    const organizationIds = cronMode
+      ? await listAllOrganizationIds(supabase)
+      : [await requireOrganizationId(supabase)];
+
     if (parsed.data.reset) {
-      const { cursor } = await resetReplay(supabase);
+      const resets = await Promise.all(
+        organizationIds.map((organizationId) => resetReplay(supabase, organizationId)),
+      );
+      const cursor = resets[0]?.cursor ?? null;
       return NextResponse.json({
         success: true,
         reset: true,
@@ -46,13 +55,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = await runReplay(supabase, { advanceDays: parsed.data.advance_days });
+    const results = await Promise.all(
+      organizationIds.map((organizationId) =>
+        runReplay(supabase, { organizationId, advanceDays: parsed.data.advance_days }),
+      ),
+    );
+    const result = results[0];
+    if (!result) {
+      return NextResponse.json({ success: true, cursor: null, previous_cursor: null, at_end: true, created: 0 });
+    }
+
+    const created = results.reduce(
+      (sum, r) => sum + r.breaches.created.length + r.forecast.created.length,
+      0,
+    );
+
     return NextResponse.json({
       success: true,
       cursor: result.cursor,
       previous_cursor: result.previous_cursor,
       at_end: result.at_end,
-      created: result.breaches.created.length + result.forecast.created.length,
+      created,
       breaches: result.breaches,
       forecast: result.forecast,
     });

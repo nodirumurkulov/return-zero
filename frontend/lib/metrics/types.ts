@@ -21,6 +21,7 @@ export type Direction = "above" | "below"; // which side of the threshold is a b
 export type MetricStatus = "healthy" | "warning" | "critical";
 
 export interface MetricDefinition {
+  id: string;
   metric_key: string;
   display_name: string;
   description: string | null;
@@ -58,7 +59,7 @@ export interface ProductSourceFacts {
 
 export interface ThresholdOverride {
   product_id: string | null;
-  metric_key: string;
+  metric_definition_id: string;
   threshold: number;
   direction: Direction | null;
   active: boolean;
@@ -73,4 +74,23 @@ export interface MetricValue {
   direction: Direction;
   status: MetricStatus;
   severity: string;
+}
+
+export interface SourceFactsOpts {
+  organizationId: string;
+  windowDays: number;
+  asOf?: string | null;
+}
+
+export interface SeriesOpts {
+  organizationId: string;
+  productId?: string;
+  months?: number;
+}
+
+export interface ComputeOpts {
+  organizationId: string;
+  productId?: string;
+  windowDays?: number;
+  asOf?: string;
 }

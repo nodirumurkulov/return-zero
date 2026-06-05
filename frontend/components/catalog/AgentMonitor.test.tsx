@@ -6,7 +6,8 @@ import AgentMonitor from "./AgentMonitor";
 const thresholds: KpiThreshold[] = [
   {
     id: "t1",
-    product_id: "p1",
+    product_id: "11111111-1111-4111-8111-111111111111",
+    metric_definition_id: "22222222-2222-4222-8222-222222222221",
     metric_key: "return_rate",
     threshold: 10,
     direction: "above",

@@ -5,8 +5,12 @@ import { z } from "zod";
 import { orderIdsForProduct } from "../product-orders";
 import type { AgentSupabase } from "../types";
 
-export async function fetchReturnsContext(supabase: AgentSupabase, productId: string) {
-  const orderIds = await orderIdsForProduct(supabase, productId);
+export async function fetchReturnsContext(
+  supabase: AgentSupabase,
+  organizationId: string,
+  productId: string,
+) {
+  const orderIds = await orderIdsForProduct(supabase, organizationId, productId);
 
   const refundData =
     orderIds.length === 0
@@ -14,7 +18,7 @@ export async function fetchReturnsContext(supabase: AgentSupabase, productId: st
       : (
           await supabase
             .from("refunds")
-            .select("refund_id, amount, reason, created_at, order_id")
+            .select("id, amount, reason, created_at, order_id")
             .in("order_id", orderIds)
             .order("created_at", { ascending: false })
             .limit(500)
@@ -42,12 +46,12 @@ export async function fetchReturnsContext(supabase: AgentSupabase, productId: st
   };
 }
 
-export function createReturnsTools(supabase: AgentSupabase) {
+export function createReturnsTools(supabase: AgentSupabase, organizationId: string) {
   return {
     listRefundsForProduct: tool({
       description: "List refunds for all orders of a product with reason breakdown and totals",
       inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchReturnsContext(supabase, productId),
+      execute: async ({ productId }) => fetchReturnsContext(supabase, organizationId, productId),
     }),
   };
 }

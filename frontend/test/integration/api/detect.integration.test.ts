@@ -11,6 +11,17 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(async () => ({
+    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+  })),
+}));
+
+vi.mock("@/lib/organizations", () => ({
+  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
+  requireOrganizationId: vi.fn(async () => "org-1"),
+}));
+
 import { POST } from "@/app/api/detect/route";
 import { detectBreaches } from "@/lib/detection/detect";
 
@@ -28,7 +39,7 @@ describe("POST /api/detect", () => {
           product_id: "prod-1",
           title: "Test",
           severity: "high",
-          affected_kpis: ["stock"],
+          affected_kpi_keys: ["stock"],
           impact_amount: 1000,
         },
       ],

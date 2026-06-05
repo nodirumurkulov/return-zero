@@ -6,14 +6,14 @@ import { agentFindingLlmSchema } from "./schemas";
 import { createForecastingTools } from "./tools/forecasting-tools";
 import type { AgentSupabase, LlmAgentFinding } from "./types";
 
-function createForecastingAgent(supabase: AgentSupabase) {
+function createForecastingAgent(supabase: AgentSupabase, organizationId: string) {
   return new ToolLoopAgent({
     model: getModel(),
     instructions: `You are the Forecasting Agent for Resolve.
 Always call getDeterministicForecast for the given productId before writing your finding.
 Forecasts are DETERMINISTIC and already computed — never change the numbers.
 Summarise the forward-looking risk in 1-2 sentences with the exact figures from the tool.`,
-    tools: createForecastingTools(supabase),
+    tools: createForecastingTools(supabase, organizationId),
     output: Output.object({ schema: agentFindingLlmSchema }),
     stopWhen: stepCountIs(5),
   });
@@ -21,9 +21,10 @@ Summarise the forward-looking risk in 1-2 sentences with the exact figures from 
 
 export async function runForecastingAgent(
   supabase: AgentSupabase,
+  organizationId: string,
   productId: string,
 ): Promise<LlmAgentFinding> {
-  const agent = createForecastingAgent(supabase);
+  const agent = createForecastingAgent(supabase, organizationId);
   const { output } = await agent.generate({
     prompt: `Summarise forecasts for product ${productId}. Call getDeterministicForecast first.`,
   });

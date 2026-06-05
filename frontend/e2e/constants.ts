@@ -18,8 +18,11 @@ export const E2E_DETECTED_INCIDENT_ID =
   "00000000-0000-0000-0000-000000000099";
 export const E2E_DETECTED_INCIDENT_TITLE = "E2E Detected Incident";
 
-/** First Pretty Fly trainer in products.csv (used for investigation E2E). */
-export const COURT_TRAINER_PRODUCT_ID = "prod_00005";
+/** Demo org from scripts/seed.ts */
+export const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
+
+/** First Pretty Fly trainer external id (uuid resolved at runtime). */
+export const COURT_TRAINER_PRODUCT_EXTERNAL_ID = "prod_00005";
 
 export const SEEDED_INCIDENT_TITLES = [
   MAIN_INCIDENT_TITLE,

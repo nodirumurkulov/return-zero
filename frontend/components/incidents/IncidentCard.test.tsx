@@ -19,7 +19,7 @@ describe("IncidentCard", () => {
     const incident = createIncidentFixture({
       title: "Refund spike",
       impact_amount: 5000,
-      affected_kpis: ["refund_rate", "return_rate", "support_volume", "extra"],
+      affected_kpi_keys: ["refund_rate", "return_rate", "support_volume", "extra"],
     });
     renderWithProviders(<IncidentCard incident={incident} />);
     expect(screen.getByRole("link", { name: "Refund spike" })).toHaveAttribute(

@@ -5,12 +5,17 @@ import { z } from "zod";
 import { campaignNamesForProduct } from "../product-orders";
 import type { AgentSupabase } from "../types";
 
-export async function fetchMarketingContext(supabase: AgentSupabase, productId: string) {
-  const productCampaigns = await campaignNamesForProduct(supabase, productId);
+export async function fetchMarketingContext(
+  supabase: AgentSupabase,
+  organizationId: string,
+  productId: string,
+) {
+  const productCampaigns = await campaignNamesForProduct(supabase, organizationId, productId);
 
   const { data: metaAds } = await supabase
     .from("meta_ads_daily")
     .select("campaign_name, spend_gbp, conversions, conversion_value_gbp")
+    .eq("organization_id", organizationId)
     .order("date", { ascending: false })
     .limit(1000);
 
@@ -42,6 +47,7 @@ export async function fetchMarketingContext(supabase: AgentSupabase, productId: 
   const { data: roasDef } = await supabase
     .from("metric_definitions")
     .select("default_threshold")
+    .eq("organization_id", organizationId)
     .eq("metric_key", "ad_roas")
     .single();
   const roasAlarm = Number(roasDef?.default_threshold ?? 1.5);
@@ -56,13 +62,13 @@ export async function fetchMarketingContext(supabase: AgentSupabase, productId: 
   };
 }
 
-export function createMarketingTools(supabase: AgentSupabase) {
+export function createMarketingTools(supabase: AgentSupabase, organizationId: string) {
   return {
     getCampaignAttribution: tool({
       description:
         "Fetch Meta ad campaign attribution, spend, revenue, ROAS, and campaigns below alarm threshold",
       inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchMarketingContext(supabase, productId),
+      execute: async ({ productId }) => fetchMarketingContext(supabase, organizationId, productId),
     }),
   };
 }
