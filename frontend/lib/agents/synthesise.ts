@@ -1,8 +1,7 @@
 import "server-only";
 
-import { Output, ToolLoopAgent } from "ai";
-import { getModel } from "@/lib/ai/model";
-import { synthesiserLlmSchema } from "./schemas";
+import { createSynthesisAgent } from "@/lib/ai/agent";
+import { synthesiserOutputSchema } from "./schemas";
 import type { InvestigationAction, LlmAgentFinding } from "./types";
 
 const SYNTHESIS_INSTRUCTIONS = `You are the root cause synthesiser for Resolve, a commerce incident response platform.
@@ -15,10 +14,9 @@ export async function synthesiseRootCause(findings: LlmAgentFinding[]): Promise<
   root_cause_confidence: number;
   actions: InvestigationAction[];
 }> {
-  const synthesiser = new ToolLoopAgent({
-    model: getModel(),
+  const synthesiser = createSynthesisAgent({
     instructions: SYNTHESIS_INSTRUCTIONS,
-    output: Output.object({ schema: synthesiserLlmSchema }),
+    outputSchema: synthesiserOutputSchema,
   });
 
   const { output } = await synthesiser.generate({

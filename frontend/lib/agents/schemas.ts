@@ -1,3 +1,4 @@
+import { zodSchema } from "ai";
 import { z } from "zod";
 
 export const investigateBodySchema = z.object({
@@ -12,6 +13,10 @@ export const agentFindingLlmSchema = z.object({
   detail: z.record(z.string(), z.unknown()),
 });
 
+export type AgentFindingLlm = z.infer<typeof agentFindingLlmSchema>;
+
+export const agentFindingOutputSchema = zodSchema(agentFindingLlmSchema);
+
 export const synthesiserLlmSchema = z.object({
   root_cause: z.string(),
   root_cause_confidence: z.number(),
@@ -25,3 +30,13 @@ export const synthesiserLlmSchema = z.object({
     }),
   ),
 });
+
+export type SynthesiserLlm = z.infer<typeof synthesiserLlmSchema>;
+
+export const synthesiserOutputSchema = zodSchema(synthesiserLlmSchema);
+
+const productIdInputZod = z.object({ productId: z.string() });
+
+export type ProductIdInput = z.infer<typeof productIdInputZod>;
+
+export const productIdInputSchema = zodSchema(productIdInputZod);

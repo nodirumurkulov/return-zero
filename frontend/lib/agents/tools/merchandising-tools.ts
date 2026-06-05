@@ -1,15 +1,15 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
+import { productIdInputSchema, type ProductIdInput } from "../schemas";
 import type { AgentSupabase } from "../types";
 
 export function createMerchandisingTools(supabase: AgentSupabase) {
   return {
     getProductDetails: tool({
       description: "Fetch product catalog record for a product",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => {
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }: ProductIdInput) => {
         const { data: product } = await supabase
           .from("products")
           .select("*")
@@ -20,8 +20,8 @@ export function createMerchandisingTools(supabase: AgentSupabase) {
     }),
     listVariants: tool({
       description: "List variants and stockout sizes for a product",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => {
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }: ProductIdInput) => {
         const { data: variants } = await supabase
           .from("variants")
           .select("variant_id, option1_value, option2_value, inventory_quantity, price")

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
+import { productIdInputSchema, type ProductIdInput } from "../schemas";
 import type { AgentSupabase } from "../types";
 
 const movementSince = () =>
@@ -11,8 +11,8 @@ export function createInventoryTools(supabase: AgentSupabase) {
   return {
     listVariantsWithStock: tool({
       description: "List variant stock levels and zero-stock size variants for a product",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => {
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }: ProductIdInput) => {
         const { data: variants } = await supabase
           .from("variants")
           .select("variant_id, option1_value, inventory_quantity")
@@ -25,8 +25,8 @@ export function createInventoryTools(supabase: AgentSupabase) {
     }),
     listRecentMovements: tool({
       description: "List inventory movements in the last 90 days for a product's variants",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => {
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }: ProductIdInput) => {
         const { data: variants } = await supabase
           .from("variants")
           .select("variant_id")

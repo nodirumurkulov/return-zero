@@ -1,8 +1,8 @@
 import "server-only";
 
 import { tool } from "ai";
-import { z } from "zod";
 import { orderIdsForProduct } from "../product-orders";
+import { productIdInputSchema, type ProductIdInput } from "../schemas";
 import type { AgentSupabase } from "../types";
 
 export async function fetchReturnsContext(supabase: AgentSupabase, productId: string) {
@@ -46,8 +46,8 @@ export function createReturnsTools(supabase: AgentSupabase) {
   return {
     listRefundsForProduct: tool({
       description: "List refunds for all orders of a product with reason breakdown and totals",
-      inputSchema: z.object({ productId: z.string() }),
-      execute: async ({ productId }) => fetchReturnsContext(supabase, productId),
+      inputSchema: productIdInputSchema,
+      execute: async ({ productId }: ProductIdInput) => fetchReturnsContext(supabase, productId),
     }),
   };
 }

@@ -1,21 +1,18 @@
 import "server-only";
 
-import { Output, stepCountIs, ToolLoopAgent } from "ai";
-import { getModel } from "@/lib/ai/model";
-import { agentFindingLlmSchema } from "./schemas";
+import { createInvestigationAgent } from "@/lib/ai/agent";
+import { agentFindingOutputSchema } from "./schemas";
 import { createInventoryTools } from "./tools/inventory-tools";
 import type { AgentSupabase, LlmAgentFinding } from "./types";
 
 function createInventoryAgent(supabase: AgentSupabase) {
-  return new ToolLoopAgent({
-    model: getModel(),
+  return createInvestigationAgent({
     instructions: `You are the Inventory Agent for Resolve.
 Always call listVariantsWithStock and listRecentMovements for the given productId before writing your finding.
 Analyse stock levels and inventory movements. Identify stockouts and reorder urgency. Use only numbers from tools.
 Be specific with exact unit counts.`,
     tools: createInventoryTools(supabase),
-    output: Output.object({ schema: agentFindingLlmSchema }),
-    stopWhen: stepCountIs(5),
+    outputSchema: agentFindingOutputSchema,
   });
 }
 

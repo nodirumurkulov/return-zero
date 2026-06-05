@@ -105,7 +105,6 @@ export default tseslint.config(
       "lib/agents/**/*.ts",
       "lib/cron-auth.ts",
       "lib/api-errors.ts",
-      "lib/llm.ts",
       "lib/catalog/health.ts",
       "lib/forecast/methods.ts",
       "lib/detection/schemas.ts",

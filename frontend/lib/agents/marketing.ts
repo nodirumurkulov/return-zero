@@ -1,21 +1,18 @@
 import "server-only";
 
-import { Output, stepCountIs, ToolLoopAgent } from "ai";
-import { getModel } from "@/lib/ai/model";
-import { agentFindingLlmSchema } from "./schemas";
+import { createInvestigationAgent } from "@/lib/ai/agent";
+import { agentFindingOutputSchema } from "./schemas";
 import { createMarketingTools } from "./tools/marketing-tools";
 import type { AgentSupabase, LlmAgentFinding } from "./types";
 
 function createMarketingAgent(supabase: AgentSupabase) {
-  return new ToolLoopAgent({
-    model: getModel(),
+  return createInvestigationAgent({
     instructions: `You are the Marketing Agent for Resolve.
 Always call getCampaignAttribution for the given productId before writing your finding.
 Analyse campaign performance data. Identify underperforming spend, traffic quality issues. Use only numbers from tools.
 The summary must be 1-2 sentences with exact numbers.`,
     tools: createMarketingTools(supabase),
-    output: Output.object({ schema: agentFindingLlmSchema }),
-    stopWhen: stepCountIs(5),
+    outputSchema: agentFindingOutputSchema,
   });
 }
 
