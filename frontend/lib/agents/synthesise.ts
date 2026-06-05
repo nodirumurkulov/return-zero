@@ -1,47 +1,33 @@
 import "server-only";
-import { callLLMJson } from "@/lib/llm";
+
+import { Output, ToolLoopAgent } from "ai";
+import { getModel } from "@/lib/ai/model";
 import { synthesiserLlmSchema } from "./schemas";
 import type { InvestigationAction, LlmAgentFinding } from "./types";
+
+const SYNTHESIS_INSTRUCTIONS = `You are the root cause synthesiser for Resolve, a commerce incident response platform.
+Given findings from investigation agents, produce a concise root cause narrative and 3-4 concrete action recommendations.
+Root cause should be 2-3 sentences, specific, mentioning exact numbers from the findings.
+Auto-deploy should only be true for low-risk, purely additive actions (e.g. adding content).`;
 
 export async function synthesiseRootCause(findings: LlmAgentFinding[]): Promise<{
   root_cause: string;
   root_cause_confidence: number;
   actions: InvestigationAction[];
 }> {
-  const result = await callLLMJson(
-    [
-      {
-        role: "system",
-        content: `You are the root cause synthesiser for Resolve, a commerce incident response platform.
-Given findings from 4 agents, produce a concise root cause narrative and 3-4 concrete action recommendations.
-Respond with JSON:
-{
-  "root_cause": "...",
-  "root_cause_confidence": 85,
-  "actions": [
-    {
-      "title": "...",
-      "description": "...",
-      "impact_level": "high|medium|low",
-      "risk_level": "high|medium|low",
-      "auto_deploy": false
-    }
-  ]
-}
-Root cause should be 2-3 sentences, specific, mentioning exact numbers from the findings.
-Auto-deploy should only be true for low-risk, purely additive actions (e.g. adding content).`,
-      },
-      {
-        role: "user",
-        content: `Agent findings:\n${JSON.stringify(findings, null, 2)}`,
-      },
-    ],
-    synthesiserLlmSchema,
-  );
+  const synthesiser = new ToolLoopAgent({
+    model: getModel(),
+    instructions: SYNTHESIS_INSTRUCTIONS,
+    output: Output.object({ schema: synthesiserLlmSchema }),
+  });
 
-  return {
-    root_cause: result?.root_cause ?? "Under investigation",
-    root_cause_confidence: result?.root_cause_confidence ?? 70,
-    actions: result?.actions ?? [],
-  };
+  const { output } = await synthesiser.generate({
+    prompt: `Agent findings:\n${JSON.stringify(findings, null, 2)}`,
+  });
+
+  if (!output) {
+    throw new Error("Root cause synthesiser: missing structured output");
+  }
+
+  return output;
 }

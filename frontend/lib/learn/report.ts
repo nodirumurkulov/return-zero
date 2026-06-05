@@ -5,12 +5,12 @@
 // face of the knowledge base.
 //
 // The numbers are computed deterministically from the engine; the LLM only
-// NARRATES over them (never invents figures). If no LLM key is configured the
-// report still renders with a deterministic narrative.
+// NARRATES over them (never invents figures). LLM failures propagate to the caller.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { generateText, Output } from "ai";
 import { z } from "zod";
-import { callLLMJson } from "@/lib/llm";
+import { getModel } from "@/lib/ai/model";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MetricValue, MonthlyPoint } from "@/lib/metrics/types";
@@ -238,56 +238,34 @@ export async function buildSummary(supabase: SupabaseClient): Promise<ReportSumm
   };
 }
 
-// Deterministic narrative used as the LLM fallback (and as the grounding the LLM
-// rewrites). Never contains a figure the summary doesn't already hold.
-function fallbackNarrative(s: ReportSummary): string {
-  const pct = (n: number) => `${round(n * 100, 1)}%`;
-  const trend =
-    s.trend.revenue_direction === "rising"
-      ? "trending up"
-      : s.trend.revenue_direction === "falling"
-        ? "trending down"
-        : "holding steady";
-  const worst = s.top.worst_refund_rate[0];
-  return [
-    `Across ${s.totals.products} products and ${s.totals.skus} SKUs your store has booked £${s.totals.revenue_lifetime.toLocaleString()} over ${s.trend.months.length} months, with revenue ${trend} and an average order value of £${s.totals.aov.toLocaleString()}.`,
-    `Overall refund rate is ${pct(s.totals.refund_rate)} and return rate ${pct(s.totals.return_rate)}.` +
-      (worst ? ` ${worst.title} stands out with a ${pct(worst.value)} refund rate.` : ""),
-    s.totals.breaches_now > 0
-      ? `${s.totals.breaches_now} product${s.totals.breaches_now === 1 ? "" : "s"} are currently outside their learned bands — we'll open incidents and watch these in real time.`
-      : `Nothing is currently outside its learned band; we'll keep watching against the baselines we just learned.`,
-  ].join(" ");
-}
-
 const narrativeLlmSchema = z.object({
-  narrative: z.string().optional(),
-  text: z.string().optional(),
+  narrative: z.string().min(1),
 });
 
 export async function narrate(summary: ReportSummary): Promise<string> {
-  const fallback = fallbackNarrative(summary);
-  try {
-    const result = await callLLMJson(
-      [
-        {
-          role: "system",
-          content:
-            "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
-            "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
-            'Reply as JSON: {"narrative": "..."}.',
-        },
-        {
-          role: "user",
-          content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
-        },
-      ],
-      narrativeLlmSchema,
-    );
-    const text = (result?.narrative ?? result?.text ?? "").trim();
-    return text.length > 0 ? text : fallback;
-  } catch {
-    return fallback;
+  const { output } = await generateText({
+    model: getModel(),
+    output: Output.object({ schema: narrativeLlmSchema }),
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
+          "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
+          'Reply as JSON: {"narrative": "..."}.',
+      },
+      {
+        role: "user",
+        content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
+      },
+    ],
+  });
+
+  if (!output) {
+    throw new Error("Onboarding report narrative: missing structured output");
   }
+
+  return output.narrative;
 }
 
 export interface BusinessReport {

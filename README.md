@@ -210,6 +210,7 @@ Deploy on Vercel with **Root Directory** set to `frontend`. See [`docs/DEPLOYMEN
 | Empty catalog or incidents | DB not seeded | Run `scripts` seed against your Supabase project |
 | Auth redirect loops | Supabase redirect URL mismatch | Add `http://localhost:3000/**` and your Vercel URL in Supabase Auth → URL configuration |
 | Investigation fails | Missing LLM key or provider | Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |
+| Debug agent tool calls | DevTools not running | `cd frontend && bun run ai:devtools` → http://localhost:4983 (captures to `.devtools/generations.json`) |
 | Cron routes 401 | `CRON_SECRET` set | Send `Authorization: Bearer $CRON_SECRET` or clear for local dev |
 
 ---
