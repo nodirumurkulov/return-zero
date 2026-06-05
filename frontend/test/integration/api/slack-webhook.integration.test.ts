@@ -6,18 +6,36 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("@/lib/incidents", () => ({
   approveIncidentActions: vi.fn(),
+  getIncident: vi.fn(),
   listLowRiskProposedActionIds: vi.fn(),
 }));
+
+vi.mock("@/lib/detection/recover", () => ({
+  captureRecoveryBaseline: vi.fn(),
+}));
+
+vi.mock("@/lib/slack", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/slack")>();
+  return {
+    ...actual,
+    sendIncidentNotification: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
 import { POST } from "@/app/api/slack/webhook/route";
-import { approveIncidentActions, listLowRiskProposedActionIds } from "@/lib/incidents";
+import {
+  approveIncidentActions,
+  getIncident,
+  listLowRiskProposedActionIds,
+} from "@/lib/incidents";
 
 const listLowRiskMock = vi.mocked(listLowRiskProposedActionIds);
 const approveMock = vi.mocked(approveIncidentActions);
+const getIncidentMock = vi.mocked(getIncident);
 
 function signedBody(payload: object, secret = "slack-signing-secret") {
   const rawPayload = JSON.stringify(payload);
@@ -33,6 +51,7 @@ describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
     listLowRiskMock.mockResolvedValue(["a1"]);
     approveMock.mockResolvedValue({ approved: 1 });
+    getIncidentMock.mockResolvedValue(null);
   });
 
   afterEach(() => {
