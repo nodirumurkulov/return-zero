@@ -108,18 +108,6 @@ export default function AppShell({
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border p-4">
-            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full motion-safe:animate-ping rounded-full bg-sev-resolved/50" />
-                  <span className="relative inline-flex size-2 rounded-full bg-sev-resolved" />
-                </span>
-                <span className="text-xs font-semibold text-foreground">Hugo is online</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                Watching your KPIs in real time. You&apos;ll hear from it only when something breaks.
-              </p>
-            </div>
             <div className="flex items-center gap-3">
               <Avatar className="size-9">
                 <AvatarFallback className="bg-primary-subtle text-sm font-medium text-primary">
