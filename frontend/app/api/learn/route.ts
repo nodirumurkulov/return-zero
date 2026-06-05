@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { resetReplay } from "@/lib/detection/replay";
+import { initReplay } from "@/lib/detection/replay";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 import { learnBodySchema } from "@/lib/learn/schemas";
@@ -33,9 +33,10 @@ export async function POST(req: NextRequest) {
   try {
     const learn = await learnBaselines(supabase);
     const report = await buildBusinessReport(supabase);
-    // Rewind the replay clock to the start of the live window so the incidents
-    // board stays empty until the user presses Start on the Orders stream.
-    const { cursor } = await resetReplay(supabase);
+    // Fix the stream start at the history end and seat the cursor there, so the
+    // incidents board stays empty until the user presses Start on the Orders
+    // stream (which then ingests the staged future rows day by day).
+    const { cursor } = await initReplay(supabase);
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";
