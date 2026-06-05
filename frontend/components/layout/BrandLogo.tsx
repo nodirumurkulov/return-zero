@@ -59,7 +59,14 @@ export function BrandLogo({
   );
 
   if (variant === "sidebar") {
-    return <Link href="/catalog">{content}</Link>;
+    return (
+      <Link
+        href="/catalog"
+        className="block rounded-md outline-hidden transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        {content}
+      </Link>
+    );
   }
 
   return content;

@@ -80,12 +80,12 @@ export default function AppShell({
       </a>
       <SidebarProvider>
         <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-          <SidebarHeader className="gap-3 border-b border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
-            <div className="flex items-center gap-2">
+          <SidebarHeader className="gap-0 border-b border-sidebar-border p-0 group-data-[collapsible=icon]:p-2">
+            <div className="flex items-center gap-2 px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
               <BrandLogo />
               <SidebarTrigger className="ml-auto hidden group-data-[collapsible=icon]:hidden md:inline-flex" />
             </div>
-            <div className="group-data-[collapsible=icon]:hidden">
+            <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
               <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
             </div>
           </SidebarHeader>
