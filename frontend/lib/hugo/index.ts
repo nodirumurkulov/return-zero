@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getIncidentDetail, type Incident } from "@/lib/incidents";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
-import { postSlackMessage } from "@/lib/slack";
+import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import { runHugoApproval, runHugoInvestigation } from "./actions";
@@ -11,8 +11,10 @@ import {
   buildIncidentDetailContext,
   buildInventoryContext,
   buildOpenIncidentsContext,
+  buildThreadTranscript,
   formatIncidentLine,
   resolveIncident,
+  resolveThreadIncidentReference,
   wantsCatalog,
   wantsInventory,
 } from "./context";
@@ -42,11 +44,20 @@ function disambiguation(action: string, candidates: Incident[]): string {
   ].join("\n");
 }
 
+function needsThreadHistory(prompt: string): boolean {
+  return /\b(it|that|this|first|second|third|fourth|fifth|one|same)\b/i.test(prompt);
+}
+
+function isHistoryScopeError(error: string): boolean {
+  return ["missing_scope", "not_in_channel", "channel_not_found"].includes(error);
+}
+
 async function answerDataQuery(
   supabase: SupabaseClient<Database>,
   mention: HugoMention,
   organizationId: string,
   incidentReference: string | null | undefined,
+  threadTranscript?: string,
 ): Promise<string> {
   const parts = [await buildOpenIncidentsContext(supabase, organizationId)];
 
@@ -63,11 +74,11 @@ async function answerDataQuery(
     parts.push(await buildCatalogContext(supabase, organizationId));
   }
 
-  if (wantsInventory(mention.prompt)) {
+  if (wantsInventory(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
     parts.push(await buildInventoryContext(supabase, organizationId));
   }
 
-  return generateDataReply(mention.prompt, parts.join("\n\n"));
+  return generateDataReply(mention.prompt, parts.join("\n\n"), threadTranscript);
 }
 
 /**
@@ -89,13 +100,29 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       return;
     }
 
+    const threadRead = mention.threadTs
+      ? await fetchSlackThreadMessages({ channel: mention.channel, threadTs: mention.threadTs })
+      : null;
+
+    if (threadRead && !threadRead.ok && isHistoryScopeError(threadRead.error) && needsThreadHistory(mention.prompt)) {
+      await post(
+        'I need Slack thread history access to answer follow-ups like "the second one". Ask an admin to approve the updated Slack scopes, then try again.',
+      );
+      return;
+    }
+
+    const threadTranscript = threadRead?.ok ? buildThreadTranscript(threadRead.messages) : undefined;
+
     const intent = await classifyHugoIntent(mention.prompt);
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
+      const threadReference = threadTranscript
+        ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
+        : null;
       const { match, candidates } = await resolveIncident(
         supabase,
-        intent.incident_reference,
+        threadReference ?? intent.incident_reference,
         organizationId,
       );
       if (!match) {
@@ -118,11 +145,22 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
     }
 
     if (intent.intent === "data_query") {
-      await post(await answerDataQuery(supabase, mention, organizationId, intent.incident_reference));
+      const threadReference = threadTranscript
+        ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
+        : null;
+      await post(
+        await answerDataQuery(
+          supabase,
+          mention,
+          organizationId,
+          threadReference ?? intent.incident_reference,
+          threadTranscript,
+        ),
+      );
       return;
     }
 
-    await post(await generateChatReply(mention.prompt));
+    await post(await generateChatReply(mention.prompt, threadTranscript));
   } catch (err) {
     console.error("[Hugo] handleHugoMention failed:", err);
     await post("Sorry, something went wrong handling that. Please try again in a moment.");

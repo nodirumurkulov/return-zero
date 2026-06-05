@@ -300,6 +300,42 @@ export function stripSlackMentions(text: string): string {
   return text.replace(/<@[A-Z0-9]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+export type SlackThreadMessage = {
+  type?: string;
+  user?: string;
+  bot_id?: string;
+  text?: string;
+  ts?: string;
+  thread_ts?: string;
+};
+
+export type SlackThreadReadResult =
+  | { ok: true; messages: SlackThreadMessage[] }
+  | { ok: false; error: string };
+
+export async function fetchSlackThreadMessages(args: {
+  channel: string;
+  threadTs: string;
+}): Promise<SlackThreadReadResult> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return { ok: false, error: "missing_bot_token" };
+
+  const url = new URL("https://slack.com/api/conversations.replies");
+  url.searchParams.set("channel", args.channel);
+  url.searchParams.set("ts", args.threadTs);
+  url.searchParams.set("limit", "20");
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = (await res.json().catch(() => null)) as
+    | { ok?: boolean; error?: string; messages?: SlackThreadMessage[] }
+    | null;
+
+  if (!json?.ok) return { ok: false, error: json?.error ?? `http_${res.status}` };
+  return { ok: true, messages: json.messages ?? [] };
+}
+
 /**
  * Post a message to a Slack channel via the Web API (`chat.postMessage`),
  * authenticated with the bot token. `threadTs` keeps replies in-thread.
@@ -358,4 +394,3 @@ export async function postWebhookBlocks(blocks: object[]): Promise<void> {
     console.error(`[Slack] Webhook blocks failed: ${res.status} ${text}`);
   }
 }
-

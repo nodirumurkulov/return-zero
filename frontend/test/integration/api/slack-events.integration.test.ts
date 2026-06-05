@@ -74,4 +74,41 @@ describe("POST /api/slack/events", () => {
     expect(json.challenge).toBe("challenge-token");
     expect(handleHugoMentionMock).not.toHaveBeenCalled();
   });
+
+  it("passes app mentions to Hugo with thread metadata", async () => {
+    const { body, timestamp, signature, secret } = signedJsonBody({
+      type: "event_callback",
+      team_id: "T123",
+      event: {
+        type: "app_mention",
+        user: "U123",
+        channel: "C123",
+        text: "<@UHUGO> investigate the second one",
+        ts: "1710000000.000100",
+        thread_ts: "1710000000.000000",
+      },
+    });
+    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/slack/events", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-slack-signature": signature,
+          "x-slack-request-timestamp": timestamp,
+        },
+        body,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(handleHugoMentionMock).toHaveBeenCalledWith({
+      channel: "C123",
+      threadTs: "1710000000.000000",
+      prompt: "investigate the second one",
+      userName: "U123",
+      teamId: "T123",
+    });
+  });
 });

@@ -32,4 +32,18 @@ describe("generateDataReply", () => {
     const messages = generateTextMock.mock.calls[0][0].messages as Array<{ content: string }>;
     expect(messages[1].content).toContain("Open incidents (2 of 5)");
   });
+
+  it("includes Slack thread context when answering follow-up questions", async () => {
+    generateTextMock.mockResolvedValue({ text: "The second incident has ~3d to stockout." });
+    await generateDataReply(
+      "how many days until that stocks out?",
+      "Inventory / stock: Hoodie has ~3d to stockout",
+      "User: show open incidents\nHugo: 1. Return spike [aaaaaaaa]\n2. Stockout risk [bbbbbbbb]",
+    );
+
+    const messages = generateTextMock.mock.calls[0][0].messages as Array<{ content: string }>;
+    expect(messages[1].content).toContain("Slack thread so far:");
+    expect(messages[1].content).toContain("Latest question: how many days until that stocks out?");
+    expect(messages[1].content).toContain("Inventory / stock");
+  });
 });
