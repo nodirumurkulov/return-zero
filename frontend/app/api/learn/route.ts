@@ -1,9 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { learnBaselines } from "@/lib/learn/baselines";
-import { buildBusinessReport } from "@/lib/learn/report";
 import { learnBodySchema } from "@/lib/learn/schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { createReplay } from "@/lib/stores/analytics/replay";
+import { runStoreIntelligence } from "@/lib/stores";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,12 +36,8 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient();
   try {
-    const learn = await learnBaselines(supabase, organizationId);
-    const report = await buildBusinessReport(supabase, organizationId);
-    // Rewind the replay clock to the start of the live window so the incidents
-    // board stays empty until the user presses Start on the Orders stream.
-    const { cursor } = await createReplay(supabase).reset(organizationId);
-    return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
+    const { learn, reportId, replayCursor } = await runStoreIntelligence(supabase, organizationId);
+    return NextResponse.json({ success: true, learn, reportId, replayCursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";
     return NextResponse.json({ success: false, error: message }, { status: 500 });

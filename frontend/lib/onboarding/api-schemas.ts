@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { StorePlatform } from "@/lib/stores/connect/store-connection";
+import type { StorePlatform } from "@/lib/stores";
 
 export const onboardingConnectBodySchema = z
   .object({

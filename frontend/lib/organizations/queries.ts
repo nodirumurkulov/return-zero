@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { connectStore } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { Organization } from "./organization";
@@ -94,6 +95,14 @@ export async function createOrganizationWithOwner(
 
   if (memberErr) {
     throw new OrganizationError(memberErr.message);
+  }
+
+  const provisioned = await connectStore(supabase, org.id, "mock_csv");
+  if (!provisioned.success) {
+    const failed = provisioned.results.filter((result) => result.error).map((result) => result.table);
+    throw new OrganizationError(
+      failed.length > 0 ? `Demo store load failed: ${failed.join(", ")}` : "Demo store load failed",
+    );
   }
 
   return org;

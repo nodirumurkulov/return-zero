@@ -2,7 +2,7 @@ import {
   onboardingConnectBodySchema,
   onboardingConnectResponseSchema,
 } from "@/lib/onboarding/api-schemas";
-import type { LoadResult, StorePlatform } from "@/lib/stores/connect";
+import type { LoadResult, StorePlatform } from "@/lib/stores";
 
 export type PostConnectStoreInput = {
   readonly platform: StorePlatform;
