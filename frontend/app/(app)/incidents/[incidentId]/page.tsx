@@ -1,9 +1,7 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import IncidentDetailView from "@/components/incidents/IncidentDetailView";
-import { getIncidentDetailQueryOptions } from "@/hooks/stores/incidents/query-options.server";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { getQueryClient } from "@/lib/query/query-client";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,17 +16,12 @@ export default async function IncidentDetailPage(props: PageProps) {
   const org = await tryRequireOrganizationId(supabase);
   if (!org.ok) notFound();
 
-  const queryClient = getQueryClient();
-
-  const detail = await queryClient.fetchQuery(
-    getIncidentDetailQueryOptions(supabase, { id: incidentId }, org.organizationId),
-  );
+  const detail = await getStore(supabase).incidents.getDetail({
+    id: incidentId,
+    organizationId: org.organizationId,
+  });
 
   if (!detail) notFound();
 
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <IncidentDetailView incidentId={incidentId} />
-    </HydrationBoundary>
-  );
+  return <IncidentDetailView detail={detail} />;
 }

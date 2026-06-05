@@ -1,19 +1,26 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
-import { postSlackMessage } from "@/lib/slack";
+import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
 import type { Incident } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
-import { runHugoApproval, runHugoInvestigation } from "./actions";
+import {
+  runHugoApproval,
+  runHugoInvestigation,
+  runHugoReopen,
+  runHugoSnooze,
+} from "./actions";
 import {
   buildCatalogContext,
   buildIncidentDetailContext,
   buildInventoryContext,
   buildOpenIncidentsContext,
+  buildThreadTranscript,
   formatIncidentLine,
   resolveIncident,
+  resolveThreadIncidentReference,
   wantsCatalog,
   wantsInventory,
 } from "./context";
@@ -43,11 +50,56 @@ function disambiguation(action: string, candidates: Incident[]): string {
   ].join("\n");
 }
 
+export function needsThreadHistory(prompt: string): boolean {
+  const clean = prompt.trim();
+  if (/\b(first|second|third|fourth|fifth)\b/i.test(clean)) return true;
+
+  const wordCount = clean.split(/\s+/).filter(Boolean).length;
+  return wordCount <= 8 && /\b(it|that|this|one|same)\b/i.test(clean);
+}
+
+function isHistoryScopeError(error: string): boolean {
+  return ["missing_scope", "not_in_channel", "channel_not_found"].includes(error);
+}
+
+function confirmationBlocks(action: "resolve" | "reject", incident: Incident): object[] {
+  const label = action === "resolve" ? "Resolve incident" : "Reject proposed fixes";
+  const actionId = action === "resolve" ? "confirm_hugo_resolve" : "confirm_hugo_reject";
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `Confirm: *${label}* for "${incident.title}"?`,
+      },
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: { type: "plain_text", text: `Confirm ${action}` },
+          style: action === "resolve" ? "primary" : "danger",
+          action_id: actionId,
+          value: incident.id,
+        },
+        {
+          type: "button",
+          text: { type: "plain_text", text: "Cancel" },
+          action_id: "cancel_hugo_action",
+          value: incident.id,
+        },
+      ],
+    },
+  ];
+}
+
 async function answerDataQuery(
   supabase: SupabaseClient<Database>,
   mention: HugoMention,
   organizationId: string,
   incidentReference: string | null | undefined,
+  threadTranscript?: string,
 ): Promise<string> {
   const parts = [await buildOpenIncidentsContext(supabase, organizationId)];
 
@@ -55,12 +107,11 @@ async function answerDataQuery(
   if (ref) {
     const { match } = await resolveIncident(supabase, ref, organizationId);
     if (match) {
-      const detail = await getStore(supabase).incidents.get({
+      const detail = await getStore(supabase).incidents.getDetail({
         id: match.id,
         organizationId,
-        detail: true,
       });
-      if (detail && "incident" in detail) {
+      if (detail) {
         parts.push(buildIncidentDetailContext(detail));
       }
     }
@@ -70,11 +121,11 @@ async function answerDataQuery(
     parts.push(await buildCatalogContext(supabase, organizationId));
   }
 
-  if (wantsInventory(mention.prompt)) {
+  if (wantsInventory(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
     parts.push(await buildInventoryContext(supabase, organizationId));
   }
 
-  return generateDataReply(mention.prompt, parts.join("\n\n"));
+  return generateDataReply(mention.prompt, parts.join("\n\n"), threadTranscript);
 }
 
 /**
@@ -96,13 +147,29 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       return;
     }
 
+    const threadRead = mention.threadTs
+      ? await fetchSlackThreadMessages({ channel: mention.channel, threadTs: mention.threadTs })
+      : null;
+
+    if (threadRead && !threadRead.ok && isHistoryScopeError(threadRead.error) && needsThreadHistory(mention.prompt)) {
+      await post(
+        'I need Slack thread history access to answer follow-ups like "the second one". Ask an admin to approve the updated Slack scopes, then try again.',
+      );
+      return;
+    }
+
+    const threadTranscript = threadRead?.ok ? buildThreadTranscript(threadRead.messages) : undefined;
+
     const intent = await classifyHugoIntent(mention.prompt);
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
+      const threadReference = threadTranscript
+        ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
+        : null;
       const { match, candidates } = await resolveIncident(
         supabase,
-        intent.incident_reference,
+        threadReference ?? intent.incident_reference,
         organizationId,
       );
       if (!match) {
@@ -124,12 +191,57 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       return;
     }
 
-    if (intent.intent === "data_query") {
-      await post(await answerDataQuery(supabase, mention, organizationId, intent.incident_reference));
+    if (["resolve", "reopen", "snooze", "reject"].includes(intent.intent)) {
+      const verb = intent.intent;
+      const threadReference = threadTranscript
+        ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
+        : null;
+      const { match, candidates } = await resolveIncident(
+        supabase,
+        threadReference ?? intent.incident_reference,
+        organizationId,
+      );
+      if (!match) {
+        await post(disambiguation(verb, candidates));
+        return;
+      }
+
+      if (verb === "resolve" || verb === "reject") {
+        await postSlackMessage({
+          channel: mention.channel,
+          threadTs: mention.threadTs,
+          text: `Please confirm ${verb} for "${match.title}".`,
+          blocks: confirmationBlocks(verb, match),
+        });
+        return;
+      }
+
+      const actor = { slack_user: mention.userName ?? "slack-user" };
+      const result =
+        verb === "reopen"
+          ? await runHugoReopen(supabase, match, actor)
+          : await runHugoSnooze(supabase, match, intent.duration_days ?? 7, actor);
+      await post(result);
       return;
     }
 
-    await post(await generateChatReply(mention.prompt));
+    if (intent.intent === "data_query") {
+      const threadReference = threadTranscript
+        ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
+        : null;
+      await post(
+        await answerDataQuery(
+          supabase,
+          mention,
+          organizationId,
+          threadReference ?? intent.incident_reference,
+          threadTranscript,
+        ),
+      );
+      return;
+    }
+
+    await post(await generateChatReply(mention.prompt, threadTranscript));
   } catch (err) {
     console.error("[Hugo] handleHugoMention failed:", err);
     await post("Sorry, something went wrong handling that. Please try again in a moment.");

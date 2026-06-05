@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
-  const raw = await req.json().catch(() => ({}));
+  const raw: unknown = await req.json().catch(() => ({}));
   const parsed = learnBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(

@@ -35,7 +35,6 @@ const advanceResult = {
   cursor: "2024-01-08",
   at_end: false,
   breaches: { scanned: 1, created: [], skipped: [] },
-  forecast: { scanned: 1, created: [], skipped: [] },
 };
 
 describe("POST /api/stores/orders/advance", () => {

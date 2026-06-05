@@ -9,7 +9,9 @@ Two entry points:
 | Entry | Use for |
 |-------|---------|
 | `@/lib/stores` | Types, Zod schemas, pure helpers (client + server) |
-| `@/lib/stores/server` | `getStore(supabase)` and server-only exports (RSC, API routes, scripts) |
+| `@/lib/stores/server` | `getStore(supabase)` and server-only exports (RSC, API routes) |
+
+Scripts and seed use `provisionMockCsvStore` from `lib/stores/import/provision.ts` (relative import — no `server-only`).
 
 ```typescript
 import { getStore } from "@/lib/stores/server";

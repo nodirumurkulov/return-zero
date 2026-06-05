@@ -31,12 +31,6 @@ export const updateIncidentBodySchema = z
 
 export type UpdateIncidentBody = z.infer<typeof updateIncidentBodySchema>;
 
-export const recoverBodySchema = z.object({
-  advance_days: z.number().finite().optional(),
-});
-
-export type RecoverBody = z.infer<typeof recoverBodySchema>;
-
 export const patchIncidentStatusBodySchema = z
   .object({
     status: z.enum(INCIDENT_STATUSES),

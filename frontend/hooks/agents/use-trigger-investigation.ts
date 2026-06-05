@@ -1,20 +1,19 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
-import { incidentKeys } from "@/hooks/stores/incidents/keys";
 import { triggerInvestigation, type TriggerInvestigationInput } from "@/lib/api/investigate/client";
 import type { IncidentRef } from "@/lib/stores";
 
 export function useTriggerInvestigation(incident: IncidentRef) {
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: (input: Omit<TriggerInvestigationInput, "incident">) =>
       triggerInvestigation({ incident, ...input }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: incidentKeys.detail(incident.id) });
-      void queryClient.invalidateQueries({ queryKey: incidentKeys.list() });
+      router.refresh();
     },
   });
 }

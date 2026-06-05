@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ product
   }
   const { organizationId } = org;
 
-  const raw = await req.json().catch(() => null);
+  const raw: unknown = await req.json().catch(() => null);
   const parsed = updateThresholdBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(

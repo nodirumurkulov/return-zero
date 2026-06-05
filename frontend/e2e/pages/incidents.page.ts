@@ -24,6 +24,8 @@ export class IncidentsPage {
 
   async changeStatus(title: string, statusLabel: string) {
     await this.statusTriggerFor(title).click();
-    await this.page.getByRole("menuitem").filter({ hasText: statusLabel }).click();
+    const item = this.page.getByRole("menuitem").filter({ hasText: statusLabel });
+    await item.waitFor({ state: "visible" });
+    await item.click();
   }
 }

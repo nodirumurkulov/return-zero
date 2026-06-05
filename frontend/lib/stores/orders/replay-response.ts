@@ -28,7 +28,6 @@ export const replayAdvanceResponseSchema = z.union([
     at_end: z.boolean(),
     created: z.number(),
     breaches: detectionResultSchema.optional(),
-    forecast: detectionResultSchema.optional(),
   }),
   z.object({ error: z.string() }),
 ]);

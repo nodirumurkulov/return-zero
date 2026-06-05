@@ -1,18 +1,17 @@
-import { expect, test } from "@playwright/test";
 import {
   MAIN_INCIDENT_ID,
   MAIN_INCIDENT_TITLE,
   SEEDED_INCIDENT_TITLES,
   STATUS_CHANGE_INCIDENT_TITLE,
 } from "../constants";
+import { expect, resetStatusChangeIncidentFixture, test } from "../fixtures";
 import { IncidentsPage } from "../pages/incidents.page";
-import { resetStatusChangeIncidentFixture } from "../reset-main-incident";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("Incidents board", () => {
-  test.beforeEach(async () => {
-    await resetStatusChangeIncidentFixture();
+  test.beforeEach(async ({ admin }) => {
+    await resetStatusChangeIncidentFixture(admin);
   });
   test("shows all seeded incidents on the kanban", async ({ page }) => {
     const incidents = new IncidentsPage(page);

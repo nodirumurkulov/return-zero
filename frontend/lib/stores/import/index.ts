@@ -11,6 +11,11 @@ export interface ImportTableResult {
   error?: string;
 }
 
+export interface ImportRunResult {
+  results: ImportTableResult[];
+  success: boolean;
+}
+
 export interface ImportLoadOpts {
   replace?: boolean;
 }

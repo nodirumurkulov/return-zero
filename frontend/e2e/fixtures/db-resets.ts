@@ -1,14 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-import { DEMO_ORG_ID, MAIN_INCIDENT_ID, STATUS_CHANGE_INCIDENT_ID } from "./constants";
-import { requireSupabaseEnv } from "./env";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { DEMO_ORG_ID, MAIN_INCIDENT_ID, STATUS_CHANGE_INCIDENT_ID } from "../constants";
 
 /** Restore demo incident 1 action rows after approve E2E tests mutate them. */
-export async function resetMainIncidentFixture() {
-  const { url, serviceRoleKey } = requireSupabaseEnv();
-  const admin = createClient(url, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
+export async function resetMainIncidentFixture(admin: SupabaseClient) {
   const now = Date.now();
   const minus = (mins: number) => new Date(now - mins * 60 * 1000).toISOString();
 
@@ -96,12 +91,7 @@ export async function resetMainIncidentFixture() {
 }
 
 /** Restore stockout incident status after kanban E2E mutates it. */
-export async function resetStatusChangeIncidentFixture() {
-  const { url, serviceRoleKey } = requireSupabaseEnv();
-  const admin = createClient(url, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
+export async function resetStatusChangeIncidentFixture(admin: SupabaseClient) {
   const { error } = await admin
     .from("incidents")
     .update({ status: "fix_proposed" })
@@ -111,7 +101,7 @@ export async function resetStatusChangeIncidentFixture() {
   }
 }
 
-export async function resetAllE2eFixtures() {
-  await resetMainIncidentFixture();
-  await resetStatusChangeIncidentFixture();
+export async function resetAllE2eFixtures(admin: SupabaseClient) {
+  await resetMainIncidentFixture(admin);
+  await resetStatusChangeIncidentFixture(admin);
 }

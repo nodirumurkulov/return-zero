@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { getStore, notifyNewIncidents } from "@/lib/stores/server";
@@ -30,10 +31,11 @@ export async function POST(req: NextRequest) {
     const results = await Promise.all(
       organizationIds.map((organizationId) => store.incidents.detect({ organizationId })),
     );
-    await notifyNewIncidents(results.flatMap((r) => r.created));
+    const created = results.flatMap((r) => r.created);
+    await notifyNewIncidents(created);
+    void investigateCreatedIncidents(supabase, created);
 
     const scanned = results.reduce((sum, r) => sum + r.scanned, 0);
-    const created = results.flatMap((r) => r.created);
     const skipped = results.flatMap((r) => r.skipped);
 
     return NextResponse.json({

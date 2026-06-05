@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
-import { getStore } from "@/lib/stores/server";
+import { approveIncidentAndNotify, getStore, listIncidentActionIds } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,25 @@ export async function POST(req: NextRequest) {
   const incidentId = action.value;
   const slackUser = payload.user?.name ?? "slack-user";
 
+  if (action.action_id === "cancel_hugo_action") {
+    return NextResponse.json({ text: "Canceled. No changes were made." });
+  }
+
+  if (action.action_id === "confirm_hugo_resolve" || action.action_id === "confirm_hugo_reject") {
+    const store = getStore(supabase);
+    const incident = await store.incidents.get({ id: incidentId, organizationId });
+    if (!incident) {
+      return NextResponse.json({ error: "Incident not found" }, { status: 404 });
+    }
+
+    const result =
+      action.action_id === "confirm_hugo_resolve"
+        ? await runHugoResolve(supabase, incident, { slack_user: slackUser })
+        : await runHugoRejectProposedActions(supabase, incident, { slack_user: slackUser });
+
+    return NextResponse.json({ text: result });
+  }
+
   if (action.action_id === "approve_low_risk") {
     const store = getStore(supabase);
     const incident = await store.incidents.get({ id: incidentId, organizationId });
@@ -58,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
-    const actionIds = await store.incidents.listActions({
+    const actionIds = await listIncidentActionIds(supabase, {
       incidentId,
       organizationId,
       filter: { status: "proposed", riskLevel: "low" },
@@ -66,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (actionIds.length > 0) {
       try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-        await store.incidents.approveAndNotify({
+        await approveIncidentAndNotify(supabase, {
           incidentId,
           actionIds,
           approvedByUserId: null,

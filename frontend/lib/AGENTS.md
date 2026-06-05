@@ -24,7 +24,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | Module | Import | Owns |
 |--------|--------|------|
 | `organizations/` | `@/lib/organizations` | Tenancy: org membership, `requireOrganizationId`, cron tenant iteration |
-| `stores/incidents/` | `@/lib/stores/incidents` | Incident lifecycle, detection, forecast-risk, recover |
+| `stores/incidents/` | `@/lib/stores/incidents` | KPI breach detect + incident CRUD |
 | `stores/analytics/catalog/` | `@/lib/stores/analytics/catalog` | Metrics, thresholds, health, catalog queries |
 | `stores/analytics/metrics/` | `@/lib/stores/analytics/metrics` | KPI engine, definitions, series |
 | `stores/analytics/forecast/` | `@/lib/stores/analytics/forecast` | Deterministic forecasts |

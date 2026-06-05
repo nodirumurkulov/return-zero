@@ -1,44 +1,40 @@
 # AGENTS.md — lib/stores/incidents
 
-Incident lifecycle, detection, and recovery. **Parent:** [../../AGENTS.md](../../AGENTS.md)
+KPI breach detection and incident CRUD. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `types.ts` | DB row types + `IncidentDetail`, `IncidentRef` |
-| `status.ts` | Kanban columns and status/severity constants |
-| `schemas.ts` | Zod request bodies for API routes |
-| `index.ts` | **`Incidents`** + `createIncidents` — sole public API |
-| `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation (not re-exported) |
-| `api/` | Server query options + client fetch helpers |
+| `incidents.ts` | **`Incidents`** class + route helpers (`listIncidentActionIds`, `approveIncidentAndNotify`) |
+| `detect.ts` | Threshold breach → insert incident row |
+| `index.ts` | Barrel: types, schemas, status |
+| `types.ts`, `schemas.ts`, `status.ts`, `errors.ts` | Types and API validation |
+| `notify-new-incidents.ts` | Slack fan-out for new breaches |
 
-Client hooks: `@/hooks/stores/incidents` (approve, status updates, detail queries).
+AI investigation lives in **`@/lib/hugo`** — route handlers call it after detect, not this module.
+
+Client HTTP: `@/lib/api/stores/incidents/client` (mutations). Hooks: `@/hooks/stores/incidents`.
 
 ## Public API
 
-All domain operations are methods on `Incidents`. Instantiate via `createIncidents(supabase)`:
-
 ```typescript
-const store = createIncidents(supabase);
-await store.listIncidents(organizationId);
-await store.detectBreaches({ organizationId, asOf });
-await store.approveIncidentActions({ incidentId, actionIds, approvedByUserId });
+import { getStore } from "@/lib/stores/server";
+
+const { incidents } = getStore(supabase);
+await incidents.list({ organizationId });
+await incidents.get({ id, organizationId });
+await incidents.getDetail({ id, organizationId });
+await incidents.update({ id, organizationId, patch });
+await incidents.approve({ incidentId, actionIds, approvedByUserId });
+await incidents.detect({ organizationId, asOf });
 ```
 
-Do not add loose module-level functions — routes and jobs call store methods.
-
-## Types
-
-Use Supabase-generated row types only — no mappers, no `*Row` aliases, no `toRow()`:
-
-```typescript
-export type Incident = Database["public"]["Tables"]["incidents"]["Row"];
-```
+`detect` scans product KPIs (via metrics engine + catalog thresholds) and opens one incident per breached product with no open incident.
 
 ## Usage
 
 ```typescript
-import { createIncidents, type Incident } from "@/lib/stores/incidents";
-import { useApproveActions } from "@/hooks/stores/incidents";
+import type { Incident, IncidentDetail } from "@/lib/stores";
+import { patchIncidentStatus } from "@/lib/api/stores/incidents/client";
 ```

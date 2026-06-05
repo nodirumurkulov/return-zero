@@ -3,7 +3,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { approveIncidentBodySchema } from "@/lib/stores";
-import { getStore } from "@/lib/stores/server";
+import {
+  approveIncidentAndNotify,
+  listIncidentActionIds,
+} from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +22,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
   const org = await tryRequireOrganizationId(supabase);
   if (!org.ok) {
-    logApiError("api/incidents/[id]/approve", new Error(org.error));
+    logApiError("api/stores/incidents/[id]/approve", new Error(org.error));
     return apiErrorResponse(new Error(org.error), 403);
   }
   const { organizationId } = org;
 
   const params = await props.params;
-  const raw = await req.json().catch(() => ({}));
+  const raw: unknown = await req.json().catch(() => ({}));
   const parsed = approveIncidentBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -34,10 +37,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     );
   }
 
-  const store = getStore(supabase);
   const body = parsed.data;
   const lowRiskIds = body.approve_all_low_risk
-    ? await store.incidents.listActions({
+    ? await listIncidentActionIds(supabase, {
         incidentId: params.id,
         organizationId,
         filter: { status: "proposed", riskLevel: "low" },
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    await store.incidents.approveAndNotify({
+    await approveIncidentAndNotify(supabase, {
       incidentId: params.id,
       actionIds,
       approvedByUserId: user.id,
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       appUrl,
     });
   } catch (err) {
-    logApiError("api/incidents/[id]/approve", err);
+    logApiError("api/stores/incidents/[id]/approve", err);
     return apiErrorResponse(err);
   }
 

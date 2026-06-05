@@ -1,9 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, CircleCheckBig } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
@@ -14,83 +12,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ImpactTag } from "@/components/ui/ImpactTag";
 import { SectionLabel } from "@/components/ui/section-label";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useTriggerInvestigation } from "@/hooks/agents";
-import { getIncidentDetailClientQueryOptions } from "@/hooks/stores/incidents";
+import type { IncidentDetail } from "@/lib/stores";
 
-function IncidentDetailSkeleton() {
-  return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-border bg-card px-6 py-3.5">
-        <Skeleton className="h-3 w-32" />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Skeleton className="h-7 w-64 max-w-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-        </div>
-      </div>
-      <div className="flex-1 bg-muted/30 p-6">
-        <div className="mx-auto max-w-[1040px] space-y-5">
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-          </div>
-          <Skeleton className="h-40 w-full rounded-xl" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function IncidentDetailView({ incidentId }: { incidentId: string }) {
-  const incidentRef = { id: incidentId };
-  const { data: detail, isError, error, isPending } = useQuery(
-    getIncidentDetailClientQueryOptions(incidentRef),
-  );
-
-  // Auto-investigate when a freshly detected incident is opened. Guarded to fire
-  // at most once per mount; the manual button stays as a fallback. (Costs one LLM
-  // run on first view of a `detected` incident.)
-  const { mutate: triggerInvestigation, isPending: investigatePending } =
-    useTriggerInvestigation(incidentRef);
-  const autoFiredRef = useRef(false);
-  const detectedStatus = detail?.incident.status;
-  const affectedProduct = detail?.incident.product_id ?? null;
-  useEffect(() => {
-    if (autoFiredRef.current) return;
-    if (detectedStatus === "detected" && affectedProduct && !investigatePending) {
-      autoFiredRef.current = true;
-      triggerInvestigation({ product: { id: affectedProduct } });
-    }
-  }, [detectedStatus, affectedProduct, investigatePending, triggerInvestigation]);
-
-  if (isPending && !detail) {
-    return <IncidentDetailSkeleton />;
-  }
-
-  if (isError || !detail) {
-    return (
-      <div className="p-6">
-        <EmptyState
-          title="Failed to load incident"
-          description={error instanceof Error ? error.message : "Unknown error"}
-        />
-      </div>
-    );
-  }
-
+export default function IncidentDetailView({ detail }: { detail: IncidentDetail }) {
   const { incident, findings, actions, timeline } = detail;
-  const recoveryPct = incident.recovery_pct != null ? Math.round(incident.recovery_pct * 100) : null;
-  const showRecovery =
-    incident.monitoring_kpi != null &&
-    recoveryPct != null &&
-    (incident.status === "monitoring" || incident.status === "resolved");
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header band */}
       <div className="border-b border-border bg-card px-6 py-3.5">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Link href="/incidents" className="hover:text-foreground">
@@ -123,11 +52,9 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
         ) : null}
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-auto bg-muted/30">
         <div className="mx-auto max-w-[1040px] p-6">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            {/* Main column */}
             <div className="space-y-5">
               {incident.root_cause ? (
                 <Card className="gap-0 p-5">
@@ -162,7 +89,7 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
                 ) : (
                   <EmptyState
                     title="No findings yet"
-                    description="Trigger investigation to populate agent findings for this incident."
+                    description="Investigation runs automatically after a breach is detected. Use the button above to retry."
                   />
                 )}
               </section>
@@ -173,30 +100,7 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
               </section>
             </div>
 
-            {/* Rail */}
             <div className="space-y-5">
-              {showRecovery ? (
-                <Card className="gap-0 p-4">
-                  <div className="flex items-center justify-between">
-                    <SectionLabel>Projected recovery</SectionLabel>
-                    <span className="tabnum text-[11px] font-medium text-sev-resolved">{recoveryPct}%</span>
-                  </div>
-                  <p className="mt-1 text-[13px] text-muted-foreground">{incident.monitoring_kpi}</p>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-sev-resolved transition-[width]"
-                      style={{ width: `${recoveryPct}%` }}
-                    />
-                  </div>
-                  {incident.baseline_value != null && incident.target_value != null ? (
-                    <p className="mt-2 tabnum text-[11px] text-muted-foreground">
-                      baseline {Number(incident.baseline_value).toFixed(2)} → target{" "}
-                      {Number(incident.target_value).toFixed(2)}
-                    </p>
-                  ) : null}
-                </Card>
-              ) : null}
-
               <Card className="gap-0 p-4">
                 <SectionLabel className="mb-3">Timeline</SectionLabel>
                 <IncidentTimeline events={timeline} />

@@ -17,6 +17,6 @@ export class OrdersPage {
   }
 
   orderFeedRows() {
-    return this.page.locator('[class*="tabnum"]').filter({ hasText: /^#/ });
+    return this.page.getByTestId("order-feed-row");
   }
 }

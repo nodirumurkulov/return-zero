@@ -28,7 +28,10 @@ export function OrderRow({ order }: { order: OrderFeedItem }) {
     ? order.items.map((i) => `${i.title}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(", ")
     : "N/A";
   return (
-    <div className="flex items-center gap-4 px-5 py-2.5 transition-colors hover:bg-muted/40">
+    <div
+      className="flex items-center gap-4 px-5 py-2.5 transition-colors hover:bg-muted/40"
+      data-testid="order-feed-row"
+    >
       <span className="tabnum w-[84px] shrink-0 font-mono text-xs text-muted-foreground">
         #{order.order_number ?? order.order_id.slice(-6)}
       </span>

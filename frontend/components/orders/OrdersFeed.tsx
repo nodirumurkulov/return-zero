@@ -115,10 +115,7 @@ export function OrdersFeed({
       try {
         const body = await advanceReplayMutate({ advance_days: advanceDays });
         if (!("breaches" in body)) return;
-        const incidents = [
-          ...(body.breaches?.created ?? []),
-          ...(body.forecast?.created ?? []),
-        ];
+        const incidents = [...(body.breaches?.created ?? [])];
         const cursor = body.cursor ?? checkpointDayRef.current;
         checkpointDayRef.current = cursor;
         setClock(cursor);

@@ -27,39 +27,30 @@ export {
   type FeedResponse,
 } from "./orders/schemas";
 
-export type { AgentFinding } from "./incidents/agent-finding";
-export type { IncidentAction } from "./incidents/incident-action";
-export type { IncidentDetail } from "./incidents/incident-detail";
-export type { IncidentRef } from "./incidents/incident-ref";
-export type { Incident } from "./incidents/incident";
-export type { TimelineEvent } from "./incidents/timeline-event";
 export type {
+  AgentFinding,
   ApproveActionsInput,
-  IncidentsApproveAndNotifyOpts,
-  IncidentsCaptureBaselineOpts,
+  ApproveIncidentAndNotifyOpts,
+  Incident,
+  IncidentAction,
+  IncidentDetail,
+  IncidentRef,
   IncidentsGetOpts,
-  IncidentsListActionsOpts,
   IncidentsListOpts,
   IncidentsUpdateOpts,
-} from "./incidents";
+  ListIncidentActionIdsOpts,
+  TimelineEvent,
+} from "./incidents/types";
 export type { DetectOpts, DetectionResult, CreatedIncident } from "./incidents/detect";
-export type {
-  ForecastDetectOpts,
-  ForecastDetectionResult,
-  CreatedForecastIncident,
-} from "./incidents/forecast-risk";
-export type { RecoverOpts, RecoveryResult } from "./incidents/recover";
 export {
   approveIncidentBodySchema,
   approveIncidentResponseSchema,
   incidentDetailSchema,
   patchIncidentStatusBodySchema,
-  recoverBodySchema,
   updateIncidentBodySchema,
   type ApproveIncidentBody,
   type ApproveIncidentResponse,
   type PatchIncidentStatusBody,
-  type RecoverBody,
   type UpdateIncidentBody,
 } from "./incidents/schemas";
 export { INCIDENT_STATUSES, KANBAN_COLUMNS } from "./incidents/status";

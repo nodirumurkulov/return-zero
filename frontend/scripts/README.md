@@ -1,6 +1,6 @@
 # Scripts
 
-Bun CLI utilities to bootstrap the demo org and validate the database. New signups auto-provision the Pretty Fly demo store at account creation; `seed.ts` creates org + demo user only. Load store fixtures for E2E via `demo-fixtures.ts` or sign up through the app.
+Bun CLI utilities to bootstrap the demo org and validate the database. New signups auto-provision the Pretty Fly demo store at account creation.
 
 ## Prerequisites
 
@@ -23,22 +23,24 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environmen
 
 ```bash
 bun run scripts/seed.ts
+bun run scripts/seed.ts -- --full          # + Pretty Fly store + demo kanban incidents
+bun run scripts/seed.ts -- --full --e2e    # + E2E user (for Playwright)
 ```
 
 ## What's here
 
 | File | Purpose |
 |------|---------|
-| `seed.ts` | Demo org + auth user (no store data) |
-| `demo-fixtures.ts` | Load Pretty Fly store + KPI thresholds + demo incidents (E2E global-setup) |
+| `seed.ts` | Demo org + auth user; `--full` loads store + incidents; `--e2e` adds Playwright user |
 | `validate-counts.ts` | Assert table row counts |
 | `validate-metrics.ts` | Assert metrics RPCs on seeded data |
+
 No separate `scripts/` package at repo root; `createClient()` from `@supabase/supabase-js` in each script. DB setup uses Supabase CLI (`bun run db:reset` in `frontend/`).
 
 ## Notes
 
-- Validators need store data loaded (signup provisioning, E2E `demo-fixtures`, or `/onboarding` learn flow); CI does not run these.
+- Validators need store data loaded (`seed --full`, signup provisioning, or `/onboarding` learn flow); CI does not run these.
+- Store import for scripts uses `provisionMockCsvStore` from `lib/stores/import/provision.ts` (script-safe, no `server-only`).
 
 **Agents:** [../AGENTS.md](../AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+**Parent:** [../README.md](../README.md)

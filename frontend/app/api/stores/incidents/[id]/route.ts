@@ -7,34 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const org = await tryRequireOrganizationId(supabase);
-  if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
-  }
-
-  const detail = await getStore(supabase).incidents.get({
-    id: params.id,
-    organizationId: org.organizationId,
-    detail: true,
-  });
-
-  if (!detail) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  return NextResponse.json(detail);
-}
-
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const supabase = await createClient();
@@ -50,7 +22,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     return NextResponse.json({ error: org.error }, { status: 403 });
   }
 
-  const raw = await req.json().catch(() => null);
+  const raw: unknown = await req.json().catch(() => null);
   const parsed = updateIncidentBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -67,7 +39,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     });
     return NextResponse.json(data);
   } catch (err) {
-    logApiError("api/incidents/[id] PATCH", err);
+    logApiError("api/stores/incidents/[id] PATCH", err);
     return apiErrorResponse(err);
   }
 }

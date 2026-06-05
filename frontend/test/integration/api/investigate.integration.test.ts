@@ -7,30 +7,35 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock("@/lib/agents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/agents")>();
-  return {
-    ...actual,
-    persistInvestigation: vi.fn(),
-  };
-});
+const { investigateIncidentMock, incidentsStoreMock } = vi.hoisted(() => ({
+  investigateIncidentMock: vi.fn(),
+  incidentsStoreMock: { get: vi.fn() },
+}));
+
+vi.mock("@/lib/hugo/investigate-incident", () => ({
+  investigateIncident: investigateIncidentMock,
+}));
+
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: incidentsStoreMock })),
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  requireOrganizationId: vi.fn(),
+  tryRequireOrganizationId: vi.fn(),
 }));
 
 import { POST } from "@/app/api/investigate/route";
-import { persistInvestigation } from "@/lib/agents";
-import { requireOrganizationId } from "@/lib/organizations";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const persistInvestigationMock = vi.mocked(persistInvestigation);
+const investigateMock = investigateIncidentMock;
+const getIncidentMock = incidentsStoreMock.get;
 const createClientMock = vi.mocked(createClient);
-const requireOrganizationIdMock = vi.mocked(requireOrganizationId);
+const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 
 const INCIDENT_ID = "550e8400-e29b-41d4-a716-446655440001";
 const PRODUCT_ID = "550e8400-e29b-41d4-a716-446655440002";
@@ -53,7 +58,7 @@ describe("POST /api/investigate", () => {
       }),
     );
     expect(res.status).toBe(400);
-    expect(persistInvestigationMock).not.toHaveBeenCalled();
+    expect(investigateMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 when user is not signed in", async () => {
@@ -71,7 +76,7 @@ describe("POST /api/investigate", () => {
     expect(res.status).toBe(401);
   });
 
-  it("persists investigation for authenticated user", async () => {
+  it("delegates to Hugo investigateIncident for authenticated user", async () => {
     const supabase = {
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
       from: () => ({
@@ -81,8 +86,16 @@ describe("POST /api/investigate", () => {
       }),
     };
     createClientMock.mockResolvedValue(supabase as never);
-    requireOrganizationIdMock.mockResolvedValue("org-1");
-    persistInvestigationMock.mockResolvedValue({
+    tryRequireOrganizationIdMock.mockResolvedValue({
+      ok: true,
+      organizationId: "org-1",
+    });
+    getIncidentMock.mockResolvedValue({
+      id: INCIDENT_ID,
+      product_id: PRODUCT_ID,
+      organization_id: "org-1",
+    });
+    investigateMock.mockResolvedValue({
       result: {
         findings: [],
         root_cause: "Supplier defect",
@@ -101,6 +114,6 @@ describe("POST /api/investigate", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(persistInvestigationMock).toHaveBeenCalledWith(supabase, INCIDENT_ID, PRODUCT_ID);
+    expect(investigateMock).toHaveBeenCalledWith(supabase, INCIDENT_ID, PRODUCT_ID);
   });
 });

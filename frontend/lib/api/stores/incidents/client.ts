@@ -1,14 +1,11 @@
+import { apiClient } from "@/lib/api/client";
 import {
   approveIncidentBodySchema,
   approveIncidentResponseSchema,
-  incidentDetailSchema,
   patchIncidentStatusBodySchema,
   type Incident,
-  type IncidentDetail,
   type IncidentRef,
 } from "@/lib/stores";
-
-import { apiClient } from "../client";
 
 export type ApproveIncidentActionsApproval =
   | { readonly kind: "all_low_risk" }
@@ -39,19 +36,12 @@ function toApproveBody(approval: ApproveIncidentActionsApproval): ApproveInciden
   return { action_ids: [...approval.actionIds] };
 }
 
-export async function getIncidentDetail(incident: IncidentRef): Promise<IncidentDetail> {
-  const data = await apiClient(`/api/incidents/${incident.id}`, {
-    output: incidentDetailSchema,
-  });
-  return data as IncidentDetail;
-}
-
 export async function patchIncidentStatus(input: PatchIncidentStatusInput): Promise<Incident> {
   const body = patchIncidentStatusBodySchema.parse({
     status: input.status.value,
     resolved_at: input.status.value === "resolved" ? new Date().toISOString() : null,
   });
-  const data = await apiClient(`/api/incidents/${input.incident.id}`, {
+  const data = await apiClient(`/api/stores/incidents/${input.incident.id}`, {
     method: "PATCH",
     body,
   });
@@ -62,7 +52,7 @@ export async function approveIncidentActions(
   input: ApproveIncidentActionsInput,
 ): Promise<ApproveIncidentActionsResult> {
   const body = approveIncidentBodySchema.parse(toApproveBody(input.approval));
-  const data = await apiClient(`/api/incidents/${input.incident.id}/approve`, {
+  const data = await apiClient(`/api/stores/incidents/${input.incident.id}/approve`, {
     method: "POST",
     body,
     output: approveIncidentResponseSchema,

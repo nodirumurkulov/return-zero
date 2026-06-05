@@ -1,21 +1,9 @@
-/**
- * Demo store data + incidents for E2E and local dev after onboarding connect.
- * Not run by `bun run seed` — users load the mock store via onboarding.
- */
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { PrettyFlyPack } from "../lib/stores/import/mock/pack";
-import { getStore } from "../lib/stores/server";
+import { COURT_TRAINER_PRODUCT_EXTERNAL_ID } from "../constants";
 
-const HERO_PRODUCT_EXTERNAL_ID = "prod_00005";
+const HERO_PRODUCT_EXTERNAL_ID = COURT_TRAINER_PRODUCT_EXTERNAL_ID;
 const BATCH_SIZE = 500;
-
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(scriptDir, "../../hackathon/data-pack/data");
-const prettyFlyPack = new PrettyFlyPack(DATA_DIR);
 
 async function upsert(
   supabase: SupabaseClient,
@@ -33,19 +21,6 @@ async function upsert(
       console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
     }
   }
-}
-
-export async function loadDemoStore(supabase: SupabaseClient, organizationId: string) {
-  console.log("  loading Pretty Fly demo store…");
-  const { success } = await getStore(supabase).import.run({
-    organizationId,
-    platform: "mock_csv",
-    source: prettyFlyPack.read(),
-  });
-  if (!success) {
-    throw new Error("Demo store load failed");
-  }
-  console.log("  ✓ demo store connected");
 }
 
 export async function seedProductKpiThresholds(supabase: SupabaseClient, organizationId: string) {
@@ -160,6 +135,7 @@ export async function seedDemoIncidents(
     [
       {
         id: "00000000-0000-0000-0001-000000000001",
+        organization_id: organizationId,
         incident_id: incidentId,
         agent_name: "Returns Agent",
         agent_icon: "📦",
@@ -176,6 +152,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0001-000000000002",
+        organization_id: organizationId,
         incident_id: incidentId,
         agent_name: "Merchandising Agent",
         agent_icon: "🛍️",
@@ -192,6 +169,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0001-000000000003",
+        organization_id: organizationId,
         incident_id: incidentId,
         agent_name: "Marketing Agent",
         agent_icon: "📣",
@@ -208,6 +186,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0001-000000000004",
+        organization_id: organizationId,
         incident_id: incidentId,
         agent_name: "Inventory Agent",
         agent_icon: "🏭",
@@ -229,6 +208,7 @@ export async function seedDemoIncidents(
     [
       {
         id: "00000000-0000-0000-0002-000000000001",
+        organization_id: organizationId,
         incident_id: incidentId,
         title: "Add sizing guidance to product page",
         description:
@@ -242,6 +222,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0002-000000000002",
+        organization_id: organizationId,
         incident_id: incidentId,
         title: "Enable fit assistant widget",
         description:
@@ -254,6 +235,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0002-000000000003",
+        organization_id: organizationId,
         incident_id: incidentId,
         title: "Update support flow — exchange before refund",
         description:
@@ -266,6 +248,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0002-000000000004",
+        organization_id: organizationId,
         incident_id: incidentId,
         title: "Pause cold-traffic Meta campaign",
         description:
@@ -284,6 +267,7 @@ export async function seedDemoIncidents(
     [
       {
         id: "00000000-0000-0000-0003-000000000001",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "anomaly_detected",
         description: "Return rate for Court Trainer crossed 20% threshold (current: 22.5%)",
@@ -292,6 +276,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0003-000000000002",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "incident_created",
         description:
@@ -300,6 +285,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0003-000000000003",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "agent_assigned",
         description:
@@ -308,6 +294,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0003-000000000004",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "root_cause_found",
         description:
@@ -317,6 +304,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0003-000000000005",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "action_proposed",
         description: "4 actions proposed: 1 auto-deploy, 3 requiring approval",
@@ -324,6 +312,7 @@ export async function seedDemoIncidents(
       },
       {
         id: "00000000-0000-0000-0003-000000000006",
+        organization_id: organizationId,
         incident_id: incidentId,
         event_type: "deployed",
         description: "Action auto-deployed: sizing guidance published to Court Trainer product page",
@@ -397,13 +386,11 @@ export async function seedDemoIncidents(
   );
 }
 
-/** E2E bootstrap: load mock store, KPI thresholds, and kanban demo incidents. */
-export async function bootstrapDemoFixtures(supabase: SupabaseClient, organizationId: string) {
-  await loadDemoStore(supabase, organizationId);
-  const productIdByExternalId = await getStore(supabase).import.externalIdMap({
-    organizationId,
-    table: "products",
-  });
+export async function seedDemoKanbanData(
+  supabase: SupabaseClient,
+  organizationId: string,
+  productIdByExternalId: Map<string, string>,
+) {
   await seedProductKpiThresholds(supabase, organizationId);
   await seedDemoIncidents(supabase, organizationId, productIdByExternalId);
 }

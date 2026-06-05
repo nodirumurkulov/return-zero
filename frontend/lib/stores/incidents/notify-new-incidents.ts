@@ -3,11 +3,8 @@ import "server-only";
 import { notifyNewIncident } from "@/lib/slack";
 
 import type { CreatedIncident } from "./detect";
-import type { CreatedForecastIncident } from "./forecast-risk";
 
-export async function notifyNewIncidents(
-  incidents: readonly (CreatedIncident | CreatedForecastIncident)[],
-): Promise<void> {
+export async function notifyNewIncidents(incidents: readonly CreatedIncident[]): Promise<void> {
   await Promise.all(
     incidents.map((inc) =>
       notifyNewIncident({

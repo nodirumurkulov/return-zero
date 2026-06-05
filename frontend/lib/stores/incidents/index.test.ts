@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import { Incidents } from "./index";
+import { Incidents, listIncidentActionIds } from "./incidents";
 
 type QueryResult = { data: unknown; error: { message: string } | null };
 
@@ -29,13 +29,12 @@ function chainMock(responses: QueryResult[]) {
 }
 
 describe("Incidents", () => {
-  describe("listActions", () => {
+  describe("listIncidentActionIds", () => {
     it("returns ids for low-risk proposed actions", async () => {
       const { supabase } = chainMock([
         { data: [{ id: "low-1" }, { id: "low-2" }], error: null },
       ]);
-      const store = new Incidents(supabase);
-      const ids = await store.listActions({
+      const ids = await listIncidentActionIds(supabase, {
         incidentId: "inc-1",
         organizationId: "org-1",
         filter: { status: "proposed", riskLevel: "low" },

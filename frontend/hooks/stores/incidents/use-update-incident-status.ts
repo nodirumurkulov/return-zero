@@ -1,24 +1,22 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 import {
   patchIncidentStatus,
   type PatchIncidentStatusInput,
-} from "@/lib/api/incidents/client";
-
-import { incidentKeys } from "./keys";
+} from "@/lib/api/stores/incidents/client";
 
 export type { PatchIncidentStatusInput as UpdateIncidentStatusInput };
 
 export function useUpdateIncidentStatus() {
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: patchIncidentStatus,
-    onSuccess: (_data, input) => {
-      void queryClient.invalidateQueries({ queryKey: incidentKeys.list() });
-      void queryClient.invalidateQueries({ queryKey: incidentKeys.detail(input.incident.id) });
+    onSuccess: () => {
+      router.refresh();
     },
   });
 }

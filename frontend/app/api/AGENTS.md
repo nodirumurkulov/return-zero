@@ -28,12 +28,10 @@ if (!parsed.success) {
 | `GET /api/stores/orders/feed` | `getStore().orders.list` |
 | `PATCH /api/stores/catalog/[productId]/threshold` | `getStore().catalog.update` |
 | `POST /api/stores/learn` | `getStore().learn.run` |
-| `POST /api/stores/incidents/detect` | `getStore().incidents.detect` |
-| `POST /api/stores/incidents/forecast-risk` | `getStore().incidents.forecast` |
-| `POST /api/stores/incidents/recover` | `getStore().incidents.recover` |
-| `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
-| `POST /api/incidents/[id]/approve` | `getStore().incidents.approve` |
-| `GET/PATCH /api/incidents/[id]` | `getStore().incidents.get` / `.update` |
+| `POST /api/stores/incidents/detect` | `getStore().incidents.detect` + `hugo/investigate-incident` |
+| `POST /api/investigate` | `hugo/investigate-incident` |
+| `POST /api/stores/incidents/[id]/approve` | `approveIncidentAndNotify` |
+| `PATCH /api/stores/incidents/[id]` | `getStore().incidents.update` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 | `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |
 

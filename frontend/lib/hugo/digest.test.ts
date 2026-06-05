@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Incident } from "@/lib/stores/incidents/incident";
+import type { Incident } from "@/lib/stores";
 import { buildDigestBlocks, summarizeIncidents } from "./digest";
 
 function incident(overrides: Partial<Incident>): Incident {

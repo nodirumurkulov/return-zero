@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const supabase = await createClient();
 const store = getStore(supabase);
-const detail = await store.incidents.get({ organizationId, incidentId });
+const detail = await store.incidents.getDetail({ id: incidentId, organizationId });
 ```
 
 API routes validate JSON with Zod in each domain's `schemas.ts` (inline `safeParse` in the route).

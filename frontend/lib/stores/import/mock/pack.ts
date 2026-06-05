@@ -1,5 +1,3 @@
-import "server-only";
-
 import fs from "node:fs";
 import path from "node:path";
 
@@ -30,7 +28,7 @@ export const PRETTY_FLY_FILES = [
 export type PrettyFlyFile = (typeof PRETTY_FLY_FILES)[number];
 export type PrettyFlyFiles = Partial<Record<PrettyFlyFile, string>>;
 
-/** Pretty Fly hackathon data pack shipped with the repo (server-only). */
+/** Pretty Fly hackathon data pack shipped with the repo. */
 export class PrettyFlyPack {
   constructor(private readonly dataDir = path.resolve(process.cwd(), "../hackathon/data-pack/data")) {}
 

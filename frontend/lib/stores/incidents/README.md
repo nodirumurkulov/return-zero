@@ -1,32 +1,12 @@
-# Incidents domain
+# lib/stores/incidents
 
-Types, store, detection, recovery, and client hooks for the incident lifecycle.
+KPI breach detection and incident lifecycle (list, detail, patch, approve).
 
-## What's here
+| File | Role |
+|------|------|
+| `incidents.ts` | **`Incidents`** class |
+| `detect.ts` | Threshold breach → insert row |
+| `types.ts`, `schemas.ts`, `status.ts` | Types and validation |
+| `notify-new-incidents.ts` | Slack notifications for new breaches |
 
-| File | Purpose |
-|------|---------|
-| `types.ts` | `Incident`, `IncidentAction`, `AgentFinding`, `TimelineEvent`, `IncidentDetail` |
-| `status.ts` | `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus` |
-| `schemas.ts` | Zod bodies for approve, patch, and recover APIs |
-| `index.ts` | **`Incidents`** — list, detail, patch, approve, detect, recover |
-| `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation |
-| `api/`, `hooks/` | TanStack Query keys and client mutations |
-
-## Usage
-
-```typescript
-import { createIncidents, type Incident } from "@/lib/stores/incidents";
-
-const store = createIncidents(supabase);
-const incidents = await store.listIncidents(organizationId);
-```
-
-## Notes
-
-- Single source for `Incident` — do not redefine in pages or components.
-- Call store methods; do not add loose module-level functions.
-
-**Agents:** [AGENTS.md](AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-05
+AI investigation is **`@/lib/hugo/investigate-incident`** — called from route handlers after detect, not from this module.

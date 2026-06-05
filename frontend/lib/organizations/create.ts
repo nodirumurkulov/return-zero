@@ -1,9 +1,8 @@
-import "server-only";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
+
+import { provisionMockCsvStore } from "../stores/import/provision";
 
 import type { Organization } from "./organization";
 import { OrganizationError } from "./queries";
@@ -32,10 +31,7 @@ export async function createOrganizationWithOwner(
     throw new OrganizationError(memberErr.message);
   }
 
-  const provisioned = await getStore(supabase).import.run({
-    organizationId: org.id,
-    platform: "mock_csv",
-  });
+  const provisioned = await provisionMockCsvStore(supabase, { organizationId: org.id });
   if (!provisioned.success) {
     const failed = provisioned.results.filter((result) => result.error).map((result) => result.table);
     throw new OrganizationError(

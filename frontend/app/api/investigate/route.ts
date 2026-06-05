@@ -1,14 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
-import { investigateBodySchema, persistInvestigation } from "@/lib/agents";
+import { investigateBodySchema } from "@/lib/agents";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { requireOrganizationId } from "@/lib/organizations";
+import { investigateIncident } from "@/lib/hugo/investigate-incident";
+import { tryRequireOrganizationId } from "@/lib/organizations";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const raw = await req.json().catch(() => null);
+  const raw: unknown = await req.json().catch(() => null);
   const parsed = investigateBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -28,12 +30,28 @@ export async function POST(req: NextRequest) {
   const { incident_id, product_id } = parsed.data;
 
   try {
-    await requireOrganizationId(supabase);
+    const org = await tryRequireOrganizationId(supabase);
+    if (!org.ok) {
+      return NextResponse.json({ error: org.error }, { status: 403 });
+    }
 
-    const { result, findings_count, actions_count } = await persistInvestigation(
+    const incident = await getStore(supabase).incidents.get({
+      id: incident_id,
+      organizationId: org.organizationId,
+    });
+    if (!incident) {
+      return NextResponse.json({ error: "Incident not found" }, { status: 404 });
+    }
+
+    const resolvedProductId = incident.product_id ?? product_id;
+    if (!resolvedProductId) {
+      return NextResponse.json({ error: "Incident has no product" }, { status: 400 });
+    }
+
+    const { result, findings_count, actions_count } = await investigateIncident(
       supabase,
       incident_id,
-      product_id,
+      resolvedProductId,
     );
 
     revalidatePath("/incidents");

@@ -145,17 +145,12 @@ export class Orders {
       organizationId: opts.organizationId,
       asOf: cursor,
     });
-    const forecast = await this.incidents.forecast({
-      organizationId: opts.organizationId,
-      asOf: cursor,
-    });
 
     return {
       previous_cursor: previous,
       cursor,
       at_end,
       breaches,
-      forecast,
     };
   }
 

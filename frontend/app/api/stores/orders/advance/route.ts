@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
+import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { advanceBodySchema } from "@/lib/stores";
 import { getStore, notifyNewIncidents } from "@/lib/stores/server";
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (!user) return cronDenied ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const raw = await req.json().catch(() => ({}));
+  const raw: unknown = await req.json().catch(() => ({}));
   const parsed = advanceBodySchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -70,24 +71,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await notifyNewIncidents([
-      ...results.flatMap((r) => r.breaches.created),
-      ...results.flatMap((r) => r.forecast.created),
-    ]);
-
-    const created = results.reduce(
-      (sum, r) => sum + r.breaches.created.length + r.forecast.created.length,
-      0,
-    );
+    const createdIncidents = results.flatMap((r) => r.breaches.created);
+    await notifyNewIncidents(createdIncidents);
+    void investigateCreatedIncidents(supabase, createdIncidents);
 
     return NextResponse.json({
       success: true,
       cursor: result.cursor,
       previous_cursor: result.previous_cursor,
       at_end: result.at_end,
-      created,
+      created: createdIncidents.length,
       breaches: result.breaches,
-      forecast: result.forecast,
     });
   } catch (err) {
     logApiError("api/stores/orders/advance", err);
