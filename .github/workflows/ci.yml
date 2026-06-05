@@ -110,12 +110,6 @@ jobs:
       - run: bun ci
       - run: bun run build
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: next-build
-          path: frontend/.next
-          retention-days: 1
-
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -139,10 +133,17 @@ jobs:
 
       - run: bun ci
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/cache@v4
         with:
-          name: next-build
-          path: frontend/.next
+          path: |
+            ~/.bun/install/cache
+            frontend/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-
+            next-${{ runner.os }}-
+
+      - run: bun run build
 
       - uses: supabase/setup-cli@v1
         with:
