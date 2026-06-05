@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { assertCronAuthorized } from "@/lib/cron-auth";
-import { resetReplay, runReplay } from "@/lib/detection/replay";
+import { runReplay } from "@/lib/detection/replay";
+import { resetReplay } from "@/lib/detection/replay-clock";
 import { replayBodySchema } from "@/lib/detection/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
