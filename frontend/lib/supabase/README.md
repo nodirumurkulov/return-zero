@@ -24,8 +24,8 @@ bun run db:types:check
 Or against a remote project:
 
 ```bash
-SUPABASE_ACCESS_TOKEN=... bunx supabase gen types typescript \
-  --project-id <project-ref> --schema public \
+SUPABASE_ACCESS_TOKEN=... bunx supabase gen types \
+  --project-id <project-ref> --lang=typescript --schema public \
   > lib/supabase/database.types.ts
 ```
 
