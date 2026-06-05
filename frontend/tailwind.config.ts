@@ -10,6 +10,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -63,20 +67,20 @@ const config: Config = {
         // exactly: text-sev-critical / bg-sev-criticalBg / border-sev-criticalBd.
         sev: {
           critical: "hsl(var(--sev-critical))",
-          criticalBg: "#fef2f2",
-          criticalBd: "#fecaca",
+          criticalBg: "hsl(var(--sev-critical-bg))",
+          criticalBd: "hsl(var(--sev-critical-bd))",
           high: "hsl(var(--sev-high))",
-          highBg: "#fff7ed",
-          highBd: "#fed7aa",
+          highBg: "hsl(var(--sev-high-bg))",
+          highBd: "hsl(var(--sev-high-bd))",
           monitor: "hsl(var(--sev-medium))",
-          monitorBg: "#fffbeb",
-          monitorBd: "#fde68a",
+          monitorBg: "hsl(var(--sev-monitor-bg))",
+          monitorBd: "hsl(var(--sev-monitor-bd))",
           resolved: "hsl(var(--sev-low))",
-          resolvedBg: "#f0fdf4",
-          resolvedBd: "#bbf7d0",
+          resolvedBg: "hsl(var(--sev-resolved-bg))",
+          resolvedBd: "hsl(var(--sev-resolved-bd))",
           idle: "hsl(var(--sev-idle))",
-          idleBg: "#f4f4f5",
-          idleBd: "#e4e4e7",
+          idleBg: "hsl(var(--sev-idle-bg))",
+          idleBd: "hsl(var(--sev-idle-bd))",
           // legacy aliases (untouched components)
           medium: "hsl(var(--sev-medium))",
           low: "hsl(var(--sev-low))",

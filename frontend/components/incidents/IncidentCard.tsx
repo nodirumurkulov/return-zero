@@ -46,7 +46,7 @@ export default function IncidentCard({
   return (
     <Card
       data-testid="incident-card"
-      className="group gap-0 p-3 transition-all hover:shadow-pop"
+      className="group gap-0 p-3 transition-[box-shadow,border-color] hover:shadow-pop"
     >
       <div className="flex items-start justify-between gap-2">
         <SeverityBadge severity={incident.severity} />

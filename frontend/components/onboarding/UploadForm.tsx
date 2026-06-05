@@ -41,7 +41,7 @@ export default function UploadForm() {
 
   function submit() {
     if (matched.length === 0) {
-      setError("No matching CSVs found — expected files named like orders.csv, products.csv …");
+      setError("No matching CSVs found. Expected files named like orders.csv, products.csv …");
       return;
     }
     const fd = new FormData();
@@ -100,7 +100,7 @@ export default function UploadForm() {
     <Card>
       <CardContent className="space-y-4 p-4">
         <p className="text-xs text-muted-foreground">
-          Drop all your CSV exports here (or click to choose) — select them all at once. We match each file
+          Drop all your CSV exports here (or click to choose). Select them all at once. We match each file
           to its table by name. This replaces any existing data and starts a fresh slate (no incidents until
           you play the stream).
         </p>
@@ -125,7 +125,7 @@ export default function UploadForm() {
           <UploadCloud className="size-6 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">Drop your CSVs here, or click to choose</span>
           <span className="text-xs text-muted-foreground">
-            Select all {CONTRACT_FILES.length} at once — we&apos;ll figure out which is which
+            Select all {CONTRACT_FILES.length} at once. We&apos;ll figure out which is which
           </span>
           <input
             ref={inputRef}
@@ -193,7 +193,7 @@ export default function UploadForm() {
             {results.map((r) => (
               <div key={r.table} className={r.error ? "text-sev-critical" : "text-sev-resolved"}>
                 {r.error ? "✗" : "✓"} {r.table}: {r.count.toLocaleString()}
-                {r.error ? ` — ${r.error}` : ""}
+                {r.error ? `: ${r.error}` : ""}
               </div>
             ))}
           </div>

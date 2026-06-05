@@ -11,6 +11,16 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+function rateTrendSubtext(trend: number[], label: string): string | undefined {
+  if (trend.length < 2) return undefined;
+  const first = trend[0];
+  const last = trend[trend.length - 1];
+  const delta = last - first;
+  if (Math.abs(delta) < 0.002) return `${label} holding steady`;
+  const pts = (Math.abs(delta) * 100).toFixed(1);
+  return delta > 0 ? `${label} up ${pts} pts over window` : `${label} down ${pts} pts over window`;
+}
+
 type PageProps = {
   params: Promise<{ productId: string }>;
 };
@@ -49,7 +59,7 @@ export default async function ProductDetailPage(props: PageProps) {
         <KpiCard
           label="Return rate"
           value={`${((metrics.return_rate ?? 0) * 100).toFixed(1)}%`}
-          subtext="Sizing-related returns trending up"
+          subtext={rateTrendSubtext(returnTrend, "Return rate")}
           trend={returnTrend}
           accent={(metrics.return_rate ?? 0) > 0.2 ? "danger" : "default"}
         />

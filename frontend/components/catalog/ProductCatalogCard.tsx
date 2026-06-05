@@ -9,14 +9,14 @@ type ProductCatalogCardProps = {
 };
 
 function formatPct(value: number | null) {
-  if (value == null) return "—";
+  if (value == null) return "N/A";
   return `${(value * 100).toFixed(1)}%`;
 }
 
 export default function ProductCatalogCard({ product, health }: ProductCatalogCardProps) {
   return (
     <Link href={`/catalog/${product.product_id}`}>
-      <Card className="group h-full transition-all hover:border-primary/40 hover:shadow-pop">
+      <Card className="group h-full transition-[box-shadow,border-color] hover:border-primary/40 hover:shadow-pop">
         <CardContent className="space-y-4 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
