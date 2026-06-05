@@ -52,18 +52,6 @@ async function upsert(
   }
 }
 
-async function insertInChunks(table: string, rows: Record<string, unknown>[]) {
-  for (const chunk of Array.from(
-    { length: Math.ceil(rows.length / BATCH_SIZE) },
-    (_, i) => rows.slice(i * BATCH_SIZE, i * BATCH_SIZE + BATCH_SIZE),
-  )) {
-    const { error } = await supabase.from(table).insert(chunk);
-    if (error) {
-      console.error(`  ✗ ${table} (${chunk.length} rows): ${error.message}`);
-    }
-  }
-}
-
 function coerceBool(val: unknown): boolean {
   if (typeof val === "boolean") return val;
   if (typeof val === "string") return val.toLowerCase() === "true";
@@ -197,7 +185,7 @@ async function seedRawData() {
   // meta_ads_daily
   console.log("  meta_ads_daily…");
   const metaAds = readCSV("meta_ads_daily.csv");
-  await insertInChunks(
+  await upsert(
     "meta_ads_daily",
     metaAds.map((r) => ({
       date: r.date,
@@ -212,13 +200,14 @@ async function seedRawData() {
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
     })),
+    "date,campaign_name,ad_name,placement",
   );
   console.log(`    → ${metaAds.length} rows`);
 
   // google_ads_daily
   console.log("  google_ads_daily…");
   const googleAds = readCSV("google_ads_daily.csv");
-  await insertInChunks(
+  await upsert(
     "google_ads_daily",
     googleAds.map((r) => ({
       date: r.date,
@@ -231,6 +220,7 @@ async function seedRawData() {
       conversions: r.conversions,
       conversion_value_gbp: r.conversion_value_gbp,
     })),
+    "date,campaign_name,ad_group",
   );
   console.log(`    → ${googleAds.length} rows`);
 
