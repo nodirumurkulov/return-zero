@@ -37,7 +37,7 @@ export default async function ReportPage() {
       <div className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">Your business report</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We&apos;ll analyze the data you uploaded — learn what&apos;s normal for your store and
+          We&apos;ll analyze the data you uploaded, learn what&apos;s normal for your store, and
           surface the patterns worth watching. This takes a few seconds.
         </p>
         <div className="mt-6">
@@ -160,7 +160,7 @@ export default async function ReportPage() {
                 <p key={l.metric_key} className="text-muted-foreground">
                   We learned your normal <span className="text-foreground">{l.display_name}</span> is
                   about {l.metric_key === "ad_roas" ? `${l.avg_mean.toFixed(2)}x` : pct(l.avg_mean)} across{" "}
-                  {l.products} products — we&apos;ll alert{" "}
+                  {l.products} products. We&apos;ll alert{" "}
                   {l.metric_key === "ad_roas" ? "below" : "above"}{" "}
                   {l.metric_key === "ad_roas" ? `${l.avg_threshold.toFixed(2)}x` : pct(l.avg_threshold)}.
                 </p>
@@ -181,10 +181,10 @@ export default async function ReportPage() {
               {summary.risks_now.map((r) => (
                 <div key={`${r.product_id}:${r.metric_key}`} className="flex justify-between gap-2">
                   <span className="truncate">
-                    {r.title} — {r.display_name}
+                    {r.title}: {r.display_name}
                   </span>
                   <span className="text-destructive">
-                    {r.value == null ? "—" : r.metric_key === "ad_roas" ? r.value.toFixed(2) : pct(r.value)}
+                    {r.value == null ? "N/A" : r.metric_key === "ad_roas" ? r.value.toFixed(2) : pct(r.value)}
                   </span>
                 </div>
               ))}

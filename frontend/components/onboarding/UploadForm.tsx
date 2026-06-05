@@ -78,8 +78,8 @@ export default function UploadForm() {
       <CardContent className="p-4">
         <form onSubmit={onSubmit} className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Upload the CSVs you have — the more you provide, the richer the analysis. This replaces any
-            existing data and starts a fresh slate (no incidents yet — they appear once you play the stream).
+            Upload the CSVs you have. The more you provide, the richer the analysis. This replaces any
+            existing data and starts a fresh slate. Incidents appear once you play the stream.
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -108,7 +108,7 @@ export default function UploadForm() {
             {results.map((r) => (
               <div key={r.table} className={r.error ? "text-sev-critical" : "text-sev-resolved"}>
                 {r.error ? "✗" : "✓"} {r.table}: {r.count.toLocaleString()}
-                {r.error ? ` — ${r.error}` : ""}
+                {r.error ? `: ${r.error}` : ""}
               </div>
             ))}
           </div>

@@ -43,7 +43,7 @@ export default function ThresholdEditor({
         <CardContent className="p-4">
           <SectionLabel>KPI thresholds</SectionLabel>
           <p className="text-sm text-muted-foreground">
-            No per-product overrides — defaults from metric definitions apply.
+            No per-product overrides. Defaults from metric definitions apply.
           </p>
         </CardContent>
       </Card>
