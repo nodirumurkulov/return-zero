@@ -79,11 +79,14 @@ export interface LearnResult {
 }
 
 export async function learnBaselines(supabase: SupabaseClient): Promise<LearnResult> {
-  const { data: defRows, error: defErr } = await supabase
-    .from("metric_definitions")
-    .select("metric_key, direction, default_threshold")
-    .eq("enabled", true);
+  const [{ data: defRows, error: defErr }, { data: settingRows }] = await Promise.all([
+    supabase.from("metric_definitions").select("metric_key, direction, default_threshold").eq("enabled", true),
+    supabase.from("business_settings").select("key, value"),
+  ]);
   if (defErr) throw new Error(`metric_definitions read failed: ${defErr.message}`);
+
+  const settings = new Map((settingRows ?? []).map((s) => [String(s.key), Number(s.value)]));
+  const minRoas = settings.get("min_roas");
 
   const defs = (defRows ?? [])
     .map((d) => ({
@@ -91,7 +94,12 @@ export async function learnBaselines(supabase: SupabaseClient): Promise<LearnRes
       direction: d.direction === "below" ? "below" : "above",
       default_threshold: Number(d.default_threshold),
     }))
-    .filter((d): d is MetricDef => (LEARNABLE as readonly string[]).includes(d.metric_key));
+    .filter((d): d is MetricDef => (LEARNABLE as readonly string[]).includes(d.metric_key))
+    .map((d) =>
+      d.metric_key === "ad_roas" && minRoas !== undefined && Number.isFinite(minRoas)
+        ? { ...d, default_threshold: minRoas }
+        : d,
+    );
 
   // Learn "normal" on the BASELINE period only — everything before the live
   // stream window — so the anomalies we're about to replay don't pollute it.
