@@ -31,3 +31,7 @@ frontend/e2e/.auth/
 frontend/playwright-report/
 frontend/test-results/
 frontend/blob-report/
+
+# raw dataset + design assets — never commit
+data/
+*.zip
