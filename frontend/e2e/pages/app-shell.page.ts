@@ -15,13 +15,8 @@ export class AppShellPage {
     return this.page.getByRole("button", { name: "Sign out" });
   }
 
-<<<<<<< HEAD
-  sidebarToggleTrigger() {
-    return this.page.locator('[data-sidebar="trigger"]');
-=======
   desktopSidebarTrigger() {
     return this.page.locator('[data-slot="sidebar-header"] [data-slot="sidebar-trigger"]');
->>>>>>> 65c55c2 (Fix e2e sidebar trigger locator strict-mode violation)
   }
 
   async goToCatalog() {
