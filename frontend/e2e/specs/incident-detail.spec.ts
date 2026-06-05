@@ -6,13 +6,13 @@ import {
   MAIN_INCIDENT_TITLE,
 } from "../constants";
 import { IncidentDetailPage } from "../pages/incident-detail.page";
-import { resetMainIncidentFixture } from "../reset-main-incident";
+import { resetAllE2eFixtures } from "../reset-main-incident";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("Incident detail", () => {
   test.beforeEach(async () => {
-    await resetMainIncidentFixture();
+    await resetAllE2eFixtures();
   });
   test("shows findings and proposed actions", async ({ page }) => {
     const detail = new IncidentDetailPage(page);
@@ -24,24 +24,30 @@ test.describe("Incident detail", () => {
     await expect(page.getByText("Returns Agent")).toBeVisible();
   });
 
-  test("approves all low-risk proposed actions", async ({ page }) => {
+  test("approves all low-risk proposed actions and enters monitoring", async ({ page }) => {
     const detail = new IncidentDetailPage(page);
     await detail.goto(MAIN_INCIDENT_ID);
 
     await expect(detail.approveAllLowRiskButton()).toBeVisible();
     await detail.approveAllLowRiskButton().click();
     await expect(detail.successAlert()).toBeVisible();
+    await expect(page.getByText("Monitoring", { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Pause cold-traffic Meta campaign")).toBeVisible();
+    await expect(page.getByText("deployed", { exact: false }).first()).toBeVisible();
   });
 
-  test("approves a single proposed action when one remains", async ({ page }) => {
+  test("approves a single low-risk proposed action", async ({ page }) => {
     const detail = new IncidentDetailPage(page);
     await detail.goto(MAIN_INCIDENT_ID);
 
-    const approve = detail.approveButtons().first();
-    if (await approve.isVisible()) {
-      await approve.click();
-      await expect(detail.successAlert()).toBeVisible();
-    }
+    const fitAssistantRow = page
+      .locator("div")
+      .filter({ hasText: "Enable fit assistant widget" })
+      .filter({ has: detail.approveButtons() });
+    const approve = fitAssistantRow.getByTestId("approve-action");
+    await expect(approve).toBeVisible();
+    await approve.click();
+    await expect(detail.successAlert()).toBeVisible();
   });
 
   test("triggers investigation with stubbed API", async ({ page }) => {

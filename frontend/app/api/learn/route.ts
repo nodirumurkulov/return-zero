@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
+import { learnBodySchema } from "@/lib/learn/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,7 +10,16 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const raw = await req.json().catch(() => ({}));
+  const parsed = learnBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
   const auth = await createClient();
   const {
     data: { user },

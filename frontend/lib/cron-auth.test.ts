@@ -1,0 +1,68 @@
+import { NextRequest } from "next/server";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  assertCronAuthorized,
+  CRON_API_PATHS,
+  cronAuthRequired,
+  getCronSecret,
+  hasCronAuth,
+  isCronSecretConfigured,
+  matchesCronPath,
+} from "./cron-auth";
+
+function requestWithAuth(auth: string | null): NextRequest {
+  const headers = new Headers();
+  if (auth) headers.set("authorization", auth);
+  return new NextRequest("http://localhost/api/detect", { headers });
+}
+
+describe("cron-auth", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("lists scheduler API paths including replay", () => {
+    expect(CRON_API_PATHS).toContain("/api/detect");
+    expect(CRON_API_PATHS).toContain("/api/replay");
+  });
+
+  it("matchesCronPath recognizes cron routes", () => {
+    expect(matchesCronPath("/api/detect")).toBe(true);
+    expect(matchesCronPath("/api/replay")).toBe(true);
+    expect(matchesCronPath("/api/incidents")).toBe(false);
+  });
+
+  it("hasCronAuth accepts Bearer and raw secret", () => {
+    vi.stubEnv("CRON_SECRET", "test-secret");
+    expect(hasCronAuth(requestWithAuth("Bearer test-secret"))).toBe(true);
+    expect(hasCronAuth(requestWithAuth("test-secret"))).toBe(true);
+    expect(hasCronAuth(requestWithAuth("wrong"))).toBe(false);
+  });
+
+  it("assertCronAuthorized returns null when secret unset in development", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CRON_SECRET", "");
+    expect(assertCronAuthorized(requestWithAuth(null))).toBeNull();
+  });
+
+  it("assertCronAuthorized returns 401 when secret set but header missing", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CRON_SECRET", "test-secret");
+    const res = assertCronAuthorized(requestWithAuth(null));
+    expect(res?.status).toBe(401);
+  });
+
+  it("assertCronAuthorized returns 503 in production without CRON_SECRET", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CRON_SECRET", "");
+    const res = assertCronAuthorized(requestWithAuth("Bearer x"));
+    expect(res?.status).toBe(503);
+  });
+
+  it("getCronSecret trims whitespace", () => {
+    vi.stubEnv("CRON_SECRET", "  abc  ");
+    expect(getCronSecret()).toBe("abc");
+    expect(isCronSecretConfigured()).toBe(true);
+    expect(cronAuthRequired()).toBe(true);
+  });
+});

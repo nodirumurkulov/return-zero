@@ -107,7 +107,13 @@ export default tseslint.config(
       "lib/cron-auth.ts",
       "lib/api-errors.ts",
       "lib/llm.ts",
+      "lib/catalog/health.ts",
+      "lib/forecast/methods.ts",
+      "lib/detection/schemas.ts",
+      "lib/detection/severity.ts",
+      "lib/learn/schemas.ts",
     ],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",

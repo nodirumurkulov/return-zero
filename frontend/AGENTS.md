@@ -22,12 +22,14 @@ bun run db:lint
 | Script | Purpose |
 |--------|---------|
 | `dev` | Local server |
-| `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest |
+| `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest + API integration |
 | `build` | Production build |
 | `db:reset` / `db:lint` / `db:test:rls` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
 | `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
-| `test` / `test:watch` | Vitest |
+| `test` / `test:watch` | Vitest (components + `lib/**/*.test.ts`) |
+| `test:lib` | Vitest — `lib/**` only (fast iteration) |
+| `test:integration` | API route handlers (`vitest.integration.config.ts`) |
 | `e2e` / `test:e2e` / `e2e:ui` / `e2e:headed` | Playwright ([e2e/README.md](e2e/README.md)) |
 | `e2e:install` | Chromium for local runs |
 
@@ -47,10 +49,18 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Testing
 
-- `bun run test` — Vitest (lib + co-located `components/**/*.test.tsx`).
-- `bun run check` — lint, typecheck, and `test`.
-- `bun run e2e` / `test:e2e` — Playwright ([e2e/README.md](e2e/README.md)).
-- E2E path: `supabase start` → `seed` → `build` → `CI=true bun run e2e`.
+Test pyramid (fast → slow):
+
+| Layer | Command | Scope |
+|-------|---------|--------|
+| Unit — `lib/` | `bun run test:lib` | Pure domain logic (detection, metrics, approve, slack, cron-auth) |
+| Unit — UI | `bun run test` | Co-located `components/**/*.test.tsx` + all Vitest includes |
+| API integration | `bun run test:integration` | Cron/auth + Zod on selected routes (mocked Supabase) |
+| DB integration | `bun run db:test:rls` + `bun run validate` | RLS SQL + seed validators (CI `integration-db` job) |
+| E2E | `CI=true bun run e2e` | Playwright against seeded Supabase + production build |
+
+- `bun run check` — lint, typecheck, unit tests, and API integration.
+- E2E path: `supabase start` → `seed` → `build` → `CI=true bun run e2e` (CI uses 1 worker for stability).
 - After changes touching metrics/detection: `bun run validate` against a seeded DB.
 
 ## Nested guides

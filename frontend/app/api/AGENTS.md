@@ -22,7 +22,10 @@ if (!parsed.success) {
 | Route | Domain module |
 |-------|----------------|
 | `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
-| `POST /api/investigate` | `agents` + `agents/schemas.ts` |
+| `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
+| `POST /api/learn` | `learn/schemas.ts` |
+| `POST /api/onboarding/upload` | `onboarding/import` + `onboarding/api-schemas.ts` (multipart; admin after auth) |
+| `POST /api/replay` | `assertCronAuthorized` or session user |
 | `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
 | `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |

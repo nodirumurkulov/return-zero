@@ -41,5 +41,7 @@ test.describe("Catalog", () => {
     const current = await firstThreshold.inputValue();
     const next = current === "0.5" ? "0.51" : "0.5";
     await product.saveFirstThreshold(next);
+    await expect(product.savedMessage()).toBeVisible();
+    await expect(firstThreshold).toHaveValue(next);
   });
 });
