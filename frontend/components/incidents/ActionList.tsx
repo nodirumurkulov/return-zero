@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
-import { useApproveActions } from "@/hooks/incidents";
+import { useApproveActions } from "@/hooks/stores/incidents";
 import { cn } from "@/lib/utils";
 import type { IncidentAction } from "@/types/incidents";
 

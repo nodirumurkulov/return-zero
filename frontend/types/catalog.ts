@@ -1,26 +1,6 @@
-export type ProductMetric = {
-  product_id: string;
-  external_id: string;
-  title: string | null;
-  product_type: string | null;
-  gender_segment: string | null;
-  revenue_gbp: number;
-  order_count: number;
-  return_rate: number | null;
-  refund_rate: number | null;
-  support_tickets: number;
-  ad_roas: number | null;
-};
-
-export type KpiThreshold = {
-  id: string;
-  product_id: string | null;
-  metric_definition_id: string;
-  metric_key: string;
-  threshold: number;
-  direction: string | null;
-  active: boolean;
-  created_at: string;
-};
-
-export type HealthLevel = "healthy" | "warning" | "critical";
+export type {
+  HealthLevel,
+  KpiThreshold,
+  ProductMetric,
+  ProductMonthlyMetric,
+} from "@/lib/stores/analytics/catalog/types";

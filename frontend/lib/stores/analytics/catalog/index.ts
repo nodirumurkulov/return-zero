@@ -1,4 +1,3 @@
-export * from "./api";
 export { getProductCatalogDetail, listCatalogWithThresholds } from "./queries";
 export { computeHealthLevel, computeProductHealth } from "./health";
 export type {

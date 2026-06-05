@@ -1,28 +1,10 @@
-export type Operation = "ratio" | "value";
-export type Direction = "above" | "below";
+import type { Database } from "@/lib/supabase/database.types";
+
+export type Operation = Database["public"]["Enums"]["metric_operation"];
+export type Direction = Database["public"]["Enums"]["metric_direction"];
 export type MetricStatus = "healthy" | "warning" | "critical";
 
-export interface MetricDefinition {
-  id: string;
-  metric_key: string;
-  display_name: string;
-  description: string | null;
-  unit: string;
-  numerator_source: string;
-  numerator_field: string;
-  denominator_source: string | null;
-  denominator_field: string | null;
-  operation: Operation;
-  window_days: number;
-  direction: Direction;
-  default_threshold: number;
-  severity: string;
-  enabled: boolean;
-  sort_order: number;
-  impact_source: string | null;
-  impact_field: string | null;
-  impact_label: string | null;
-}
+export type MetricDefinition = Database["public"]["Tables"]["metric_definitions"]["Row"];
 
 export interface ThresholdOverride {
   product_id: string | null;

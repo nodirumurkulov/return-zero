@@ -8,6 +8,8 @@ import { notifyNewIncidents } from "@/lib/stores/incidents/notify-new-incidents"
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
   const cronMode = isCronInvocation(req, cronDenied);

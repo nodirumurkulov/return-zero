@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { MockStore } from "@/lib/stores";
 import {
@@ -23,7 +24,8 @@ export async function POST() {
 
   const org = await tryRequireOrganizationId(auth);
   if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+    logApiError("api/stores/connect/mock", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
   }
 
   const supabase = createAdminClient();
@@ -35,7 +37,7 @@ export async function POST() {
       : connectPartialResponseSchema.parse({ success: false, results });
     return NextResponse.json(body, { status: success ? 200 : 207 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Connect failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/stores/connect/mock", err);
+    return apiErrorResponse(err);
   }
 }

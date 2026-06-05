@@ -24,3 +24,11 @@ export interface StoreConnector {
     opts?: StoreLoadOpts,
   ): Promise<LoadResult[]>;
 }
+
+export {
+  connectPartialResponseSchema,
+  connectResponseSchema,
+  connectResultSchema,
+  connectSuccessResponseSchema,
+  type ConnectResponse,
+} from "./schemas";

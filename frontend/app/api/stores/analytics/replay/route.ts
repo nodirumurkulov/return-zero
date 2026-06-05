@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { createReplay, replayBodySchema } from "@/lib/stores/analytics/replay";
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
       forecast: result.forecast,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/stores/analytics/replay", err);
+    return apiErrorResponse(err);
   }
 }

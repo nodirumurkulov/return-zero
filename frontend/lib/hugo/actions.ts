@@ -59,7 +59,7 @@ export async function runHugoApproval(
   approvedBy: string,
 ): Promise<string> {
   const store = createIncidents(supabase);
-  const actionIds = await store.listLowRiskProposedActionIds(incident.id);
+  const actionIds = await store.listLowRiskProposedActionIds(incident.id, incident.organization_id);
   if (actionIds.length === 0) {
     return `There are no low-risk actions awaiting approval on "${incident.title}". You may need to investigate it first, or approve higher-risk actions in the app: ${incidentLink(incident.id)}`;
   }
@@ -75,7 +75,7 @@ export async function runHugoApproval(
     return `Approval for "${incident.title}" failed: ${message}`;
   }
 
-  const updated = await store.getIncident(incident.id);
+  const updated = await store.getIncident(incident.id, incident.organization_id);
   if (updated) {
     if (updated.product_id) {
       await store.captureRecoveryBaseline(

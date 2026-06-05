@@ -16,3 +16,11 @@ export type {
 } from "./metric-definition";
 export { getSourceFacts, type ProductSourceFacts, type SourceFactsOpts } from "./source-facts";
 export { getMonthlySeries, getProductSeries, type MonthlyPoint, type SeriesOpts } from "./series";
+export {
+  confidenceFromN,
+  confidenceInterval,
+  isAnomalous,
+  zScore,
+  type Confidence,
+  type ConfidenceInterval,
+} from "./spc";

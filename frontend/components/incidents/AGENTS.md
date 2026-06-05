@@ -11,13 +11,14 @@ Incident UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 | `IncidentKanban.tsx`, `IncidentCard.tsx` | client | Kanban |
 | `ActionList.tsx` | client | Approve → `router.refresh()` |
 | `AgentFindingCard.tsx`, `IncidentTimeline.tsx` | server OK | Display |
+| `ReplayControl.tsx` | client | Advance replay via `@/hooks/stores/analytics/replay` |
 
 ## Best practices
 
-- **Incident detail:** `app/incidents/[incidentId]/page.tsx` prefetches with `getIncidentDetailQueryOptions` + `HydrationBoundary`. `IncidentDetailView` uses `useQuery` from `@/hooks/incidents` (same query key) — not a standalone `fetch` to `GET /api/incidents/[id]`.
-- Mutations (approve, investigate) go through `@/hooks/incidents` → API routes; invalidate detail queries and/or `router.refresh()` after success.
+- **Incident detail:** `app/(app)/incidents/[incidentId]/page.tsx` prefetches with `getIncidentDetailQueryOptions` + `HydrationBoundary`. `IncidentDetailView` uses `useQuery` from `@/hooks/stores/incidents` (same query key).
+- Mutations (approve, investigate) go through `@/hooks/stores/incidents` or `@/hooks/agents`; invalidate detail queries and/or `router.refresh()` after success.
 
 ## Rules
 
-- Types from `@/lib/stores/incidents` only.
-- Do **not** add raw `fetch("/api/incidents/...")` in components — use `@/hooks/incidents` + `lib/stores/incidents/api`.
+- Types from `@/types/incidents` (re-exports of `@/lib/stores/incidents` types).
+- Do **not** add raw `fetch("/api/incidents/...")` in components — use `@/hooks/stores/incidents` + `@/hooks/agents`.

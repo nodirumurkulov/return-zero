@@ -1,7 +1,7 @@
 import { linearTrend } from "@/lib/stores/analytics/forecast/methods";
 import type { Direction } from "@/lib/stores/analytics/metrics/metric-definition";
 import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
-import type { Confidence } from "./anomaly";
+import type { Confidence } from "@/lib/stores/analytics/metrics/spc";
 
 export type Severity = "critical" | "high" | "medium" | "low";
 

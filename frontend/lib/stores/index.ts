@@ -1,12 +1,13 @@
 import "server-only";
 
-export type {
-  LoadResult,
-  StoreConnection,
-  StoreConnector,
-  StoreLoadOpts,
-  StorePlatform,
-} from "./connect";
+export type { LoadResult, StoreConnector, StoreLoadOpts, StorePlatform, StoreConnection } from "./connect";
+export {
+  connectPartialResponseSchema,
+  connectResponseSchema,
+  connectResultSchema,
+  connectSuccessResponseSchema,
+  type ConnectResponse,
+} from "./connect/schemas";
 export type { Store } from "./store";
 export { StoreConnections } from "./store";
 export { MockStore } from "./mock";
