@@ -1,6 +1,6 @@
 /**
- * lib/slack.ts
- * Slack Incoming Webhook notifications for Resolve.
+ * Slack Incoming Webhook notifications and interactive approve callbacks.
+ * RUN-51: approval cards use `/api/slack/webhook` + `SLACK_SIGNING_SECRET` — not Vercel Chat SDK.
  */
 
 import "server-only";
@@ -58,9 +58,12 @@ export async function sendIncidentNotification(
 
   const actionLines = payload.actions
     ?.map((a, i) =>
-      `${i + 1}. ${a.title} ${a.auto_deploy ? "[Auto-deploys]" : `[Risk: ${a.risk_level}]`}`
+      `${i + 1}. ${a.title} ${a.auto_deploy ? "[Auto-deploys]" : `[Risk: ${a.risk_level}]`}`,
     )
     .join("\n") ?? "Investigating…";
+
+  const showApproveButton =
+    payload.status === "fix_proposed" && (payload.actions?.length ?? 0) > 0;
 
   const blocks = [
     {
@@ -91,23 +94,35 @@ export async function sendIncidentNotification(
           },
         }]
       : []),
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Proposed Actions:*\n${actionLines}`,
-      },
-    },
+    ...(showApproveButton
+      ? [{
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*Proposed Actions:*\n${actionLines}`,
+          },
+        }]
+      : payload.status === "monitoring"
+        ? [{
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: "*Recovery:*\nIncident approved — monitoring recovery in Resolve.",
+            },
+          }]
+        : []),
     {
       type: "actions",
       elements: [
-        {
-          type: "button",
-          text: { type: "plain_text", text: "Approve Low-Risk Actions" },
-          style: "primary",
-          action_id: "approve_low_risk",
-          value: payload.incident_id,
-        },
+        ...(showApproveButton
+          ? [{
+              type: "button",
+              text: { type: "plain_text", text: "Approve Low-Risk Actions" },
+              style: "primary",
+              action_id: "approve_low_risk",
+              value: payload.incident_id,
+            }]
+          : []),
         {
           type: "button",
           text: { type: "plain_text", text: "Review in App" },
