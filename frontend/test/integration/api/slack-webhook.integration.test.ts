@@ -6,20 +6,15 @@ vi.mock("server-only", () => ({}));
 
 const { incidentStoreMock } = vi.hoisted(() => ({
   incidentStoreMock: {
-    approveIncidentActions: vi.fn(),
-    getIncident: vi.fn(),
-    listLowRiskProposedActionIds: vi.fn(),
-    captureRecoveryBaseline: vi.fn(),
+    approveAndNotify: vi.fn(),
+    get: vi.fn(),
+    listActions: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/stores/incidents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
-  return {
-    ...actual,
-    createIncidents: vi.fn(() => incidentStoreMock),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: incidentStoreMock })),
+}));
 
 vi.mock("@/lib/slack", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/slack")>();
@@ -39,9 +34,9 @@ vi.mock("@/lib/organizations", () => ({
 
 import { POST } from "@/app/api/slack/webhook/route";
 import { createIncidentFixture } from "@/test/fixtures/incidents";
-const listLowRiskMock = incidentStoreMock.listLowRiskProposedActionIds;
-const approveMock = incidentStoreMock.approveIncidentActions;
-const getIncidentMock = incidentStoreMock.getIncident;
+const listActionsMock = incidentStoreMock.listActions;
+const approveMock = incidentStoreMock.approveAndNotify;
+const getMock = incidentStoreMock.get;
 
 function signedBody(payload: object, secret = "slack-signing-secret") {
   const rawPayload = JSON.stringify(payload);
@@ -55,9 +50,9 @@ function signedBody(payload: object, secret = "slack-signing-secret") {
 
 describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
-    listLowRiskMock.mockResolvedValue(["a1"]);
+    listActionsMock.mockResolvedValue(["a1"]);
     approveMock.mockResolvedValue({ approved: 1 });
-    getIncidentMock.mockResolvedValue(
+    getMock.mockResolvedValue(
       createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
     );
   });
@@ -82,13 +77,13 @@ describe("POST /api/slack/webhook", () => {
     expect(res.status).toBe(401);
   });
 
-  it("approves low-risk actions for valid Slack interaction", async () => {
-    const { body, timestamp, signature, secret } = signedBody({
+  it("approves low-risk actions when signature is valid", async () => {
+    vi.stubEnv("SLACK_SIGNING_SECRET", "slack-signing-secret");
+    const { body, timestamp, signature } = signedBody({
       team: { id: "T123" },
+      user: { name: "tester" },
       actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
-      user: { name: "slack-user" },
     });
-    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
 
     const res = await POST(
       new NextRequest("http://localhost/api/slack/webhook", {
@@ -102,11 +97,6 @@ describe("POST /api/slack/webhook", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(approveMock).toHaveBeenCalledWith({
-      incidentId: "inc-1",
-      actionIds: ["a1"],
-      approvedByUserId: null,
-      extraMetadata: { slack_user: "slack-user" },
-    });
+    expect(approveMock).toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { forecastForProduct, type ProductForecast } from "@/lib/stores/analytics/forecast/product";
-import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
+import { forecastForProduct, type ProductForecast } from "@/lib/stores/catalog/forecast/product";
+import { getMonthlySeries } from "@/lib/stores/metrics/series";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 
 const SEV_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };

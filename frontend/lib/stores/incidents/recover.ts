@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { computeProductMetrics } from "@/lib/stores/analytics/metrics/engine";
+import { computeProductMetrics } from "@/lib/stores/metrics/engine";
 
 export interface RecoveryResult {
   monitored: number;

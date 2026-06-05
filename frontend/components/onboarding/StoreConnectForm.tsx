@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useConnectStore } from "@/hooks/stores/connect";
+import { useImportStore } from "@/hooks/stores/import";
 import { useRunLearn } from "@/hooks/stores/learn";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +16,13 @@ type StoreConnectFormProps = {
 
 export default function StoreConnectForm({ mockStoreReady = false }: StoreConnectFormProps) {
   const router = useRouter();
-  const connect = useConnectStore();
+  const importStore = useImportStore("mock_csv");
   const learn = useRunLearn();
 
-  const pending = connect.isPending || learn.isPending;
+  const pending = importStore.isPending || learn.isPending;
   const error =
-    connect.error instanceof Error
-      ? connect.error.message
+    importStore.error instanceof Error
+      ? importStore.error.message
       : learn.error instanceof Error
         ? learn.error.message
         : null;
@@ -36,7 +36,7 @@ export default function StoreConnectForm({ mockStoreReady = false }: StoreConnec
   }
 
   function retryConnectAndLearn() {
-    connect.mutate("mock_csv", {
+    importStore.mutate(undefined, {
       onSuccess: () => {
         runLearnAndRedirect();
       },
@@ -44,7 +44,7 @@ export default function StoreConnectForm({ mockStoreReady = false }: StoreConnec
   }
 
   const actionLabel = pending
-    ? connect.isPending
+    ? importStore.isPending
       ? "Reconnecting demo store…"
       : "Analyzing your store…"
     : mockStoreReady

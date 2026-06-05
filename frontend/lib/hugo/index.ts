@@ -2,7 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { postSlackMessage } from "@/lib/slack";
-import { createIncidents, type Incident } from "@/lib/stores/incidents";
+import type { Incident } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import { runHugoApproval, runHugoInvestigation } from "./actions";
@@ -54,8 +55,14 @@ async function answerDataQuery(
   if (ref) {
     const { match } = await resolveIncident(supabase, ref, organizationId);
     if (match) {
-      const detail = await createIncidents(supabase).getIncidentDetail(match.id, organizationId);
-      if (detail) parts.push(buildIncidentDetailContext(detail));
+      const detail = await getStore(supabase).incidents.get({
+        id: match.id,
+        organizationId,
+        detail: true,
+      });
+      if (detail && "incident" in detail) {
+        parts.push(buildIncidentDetailContext(detail));
+      }
     }
   }
 

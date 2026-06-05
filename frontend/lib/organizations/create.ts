@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { MockStore } from "@/lib/stores/mock";
+import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { Organization } from "./organization";
@@ -32,7 +32,10 @@ export async function createOrganizationWithOwner(
     throw new OrganizationError(memberErr.message);
   }
 
-  const provisioned = await new MockStore().connect(supabase, org.id);
+  const provisioned = await getStore(supabase).import.run({
+    organizationId: org.id,
+    platform: "mock_csv",
+  });
   if (!provisioned.success) {
     const failed = provisioned.results.filter((result) => result.error).map((result) => result.table);
     throw new OrganizationError(

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { incidentKeys } from "@/hooks/stores/incidents/keys";
 import { triggerInvestigation, type TriggerInvestigationInput } from "@/lib/api/investigate/client";
-import type { IncidentRef } from "@/types/incidents";
+import type { IncidentRef } from "@/lib/stores";
 
 export function useTriggerInvestigation(incident: IncidentRef) {
   const queryClient = useQueryClient();

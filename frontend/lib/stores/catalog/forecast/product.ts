@@ -3,10 +3,9 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
+import type { MonthlyPoint } from "@/lib/stores/metrics/monthly-point";
+import { getProductSeries } from "@/lib/stores/metrics/series";
 import type { Database } from "@/lib/supabase/database.types";
-
-import type { MonthlyPoint } from "../metrics/series";
 import { forecastRate, forecastStockout, forecastValue } from "./predictors";
 import type { PointForecast, StockoutForecast } from "./types";
 

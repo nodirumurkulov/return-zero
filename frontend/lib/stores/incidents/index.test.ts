@@ -16,6 +16,7 @@ function chainMock(responses: QueryResult[]) {
       update: vi.fn(() => builder),
       insert: vi.fn(() => builder),
       single: vi.fn(() => Promise.resolve(result)),
+      maybeSingle: vi.fn(() => Promise.resolve(result)),
       then: (
         onfulfilled?: (v: QueryResult) => unknown,
         onrejected?: (e: unknown) => unknown,
@@ -28,22 +29,26 @@ function chainMock(responses: QueryResult[]) {
 }
 
 describe("Incidents", () => {
-  describe("listLowRiskProposedActionIds", () => {
+  describe("listActions", () => {
     it("returns ids for low-risk proposed actions", async () => {
       const { supabase } = chainMock([
         { data: [{ id: "low-1" }, { id: "low-2" }], error: null },
       ]);
       const store = new Incidents(supabase);
-      const ids = await store.listLowRiskProposedActionIds("inc-1", "org-1");
+      const ids = await store.listActions({
+        incidentId: "inc-1",
+        organizationId: "org-1",
+        filter: { status: "proposed", riskLevel: "low" },
+      });
       expect(ids).toEqual(["low-1", "low-2"]);
     });
   });
 
-  describe("approveIncidentActions", () => {
+  describe("approve", () => {
     it("returns zero when no action ids", async () => {
       const { supabase, from } = chainMock([]);
       const store = new Incidents(supabase);
-      const result = await store.approveIncidentActions({
+      const result = await store.approve({
         incidentId: "inc-1",
         actionIds: [],
         approvedByUserId: "user-uuid",
@@ -63,7 +68,7 @@ describe("Incidents", () => {
         { data: null, error: null },
       ]);
       const store = new Incidents(supabase);
-      const result = await store.approveIncidentActions({
+      const result = await store.approve({
         incidentId: "inc-1",
         actionIds: ["a1"],
         approvedByUserId: "user-uuid",
@@ -76,7 +81,7 @@ describe("Incidents", () => {
       const { supabase } = chainMock([{ data: null, error: { message: "not found" } }]);
       const store = new Incidents(supabase);
       await expect(
-        store.approveIncidentActions({
+        store.approve({
           incidentId: "inc-1",
           actionIds: ["a1"],
           approvedByUserId: "user-uuid",

@@ -3,8 +3,10 @@ import {
   approveIncidentResponseSchema,
   incidentDetailSchema,
   patchIncidentStatusBodySchema,
-} from "@/lib/stores/incidents/schemas";
-import type { Incident, IncidentDetail, IncidentRef } from "@/types/incidents";
+  type Incident,
+  type IncidentDetail,
+  type IncidentRef,
+} from "@/lib/stores";
 
 import { apiClient } from "../client";
 

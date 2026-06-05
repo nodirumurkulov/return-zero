@@ -7,7 +7,7 @@ import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { requireOrganizationId } from "@/lib/organizations/queries";
-import { computeProductHealth, getProductCatalogDetail } from "@/lib/stores/analytics/catalog";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +30,13 @@ export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = await createClient();
   const organizationId = await requireOrganizationId(supabase);
-  const detail = await getProductCatalogDetail(supabase, organizationId, params.productId);
+  const store = getStore(supabase);
+  const detail = await store.catalog.get({ organizationId, productId: params.productId });
 
   if (!detail) notFound();
 
   const { product: metrics, monthly: monthlyRows, thresholds: thresholdRows } = detail;
-  const health = computeProductHealth(metrics, thresholdRows);
+  const health = store.catalog.health({ product: metrics, thresholds: thresholdRows });
   const returnTrend = monthlyRows.map((row) => Number(row.return_rate ?? 0));
   const revenueTrend = monthlyRows.map((row) => Number(row.revenue_gbp ?? 0));
 

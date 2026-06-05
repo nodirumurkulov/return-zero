@@ -3,7 +3,7 @@ import { RunAnalysis } from "@/components/onboarding/RunAnalysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Sparkline from "@/components/ui/sparkline";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { parseReportSummary } from "@/lib/stores/analytics/learn/schemas";
+import { parseReportSummary } from "@/lib/stores";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

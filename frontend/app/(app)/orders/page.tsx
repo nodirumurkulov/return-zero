@@ -1,6 +1,6 @@
 import { OrdersFeed } from "@/components/orders/OrdersFeed";
 import { requireOrganizationId } from "@/lib/organizations";
-import { createReplay, Replay } from "@/lib/stores/analytics/replay";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -11,17 +11,14 @@ export const dynamic = "force-dynamic";
 export default async function OrdersPage() {
   const supabase = await createClient();
   const organizationId = await requireOrganizationId(supabase);
-  const replay = createReplay(supabase);
-  const [startDate, dataEnd] = await Promise.all([
-    replay.streamStartDate(organizationId),
-    replay.dataEndDate(organizationId),
-  ]);
-  const start = startDate ?? Replay.REPLAY_START;
-  const initialOrders = await replay.listIncomingOrders({
+  const store = getStore(supabase);
+  const bounds = await store.orders.bounds({ organizationId });
+  const start = bounds.streamStart;
+  const initialOrders = await store.orders.list({
     organizationId,
     after: `${start}T00:00:00Z`,
     limit: 30,
   });
 
-  return <OrdersFeed startDate={start} dataEnd={dataEnd} initialOrders={initialOrders} />;
+  return <OrdersFeed startDate={start} dataEnd={bounds.dataEnd} initialOrders={initialOrders} />;
 }

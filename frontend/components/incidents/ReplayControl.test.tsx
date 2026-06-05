@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh }),
 }));
 
-vi.mock("@/hooks/stores/analytics/replay", () => ({
+vi.mock("@/hooks/stores/orders", () => ({
   useAdvanceReplay: () => ({
     mutateAsync,
     isPending: false,
@@ -34,7 +34,7 @@ describe("ReplayControl", () => {
     await waitFor(() => {
       expect(screen.getByText(/\+2 new incidents/)).toBeInTheDocument();
     });
-    expect(mutateAsync).toHaveBeenCalledWith({ advanceDays: 7 });
+    expect(mutateAsync).toHaveBeenCalledWith({ advance_days: 7 });
     expect(refresh).toHaveBeenCalled();
   });
 });

@@ -101,19 +101,44 @@ export default tseslint.config(
     },
   },
   {
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["lib/stores/**", "lib/agents/**", "lib/hugo/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/lib/stores/catalog/**",
+                "@/lib/stores/incidents/**",
+                "@/lib/stores/orders/**",
+                "@/lib/stores/learn/**",
+                "@/lib/stores/search/**",
+                "@/lib/stores/metrics/**",
+                "@/lib/stores/import/**",
+              ],
+              message: "Import from @/lib/stores (types/schemas) or @/lib/stores/server (getStore).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: [
       "lib/agents/**/*.ts",
       "lib/cron-auth.ts",
       "lib/api-errors.ts",
       "lib/llm.ts",
-      "lib/stores/analytics/catalog/health.ts",
-      "lib/stores/analytics/forecast/methods.ts",
-      "lib/stores/analytics/learn/schemas.ts",
-      "lib/stores/connect/schemas.ts",
+      "lib/stores/catalog/health.ts",
+      "lib/stores/catalog/forecast/methods.ts",
+      "lib/stores/learn/schemas.ts",
+      "lib/stores/import/schemas.ts",
       "lib/organizations/queries.ts",
       "lib/organizations/slack.ts",
-      "lib/stores/analytics/catalog/queries.ts",
-      "lib/stores/analytics/metrics/engine.ts",
+      "lib/stores/catalog/queries.ts",
+      "lib/stores/metrics/engine.ts",
     ],
     ignores: ["**/*.test.ts", "**/*.test.tsx"],
     rules: {
@@ -122,6 +147,23 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-argument": "error",
       "@typescript-eslint/no-unsafe-return": "error",
       "@typescript-eslint/no-unsafe-call": "error",
+    },
+  },
+  {
+    files: ["components/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
+    ignores: ["**/*.server.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/lib/stores/server", "@/lib/stores/server/**"],
+              message: "Server-only. Use @/lib/stores for types and schemas in client code.",
+            },
+          ],
+        },
+      ],
     },
   },
   {

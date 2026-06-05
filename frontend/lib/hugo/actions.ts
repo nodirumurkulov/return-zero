@@ -1,8 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { persistInvestigation } from "@/lib/agents";
-import { sendIncidentNotification } from "@/lib/slack";
-import { createIncidents, type Incident } from "@/lib/stores/incidents";
+import type { Incident } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 
 function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -58,44 +58,27 @@ export async function runHugoApproval(
   incident: Incident,
   approvedBy: string,
 ): Promise<string> {
-  const store = createIncidents(supabase);
-  const actionIds = await store.listLowRiskProposedActionIds(incident.id, incident.organization_id);
+  const store = getStore(supabase);
+  const actionIds = await store.incidents.listActions({
+    incidentId: incident.id,
+    organizationId: incident.organization_id,
+    filter: { status: "proposed", riskLevel: "low" },
+  });
   if (actionIds.length === 0) {
     return `There are no low-risk actions awaiting approval on "${incident.title}". You may need to investigate it first, or approve higher-risk actions in the app: ${incidentLink(incident.id)}`;
   }
 
   try {
-    await store.approveIncidentActions({
+    await store.incidents.approveAndNotify({
       incidentId: incident.id,
       actionIds,
       approvedByUserId: approvedBy,
+      organizationId: incident.organization_id,
+      appUrl: appUrl(),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
     return `Approval for "${incident.title}" failed: ${message}`;
-  }
-
-  const updated = await store.getIncident(incident.id, incident.organization_id);
-  if (updated) {
-    if (updated.product_id) {
-      await store.captureRecoveryBaseline(
-        updated.organization_id,
-        updated.id,
-        updated.product_id,
-        updated.affected_kpi_keys,
-      );
-    }
-    await sendIncidentNotification({
-      title: updated.title,
-      severity: updated.severity,
-      status: "monitoring",
-      impact_amount: updated.impact_amount,
-      impact_label: updated.impact_label,
-      root_cause: updated.root_cause,
-      root_cause_confidence: updated.root_cause_confidence,
-      incident_id: updated.id,
-      app_url: appUrl(),
-    });
   }
 
   return [

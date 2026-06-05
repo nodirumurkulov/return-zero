@@ -1,7 +1,7 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 
 import { getIncidentDetail } from "@/lib/api/incidents/client";
-import type { IncidentDetail, IncidentRef } from "@/types/incidents";
+import type { IncidentDetail, IncidentRef } from "@/lib/stores";
 
 import { incidentKeys } from "./keys";
 

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import type { AgentFinding } from "@/types/incidents";
+import type { AgentFinding } from "@/lib/stores";
 
 type Stats = {
   z_score?: number;

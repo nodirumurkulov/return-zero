@@ -8,8 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import { useApproveActions } from "@/hooks/stores/incidents";
+import type { IncidentAction } from "@/lib/stores";
 import { cn } from "@/lib/utils";
-import type { IncidentAction } from "@/types/incidents";
 
 const impactColour: Record<string, string> = {
   high: "text-sev-resolved",

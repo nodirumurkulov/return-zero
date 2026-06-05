@@ -6,7 +6,7 @@ import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const mutate = vi.fn();
 
-vi.mock("@/hooks/stores/analytics/catalog", () => ({
+vi.mock("@/hooks/stores/catalog", () => ({
   useUpdateThreshold: () => ({
     mutate,
     isPending: false,

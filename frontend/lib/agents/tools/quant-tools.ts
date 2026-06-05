@@ -3,16 +3,16 @@ import "server-only";
 import { tool } from "ai";
 import { z } from "zod";
 import { loadBusinessProfile, loadProductCostRows } from "@/lib/settings/queries";
-import { marginBridge } from "@/lib/stores/analytics/forecast/margin";
-import { recommendReorder } from "@/lib/stores/analytics/forecast/reorder";
-import { computeProductMetrics } from "@/lib/stores/analytics/metrics/engine";
-import { baselineStats, kpiRatioSeries } from "@/lib/stores/analytics/metrics/kpi-series";
-import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
+import { marginBridge } from "@/lib/stores/catalog/forecast/margin";
+import { recommendReorder } from "@/lib/stores/catalog/forecast/reorder";
+import { computeProductMetrics } from "@/lib/stores/metrics/engine";
+import { baselineStats, kpiRatioSeries } from "@/lib/stores/metrics/kpi-series";
+import { getProductSeries } from "@/lib/stores/metrics/series";
 import {
   confidenceFromN,
   confidenceInterval,
   zScore,
-} from "@/lib/stores/analytics/metrics/spc";
+} from "@/lib/stores/metrics/spc";
 import type { AgentSupabase } from "../types";
 import { fetchForecastContext } from "./forecasting-tools";
 import { fetchMarketingContext } from "./marketing-tools";

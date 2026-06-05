@@ -5,7 +5,7 @@ export const CRON_API_PATHS = [
   "/api/stores/incidents/detect",
   "/api/stores/incidents/forecast-risk",
   "/api/stores/incidents/recover",
-  "/api/stores/analytics/replay",
+  "/api/stores/orders/advance",
 ] as const;
 
 export function getCronSecret(): string | undefined {

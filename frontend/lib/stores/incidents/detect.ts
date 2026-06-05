@@ -1,17 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { computeMetricsDetailed } from "@/lib/stores/analytics/metrics/engine";
-import { baselineStats, kpiRatioSeries } from "@/lib/stores/analytics/metrics/kpi-series";
-import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
-import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
-import type { ProductSourceFacts } from "@/lib/stores/analytics/metrics/source-facts";
+import { computeMetricsDetailed } from "@/lib/stores/metrics/engine";
+import { baselineStats, kpiRatioSeries } from "@/lib/stores/metrics/kpi-series";
+import type { MonthlyPoint } from "@/lib/stores/metrics/monthly-point";
+import { getMonthlySeries } from "@/lib/stores/metrics/series";
+import type { ProductSourceFacts } from "@/lib/stores/metrics/source-facts";
 
 import {
   confidenceFromN,
   confidenceInterval,
   zScore,
   type Confidence,
-} from "@/lib/stores/analytics/metrics/spc";
+} from "@/lib/stores/metrics/spc";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank, zSeverityBoost } from "./severity";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 

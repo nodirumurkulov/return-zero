@@ -8,9 +8,9 @@ import { HealthBadge } from "@/components/catalog/HealthBadge";
 import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { computeProductHealth } from "@/lib/stores/analytics/catalog/health";
+import type { HealthLevel, KpiThreshold, ProductMetric } from "@/lib/stores";
+import { computeProductHealth } from "@/lib/stores";
 import { cn } from "@/lib/utils";
-import type { HealthLevel, KpiThreshold, ProductMetric } from "@/types/catalog";
 
 function ProductRow({ product, health }: { product: ProductMetric; health: HealthLevel }) {
   return (

@@ -3,8 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
-import { createIncidents } from "@/lib/stores/incidents";
-import { notifyNewIncidents } from "@/lib/stores/incidents/notify-new-incidents";
+import { getStore, notifyNewIncidents } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,9 +24,9 @@ export async function POST(req: NextRequest) {
       ? await listAllOrganizationIds(supabase)
       : [await requireOrganizationId(supabase)];
 
-    const store = createIncidents(supabase);
+    const store = getStore(supabase);
     const results = await Promise.all(
-      organizationIds.map((organizationId) => store.detectForecastRisks({ organizationId })),
+      organizationIds.map((organizationId) => store.incidents.forecast({ organizationId })),
     );
     await notifyNewIncidents(results.flatMap((r) => r.created));
 

@@ -8,8 +8,8 @@ import { OrderRow } from "@/components/orders/OrderRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useAdvanceReplay, useReplayOrders } from "@/hooks/stores/analytics/replay";
-import type { OrderFeedItem } from "@/types/orders";
+import { useAdvanceReplay, useReplayOrders } from "@/hooks/stores/orders";
+import type { OrderFeedItem } from "@/lib/stores";
 
 function LiveStat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
   return (
@@ -113,7 +113,8 @@ export function OrdersFeed({
       lockRef.current = true;
       setBusy(true);
       try {
-        const body = await advanceReplayMutate({ advanceDays });
+        const body = await advanceReplayMutate({ advance_days: advanceDays });
+        if (!("breaches" in body)) return;
         const incidents = [
           ...(body.breaches?.created ?? []),
           ...(body.forecast?.created ?? []),

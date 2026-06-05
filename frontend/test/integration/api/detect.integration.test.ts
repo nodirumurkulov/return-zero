@@ -3,15 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { detectBreachesMock } = vi.hoisted(() => ({ detectBreachesMock: vi.fn() }));
+const { detectMock } = vi.hoisted(() => ({ detectMock: vi.fn() }));
 
-vi.mock("@/lib/stores/incidents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
-  return {
-    ...actual,
-    createIncidents: vi.fn(() => ({ detectBreaches: detectBreachesMock })),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: { detect: detectMock } })),
+  notifyNewIncidents: vi.fn(),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -34,7 +31,7 @@ describe("POST /api/stores/incidents/detect", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    detectBreachesMock.mockResolvedValue({
+    detectMock.mockResolvedValue({
       scanned: 3,
       created: [
         {
@@ -58,14 +55,14 @@ describe("POST /api/stores/incidents/detect", () => {
   it("returns 401 without cron credentials when secret is set", async () => {
     const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(detectBreachesMock).not.toHaveBeenCalled();
+    expect(detectMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 without session when CRON_SECRET is unset in development", async () => {
     vi.stubEnv("CRON_SECRET", "");
     const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(detectBreachesMock).not.toHaveBeenCalled();
+    expect(detectMock).not.toHaveBeenCalled();
   });
 
   it("runs detection when cron auth is valid", async () => {
@@ -79,6 +76,6 @@ describe("POST /api/stores/incidents/detect", () => {
     const json = (await res.json()) as { success: boolean; created: number };
     expect(json.success).toBe(true);
     expect(json.created).toBe(1);
-    expect(detectBreachesMock).toHaveBeenCalled();
+    expect(detectMock).toHaveBeenCalled();
   });
 });

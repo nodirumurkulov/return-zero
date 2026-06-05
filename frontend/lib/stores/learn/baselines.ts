@@ -16,9 +16,8 @@ import {
   kpiRatioSeries,
   LEARNABLE_KPIS,
   type BaselineStats,
-} from "@/lib/stores/analytics/metrics/kpi-series";
-import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
-import { createReplay } from "@/lib/stores/analytics/replay";
+} from "@/lib/stores/metrics/kpi-series";
+import { getMonthlySeries } from "@/lib/stores/metrics/series";
 import type { Database } from "@/lib/supabase/database.types";
 
 // Bands: alert when a product strays K standard deviations from its own normal.
@@ -60,6 +59,7 @@ export interface LearnResult {
 export async function learnBaselines(
   supabase: SupabaseClient<Database>,
   organizationId: string,
+  orders: { bounds(opts: { organizationId: string }): Promise<{ streamStart: string }> },
 ): Promise<LearnResult> {
   const [{ data: defRows, error: defErr }, { data: settingRows }] = await Promise.all([
     supabase
@@ -93,7 +93,7 @@ export async function learnBaselines(
 
   // Learn "normal" on the BASELINE period only — everything before the live
   // stream window — so the anomalies we're about to replay don't pollute it.
-  const baselineEnd = await createReplay(supabase).streamStartDate(organizationId);
+  const { streamStart: baselineEnd } = await orders.bounds({ organizationId });
   const seriesByProduct = await getMonthlySeries(supabase, { organizationId, months: 24 });
 
   // One (product, metric) entry per KPI that has enough history to be meaningful.

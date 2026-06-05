@@ -2,7 +2,7 @@
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { KANBAN_COLUMNS, type Incident } from "@/types/incidents";
+import { KANBAN_COLUMNS, type Incident } from "@/lib/stores";
 import IncidentCard from "./IncidentCard";
 
 const KANBAN_STATUS_SET = new Set<string>(KANBAN_COLUMNS.map((col) => col.status));

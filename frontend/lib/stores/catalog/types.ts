@@ -35,3 +35,34 @@ export type KpiThreshold = {
 };
 
 export type HealthLevel = "healthy" | "warning" | "critical";
+
+export type CatalogInclude = "thresholds" | "series" | "metrics";
+
+export type CatalogListOpts = {
+  organizationId: string;
+  include?: CatalogInclude[];
+};
+
+export type CatalogGetOpts = {
+  organizationId: string;
+  productId: string;
+  include?: CatalogInclude[];
+};
+
+export type CatalogHealthOpts = {
+  product: ProductMetric;
+  thresholds: KpiThreshold[];
+};
+
+export type CatalogForecastOpts = {
+  organizationId: string;
+  productId: string;
+  asOf?: string;
+};
+
+export type CatalogUpdateOpts = {
+  organizationId: string;
+  productId: string;
+  metricKey: string;
+  threshold: number;
+};

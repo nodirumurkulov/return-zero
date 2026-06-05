@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { OrderFeedItem } from "@/types/orders";
+import type { OrderFeedItem } from "@/lib/stores";
 import { renderWithProviders, screen } from "@/test/test-utils";
 import { OrdersFeed } from "./OrdersFeed";
 
 const mutateAsync = vi.fn();
 
-vi.mock("@/hooks/stores/analytics/replay", () => ({
+vi.mock("@/hooks/stores/orders", () => ({
   useAdvanceReplay: () => ({
     mutateAsync,
     isPending: false,

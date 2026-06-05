@@ -3,15 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { detectForecastRisksMock } = vi.hoisted(() => ({ detectForecastRisksMock: vi.fn() }));
+const { forecastMock } = vi.hoisted(() => ({ forecastMock: vi.fn() }));
 
-vi.mock("@/lib/stores/incidents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
-  return {
-    ...actual,
-    createIncidents: vi.fn(() => ({ detectForecastRisks: detectForecastRisksMock })),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: { forecast: forecastMock } })),
+  notifyNewIncidents: vi.fn(),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -34,7 +31,7 @@ describe("POST /api/stores/incidents/forecast-risk", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    detectForecastRisksMock.mockResolvedValue({ scanned: 2, created: [], skipped: [] });
+    forecastMock.mockResolvedValue({ scanned: 2, created: [], skipped: [] });
   });
 
   afterEach(() => {
@@ -45,7 +42,7 @@ describe("POST /api/stores/incidents/forecast-risk", () => {
   it("returns 401 without cron credentials when secret is set", async () => {
     const res = await POST(new NextRequest("http://localhost/api/stores/incidents/forecast-risk", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(detectForecastRisksMock).not.toHaveBeenCalled();
+    expect(forecastMock).not.toHaveBeenCalled();
   });
 
   it("runs forecast when cron auth is valid", async () => {
@@ -56,6 +53,6 @@ describe("POST /api/stores/incidents/forecast-risk", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(detectForecastRisksMock).toHaveBeenCalled();
+    expect(forecastMock).toHaveBeenCalled();
   });
 });

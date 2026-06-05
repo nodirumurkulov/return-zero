@@ -1,6 +1,6 @@
 import AppShell from "@/components/layout/AppShell";
 import { getCurrentOrganizationId } from "@/lib/organizations";
-import { listSearchTargets } from "@/lib/stores/analytics/search";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const organizationId = await getCurrentOrganizationId(supabase);
   const searchTargets = organizationId
-    ? await listSearchTargets(supabase, organizationId).catch(() => [])
+    ? await getStore(supabase).search.list({ organizationId }).catch(() => [])
     : [];
 
   return (

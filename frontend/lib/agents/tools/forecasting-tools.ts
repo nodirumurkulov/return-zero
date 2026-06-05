@@ -1,7 +1,7 @@
 import "server-only";
 
-import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
-import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
+import { forecastForProduct } from "@/lib/stores/catalog/forecast/product";
+import { getProductSeries } from "@/lib/stores/metrics/series";
 import type { AgentSupabase } from "../types";
 
 type OutflowRow = {

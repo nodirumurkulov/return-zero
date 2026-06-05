@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 
-import { postLearn } from "@/lib/api/learn/client";
+import { postLearn } from "@/lib/api/stores/learn/client";
 
 export function useRunLearn() {
   return useMutation({

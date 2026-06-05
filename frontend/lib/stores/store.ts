@@ -2,52 +2,34 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/lib/supabase/db";
-import type { LoadResult, StoreConnection, StoreConnector, StorePlatform } from "./connect";
+import type { Database } from "@/lib/supabase/database.types";
 
-export interface Store {
-  readonly platform: StorePlatform;
-  readonly connector: StoreConnector;
-  readonly connections: StoreConnections;
-  connect(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-    source?: unknown,
-  ): Promise<{ results: LoadResult[]; success: boolean }>;
-  getConnection(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-  ): Promise<StoreConnection | null>;
+import { Catalog } from "./catalog/catalog";
+import { Import } from "./import/import";
+import { Incidents } from "./incidents";
+import { Learn } from "./learn/learn";
+import { Orders } from "./orders/orders";
+import { Search } from "./search/search";
+
+export class Store {
+  readonly import: Import;
+  readonly catalog: Catalog;
+  readonly orders: Orders;
+  readonly incidents: Incidents;
+  readonly learn: Learn;
+  readonly search: Search;
+
+  constructor(supabase: SupabaseClient<Database>) {
+    const incidents = new Incidents(supabase);
+    this.import = new Import(supabase);
+    this.incidents = incidents;
+    this.catalog = new Catalog(supabase);
+    this.orders = new Orders(supabase, incidents);
+    this.learn = new Learn(supabase, this.orders);
+    this.search = new Search(supabase);
+  }
 }
 
-export class StoreConnections {
-  async get(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-  ): Promise<StoreConnection | null> {
-    const { data, error } = await supabase
-      .from("store_connections")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-    if (error) throw new Error(`store_connections read failed: ${error.message}`);
-    return data;
-  }
-
-  async markConnected(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-    platform: StorePlatform,
-  ): Promise<void> {
-    const { error } = await supabase
-      .from("store_connections")
-      .update({
-        platform,
-        status: "connected",
-        connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("organization_id", organizationId);
-    if (error) throw new Error(`store_connections update failed: ${error.message}`);
-  }
+export function getStore(supabase: SupabaseClient<Database>): Store {
+  return new Store(supabase);
 }

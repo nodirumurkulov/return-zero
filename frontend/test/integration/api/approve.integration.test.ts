@@ -9,20 +9,14 @@ vi.mock("next/cache", () => ({
 
 const { incidentStoreMock } = vi.hoisted(() => ({
   incidentStoreMock: {
-    approveIncidentActions: vi.fn(),
-    getIncident: vi.fn(),
-    listLowRiskProposedActionIds: vi.fn(),
-    captureRecoveryBaseline: vi.fn(),
+    approveAndNotify: vi.fn(),
+    listActions: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/stores/incidents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
-  return {
-    ...actual,
-    createIncidents: vi.fn(() => incidentStoreMock),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: incidentStoreMock })),
+}));
 
 vi.mock("@/lib/slack", () => ({
   sendIncidentNotification: vi.fn(),
@@ -40,9 +34,8 @@ import { POST } from "@/app/api/incidents/[id]/approve/route";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const approveMock = incidentStoreMock.approveIncidentActions;
-const getIncidentMock = incidentStoreMock.getIncident;
-const listLowRiskMock = incidentStoreMock.listLowRiskProposedActionIds;
+const approveMock = incidentStoreMock.approveAndNotify;
+const listActionsMock = incidentStoreMock.listActions;
 const createClientMock = vi.mocked(createClient);
 const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 
@@ -71,6 +64,10 @@ describe("POST /api/incidents/[id]/approve", () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
     } as never);
+    tryRequireOrganizationIdMock.mockResolvedValue({
+      ok: true,
+      organizationId: "00000000-0000-0000-0000-000000000100",
+    });
 
     const res = await POST(
       new NextRequest("http://localhost/api/incidents/inc-1/approve", {
@@ -92,31 +89,8 @@ describe("POST /api/incidents/[id]/approve", () => {
       ok: true,
       organizationId: "00000000-0000-0000-0000-000000000100",
     });
-    listLowRiskMock.mockResolvedValue(["low-1"]);
+    listActionsMock.mockResolvedValue(["low-1"]);
     approveMock.mockResolvedValue({ approved: 1 });
-    getIncidentMock.mockResolvedValue({
-      id: "inc-1",
-      organization_id: "00000000-0000-0000-0000-000000000100",
-      title: "Test",
-      status: "awaiting_approval",
-      severity: "high",
-      impact_amount: 1000,
-      impact_label: "GBP",
-      product_id: null,
-      affected_kpi_keys: [],
-      root_cause: null,
-      root_cause_confidence: null,
-      recovery_pct: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      resolved_at: null,
-      monitoring_kpi: null,
-      baseline_value: null,
-      target_value: null,
-      investigation_started_at: null,
-      fix_proposed_at: null,
-      monitoring_started_at: null,
-    });
 
     const res = await POST(
       new NextRequest("http://localhost/api/incidents/inc-1/approve", {
@@ -131,6 +105,8 @@ describe("POST /api/incidents/[id]/approve", () => {
       incidentId: "inc-1",
       actionIds: ["low-1"],
       approvedByUserId: "user-1",
+      organizationId: "00000000-0000-0000-0000-000000000100",
+      appUrl: expect.any(String),
     });
   });
 });

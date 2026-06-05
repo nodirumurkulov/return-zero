@@ -7,16 +7,57 @@ import type { Database } from "@/lib/supabase/database.types";
 
 import { BreachDetector, type DetectOpts, type DetectionResult } from "./detect";
 import { assertNoSupabaseError, IncidentsError } from "./errors";
-import { ForecastRiskDetector, type ForecastDetectOpts, type ForecastDetectionResult } from "./forecast-risk";
+import {
+  ForecastRiskDetector,
+  type ForecastDetectOpts,
+  type ForecastDetectionResult,
+} from "./forecast-risk";
 import { RecoveryService, type RecoverOpts, type RecoveryResult } from "./recover";
 import type { UpdateIncidentBody } from "./schemas";
-import type { Incident, IncidentDetail } from "./types";
+import type { Incident, IncidentDetail, IncidentAction } from "./types";
 
 export type ApproveActionsInput = {
   incidentId: string;
   actionIds: string[];
   approvedByUserId: string | null;
   extraMetadata?: Record<string, unknown>;
+};
+
+export type IncidentsListOpts = {
+  organizationId: string;
+};
+
+export type IncidentsGetOpts = {
+  id: string;
+  organizationId: string;
+  detail?: boolean;
+};
+
+export type IncidentsUpdateOpts = {
+  id: string;
+  organizationId: string;
+  patch: UpdateIncidentBody;
+};
+
+export type IncidentsListActionsOpts = {
+  incidentId: string;
+  organizationId: string;
+  filter?: {
+    status?: IncidentAction["status"];
+    riskLevel?: NonNullable<IncidentAction["risk_level"]>;
+  };
+};
+
+export type IncidentsCaptureBaselineOpts = {
+  organizationId: string;
+  incidentId: string;
+  productId: string;
+  affectedKpiKeys: string[] | null;
+};
+
+export type IncidentsApproveAndNotifyOpts = ApproveActionsInput & {
+  organizationId: string;
+  appUrl: string;
 };
 
 export class Incidents {
@@ -29,10 +70,10 @@ export class Incidents {
     return query.eq("organization_id", organizationId);
   }
 
-  async listIncidents(organizationId: string): Promise<Incident[]> {
+  async list(opts: IncidentsListOpts): Promise<Incident[]> {
     const query = this.withOrgFilter(
       this.supabase.from("incidents").select("*").order("created_at", { ascending: false }),
-      organizationId,
+      opts.organizationId,
     );
 
     const { data, error } = await query;
@@ -40,10 +81,13 @@ export class Incidents {
     return data ?? [];
   }
 
-  async getIncident(id: string, organizationId: string): Promise<Incident | null> {
+  async get(opts: IncidentsGetOpts): Promise<Incident | IncidentDetail | null> {
+    if (opts.detail) {
+      return this.getDetail(opts);
+    }
     const query = this.withOrgFilter(
-      this.supabase.from("incidents").select("*").eq("id", id),
-      organizationId,
+      this.supabase.from("incidents").select("*").eq("id", opts.id),
+      opts.organizationId,
     );
 
     const { data, error } = await query.maybeSingle();
@@ -53,7 +97,8 @@ export class Incidents {
     return data;
   }
 
-  async getIncidentDetail(id: string, organizationId: string): Promise<IncidentDetail | null> {
+  private async getDetail(opts: IncidentsGetOpts): Promise<IncidentDetail | null> {
+    const { id, organizationId } = opts;
     const incidentQuery = this.withOrgFilter(
       this.supabase.from("incidents").select("*").eq("id", id),
       organizationId,
@@ -94,14 +139,10 @@ export class Incidents {
     };
   }
 
-  async patchIncident(
-    id: string,
-    patch: UpdateIncidentBody,
-    organizationId: string,
-  ): Promise<Incident> {
+  async update(opts: IncidentsUpdateOpts): Promise<Incident> {
     const query = this.withOrgFilter(
-      this.supabase.from("incidents").update(patch).eq("id", id),
-      organizationId,
+      this.supabase.from("incidents").update(opts.patch).eq("id", opts.id),
+      opts.organizationId,
     );
 
     const { data, error } = await query.select().single();
@@ -112,49 +153,48 @@ export class Incidents {
     return data;
   }
 
-  async listLowRiskProposedActionIds(
-    incidentId: string,
-    organizationId: string,
-  ): Promise<string[]> {
-    const { data, error } = await this.supabase
+  async listActions(opts: IncidentsListActionsOpts): Promise<string[]> {
+    const baseQuery = this.supabase
       .from("incident_actions")
       .select("id")
-      .eq("incident_id", incidentId)
-      .eq("organization_id", organizationId)
-      .eq("status", "proposed")
-      .eq("risk_level", "low");
+      .eq("incident_id", opts.incidentId)
+      .eq("organization_id", opts.organizationId);
 
+    const queryWithStatus = opts.filter?.status
+      ? baseQuery.eq("status", opts.filter.status)
+      : baseQuery;
+    const query =
+      opts.filter?.riskLevel != null
+        ? queryWithStatus.eq("risk_level", opts.filter.riskLevel)
+        : queryWithStatus;
+
+    const { data, error } = await query;
     assertNoSupabaseError(error, "incident_actions read failed");
     return (data ?? []).map((row) => row.id);
   }
 
-  async detectBreaches(opts: DetectOpts): Promise<DetectionResult> {
+  async detect(opts: DetectOpts): Promise<DetectionResult> {
     return new BreachDetector(this.supabase).run(opts);
   }
 
-  async detectForecastRisks(opts: ForecastDetectOpts): Promise<ForecastDetectionResult> {
+  async forecast(opts: ForecastDetectOpts): Promise<ForecastDetectionResult> {
     return new ForecastRiskDetector(this.supabase).run(opts);
   }
 
-  async captureRecoveryBaseline(
-    organizationId: string,
-    incidentId: string,
-    productId: string,
-    affectedKpiKeys: string[] | null,
-  ): Promise<void> {
+  async captureBaseline(opts: IncidentsCaptureBaselineOpts): Promise<void> {
     return new RecoveryService(this.supabase).captureBaseline(
-      organizationId,
-      incidentId,
-      productId,
-      affectedKpiKeys,
+      opts.organizationId,
+      opts.incidentId,
+      opts.productId,
+      opts.affectedKpiKeys,
     );
   }
 
-  async runRecovery(opts: RecoverOpts): Promise<RecoveryResult> {
+  async recover(opts: RecoverOpts): Promise<RecoveryResult> {
     return new RecoveryService(this.supabase).run(opts);
   }
 
-  async approveIncidentActions(input: ApproveActionsInput): Promise<{ approved: number }> {
+  async approve(input: ApproveActionsInput): Promise<{ approved: number }> {
     const { incidentId, actionIds, approvedByUserId, extraMetadata } = input;
     if (actionIds.length === 0) {
       return { approved: 0 };
@@ -231,11 +271,12 @@ export class Incidents {
     return { approved: actionIds.length };
   }
 
-  async completeApproval(
-    input: ApproveActionsInput & { organizationId: string; appUrl: string },
-  ): Promise<{ approved: number }> {
-    const result = await this.approveIncidentActions(input);
-    const incident = await this.getIncident(input.incidentId, input.organizationId);
+  async approveAndNotify(opts: IncidentsApproveAndNotifyOpts): Promise<{ approved: number }> {
+    const result = await this.approve(opts);
+    const incident = (await this.get({
+      id: opts.incidentId,
+      organizationId: opts.organizationId,
+    })) as Incident | null;
     if (incident) {
       await sendIncidentNotification({
         title: incident.title,
@@ -245,25 +286,21 @@ export class Incidents {
         impact_label: incident.impact_label,
         root_cause: incident.root_cause,
         root_cause_confidence: incident.root_cause_confidence,
-        incident_id: input.incidentId,
-        app_url: input.appUrl,
+        incident_id: opts.incidentId,
+        app_url: opts.appUrl,
       });
 
       if (incident.product_id) {
-        await this.captureRecoveryBaseline(
-          input.organizationId,
-          input.incidentId,
-          incident.product_id,
-          incident.affected_kpi_keys,
-        );
+        await this.captureBaseline({
+          organizationId: opts.organizationId,
+          incidentId: opts.incidentId,
+          productId: incident.product_id,
+          affectedKpiKeys: incident.affected_kpi_keys,
+        });
       }
     }
     return result;
   }
-}
-
-export function createIncidents(supabase: SupabaseClient<Database>): Incidents {
-  return new Incidents(supabase);
 }
 
 export { IncidentsError } from "./errors";

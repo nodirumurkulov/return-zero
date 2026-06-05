@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SectionLabel } from "@/components/ui/section-label";
-import { useUpdateThreshold } from "@/hooks/stores/analytics/catalog";
-import type { KpiThreshold } from "@/types/catalog";
+import { useUpdateThreshold } from "@/hooks/stores/catalog";
+import type { KpiThreshold } from "@/lib/stores";
 
 const METRIC_LABELS: Record<string, string> = {
   return_rate: "Return rate",

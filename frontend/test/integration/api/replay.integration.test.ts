@@ -3,17 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { replayStoreMock } = vi.hoisted(() => ({
-  replayStoreMock: { run: vi.fn(), reset: vi.fn() },
+const { ordersStoreMock } = vi.hoisted(() => ({
+  ordersStoreMock: { advance: vi.fn(), reset: vi.fn() },
 }));
 
-vi.mock("@/lib/stores/analytics/replay", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/analytics/replay")>();
-  return {
-    ...actual,
-    createReplay: vi.fn(() => replayStoreMock),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ orders: ordersStoreMock })),
+  notifyNewIncidents: vi.fn(),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -30,10 +27,10 @@ vi.mock("@/lib/organizations", () => ({
   requireOrganizationId: vi.fn(async () => "org-1"),
 }));
 
-import { POST } from "@/app/api/stores/analytics/replay/route";
-const runReplayMock = replayStoreMock.run;
+import { POST } from "@/app/api/stores/orders/advance/route";
+const advanceMock = ordersStoreMock.advance;
 
-const replayResult = {
+const advanceResult = {
   previous_cursor: "2024-01-01",
   cursor: "2024-01-08",
   at_end: false,
@@ -41,11 +38,11 @@ const replayResult = {
   forecast: { scanned: 1, created: [], skipped: [] },
 };
 
-describe("POST /api/stores/analytics/replay", () => {
+describe("POST /api/stores/orders/advance", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    runReplayMock.mockResolvedValue(replayResult);
+    advanceMock.mockResolvedValue(advanceResult);
   });
 
   afterEach(() => {
@@ -54,14 +51,14 @@ describe("POST /api/stores/analytics/replay", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/stores/analytics/replay", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/orders/advance", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(runReplayMock).not.toHaveBeenCalled();
+    expect(advanceMock).not.toHaveBeenCalled();
   });
 
-  it("delegates to runReplay with parsed advance_days", async () => {
+  it("delegates to orders.advance with parsed advance_days", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/stores/analytics/replay", {
+      new NextRequest("http://localhost/api/stores/orders/advance", {
         method: "POST",
         headers: {
           authorization: "Bearer cron-test-secret",
@@ -71,6 +68,6 @@ describe("POST /api/stores/analytics/replay", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runReplayMock).toHaveBeenCalledWith({ organizationId: "org-1", advanceDays: 3 });
+    expect(advanceMock).toHaveBeenCalledWith({ organizationId: "org-1", days: 3 });
   });
 });

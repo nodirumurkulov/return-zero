@@ -1,5 +1,5 @@
 import { investigateResponseSchema } from "@/lib/agents/schemas";
-import type { IncidentRef } from "@/types/incidents";
+import type { IncidentRef } from "@/lib/stores";
 
 import { apiClient } from "../client";
 

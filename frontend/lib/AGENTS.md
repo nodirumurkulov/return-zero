@@ -12,7 +12,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 
 | Route / module | Why admin |
 |----------------|-----------|
-| `POST /api/stores/connect/mock` | Load Pretty Fly demo pack into contract tables after user auth |
+| `POST /api/stores/import/[platform]` | Load platform data into contract tables after user auth |
 | `POST /api/stores/analytics/replay` | Cron replay cursor; also accepts session user when not cron |
 | `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
@@ -34,10 +34,12 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
-| `stores/` | `@/lib/stores` | `Store`, `StoreConnector`, connect + intelligence |
-| `stores/analytics/replay/` | `@/lib/stores/analytics/replay` | Replay cursor, bounds, orders feed |
-| `stores/analytics/learn/` | `@/lib/stores/analytics/learn` | Post-connect baselines + business report |
-| `stores/connect/` | `@/lib/stores/connect` | Connect Zod schemas + store connectors |
+| `stores/` | `@/lib/stores`, `@/lib/stores/server` | `getStore`, domain facade (catalog, orders, import, …) |
+| `stores/import/` | internal | Platform import loaders |
+| `stores/catalog/` | via `@/lib/stores` | Metrics, thresholds, health |
+| `stores/orders/` | via `@/lib/stores` | Replay cursor, orders feed |
+| `stores/learn/` | via `@/lib/stores` | Post-import baselines + business report |
+| `stores/search/` | via `@/lib/stores` | Global search targets |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
 Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client TanStack hooks live under `frontend/hooks/stores/<domain>/` and call `@/lib/api/*`; server query options live in `hooks/stores/<domain>/query-options.server.ts`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.

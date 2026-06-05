@@ -3,15 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { runRecoveryMock } = vi.hoisted(() => ({ runRecoveryMock: vi.fn() }));
+const { recoverMock } = vi.hoisted(() => ({ recoverMock: vi.fn() }));
 
-vi.mock("@/lib/stores/incidents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
-  return {
-    ...actual,
-    createIncidents: vi.fn(() => ({ runRecovery: runRecoveryMock })),
-  };
-});
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: { recover: recoverMock } })),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -28,7 +24,7 @@ describe("POST /api/stores/incidents/recover", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    runRecoveryMock.mockResolvedValue({ monitored: 1, updated: 1, resolved: [] });
+    recoverMock.mockResolvedValue({ monitored: 1, updated: 1, resolved: [] });
   });
 
   afterEach(() => {
@@ -48,10 +44,10 @@ describe("POST /api/stores/incidents/recover", () => {
       }),
     );
     expect(res.status).toBe(400);
-    expect(runRecoveryMock).not.toHaveBeenCalled();
+    expect(recoverMock).not.toHaveBeenCalled();
   });
 
-  it("delegates to runRecovery with parsed body", async () => {
+  it("delegates to recover with parsed body", async () => {
     const res = await POST(
       new NextRequest("http://localhost/api/stores/incidents/recover", {
         method: "POST",
@@ -63,6 +59,6 @@ describe("POST /api/stores/incidents/recover", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runRecoveryMock).toHaveBeenCalledWith({ organizationId: "org-1", advanceDays: 7 });
+    expect(recoverMock).toHaveBeenCalledWith({ organizationId: "org-1", advanceDays: 7 });
   });
 });

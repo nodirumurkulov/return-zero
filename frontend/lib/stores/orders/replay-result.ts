@@ -1,9 +1,9 @@
-import type { DetectionResult, ForecastDetectionResult } from "@/lib/stores/incidents";
+import type { DetectionResult, ForecastDetectionResult } from "../incidents";
 
-export interface ReplayResult {
+export type OrdersAdvanceResult = {
   previous_cursor: string;
   cursor: string;
   at_end: boolean;
   breaches: DetectionResult;
   forecast: ForecastDetectionResult;
-}
+};

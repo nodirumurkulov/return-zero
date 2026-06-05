@@ -7,7 +7,11 @@ const { listIncidentsMock, postWebhookBlocksMock } = vi.hoisted(() => ({
   listIncidentsMock: vi.fn(),
   postWebhookBlocksMock: vi.fn(),
 }));
-vi.mock("@/lib/incidents", () => ({ listIncidents: listIncidentsMock }));
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({
+    incidents: { list: listIncidentsMock },
+  })),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({

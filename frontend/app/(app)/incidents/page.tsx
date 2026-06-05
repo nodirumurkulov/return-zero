@@ -3,7 +3,7 @@ import { ReplayControl } from "@/components/incidents/ReplayControl";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionLabel } from "@/components/ui/section-label";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { createIncidents } from "@/lib/stores/incidents";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function IncidentsPage() {
   const { organizationId } = orgResult;
 
   const [result, replayRes] = await Promise.all([
-    createIncidents(supabase).listIncidents(organizationId).then(
+    getStore(supabase).incidents.list({ organizationId }).then(
       (rows) => ({ ok: true as const, rows }),
       (err: unknown) => ({
         ok: false as const,

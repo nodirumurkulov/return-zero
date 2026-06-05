@@ -11,10 +11,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { getModel } from "@/lib/ai/model";
-import { computeMetricsDetailed } from "@/lib/stores/analytics/metrics/engine";
-import type { MetricValue } from "@/lib/stores/analytics/metrics/metric-definition";
-import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
-import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
+import { computeMetricsDetailed } from "@/lib/stores/metrics/engine";
+import type { MetricValue } from "@/lib/stores/metrics/metric-definition";
+import type { MonthlyPoint } from "@/lib/stores/metrics/monthly-point";
+import { getMonthlySeries } from "@/lib/stores/metrics/series";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
 import { type ReportSummary } from "./schemas";

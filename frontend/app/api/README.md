@@ -16,9 +16,8 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/stores/analytics/replay` | Advance replay clock (cron or signed-in user) |
 | `GET` | `/api/stores/analytics/replay/orders` | Orders feed for replay UI |
 | `POST` | `/api/learn` | Learn baselines + business report after upload |
-| `POST` | `/api/stores/connect/mock` | Load Pretty Fly demo pack (mock CSV) |
-| `POST` | `/api/stores/connect/shopify` | Connect Shopify store |
-| `GET` | `/api/stores/connection` | Current store connection status |
+| `POST` | `/api/stores/import/[platform]` | Import store data (`mock_csv`, `shopify`) |
+| `GET` | `/api/stores/import/status` | Current import/connection status |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 | `POST` | `/api/slack/events` | Slack Events API — `@hugo` mentions → LLM reply (URL verify + signing secret) |
 

@@ -22,18 +22,18 @@ if (!parsed.success) {
 | Route | Domain module |
 |-------|----------------|
 | `GET /api/digest` | `hugo/digest` — daily digest to Slack (cron-only) |
-| `POST /api/stores/connect/mock` | `@/lib/stores` `MockStore` |
-| `POST /api/stores/connect/shopify` | `@/lib/stores` `ShopifyStore` |
-| `GET /api/stores/connection` | `StoreConnections` |
-| `POST /api/stores/analytics/replay` | `stores/orders` (replay) |
-| `GET /api/stores/analytics/replay/orders` | `stores/orders` (replay) |
-| `POST /api/stores/incidents/detect` | `stores/incidents` |
-| `POST /api/stores/incidents/forecast-risk` | `stores/incidents` |
-| `POST /api/stores/incidents/recover` | `stores/incidents` |
+| `POST /api/stores/import/[platform]` | `getStore().import.run` |
+| `GET /api/stores/import/status` | `getStore().import.status` |
+| `POST /api/stores/orders/advance` | `getStore().orders.advance` |
+| `GET /api/stores/orders/feed` | `getStore().orders.list` |
+| `PATCH /api/stores/catalog/[productId]/threshold` | `getStore().catalog.update` |
+| `POST /api/stores/learn` | `getStore().learn.run` |
+| `POST /api/stores/incidents/detect` | `getStore().incidents.detect` |
+| `POST /api/stores/incidents/forecast-risk` | `getStore().incidents.forecast` |
+| `POST /api/stores/incidents/recover` | `getStore().incidents.recover` |
 | `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
-| `POST /api/learn` | `learn/schemas.ts` |
-| `POST /api/incidents/[id]/approve` | `incidents/approve` |
-| `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
+| `POST /api/incidents/[id]/approve` | `getStore().incidents.approve` |
+| `GET/PATCH /api/incidents/[id]` | `getStore().incidents.get` / `.update` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 | `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |
 

@@ -3,7 +3,7 @@
 // sizing a safety buffer from the demand variability we observe in
 // inventory_movements. Deterministic: same series in → same plan out.
 
-import { confidenceFromN, type Confidence } from "@/lib/stores/analytics/metrics/spc";
+import { confidenceFromN, type Confidence } from "@/lib/stores/metrics/spc";
 
 /**
  * Inverse standard normal CDF (Acklam's rational approximation). We only need it

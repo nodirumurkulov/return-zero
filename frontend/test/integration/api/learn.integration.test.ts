@@ -3,20 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/stores/analytics/learn/baselines", () => ({
-  learnBaselines: vi.fn(),
+const { learnRunMock } = vi.hoisted(() => ({
+  learnRunMock: vi.fn(),
 }));
 
-vi.mock("@/lib/stores/analytics/learn/report", () => ({
-  buildBusinessReport: vi.fn(),
-}));
-
-const { replayStoreMock } = vi.hoisted(() => ({
-  replayStoreMock: { reset: vi.fn() },
-}));
-
-vi.mock("@/lib/stores/analytics/replay", () => ({
-  createReplay: vi.fn(() => replayStoreMock),
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ learn: { run: learnRunMock } })),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -33,19 +25,15 @@ vi.mock("@/lib/organizations", () => ({
   tryRequireOrganizationId: vi.fn(async () => ({ ok: true, organizationId: "org-1" })),
 }));
 
-import { POST } from "@/app/api/learn/route";
-import { learnBaselines } from "@/lib/stores/analytics/learn/baselines";
-import { buildBusinessReport } from "@/lib/stores/analytics/learn/report";
+import { POST } from "@/app/api/stores/learn/route";
 
-const learnBaselinesMock = vi.mocked(learnBaselines);
-const buildBusinessReportMock = vi.mocked(buildBusinessReport);
-const resetReplayMock = replayStoreMock.reset;
-
-describe("POST /api/learn", () => {
+describe("POST /api/stores/learn", () => {
   beforeEach(() => {
-    learnBaselinesMock.mockResolvedValue({ baselines: 1, thresholds: 1, products: 1 });
-    buildBusinessReportMock.mockResolvedValue({ id: "report-1" } as never);
-    resetReplayMock.mockResolvedValue({ cursor: "2024-01-01" });
+    learnRunMock.mockResolvedValue({
+      learn: { baselines: 1, thresholds: 1, products: 1 },
+      reportId: "report-1",
+      replayCursor: "2024-01-01",
+    });
   });
 
   afterEach(() => {
@@ -59,31 +47,31 @@ describe("POST /api/learn", () => {
     } as never);
 
     const res = await POST(
-      new NextRequest("http://localhost/api/learn", {
+      new NextRequest("http://localhost/api/stores/learn", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
       }),
     );
     expect(res.status).toBe(401);
-    expect(learnBaselinesMock).not.toHaveBeenCalled();
+    expect(learnRunMock).not.toHaveBeenCalled();
   });
 
   it("returns 400 for invalid body", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/learn", {
+      new NextRequest("http://localhost/api/stores/learn", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ extra: true }),
       }),
     );
     expect(res.status).toBe(400);
-    expect(learnBaselinesMock).not.toHaveBeenCalled();
+    expect(learnRunMock).not.toHaveBeenCalled();
   });
 
   it("runs learn pipeline for authenticated org member", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/learn", {
+      new NextRequest("http://localhost/api/stores/learn", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
@@ -93,8 +81,6 @@ describe("POST /api/learn", () => {
     const json = (await res.json()) as { success: boolean; reportId: string };
     expect(json.success).toBe(true);
     expect(json.reportId).toBe("report-1");
-    expect(learnBaselinesMock).toHaveBeenCalled();
-    expect(buildBusinessReportMock).toHaveBeenCalled();
-    expect(resetReplayMock).toHaveBeenCalled();
+    expect(learnRunMock).toHaveBeenCalledWith({ organizationId: "org-1" });
   });
 });

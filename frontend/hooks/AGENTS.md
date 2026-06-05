@@ -14,8 +14,8 @@ React Query wrappers mirroring `lib/` domain layout. **Parent:** [../lib/AGENTS.
 
 | Layer | May import |
 |-------|------------|
-| `hooks/` (client `use-*`, `query-options.ts`) | `@/lib/api/*`, `@/types/*`, TanStack Query — **not** `@/lib/stores` |
-| `hooks/**/*.server.ts` | `@/lib/stores/*` (server-only prefetch) |
+| `hooks/` (client `use-*`, `query-options.ts`) | `@/lib/api/*`, `@/lib/stores` (types/schemas only) — **not** `@/lib/stores/server` |
+| `hooks/**/*.server.ts` | `@/lib/stores/server` (server-only prefetch) |
 | `components/` | `@/hooks/*` only — not `@/lib/api` |
 
 ## Layout
@@ -26,11 +26,10 @@ hooks/
 │   └── use-trigger-investigation.ts
 └── stores/                    # mirrors lib/stores
     ├── incidents/
-    ├── connect/
+    ├── import/
     ├── learn/
-    └── analytics/
-        ├── catalog/
-        └── replay/
+    ├── catalog/
+    └── orders/
 ```
 
 ## Conventions

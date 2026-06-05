@@ -1,8 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeProductHealth, listCatalogWithThresholds } from "@/lib/stores/analytics/catalog";
-import { forecastStockout } from "@/lib/stores/analytics/forecast/predictors";
-import { createIncidents, type Incident, type IncidentDetail } from "@/lib/stores/incidents";
+import { forecastStockout, type Incident, type IncidentDetail } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 // Mirror the reorder horizon defaults used by the detector/forecast modules.
@@ -46,7 +45,7 @@ export async function resolveIncident(
   reference: string | null | undefined,
   organizationId: string,
 ): Promise<{ match: Incident | null; candidates: Incident[] }> {
-  const incidents = await createIncidents(supabase).listIncidents(organizationId);
+  const incidents = await getStore(supabase).incidents.list({ organizationId });
   const ref = (reference ?? "").trim().toLowerCase();
 
   if (!ref) {
@@ -81,7 +80,7 @@ export async function buildOpenIncidentsContext(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<string> {
-  const incidents = await createIncidents(supabase).listIncidents(organizationId);
+  const incidents = await getStore(supabase).incidents.list({ organizationId });
   const open = incidents.filter(isOpenIncident);
   const resolvedCount = incidents.length - open.length;
 
@@ -132,12 +131,13 @@ export async function buildCatalogContext(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<string> {
-  const { products, thresholdsByProduct } = await listCatalogWithThresholds(supabase, organizationId);
+  const store = getStore(supabase);
+  const { products, thresholdsByProduct } = await store.catalog.list({ organizationId });
 
   const breaches = products
     .map((p) => ({
       product: p,
-      level: computeProductHealth(p, thresholdsByProduct[p.product_id] ?? []),
+      level: store.catalog.health({ product: p, thresholds: thresholdsByProduct[p.product_id] ?? [] }),
     }))
     .filter((row) => row.level !== "healthy");
 

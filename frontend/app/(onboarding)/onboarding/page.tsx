@@ -1,6 +1,6 @@
 import StoreConnectForm from "@/components/onboarding/StoreConnectForm";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { MockStore } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function OnboardingPage() {
       .from("products")
       .select("*", { count: "exact", head: true })
       .eq("organization_id", org.organizationId),
-    new MockStore().getConnection(supabase, org.organizationId),
+    getStore(supabase).import.status({ organizationId: org.organizationId }),
   ]);
 
   const productCount = count ?? 0;

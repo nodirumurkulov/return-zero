@@ -1,4 +1,4 @@
-import type { KpiThreshold, ProductMetric } from "@/lib/stores/analytics/catalog";
+import type { KpiThreshold, ProductMetric } from "@/lib/stores";
 
 export function createProductMetricFixture(
   overrides?: Partial<ProductMetric>,

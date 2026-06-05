@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { approveIncidentActions, type ApproveIncidentActionsInput } from "@/lib/api/incidents/client";
-import type { IncidentRef } from "@/types/incidents";
+import type { IncidentRef } from "@/lib/stores";
 
 import { incidentKeys } from "./keys";
 

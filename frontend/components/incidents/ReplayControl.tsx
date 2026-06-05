@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAdvanceReplay } from "@/hooks/stores/analytics/replay";
+import { useAdvanceReplay } from "@/hooks/stores/orders";
 
 export function ReplayControl({ initialCursor }: { initialCursor: string | null }) {
   const router = useRouter();
@@ -16,12 +16,12 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
     setMessage(null);
     setIsError(false);
     try {
-      const body = await advanceReplay.mutateAsync({ advanceDays: days });
+      const body = await advanceReplay.mutateAsync({ advance_days: days });
       setCursor(body.cursor?.slice(0, 10) ?? cursor);
       setMessage(
         body.created
-          ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.atEnd ? " · reached end of data" : ""}`
-          : body.atEnd
+          ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.at_end ? " · reached end of data" : ""}`
+          : body.at_end
             ? "No new incidents · reached end of data"
             : "No new incidents this step",
       );
