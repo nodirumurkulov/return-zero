@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 const BRAND = {
   sidebar: {
     title: "Hugo",
-    subtitle: "Pretty Fly · Commerce IR",
+    subtitle: "Commerce IR",
     imageSize: 28,
     titleClass: "text-[15px] font-semibold leading-tight tracking-tight",
     subtitleClass: "text-[11px] text-muted-foreground",

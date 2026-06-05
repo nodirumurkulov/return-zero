@@ -6,6 +6,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { callLLMText, type Message } from "@/lib/llm";
 
 export type SlackIncidentPayload = {
   title: string;
@@ -253,4 +254,106 @@ export function verifySlackRequest(
   }
 
   return timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Events API: @hugo conversational bot                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Slack Events API envelope. `url_verification` carries a `challenge` we echo
+ * back; `event_callback` wraps an inner event (we handle `app_mention`).
+ * See https://api.slack.com/apis/connections/events-api
+ */
+export const slackEventEnvelopeSchema = z.object({
+  type: z.string(),
+  challenge: z.string().optional(),
+  event: z
+    .object({
+      type: z.string(),
+      text: z.string().optional(),
+      user: z.string().optional(),
+      channel: z.string().optional(),
+      ts: z.string().optional(),
+      thread_ts: z.string().optional(),
+      bot_id: z.string().optional(),
+      subtype: z.string().optional(),
+    })
+    .optional(),
+});
+
+export type SlackEventEnvelope = z.infer<typeof slackEventEnvelopeSchema>;
+
+export function parseSlackEventEnvelope(raw: string): SlackEventEnvelope | null {
+  try {
+    const parsed = slackEventEnvelopeSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Remove Slack user mentions (`<@U123>`) and collapse whitespace. */
+export function stripSlackMentions(text: string): string {
+  return text.replace(/<@[A-Z0-9]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Post a message to a Slack channel via the Web API (`chat.postMessage`),
+ * authenticated with the bot token. `threadTs` keeps replies in-thread.
+ * Never throws — logs and returns on failure.
+ */
+export async function postSlackMessage(args: {
+  channel: string;
+  text: string;
+  threadTs?: string;
+}): Promise<void> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    console.warn("[Slack] SLACK_BOT_TOKEN not set — skipping chat.postMessage");
+    return;
+  }
+
+  const res = await fetch("https://slack.com/api/chat.postMessage", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      channel: args.channel,
+      text: args.text,
+      ...(args.threadTs ? { thread_ts: args.threadTs } : {}),
+    }),
+  });
+
+  const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+  if (!json?.ok) {
+    console.error(`[Slack] chat.postMessage failed: ${json?.error ?? res.status}`);
+  }
+}
+
+const HUGO_SYSTEM_PROMPT =
+  "You are Hugo, a helpful assistant for the Resolve ecommerce incident-response app. " +
+  "You are chatting inside Slack. Be concise, friendly, and use plain language. " +
+  "Slack does not render Markdown headings or tables, so prefer short paragraphs and " +
+  "simple bullet points ('- '). Keep replies under ~1500 characters unless asked for more.";
+
+/**
+ * Generate Hugo's reply to a Slack message. Returns a friendly fallback when
+ * the LLM is unavailable (missing key / network) so the bot always responds.
+ */
+export async function generateHugoReply(userText: string): Promise<string> {
+  const prompt = userText.trim();
+  if (!prompt) {
+    return "Hi! I'm Hugo 👋 — mention me with a question and I'll do my best to help.";
+  }
+
+  const messages: Message[] = [
+    { role: "system", content: HUGO_SYSTEM_PROMPT },
+    { role: "user", content: prompt },
+  ];
+
+  const reply = await callLLMText(messages);
+  return reply.trim() || "Sorry, I couldn't generate a reply right now. Please try again in a moment.";
 }
