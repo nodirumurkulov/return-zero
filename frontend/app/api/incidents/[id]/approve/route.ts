@@ -8,6 +8,7 @@ import {
   listLowRiskProposedActionIds,
 } from "@/lib/incidents";
 import { approveIncidentBodySchema } from "@/lib/incidents/schemas";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { sendIncidentNotification } from "@/lib/slack";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const org = await tryRequireOrganizationId(supabase);
+  if (!org.ok) {
+    logApiError("api/incidents/[id]/approve", new Error(org.error));
+    return apiErrorResponse(new Error(org.error), 403);
+  }
+  const { organizationId } = org;
 
   const body = parsed.data;
   const lowRiskIds = body.approve_all_low_risk
@@ -65,12 +73,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       app_url: appUrl,
     });
 
-    if (incident.affected_product) {
+    if (incident.product_id) {
       await captureRecoveryBaseline(
         supabase,
+        organizationId,
         params.id,
-        incident.affected_product,
-        incident.affected_kpis,
+        incident.product_id,
+        incident.affected_kpi_keys,
       );
     }
   }

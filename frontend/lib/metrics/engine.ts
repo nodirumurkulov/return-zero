@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSourceFacts } from "./sources";
 import type {
+  ComputeOpts,
   Direction,
   MetricDefinition,
   MetricStatus,
@@ -8,6 +9,8 @@ import type {
   ProductSourceFacts,
   ThresholdOverride,
 } from "./types";
+
+export type { ComputeOpts };
 
 // Within 10% of the threshold (on the safe side) counts as a warning.
 const WARNING_BAND = 0.1;
@@ -45,17 +48,41 @@ export function metricStatusFor(
   return near ? "warning" : "healthy";
 }
 
-export interface ComputeOpts {
-  productId?: string; // restrict to one product
-  windowDays?: number; // override each definition's own window
-  asOf?: string; // anchor the rolling window to this date (replay cursor); default = latest order
-}
-
 export interface EngineRun {
   defs: MetricDefinition[];
   factsByWindow: Map<number, Map<string, ProductSourceFacts>>;
   metrics: Record<string, MetricValue[]>;
 }
+
+type MetricDefinitionRow = {
+  id: string;
+  metric_key: string;
+  display_name: string;
+  description: string | null;
+  unit: string;
+  numerator_source: string;
+  numerator_field: string;
+  denominator_source: string | null;
+  denominator_field: string | null;
+  operation: string;
+  window_days: number;
+  direction: string;
+  default_threshold: number;
+  severity: string;
+  enabled: boolean;
+  sort_order: number;
+  impact_source: string | null;
+  impact_field: string | null;
+  impact_label: string | null;
+};
+
+type ThresholdOverrideRow = {
+  product_id: string | null;
+  metric_definition_id: string;
+  threshold: number;
+  direction: string | null;
+  active: boolean;
+};
 
 /**
  * Core engine pass — evaluates the enabled metric_definitions against source
@@ -66,24 +93,58 @@ export interface EngineRun {
  */
 export async function computeMetricsDetailed(
   supabase: SupabaseClient,
-  opts: ComputeOpts = {}
+  opts: ComputeOpts,
 ): Promise<EngineRun> {
   const [{ data: defsData, error: defsErr }, { data: ovrData, error: ovrErr }] = await Promise.all([
-    supabase.from("metric_definitions").select("*").eq("enabled", true).order("sort_order"),
-    supabase.from("product_kpi_thresholds").select("*").eq("active", true),
+    supabase
+      .from("metric_definitions")
+      .select("*")
+      .eq("organization_id", opts.organizationId)
+      .eq("enabled", true)
+      .order("sort_order"),
+    supabase
+      .from("product_kpi_thresholds")
+      .select("product_id, metric_definition_id, threshold, direction, active")
+      .eq("organization_id", opts.organizationId)
+      .eq("active", true),
   ]);
   if (defsErr) throw new Error(`load metric_definitions: ${defsErr.message}`);
   if (ovrErr) throw new Error(`load product_kpi_thresholds: ${ovrErr.message}`);
 
-  const defs: MetricDefinition[] = (defsData ?? []).map((d) => ({
-    ...(d as MetricDefinition),
-    default_threshold: Number((d as MetricDefinition).default_threshold),
-    window_days: Number((d as MetricDefinition).window_days),
-  }));
+  const defs: MetricDefinition[] = (defsData ?? []).map((d) => {
+    const row = d as MetricDefinitionRow;
+    return {
+      id: row.id,
+      metric_key: row.metric_key,
+      display_name: row.display_name,
+      description: row.description,
+      unit: row.unit,
+      numerator_source: row.numerator_source,
+      numerator_field: row.numerator_field,
+      denominator_source: row.denominator_source,
+      denominator_field: row.denominator_field,
+      operation: row.operation as MetricDefinition["operation"],
+      window_days: Number(row.window_days),
+      direction: row.direction as Direction,
+      default_threshold: Number(row.default_threshold),
+      severity: row.severity,
+      enabled: row.enabled,
+      sort_order: Number(row.sort_order),
+      impact_source: row.impact_source,
+      impact_field: row.impact_field,
+      impact_label: row.impact_label,
+    };
+  });
 
   const overrides = new Map<string, ThresholdOverride>();
-  for (const o of (ovrData ?? []) as ThresholdOverride[]) {
-    overrides.set(`${o.product_id}:${o.metric_key}`, { ...o, threshold: Number(o.threshold) });
+  for (const o of (ovrData ?? []) as ThresholdOverrideRow[]) {
+    overrides.set(`${o.product_id}:${o.metric_definition_id}`, {
+      product_id: o.product_id,
+      metric_definition_id: o.metric_definition_id,
+      threshold: Number(o.threshold),
+      direction: (o.direction as Direction | null) ?? null,
+      active: o.active,
+    });
   }
 
   // Fetch source facts once per distinct window in play (usually just one).
@@ -92,7 +153,10 @@ export async function computeMetricsDetailed(
     : new Set(defs.map((d) => d.window_days));
   const factsByWindow = new Map<number, Map<string, ProductSourceFacts>>();
   for (const w of Array.from(windows)) {
-    factsByWindow.set(w, await getSourceFacts(supabase, w, opts.asOf));
+    factsByWindow.set(
+      w,
+      await getSourceFacts(supabase, opts.organizationId, w, opts.asOf),
+    );
   }
 
   const metrics: Record<string, MetricValue[]> = {};
@@ -100,7 +164,7 @@ export async function computeMetricsDetailed(
     const facts = factsByWindow.get(opts.windowDays ?? def.window_days)!;
     for (const [productId, f] of Array.from(facts)) {
       if (opts.productId && productId !== opts.productId) continue;
-      const override = overrides.get(`${productId}:${def.metric_key}`);
+      const override = overrides.get(`${productId}:${def.id}`);
       const threshold = override?.threshold ?? def.default_threshold;
       const direction = override?.direction ?? def.direction;
       const value = evalValue(def, f);
@@ -124,7 +188,7 @@ export async function computeMetricsDetailed(
  */
 export async function computeMetrics(
   supabase: SupabaseClient,
-  opts: ComputeOpts = {}
+  opts: ComputeOpts,
 ): Promise<Record<string, MetricValue[]>> {
   return (await computeMetricsDetailed(supabase, opts)).metrics;
 }
@@ -132,9 +196,10 @@ export async function computeMetrics(
 /** Metrics for a single product, ordered by definition sort_order. */
 export async function computeProductMetrics(
   supabase: SupabaseClient,
+  organizationId: string,
   productId: string,
-  windowDays?: number
+  windowDays?: number,
 ): Promise<MetricValue[]> {
-  const all = await computeMetrics(supabase, { productId, windowDays });
+  const all = await computeMetrics(supabase, { organizationId, productId, windowDays });
   return all[productId] ?? [];
 }

@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
-import type { MonthlyPoint } from "./types";
+import type { MonthlyPoint, SeriesOpts } from "./types";
 
-export type { MonthlyPoint };
+export type { MonthlyPoint, SeriesOpts };
 
 type SeriesRow = Database["public"]["Functions"]["product_monthly_series"]["Returns"][number];
 
@@ -27,7 +27,7 @@ function toPoint(r: SeriesRow): MonthlyPoint {
  */
 export async function getMonthlySeries(
   supabase: SupabaseClient<Database>,
-  opts: { productId?: string; months?: number } = {}
+  opts: SeriesOpts,
 ): Promise<Map<string, MonthlyPoint[]>> {
   const months = opts.months ?? 24;
 
@@ -35,9 +35,11 @@ export async function getMonthlySeries(
   // products x months (~1488), so page through it to avoid silent truncation.
   const pageSize = 1000;
   const fetchPage = async (from: number): Promise<SeriesRow[]> => {
-    const { data, error } = await supabase
-      .rpc("product_monthly_series", { p_months: months })
-      .range(from, from + pageSize - 1);
+    const args: Database["public"]["Functions"]["product_monthly_series"]["Args"] = {
+      p_organization_id: opts.organizationId,
+      p_months: months,
+    };
+    const { data, error } = await supabase.rpc("product_monthly_series", args).range(from, from + pageSize - 1);
     if (error) throw new Error(`product_monthly_series failed: ${error.message}`);
     const page = data ?? [];
     if (page.length < pageSize) return page;
@@ -62,8 +64,11 @@ export async function getMonthlySeries(
 /** A single product's monthly series, ascending by month. */
 export async function getProductSeries(
   supabase: SupabaseClient<Database>,
+  organizationId: string,
   productId: string,
-  months?: number
+  months?: number,
 ): Promise<MonthlyPoint[]> {
-  return (await getMonthlySeries(supabase, { productId, months })).get(productId) ?? [];
+  return (
+    (await getMonthlySeries(supabase, { organizationId, productId, months })).get(productId) ?? []
+  );
 }

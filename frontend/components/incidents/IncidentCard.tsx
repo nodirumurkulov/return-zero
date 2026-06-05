@@ -46,7 +46,7 @@ export default function IncidentCard({
   return (
     <Card
       data-testid="incident-card"
-      className="group gap-0 p-3 transition-all hover:shadow-pop"
+      className="group gap-0 p-3 transition-[box-shadow,border-color] hover:shadow-pop"
     >
       <div className="flex items-start justify-between gap-2">
         <SeverityBadge severity={incident.severity} />
@@ -68,9 +68,9 @@ export default function IncidentCard({
         </div>
       ) : null}
 
-      {incident.affected_kpis && incident.affected_kpis.length > 0 ? (
+      {incident.affected_kpi_keys.length > 0 ? (
         <div className="mt-2.5 flex flex-wrap gap-1">
-          {incident.affected_kpis.slice(0, 3).map((kpi) => (
+          {incident.affected_kpi_keys.slice(0, 3).map((kpi) => (
             <span
               key={kpi}
               className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"

@@ -41,7 +41,7 @@ export default function AgentMonitor({ kpis }: { kpis: KpiThreshold[] }) {
         </ul>
       ) : (
         <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
-          No product-specific thresholds — using catalog defaults.
+          No product-specific thresholds. Using catalog defaults.
         </p>
       )}
     </Card>

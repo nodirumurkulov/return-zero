@@ -21,12 +21,18 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# AI SDK DevTools (local captures)
+.devtools/
+
 # Misc
 .vercel
 scripts/node_modules/
 supabase/.temp/
 
 # Playwright
+.playwright-mcp/
+ui-audit-*.png
+ui-review-*.png
 frontend/e2e/.auth/
 frontend/playwright-report/
 frontend/test-results/

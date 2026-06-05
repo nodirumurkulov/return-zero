@@ -21,8 +21,8 @@ describe("IncidentDetailView", () => {
       isError: false,
       error: null,
     });
-    renderWithProviders(<IncidentDetailView incidentId="inc-1" />);
-    expect(screen.getByText("Loading incident…")).toBeInTheDocument();
+    const { container } = renderWithProviders(<IncidentDetailView incidentId="inc-1" />);
+    expect(container.querySelectorAll("[data-slot='skeleton']").length).toBeGreaterThan(0);
   });
 
   it("renders incident title and root cause when loaded", () => {
@@ -31,7 +31,7 @@ describe("IncidentDetailView", () => {
         title: "Major return spike",
         root_cause: "Supplier defect in batch 12",
         root_cause_confidence: 90,
-        affected_kpis: ["return_rate"],
+        affected_kpi_keys: ["return_rate"],
       }),
       findings: [],
       actions: [],

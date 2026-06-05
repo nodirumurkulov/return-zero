@@ -43,7 +43,7 @@ ESLint: [eslint.config.mjs](eslint.config.mjs) — `functional/no-let`, import o
 
 ## Code style
 
-- Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, domain imports from `@/lib/*`.
+- Follow root [AGENTS.md](../AGENTS.md) mandate and [Best practices mandate](../AGENTS.md#best-practices-mandate): no `let`, no IIFEs, no Supabase wrapper shims, domain imports from `@/lib/*`.
 - Path alias `@/` → project root.
 - Auth: [proxy.ts](proxy.ts) (Supabase session). Do not bypass without reason.
 
@@ -56,7 +56,7 @@ Test pyramid (fast → slow):
 | Unit — `lib/` | `bun run test:lib` | Pure domain logic (detection, metrics, approve, slack, cron-auth) |
 | Unit — UI | `bun run test` | Co-located `components/**/*.test.tsx` + all Vitest includes |
 | API integration | `bun run test:integration` | Cron/auth + Zod on selected routes (mocked Supabase) |
-| DB integration | `bun run db:test:rls` + `bun run validate` | RLS SQL + seed validators (CI `integration-db` job) |
+| DB integration | `bun run db:test:rls` + `bun run validate` | RLS SQL + seed validators (local only) |
 | E2E | `CI=true bun run e2e` | Playwright against seeded Supabase + production build |
 
 - `bun run check` — lint, typecheck, unit tests, and API integration.

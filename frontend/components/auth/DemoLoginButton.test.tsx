@@ -7,17 +7,17 @@ vi.mock("@/app/auth/actions", () => ({
 }));
 
 describe("DemoLoginButton", () => {
-  it("renders enabled demo sign-in submit button when configured", () => {
-    render(<DemoLoginButton configured />);
+  it("renders an enabled demo sign-in submit button", () => {
+    render(<DemoLoginButton />);
     const button = screen.getByRole("button", { name: /Continue as Pretty Fly/i });
     expect(button).toBeInTheDocument();
     expect(button).toHaveTextContent("Continue as Pretty Fly");
     expect(button).toBeEnabled();
   });
 
-  it("disables submit and shows setup hint when not configured", () => {
-    render(<DemoLoginButton configured={false} />);
-    expect(screen.getByRole("button", { name: /Continue as Pretty Fly/i })).toBeDisabled();
-    expect(screen.getByText(/DEMO_USER_EMAIL/i)).toBeInTheDocument();
+  it("never leaks developer setup instructions to end users", () => {
+    render(<DemoLoginButton />);
+    expect(screen.queryByText(/DEMO_USER_EMAIL/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/bun run seed/i)).not.toBeInTheDocument();
   });
 });

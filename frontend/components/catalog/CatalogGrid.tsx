@@ -31,12 +31,12 @@ function ProductRow({ product, health }: { product: ProductMetric; health: Healt
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
           <code className="font-mono">{product.product_id}</code>
-          <span className="size-1 rounded-full bg-zinc-300" />
+          <span className="size-1 rounded-full bg-muted-foreground/30" />
           <span className="capitalize">{product.product_type}</span>
         </div>
       </div>
       <HealthBadge level={health} />
-      <ChevronRight className="size-4 text-zinc-300 group-hover:text-muted-foreground" />
+      <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
     </Link>
   );
 }

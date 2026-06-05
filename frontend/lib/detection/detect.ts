@@ -29,7 +29,7 @@ export interface CreatedIncident {
   product_id: string;
   title: string;
   severity: string;
-  affected_kpis: string[];
+  affected_kpi_keys: string[];
   impact_amount: number;
 }
 
@@ -40,35 +40,46 @@ export interface DetectionResult {
 }
 
 export interface DetectOpts {
+  organizationId: string;
   asOf?: string; // replay cursor — compute metrics as of this date instead of "now"
 }
 
 export async function detectBreaches(
   supabase: SupabaseClient,
-  opts: DetectOpts = {},
+  opts: DetectOpts,
 ): Promise<DetectionResult> {
-  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase, { asOf: opts.asOf });
+  const { defs, factsByWindow, metrics } = await computeMetricsDetailed(supabase, {
+    organizationId: opts.organizationId,
+    asOf: opts.asOf,
+  });
   const defByKey = new Map(defs.map((d) => [d.metric_key, d]));
 
   // Dedup: products that already have an open incident.
   const { data: incidentRows, error: incErr } = await supabase
     .from("incidents")
-    .select("affected_product, status");
+    .select("product_id, status")
+    .eq("organization_id", opts.organizationId);
   if (incErr) throw new Error(`load incidents: ${incErr.message}`);
   const openProducts = new Set(
     (incidentRows ?? [])
-      .filter((r) => r.affected_product && !OPEN_EXCLUDED.includes(r.status as string))
-      .map((r) => r.affected_product as string)
+      .filter((r) => r.product_id && !OPEN_EXCLUDED.includes(r.status as string))
+      .map((r) => r.product_id as string),
   );
 
   // Readable titles.
-  const { data: prodRows } = await supabase.from("products").select("product_id, title");
+  const { data: prodRows } = await supabase
+    .from("products")
+    .select("id, title")
+    .eq("organization_id", opts.organizationId);
   const titleById = new Map(
-    (prodRows ?? []).map((p) => [p.product_id as string, (p.title as string) ?? (p.product_id as string)])
+    (prodRows ?? []).map((p) => [p.id as string, (p.title as string) ?? (p.id as string)]),
   );
 
   // Monthly series for trend input to severity scoring.
-  const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
+  const seriesByProduct = await getMonthlySeries(supabase, {
+    organizationId: opts.organizationId,
+    months: 24,
+  });
 
   const created: CreatedIncident[] = [];
   const skipped: DetectionResult["skipped"] = [];
@@ -106,18 +117,19 @@ export async function detectBreaches(
     const productTitle = titleById.get(productId) ?? productId;
     const target = `${primary.m.direction === "above" ? "≤" : "≥"}${fmtValue(primary.m.unit, primary.m.threshold)}`;
     const title = `${productTitle}: ${primary.m.display_name} ${fmtValue(primary.m.unit, value)} (target ${target})`;
-    const affected_kpis = breached.map((m) => m.metric_key);
+    const affected_kpi_keys = breached.map((m) => m.metric_key);
 
     const { data: inc, error: insErr } = await supabase
       .from("incidents")
       .insert({
+        organization_id: opts.organizationId,
         title,
         status: "detected",
         severity,
         impact_amount: Math.round(primary.impact),
         impact_label: primary.def.impact_label,
-        affected_product: productId,
-        affected_kpis,
+        product_id: productId,
+        affected_kpi_keys,
       })
       .select("id")
       .single();
@@ -130,7 +142,7 @@ export async function detectBreaches(
       {
         incident_id: inc.id,
         event_type: "anomaly_detected",
-        description: `${affected_kpis.length} KPI breach(es): ${affected_kpis.join(", ")}`,
+        description: `${affected_kpi_keys.length} KPI breach(es): ${affected_kpi_keys.join(", ")}`,
         metadata: {
           breaches: ranked.map((r) => ({
             metric: r.m.metric_key,
@@ -152,7 +164,7 @@ export async function detectBreaches(
       product_id: productId,
       title,
       severity,
-      affected_kpis,
+      affected_kpi_keys,
       impact_amount: Math.round(primary.impact),
     });
 

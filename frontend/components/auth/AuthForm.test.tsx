@@ -37,4 +37,22 @@ describe("AuthForm", () => {
     });
     expect(action).toHaveBeenCalled();
   });
+
+  it("shows a success notice from the action on submit", async () => {
+    const action = vi
+      .fn()
+      .mockResolvedValue({ ok: true as const, message: "Account created. Check your email." });
+    const { user } = renderWithProviders(
+      <AuthForm title="Create account" action={action} />,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "new@example.com");
+    await user.type(screen.getByLabelText("Password"), "supersecret");
+    fireEvent.submit(screen.getByRole("button", { name: "Create account" }).closest("form")!);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account created. Check your email.")).toBeInTheDocument();
+    });
+    expect(action).toHaveBeenCalled();
+  });
 });

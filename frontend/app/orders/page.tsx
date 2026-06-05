@@ -1,6 +1,7 @@
 import { OrdersFeed } from "@/components/orders/OrdersFeed";
 import { dataEndDate, REPLAY_START, streamStartDate } from "@/lib/detection/replay";
 import { listIncomingOrders } from "@/lib/orders/queries";
+import { requireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +11,17 @@ export const dynamic = "force-dynamic";
 // detection runs as orders arrive.
 export default async function OrdersPage() {
   const supabase = await createClient();
+  const organizationId = await requireOrganizationId(supabase);
   const [startDate, dataEnd] = await Promise.all([
-    streamStartDate(supabase),
-    dataEndDate(supabase),
+    streamStartDate(supabase, organizationId),
+    dataEndDate(supabase, organizationId),
   ]);
   const start = startDate ?? REPLAY_START;
-  const initialOrders = await listIncomingOrders(supabase, { after: `${start}T00:00:00Z`, limit: 30 });
+  const initialOrders = await listIncomingOrders(supabase, {
+    organizationId,
+    after: `${start}T00:00:00Z`,
+    limit: 30,
+  });
 
   return <OrdersFeed startDate={start} dataEnd={dataEnd} initialOrders={initialOrders} />;
 }

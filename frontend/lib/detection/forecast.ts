@@ -92,20 +92,32 @@ function evaluateRule(rule: ForecastRule, fc: ProductForecast, leadDays: number)
 }
 
 export interface ForecastDetectOpts {
+  organizationId: string;
   asOf?: string; // replay cursor — forecast as of this date instead of "now"
 }
 
 export async function detectForecastRisks(
   supabase: SupabaseClient,
-  opts: ForecastDetectOpts = {},
+  opts: ForecastDetectOpts,
 ): Promise<ForecastDetectionResult> {
   const [{ data: ruleRows, error: ruleErr }, { data: setRows }, { data: outflowRows }, { data: incRows }, { data: prodRows }] =
     await Promise.all([
-      supabase.from("forecast_rules").select("*").eq("enabled", true),
-      supabase.from("business_settings").select("key, value"),
-      supabase.rpc("product_daily_outflow", { p_days: 28, ...(opts.asOf ? { p_asof: opts.asOf } : {}) }),
-      supabase.from("incidents").select("affected_product, status"),
-      supabase.from("products").select("product_id, title"),
+      supabase
+        .from("forecast_rules")
+        .select("*")
+        .eq("organization_id", opts.organizationId)
+        .eq("enabled", true),
+      supabase.from("business_settings").select("key, value").eq("organization_id", opts.organizationId),
+      supabase.rpc("product_daily_outflow", {
+        p_organization_id: opts.organizationId,
+        p_days: 28,
+        ...(opts.asOf ? { p_asof: opts.asOf } : {}),
+      }),
+      supabase
+        .from("incidents")
+        .select("product_id, status")
+        .eq("organization_id", opts.organizationId),
+      supabase.from("products").select("id, title").eq("organization_id", opts.organizationId),
     ]);
   if (ruleErr) throw new Error(`load forecast_rules: ${ruleErr.message}`);
 
@@ -120,11 +132,16 @@ export async function detectForecastRisks(
     outflow.set(r.product_id as string, { daily: Number(r.daily_outflow ?? 0), balance: Number(r.current_balance ?? 0) });
   }
   const openProducts = new Set(
-    (incRows ?? []).filter((r) => r.affected_product && !OPEN_EXCLUDED.includes(r.status as string)).map((r) => r.affected_product as string)
+    (incRows ?? [])
+      .filter((r) => r.product_id && !OPEN_EXCLUDED.includes(r.status as string))
+      .map((r) => r.product_id as string),
   );
-  const titleById = new Map((prodRows ?? []).map((p) => [p.product_id as string, (p.title as string) ?? (p.product_id as string)]));
+  const titleById = new Map((prodRows ?? []).map((p) => [p.id as string, (p.title as string) ?? (p.id as string)]));
 
-  const seriesByProduct = await getMonthlySeries(supabase, { months: 24 });
+  const seriesByProduct = await getMonthlySeries(supabase, {
+    organizationId: opts.organizationId,
+    months: 24,
+  });
 
   const created: CreatedForecastIncident[] = [];
   const skipped: ForecastDetectionResult["skipped"] = [];
@@ -150,13 +167,14 @@ export async function detectForecastRisks(
     const { data: inc, error: insErr } = await supabase
       .from("incidents")
       .insert({
+        organization_id: opts.organizationId,
         title,
         status: "detected",
         severity: primary.severity,
         impact_amount: primary.impact_amount,
         impact_label: "forecast risk",
-        affected_product: productId,
-        affected_kpis: risks.map((r) => r.kind),
+        product_id: productId,
+        affected_kpi_keys: risks.map((r) => r.kind),
       })
       .select("id")
       .single();

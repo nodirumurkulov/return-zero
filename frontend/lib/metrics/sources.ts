@@ -27,15 +27,20 @@ function toFacts(row: SourceRow): ProductSourceFacts {
  */
 export async function getSourceFacts(
   supabase: SupabaseClient<Database>,
+  organizationId: string,
   windowDays: number,
-  asOf?: string | null
+  asOf?: string | null,
 ): Promise<Map<string, ProductSourceFacts>> {
-  const { data, error } = await supabase.rpc("product_source_facts", {
+  const args: Database["public"]["Functions"]["product_source_facts"]["Args"] = {
+    p_organization_id: organizationId,
     p_window_days: windowDays,
     ...(asOf ? { p_asof: asOf } : {}),
-  });
+  };
+  const { data, error } = await supabase.rpc("product_source_facts", args);
   if (error) {
-    throw new Error(`product_source_facts(${windowDays}) failed: ${error.message}`);
+    throw new Error(
+      `product_source_facts(${organizationId}, ${windowDays}) failed: ${error.message}`,
+    );
   }
   const map = new Map<string, ProductSourceFacts>();
   for (const row of data ?? []) {

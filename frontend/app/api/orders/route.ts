@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { dataEndDate } from "@/lib/detection/replay";
 import { listIncomingOrders } from "@/lib/orders/queries";
 import { ordersQuerySchema } from "@/lib/orders/schemas";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -26,15 +27,26 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const org = await tryRequireOrganizationId(supabase);
+  if (!org.ok) {
+    return NextResponse.json({ error: org.error }, { status: 403 });
+  }
+  const { organizationId } = org;
+
   try {
     const [orders, dataEnd, cursorRow] = await Promise.all([
-      listIncomingOrders(supabase, parsed.data),
-      dataEndDate(supabase),
-      supabase.from("replay_state").select("cursor").eq("id", true).maybeSingle(),
+      listIncomingOrders(supabase, { organizationId, ...parsed.data }),
+      dataEndDate(supabase, organizationId),
+      supabase
+        .from("replay_state")
+        .select("cursor")
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
     ]);
+    const cursor = cursorRow.data?.cursor?.slice(0, 10) ?? null;
     return NextResponse.json({
       orders,
-      cursor: cursorRow.data?.cursor ? String(cursorRow.data.cursor).slice(0, 10) : null,
+      cursor,
       data_end: dataEnd,
     });
   } catch (err) {

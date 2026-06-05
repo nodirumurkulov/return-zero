@@ -1,5 +1,7 @@
 import type { HealthLevel, KpiThreshold, ProductMetric } from "./types";
 
+// ProductMetric.product_id is the internal products.id uuid; thresholds reference the same id.
+
 const WARNING_BAND = 0.1;
 
 function effectiveDirection(threshold: KpiThreshold): "above" | "below" {

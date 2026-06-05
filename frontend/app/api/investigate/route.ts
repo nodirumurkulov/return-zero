@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { investigateBodySchema, persistInvestigation } from "@/lib/agents";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { requireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
   const { incident_id, product_id } = parsed.data;
 
   try {
+    await requireOrganizationId(supabase);
+
     const { result, findings_count, actions_count } = await persistInvestigation(
       supabase,
       incident_id,

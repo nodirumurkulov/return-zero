@@ -1,8 +1,10 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  parseSlackEventEnvelope,
   parseSlackInteractionPayload,
   slackInteractionPayloadSchema,
+  stripSlackMentions,
   verifySlackRequest,
 } from "./slack";
 
@@ -61,5 +63,38 @@ describe("verifySlackRequest", () => {
     expect(
       verifySlackRequest(body, { signature: sig, timestamp }, secret),
     ).toBe(false);
+  });
+});
+
+describe("parseSlackEventEnvelope", () => {
+  it("parses a url_verification challenge", () => {
+    const raw = JSON.stringify({ type: "url_verification", challenge: "abc123" });
+    const parsed = parseSlackEventEnvelope(raw);
+    expect(parsed?.type).toBe("url_verification");
+    expect(parsed?.challenge).toBe("abc123");
+  });
+
+  it("parses an app_mention event_callback", () => {
+    const raw = JSON.stringify({
+      type: "event_callback",
+      event: { type: "app_mention", text: "<@U1> hi", channel: "C1", ts: "1.2" },
+    });
+    const parsed = parseSlackEventEnvelope(raw);
+    expect(parsed?.event?.type).toBe("app_mention");
+    expect(parsed?.event?.channel).toBe("C1");
+  });
+
+  it("returns null for invalid JSON", () => {
+    expect(parseSlackEventEnvelope("not-json")).toBeNull();
+  });
+});
+
+describe("stripSlackMentions", () => {
+  it("removes user mentions and collapses whitespace", () => {
+    expect(stripSlackMentions("<@U0BOTID>   what's   up?")).toBe("what's up?");
+  });
+
+  it("removes multiple mentions", () => {
+    expect(stripSlackMentions("hi <@U1> and <@U2>")).toBe("hi and");
   });
 });

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { resolveDemoCredentials } from "@/lib/auth/demo";
 import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
+import { createOrganizationWithOwner } from "@/lib/organizations";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -11,7 +13,7 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
-export type OAuthProvider = "google" | "azure";
+export type OAuthProvider = "google";
 
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -22,6 +24,16 @@ function readCredentials(formData: FormData) {
     email: formData.get("email"),
     password: formData.get("password"),
   });
+}
+
+function orgSlugFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "store";
+  const base =
+    local
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "store";
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export async function signIn(formData: FormData) {
@@ -45,13 +57,66 @@ export async function signUp(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     ...parsed.data,
     options: {
-      emailRedirectTo: `${appUrl()}/auth/callback`,
+      // New accounts go straight to onboarding — both when a session is created
+      // immediately (the redirect below) and after email confirmation (the
+      // callback reads ?next), so account creation always lands on /onboarding.
+      emailRedirectTo: `${appUrl()}/auth/callback?next=/onboarding`,
     },
   });
   if (error) return { ok: false as const, error: error.message };
+
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    return {
+      ok: false as const,
+      error: "An account with this email already exists. Try signing in instead.",
+    };
+  }
+
+  if (!data.session) {
+    const userId = data.user?.id;
+    if (userId) {
+      const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
+      const admin = createAdminClient();
+      try {
+        await createOrganizationWithOwner(admin, {
+          userId,
+          name: storeName,
+          slug: orgSlugFromEmail(parsed.data.email),
+        });
+      } catch (orgErr) {
+        const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
+        return { ok: false as const, error: message };
+      }
+    }
+    return {
+      ok: true as const,
+      message: `Account created. Check ${parsed.data.email} for a confirmation link to finish signing in.`,
+    };
+  }
+
+  const userId = data.user?.id;
+  if (!userId) {
+    return {
+      ok: false as const,
+      error: "Account created but organization setup failed. Sign in and try again.",
+    };
+  }
+
+  const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
+  const admin = createAdminClient();
+  try {
+    await createOrganizationWithOwner(admin, {
+      userId,
+      name: storeName,
+      slug: orgSlugFromEmail(parsed.data.email),
+    });
+  } catch (orgErr) {
+    const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
+    return { ok: false as const, error: message };
+  }
 
   redirect("/onboarding");
 }

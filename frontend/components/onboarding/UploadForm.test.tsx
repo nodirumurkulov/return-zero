@@ -5,7 +5,7 @@ import UploadForm from "./UploadForm";
 describe("UploadForm", () => {
   it("renders the multi-file upload drop-zone", () => {
     render(<UploadForm />);
-    expect(screen.getByRole("button", { name: "Upload & analyse" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
     expect(screen.getByText(/Drop your CSVs here/)).toBeInTheDocument();
   });
 });

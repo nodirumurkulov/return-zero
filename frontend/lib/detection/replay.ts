@@ -34,10 +34,14 @@ function minusMonths(iso: string, months: number): string {
 }
 
 // Latest order date in the data — the replay never advances past it.
-export async function dataEndDate(supabase: SupabaseClient): Promise<string | null> {
+export async function dataEndDate(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<string | null> {
   const { data } = await supabase
     .from("orders")
     .select("created_at")
+    .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -46,8 +50,11 @@ export async function dataEndDate(supabase: SupabaseClient): Promise<string | nu
 
 // Where the live stream begins: STREAM_WINDOW_MONTHS before the last order.
 // Null only when there are no orders (caller falls back to REPLAY_START).
-export async function streamStartDate(supabase: SupabaseClient): Promise<string | null> {
-  const end = await dataEndDate(supabase);
+export async function streamStartDate(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<string | null> {
+  const end = await dataEndDate(supabase, organizationId);
   return end ? minusMonths(end, STREAM_WINDOW_MONTHS) : null;
 }
 
@@ -59,19 +66,24 @@ export interface ReplayResult {
   forecast: ForecastDetectionResult;
 }
 
+export interface ReplayOpts {
+  organizationId: string;
+  advanceDays?: number;
+}
+
 export async function runReplay(
   supabase: SupabaseClient,
-  opts: { advanceDays?: number } = {},
+  opts: ReplayOpts,
 ): Promise<ReplayResult> {
   const advance = opts.advanceDays ?? DEFAULT_ADVANCE_DAYS;
 
-  const end = await dataEndDate(supabase);
+  const end = await dataEndDate(supabase, opts.organizationId);
   const start = end ? minusMonths(end, STREAM_WINDOW_MONTHS) : REPLAY_START;
 
   const { data: stateRow } = await supabase
     .from("replay_state")
     .select("cursor")
-    .eq("id", true)
+    .eq("organization_id", opts.organizationId)
     .maybeSingle();
   const previous = stateRow?.cursor ? asDate(String(stateRow.cursor)) : start;
 
@@ -80,12 +92,21 @@ export async function runReplay(
 
   const { error: upErr } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor }, { onConflict: "id" });
+    .upsert(
+      { organization_id: opts.organizationId, cursor },
+      { onConflict: "organization_id" },
+    );
   if (upErr) throw new Error(`replay_state upsert failed: ${upErr.message}`);
 
   // Same detectors as live, anchored to the cursor. Both dedup against open incidents.
-  const breaches = await detectBreaches(supabase, { asOf: cursor });
-  const forecast = await detectForecastRisks(supabase, { asOf: cursor });
+  const breaches = await detectBreaches(supabase, {
+    organizationId: opts.organizationId,
+    asOf: cursor,
+  });
+  const forecast = await detectForecastRisks(supabase, {
+    organizationId: opts.organizationId,
+    asOf: cursor,
+  });
 
   return {
     previous_cursor: previous,
@@ -98,11 +119,14 @@ export async function runReplay(
 
 // Reset the replay clock to the start of the live window (for re-running the demo,
 // and seeded right after an upload so the board starts empty).
-export async function resetReplay(supabase: SupabaseClient): Promise<{ cursor: string }> {
-  const cursor = (await streamStartDate(supabase)) ?? REPLAY_START;
+export async function resetReplay(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<{ cursor: string }> {
+  const cursor = (await streamStartDate(supabase, organizationId)) ?? REPLAY_START;
   const { error } = await supabase
     .from("replay_state")
-    .upsert({ id: true, cursor }, { onConflict: "id" });
+    .upsert({ organization_id: organizationId, cursor }, { onConflict: "organization_id" });
   if (error) throw new Error(`replay_state reset failed: ${error.message}`);
   return { cursor };
 }

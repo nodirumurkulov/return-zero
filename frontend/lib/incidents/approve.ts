@@ -18,7 +18,8 @@ export async function approveIncidentActions(
   supabase: SupabaseClient,
   incidentId: string,
   actionIds: string[],
-  approvedBy: string,
+  approvedByUserId: string | null,
+  extraMetadata?: Record<string, unknown>,
 ): Promise<{ approved: number }> {
   if (actionIds.length === 0) {
     return { approved: 0 };
@@ -28,7 +29,7 @@ export async function approveIncidentActions(
 
   const { error: actionErr } = await supabase
     .from("incident_actions")
-    .update({ status: "approved", approved_by: approvedBy, approved_at: now })
+    .update({ status: "approved", approved_by_user_id: approvedByUserId, approved_at: now })
     .in("id", actionIds);
 
   if (actionErr) throw new Error(actionErr.message);
@@ -38,8 +39,12 @@ export async function approveIncidentActions(
   await supabase.from("incident_timeline").insert({
     incident_id: incidentId,
     event_type: "approved",
-    description: `${actionIds.length} action(s) approved by ${approvedBy}`,
-    metadata: { action_ids: actionIds, approved_by: approvedBy },
+    description: `${actionIds.length} action(s) approved`,
+    metadata: {
+      action_ids: actionIds,
+      approved_by_user_id: approvedByUserId,
+      ...extraMetadata,
+    },
   });
 
   await supabase

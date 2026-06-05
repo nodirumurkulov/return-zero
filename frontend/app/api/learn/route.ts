@@ -3,6 +3,7 @@ import { resetReplay } from "@/lib/detection/replay";
 import { learnBaselines } from "@/lib/learn/baselines";
 import { buildBusinessReport } from "@/lib/learn/report";
 import { learnBodySchema } from "@/lib/learn/schemas";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,13 +30,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const org = await tryRequireOrganizationId(auth);
+  if (!org.ok) {
+    return NextResponse.json({ error: org.error }, { status: 403 });
+  }
+  const { organizationId } = org;
+
   const supabase = createAdminClient();
   try {
-    const learn = await learnBaselines(supabase);
-    const report = await buildBusinessReport(supabase);
+    const learn = await learnBaselines(supabase, organizationId);
+    const report = await buildBusinessReport(supabase, organizationId);
     // Rewind the replay clock to the start of the live window so the incidents
     // board stays empty until the user presses Start on the Orders stream.
-    const { cursor } = await resetReplay(supabase);
+    const { cursor } = await resetReplay(supabase, organizationId);
     return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";

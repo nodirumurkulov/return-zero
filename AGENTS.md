@@ -73,7 +73,8 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Code style
 
-- Prefer **`const`**. No **`let`** unless ESLint cannot be satisfied (rare). No **`var`**.
+- Prefer **`const`**. No **`let`** unless ESLint cannot be satisfied (rare). No **`var`**. Use `tryRequireOrganizationId()` or early returns instead of `try/catch` + `let`.
+- **No Supabase escape hatches.** Use `supabase.from("table")` and `supabase.rpc(...)` with `SupabaseClient<Database>` — never wrappers that cast `from()` to `Record<string, unknown>`, loose table-name strings, or “row value” coercers. If types are stale, run `bun run db:types` and fix `database.types.ts` in the same PR.
 - No **IIFEs** for variable init (sync or async). Use a named function or inline `safeParse`. ESLint enforces via `no-restricted-syntax`.
 - Prefer pure functions, `reduce`, and early returns over mutable index loops.
 - **No backward compatibility** (see [Best practices mandate](#best-practices-mandate)): delete deprecated surfaces and fix all imports in the same PR.
@@ -142,5 +143,5 @@ Each folder also has **README.md** for human onboarding.
 |-------|--------|
 | Lint fails on `let` / IIFE | Refactor to `const`, named function, or `Array.from` batch slices |
 | Empty UI | Seed DB; env vars in `frontend/.env.local` |
-| Types out of sync with DB | Update `lib/<domain>/types.ts` + migration in same PR |
+| Types out of sync with DB | Run `bun run db:types`; update domain types + migration — do not add `from-table` shims |
 | Investigation errors | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |

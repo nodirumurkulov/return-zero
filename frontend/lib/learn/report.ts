@@ -5,75 +5,40 @@
 // face of the knowledge base.
 //
 // The numbers are computed deterministically from the engine; the LLM only
-// NARRATES over them (never invents figures). If no LLM key is configured the
-// report still renders with a deterministic narrative.
+// NARRATES over them (never invents figures). LLM failures propagate to the caller.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { generateText, Output } from "ai";
 import { z } from "zod";
-import { callLLMJson } from "@/lib/llm";
+import { getModel } from "@/lib/ai/model";
 import { computeMetricsDetailed } from "@/lib/metrics/engine";
 import { getMonthlySeries } from "@/lib/metrics/series";
 import type { MetricValue, MonthlyPoint } from "@/lib/metrics/types";
+import type { Database, Json } from "@/lib/supabase/database.types";
 
-export interface TopProduct {
-  product_id: string;
-  title: string;
-  value: number;
-}
+import { type ReportSummary } from "./schemas";
 
-export interface RiskNow {
-  product_id: string;
-  title: string;
-  metric_key: string;
-  display_name: string;
-  value: number | null;
-  threshold: number;
-  severity: string;
-}
+export type { ReportSummary } from "./schemas";
+export { parseReportSummary } from "./schemas";
 
-export interface LearnedPattern {
-  metric_key: string;
-  display_name: string;
-  avg_mean: number;
-  avg_threshold: number;
-  products: number;
-}
-
-export interface ReportSummary {
-  generated_window_days: number;
-  totals: {
-    revenue_lifetime: number;
-    orders: number;
-    aov: number;
-    refund_rate: number;
-    return_rate: number;
-    support_volume: number;
-    products: number;
-    skus: number;
-    breaches_now: number;
-  };
-  trend: {
-    months: string[];
-    revenue: number[];
-    refund_rate: number[];
-    revenue_direction: "rising" | "falling" | "stable";
-    peak_revenue_month: string | null;
-  };
-  top: {
-    by_revenue: TopProduct[];
-    worst_refund_rate: TopProduct[];
-    worst_roas: TopProduct[];
-  };
-  risks_now: RiskNow[];
-  learned: LearnedPattern[];
-}
+type TopProduct = ReportSummary["top"]["by_revenue"][number];
+type LearnedPattern = ReportSummary["learned"][number];
 
 const round = (n: number, dp = 2): number => Number(n.toFixed(dp));
 const sum = (xs: number[]): number => xs.reduce((a, b) => a + b, 0);
 const mean = (xs: number[]): number => (xs.length ? sum(xs) / xs.length : 0);
 
-async function headCount(supabase: SupabaseClient, table: string): Promise<number> {
-  const { count } = await supabase.from(table).select("*", { count: "exact", head: true });
+type CountTable = "orders" | "support_tickets" | "variants";
+
+async function headCount(
+  supabase: SupabaseClient<Database>,
+  table: CountTable,
+  organizationId: string,
+): Promise<number> {
+  const { count } = await supabase
+    .from(table)
+    .select("*", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
   return count ?? 0;
 }
 
@@ -115,21 +80,44 @@ function metricValue(metrics: MetricValue[], key: string): MetricValue | undefin
   return metrics.find((m) => m.metric_key === key);
 }
 
-export async function buildSummary(supabase: SupabaseClient): Promise<ReportSummary> {
-  const [{ metrics }, seriesByProduct, productRows, baselineRows, thresholdRows, orders, support, skus] =
-    await Promise.all([
-      computeMetricsDetailed(supabase),
-      getMonthlySeries(supabase, { months: 24 }),
-      supabase.from("products").select("product_id, title"),
-      supabase.from("product_baselines").select("metric_key, mean"),
-      supabase.from("product_kpi_thresholds").select("metric_key, threshold").not("product_id", "is", null),
-      headCount(supabase, "orders"),
-      headCount(supabase, "support_tickets"),
-      headCount(supabase, "variants"),
-    ]);
+export async function buildSummary(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<ReportSummary> {
+  const [
+    { metrics },
+    seriesByProduct,
+    productRows,
+    baselineRows,
+    thresholdRows,
+    metricDefRows,
+    orders,
+    support,
+    skus,
+  ] = await Promise.all([
+    computeMetricsDetailed(supabase, { organizationId }),
+    getMonthlySeries(supabase, { organizationId, months: 24 }),
+    supabase.from("products").select("id, title").eq("organization_id", organizationId),
+    supabase
+      .from("product_baselines")
+      .select("metric_definition_id, mean")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("product_kpi_thresholds")
+      .select("metric_definition_id, threshold")
+      .eq("organization_id", organizationId),
+    supabase.from("metric_definitions").select("id, metric_key").eq("organization_id", organizationId),
+    headCount(supabase, "orders", organizationId),
+    headCount(supabase, "support_tickets", organizationId),
+    headCount(supabase, "variants", organizationId),
+  ]);
+
+  const keyByDefId = new Map(
+    (metricDefRows.data ?? []).map((d) => [d.id, d.metric_key]),
+  );
 
   const titleOf = new Map<string, string>(
-    (productRows.data ?? []).map((p) => [String(p.product_id), String(p.title ?? p.product_id)]),
+    (productRows.data ?? []).map((p) => [p.id, p.title ?? p.id]),
   );
   const displayName = new Map<string, string>();
   for (const list of Object.values(metrics)) {
@@ -191,14 +179,20 @@ export async function buildSummary(supabase: SupabaseClient): Promise<ReportSumm
       }, {}),
     );
   const meanByMetric = new Map(
-    groupAvg((baselineRows.data ?? []).map((r) => ({ metric_key: String(r.metric_key), v: Number(r.mean) }))).map(
-      ([k, vs]) => [k, vs],
-    ),
+    groupAvg(
+      (baselineRows.data ?? []).map((r) => ({
+        metric_key: keyByDefId.get(r.metric_definition_id) ?? r.metric_definition_id,
+        v: r.mean,
+      })),
+    ).map(([k, vs]) => [k, vs]),
   );
   const threshByMetric = new Map(
-    groupAvg((thresholdRows.data ?? []).map((r) => ({ metric_key: String(r.metric_key), v: Number(r.threshold) }))).map(
-      ([k, vs]) => [k, vs],
-    ),
+    groupAvg(
+      (thresholdRows.data ?? []).map((r) => ({
+        metric_key: keyByDefId.get(r.metric_definition_id) ?? r.metric_definition_id,
+        v: r.threshold,
+      })),
+    ).map(([k, vs]) => [k, vs]),
   );
   const learned: LearnedPattern[] = Array.from(meanByMetric.entries()).map(([key, means]) => ({
     metric_key: key,
@@ -238,56 +232,34 @@ export async function buildSummary(supabase: SupabaseClient): Promise<ReportSumm
   };
 }
 
-// Deterministic narrative used as the LLM fallback (and as the grounding the LLM
-// rewrites). Never contains a figure the summary doesn't already hold.
-function fallbackNarrative(s: ReportSummary): string {
-  const pct = (n: number) => `${round(n * 100, 1)}%`;
-  const trend =
-    s.trend.revenue_direction === "rising"
-      ? "trending up"
-      : s.trend.revenue_direction === "falling"
-        ? "trending down"
-        : "holding steady";
-  const worst = s.top.worst_refund_rate[0];
-  return [
-    `Across ${s.totals.products} products and ${s.totals.skus} SKUs your store has booked £${s.totals.revenue_lifetime.toLocaleString()} over ${s.trend.months.length} months, with revenue ${trend} and an average order value of £${s.totals.aov.toLocaleString()}.`,
-    `Overall refund rate is ${pct(s.totals.refund_rate)} and return rate ${pct(s.totals.return_rate)}.` +
-      (worst ? ` ${worst.title} stands out with a ${pct(worst.value)} refund rate.` : ""),
-    s.totals.breaches_now > 0
-      ? `${s.totals.breaches_now} product${s.totals.breaches_now === 1 ? "" : "s"} are currently outside their learned bands — we'll open incidents and watch these in real time.`
-      : `Nothing is currently outside its learned band; we'll keep watching against the baselines we just learned.`,
-  ].join(" ");
-}
-
 const narrativeLlmSchema = z.object({
-  narrative: z.string().optional(),
-  text: z.string().optional(),
+  narrative: z.string().min(1),
 });
 
 export async function narrate(summary: ReportSummary): Promise<string> {
-  const fallback = fallbackNarrative(summary);
-  try {
-    const result = await callLLMJson(
-      [
-        {
-          role: "system",
-          content:
-            "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
-            "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
-            'Reply as JSON: {"narrative": "..."}.',
-        },
-        {
-          role: "user",
-          content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
-        },
-      ],
-      narrativeLlmSchema,
-    );
-    const text = (result?.narrative ?? result?.text ?? "").trim();
-    return text.length > 0 ? text : fallback;
-  } catch {
-    return fallback;
+  const { output } = await generateText({
+    model: getModel(),
+    output: Output.object({ schema: narrativeLlmSchema }),
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an analyst writing a short, warm onboarding report for a Shopify merchant. " +
+          "Use ONLY the figures in the JSON — never invent numbers. 2-3 short paragraphs of plain prose. " +
+          'Reply as JSON: {"narrative": "..."}.',
+      },
+      {
+        role: "user",
+        content: `Here is the computed summary of the merchant's business and the patterns we learned:\n${JSON.stringify(summary)}\n\nWrite the narrative.`,
+      },
+    ],
+  });
+
+  if (!output) {
+    throw new Error("Onboarding report narrative: missing structured output");
   }
+
+  return output.narrative;
 }
 
 export interface BusinessReport {
@@ -297,14 +269,26 @@ export interface BusinessReport {
   created_at: string;
 }
 
-export async function buildBusinessReport(supabase: SupabaseClient): Promise<BusinessReport> {
-  const summary = await buildSummary(supabase);
+export async function buildBusinessReport(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<BusinessReport> {
+  const summary = await buildSummary(supabase, organizationId);
   const narrative = await narrate(summary);
   const { data, error } = await supabase
     .from("business_reports")
-    .insert({ summary, narrative })
+    .insert({
+      organization_id: organizationId,
+      summary: summary as unknown as Json,
+      narrative,
+    })
     .select("id, summary, narrative, created_at")
     .single();
-  if (error) throw new Error(`business_reports insert failed: ${error.message}`);
-  return { ...data, summary, narrative };
+  if (error || !data) throw new Error(`business_reports insert failed: ${error?.message ?? "no row"}`);
+  return {
+    id: data.id,
+    summary,
+    narrative,
+    created_at: data.created_at,
+  };
 }

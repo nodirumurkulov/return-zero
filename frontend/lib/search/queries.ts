@@ -1,17 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/lib/supabase/database.types";
+
 import type { SearchTarget } from "./types";
 
 export type { SearchTarget } from "./types";
 
 export async function listSearchTargets(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
 ): Promise<SearchTarget[]> {
   const [productsRes, incidentsRes] = await Promise.all([
-    supabase.from("products").select("product_id, title").order("title"),
+    supabase
+      .from("products")
+      .select("id, title")
+      .eq("organization_id", organizationId)
+      .order("title", { ascending: true }),
     supabase
       .from("incidents")
       .select("id, title")
+      .eq("organization_id", organizationId)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -19,9 +27,9 @@ export async function listSearchTargets(
   if (incidentsRes.error) throw new Error(incidentsRes.error.message);
 
   const products: SearchTarget[] = (productsRes.data ?? []).map((row) => ({
-    id: row.product_id,
-    label: row.title ?? row.product_id,
-    href: `/catalog/${row.product_id}`,
+    id: row.id,
+    label: row.title ?? row.id,
+    href: `/catalog/${row.id}`,
     kind: "product",
   }));
 

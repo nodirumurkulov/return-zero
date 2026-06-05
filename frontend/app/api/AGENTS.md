@@ -29,6 +29,7 @@ if (!parsed.success) {
 | `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
 | `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
+| `POST /api/slack/events` | `slack` transport + `hugo.handleHugoMention` (@hugo bot, async reply via `after()`) |
 
 Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
 

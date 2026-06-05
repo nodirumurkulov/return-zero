@@ -28,9 +28,12 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
-    "e2e:install": "playwright install chromium"
+    "e2e:install": "playwright install chromium",
+    "ai:devtools": "npx @ai-sdk/devtools"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.81",
+    "@ai-sdk/openai": "^3.0.68",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -42,12 +45,14 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@tanstack/react-query": "^5.101.0",
+    "ai": "^6.0.197",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "csv-parse": "^5.6.0",
+    "geist": "^1.7.2",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
-    "openai": "^6.41.0",
+    "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "^19",
     "react-dom": "^19",
@@ -58,6 +63,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@ai-sdk/devtools": "^0.0.18",
     "@playwright/test": "^1.52.0",
     "@tanstack/react-query-devtools": "^5.101.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -72,10 +78,13 @@
     "eslint-plugin-functional": "^10.0.0",
     "eslint-plugin-import": "^2.32.0",
     "happy-dom": "^20.10.1",
-    "postcss": "^8",
+    "postcss": "^8.5.10",
     "tailwindcss": "^3.4.17",
     "typescript": "^5",
     "typescript-eslint": "^8.60.1",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "postcss": ">=8.5.10"
   }
 }

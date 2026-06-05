@@ -8,11 +8,11 @@ const STATUS_TONE: Record<string, string> = {
   processing: "text-sev-monitor bg-sev-monitorBg",
   refunded: "text-sev-critical bg-sev-criticalBg",
   partially_refunded: "text-sev-high bg-sev-highBg",
-  voided: "text-zinc-500 bg-zinc-100",
+  voided: "text-muted-foreground bg-muted",
 };
 
 function tone(status: string | null): string {
-  return STATUS_TONE[(status ?? "").toLowerCase()] ?? "text-zinc-500 bg-zinc-100";
+  return STATUS_TONE[(status ?? "").toLowerCase()] ?? "text-muted-foreground bg-muted";
 }
 
 function timeOf(iso: string): string {
@@ -26,7 +26,7 @@ export function OrderRow({ order }: { order: OrderFeedItem }) {
   const units = order.items.reduce((n, i) => n + i.quantity, 0);
   const items = order.items.length
     ? order.items.map((i) => `${i.title}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(", ")
-    : "—";
+    : "N/A";
   return (
     <div className="flex items-center gap-4 px-5 py-2.5 transition-colors hover:bg-muted/40">
       <span className="tabnum w-[84px] shrink-0 font-mono text-xs text-muted-foreground">
@@ -38,7 +38,7 @@ export function OrderRow({ order }: { order: OrderFeedItem }) {
             <User className="size-3.5" />
           </AvatarFallback>
         </Avatar>
-        <span className="truncate text-[13px] text-foreground">{order.country ?? "—"}</span>
+        <span className="truncate text-[13px] text-foreground">{order.country ?? "N/A"}</span>
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] text-foreground">{items}</div>
@@ -52,7 +52,7 @@ export function OrderRow({ order }: { order: OrderFeedItem }) {
       <span
         className={`hidden w-[92px] shrink-0 rounded-md px-2 py-0.5 text-center text-[11px] font-medium capitalize md:inline-block ${tone(order.financial_status)}`}
       >
-        {(order.financial_status ?? "—").replace(/_/g, " ")}
+        {(order.financial_status ?? "N/A").replace(/_/g, " ")}
       </span>
       <span className="tabnum w-[72px] shrink-0 text-right text-sm font-semibold text-foreground">
         £{Math.round(order.total_price).toLocaleString("en-GB")}

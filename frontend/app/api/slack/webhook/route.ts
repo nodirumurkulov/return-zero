@@ -41,13 +41,13 @@ export async function POST(req: NextRequest) {
   }
 
   const incidentId = action.value;
-  const approvedBy = payload.user?.name ?? "slack-user";
+  const slackUser = payload.user?.name ?? "slack-user";
 
   if (action.action_id === "approve_low_risk") {
     const actionIds = await listLowRiskProposedActionIds(supabase, incidentId);
     if (actionIds.length > 0) {
       try {
-        await approveIncidentActions(supabase, incidentId, actionIds, approvedBy);
+        await approveIncidentActions(supabase, incidentId, actionIds, null, { slack_user: slackUser });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
@@ -55,12 +55,13 @@ export async function POST(req: NextRequest) {
 
       const incident = await getIncident(supabase, incidentId);
       if (incident) {
-        if (incident.affected_product) {
+        if (incident.product_id) {
           await captureRecoveryBaseline(
             supabase,
+            incident.organization_id,
             incidentId,
-            incident.affected_product,
-            incident.affected_kpis,
+            incident.product_id,
+            incident.affected_kpi_keys,
           );
         }
 

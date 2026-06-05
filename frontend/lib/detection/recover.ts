@@ -12,13 +12,14 @@ import { computeProductMetrics } from "../metrics/engine";
 /** Snapshot the incident's primary KPI when it enters monitoring. */
 export async function captureRecoveryBaseline(
   supabase: SupabaseClient,
+  organizationId: string,
   incidentId: string,
   productId: string,
-  affectedKpis: string[] | null
+  affectedKpiKeys: string[] | null,
 ): Promise<void> {
-  const metrics = await computeProductMetrics(supabase, productId);
+  const metrics = await computeProductMetrics(supabase, organizationId, productId);
   if (metrics.length === 0) return;
-  const primaryKey = affectedKpis?.[0];
+  const primaryKey = affectedKpiKeys?.[0];
   const m =
     metrics.find((x) => x.metric_key === primaryKey) ??
     metrics.find((x) => x.status === "critical") ??
@@ -34,13 +35,19 @@ export async function captureRecoveryBaseline(
       monitoring_started_at: new Date().toISOString(),
       recovery_pct: 0,
     })
-    .eq("id", incidentId);
+    .eq("id", incidentId)
+    .eq("organization_id", organizationId);
 }
 
 export interface RecoveryResult {
   monitored: number;
   updated: number;
   resolved: string[];
+}
+
+export interface RecoverOpts {
+  organizationId: string;
+  advanceDays?: number;
 }
 
 /**
@@ -50,14 +57,18 @@ export interface RecoveryResult {
  */
 export async function runRecovery(
   supabase: SupabaseClient,
-  opts: { advanceDays?: number } = {}
+  opts: RecoverOpts,
 ): Promise<RecoveryResult> {
-  const { data: setRows } = await supabase.from("business_settings").select("key, value");
+  const { data: setRows } = await supabase
+    .from("business_settings")
+    .select("key, value")
+    .eq("organization_id", opts.organizationId);
   const horizon = Number((setRows ?? []).find((s) => s.key === "recovery_horizon_days")?.value ?? 21);
 
   const { data: incidents } = await supabase
     .from("incidents")
     .select("id, monitoring_kpi, monitoring_started_at")
+    .eq("organization_id", opts.organizationId)
     .eq("status", "monitoring");
 
   const resolved: string[] = [];
@@ -70,11 +81,19 @@ export async function runRecovery(
       Math.max(0, (nowMs - new Date(inc.monitoring_started_at).getTime()) / 86_400_000);
     const pct = horizon > 0 ? Math.min(1, elapsedDays / horizon) : 1;
 
-    await supabase.from("incidents").update({ recovery_pct: pct }).eq("id", inc.id);
+    await supabase
+      .from("incidents")
+      .update({ recovery_pct: pct })
+      .eq("id", inc.id)
+      .eq("organization_id", opts.organizationId);
 
     if (pct >= 1) {
       const now = new Date().toISOString();
-      await supabase.from("incidents").update({ status: "resolved", resolved_at: now }).eq("id", inc.id);
+      await supabase
+        .from("incidents")
+        .update({ status: "resolved", resolved_at: now })
+        .eq("id", inc.id)
+        .eq("organization_id", opts.organizationId);
       await supabase.from("incident_timeline").insert([
         {
           incident_id: inc.id,

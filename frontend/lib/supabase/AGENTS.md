@@ -20,6 +20,11 @@
 | `database.types.ts` | Generated `Database` type — `bun run db:types` after migrations |
 | `db.ts` | `Tables<>`, `Views<>` helpers |
 
+## Query rules
+
+- Always `supabase.from("<table>")` or `supabase.rpc("<fn>", args)` on `SupabaseClient<Database>`.
+- Never add wrapper modules that re-cast the client to untyped builders. Stale types → migration + `bun run db:types`, not shims.
+
 There is no `client.ts` until a `"use client"` island needs direct Supabase in the browser. Prefer server actions, RSC data loading, and API routes instead.
 
 ## Imports

@@ -13,7 +13,11 @@ export class OnboardingPage {
   }
 
   uploadButton() {
-    return this.page.getByRole("button", { name: /Upload & analyse/i });
+    return this.page.getByRole("button", { name: /^Upload/i });
+  }
+
+  profileSaveButton() {
+    return this.page.getByRole("button", { name: /Save profile & build report/i });
   }
 
   fileInput() {

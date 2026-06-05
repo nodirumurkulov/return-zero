@@ -5,6 +5,7 @@ import {
 } from "@/lib/onboarding/api-schemas";
 import { importContractData } from "@/lib/onboarding/import";
 import { CONTRACT_FILES } from "@/lib/onboarding/schemas";
+import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,9 +41,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No CSV files provided" }, { status: 400 });
   }
 
+  const org = await tryRequireOrganizationId(auth);
+  if (!org.ok) {
+    return NextResponse.json({ error: org.error }, { status: 403 });
+  }
+  const { organizationId } = org;
+
   const supabase = createAdminClient();
   try {
-    const results = await importContractData(supabase, files, { replace });
+    const results = await importContractData(supabase, organizationId, files, { replace });
     const ok = results.every((r) => !r.error);
     const body = ok
       ? onboardingUploadSuccessResponseSchema.parse({ success: true, results })

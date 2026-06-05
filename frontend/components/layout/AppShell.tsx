@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import GlobalSearch from "@/components/layout/GlobalSearch";
+import { ShopSwitcher } from "@/components/layout/ShopSwitcher";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,10 +22,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { SearchTarget } from "@/lib/search";
+import { DEMO_SHOPS } from "@/lib/shops";
 
 const NAV = [
   { href: "/orders", label: "Orders", icon: Receipt },
@@ -75,10 +79,17 @@ export default function AppShell({
         Skip to main content
       </a>
       <SidebarProvider>
-        <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="border-b border-sidebar-border p-4">
-            <BrandLogo />
+        <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+          <SidebarHeader className="gap-0 border-b border-sidebar-border p-0 group-data-[collapsible=icon]:p-2">
+            <div className="flex items-center gap-2 px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
+              <BrandLogo />
+              <SidebarTrigger className="ml-auto hidden group-data-[collapsible=icon]:hidden md:inline-flex" />
+            </div>
+            <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
+              <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
+            </div>
           </SidebarHeader>
+          <SidebarRail />
 
           <SidebarContent>
             <SidebarGroup>
@@ -104,25 +115,13 @@ export default function AppShell({
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border p-4">
-            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-sev-resolved/50" />
-                  <span className="relative inline-flex size-2 rounded-full bg-sev-resolved" />
-                </span>
-                <span className="text-xs font-semibold text-foreground">Hugo is online</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                Watching your KPIs in real time. You&apos;ll hear from it only when something breaks.
-              </p>
-            </div>
             <div className="flex items-center gap-3">
               <Avatar className="size-9">
                 <AvatarFallback className="bg-primary-subtle text-sm font-medium text-primary">
                   {initial}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">
                   {displayName}
                 </p>
@@ -141,6 +140,7 @@ export default function AppShell({
             <div className="relative max-w-md flex-1">
               <GlobalSearch targets={searchTargets} />
             </div>
+            <ThemeToggle />
             <div className="md:hidden">
               <SignOutButton />
             </div>
