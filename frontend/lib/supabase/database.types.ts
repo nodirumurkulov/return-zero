@@ -96,6 +96,41 @@ export type Database = {
           },
         ]
       }
+      business_profile: {
+        Row: {
+          hero_product_ids: string[]
+          organization_id: string
+          platform: string
+          primary_goal: string
+          store_name: string
+          updated_at: string
+        }
+        Insert: {
+          hero_product_ids?: string[]
+          organization_id: string
+          platform?: string
+          primary_goal?: string
+          store_name?: string
+          updated_at?: string
+        }
+        Update: {
+          hero_product_ids?: string[]
+          organization_id?: string
+          platform?: string
+          primary_goal?: string
+          store_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profile_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_settings: {
         Row: {
           key: string
@@ -882,6 +917,7 @@ export type Database = {
           id: string
           name: string
           slug: string
+          slack_team_id: string | null
           updated_at: string
         }
         Insert: {
@@ -889,6 +925,7 @@ export type Database = {
           id?: string
           name: string
           slug: string
+          slack_team_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -896,6 +933,7 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+          slack_team_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1003,6 +1041,42 @@ export type Database = {
           },
           {
             foreignKeyName: "product_baselines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_cost_overrides: {
+        Row: {
+          cost_per_unit: number
+          organization_id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost_per_unit: number
+          organization_id: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost_per_unit?: number
+          organization_id?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_cost_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_cost_overrides_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

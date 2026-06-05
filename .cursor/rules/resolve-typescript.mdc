@@ -1,0 +1,17 @@
+---
+description: Resolve TypeScript idioms — const-only, typed Supabase, no escape hatches
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript standards (Resolve)
+
+Reference [AGENTS.md](../../AGENTS.md) for the full mandate.
+
+- Use `const` only; no `let`, `var`, or IIFEs for variable init.
+- Import types with `import type` (inline-type-imports).
+- Use `SupabaseClient<Database>` — never bare `SupabaseClient` in domain code.
+- Query with `supabase.from("literal_table")` and `supabase.rpc(...)`; no dynamic table strings, no `as unknown as` on builders.
+- No `any`, `@ts-expect-error`, or `eslint-disable` without explicit user approval.
+- Regenerate `database.types.ts` via `bun run db:types` when schema changes — do not add shim helpers.
+- Expand `@typescript-eslint/no-unsafe-*` to new domains as Zod + typed rows land (RUN-73).

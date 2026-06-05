@@ -1,0 +1,19 @@
+---
+description: Next.js 16 App Router — RSC-first, proxy auth, server action patterns
+globs: frontend/app/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Next.js App Router (Resolve)
+
+See [frontend/app/AGENTS.md](../../frontend/app/AGENTS.md).
+
+- Default to Server Components; fetch with `await createClient()` + domain queries.
+- No client `useEffect` + `fetch` for initial page data.
+- `"use client"` only for hooks, browser APIs, or event handlers.
+- Authenticate server actions like API routes (`getUser()` + org resolution).
+- Use `Promise.all` for independent server fetches; avoid serial waterfalls.
+- After mutations: `revalidatePath` in server actions; `router.refresh()` in client hooks when RSC props must update.
+- Auth callback and redirects: `safeRedirectPath` / `safeRedirectPathFromQuery` only.
+- Cron admin all-org mode: `isCronInvocation()` — never when `CRON_SECRET` is unset.
+- `export const dynamic = "force-dynamic"` where Supabase data must be fresh.

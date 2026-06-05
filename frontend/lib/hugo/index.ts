@@ -1,8 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getIncidentDetail, type Incident } from "@/lib/incidents";
+import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { postSlackMessage } from "@/lib/slack";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/database.types";
 import { runHugoApproval, runHugoInvestigation } from "./actions";
 import {
   buildCatalogContext,
@@ -20,6 +22,7 @@ export type HugoMention = {
   channel: string;
   threadTs?: string;
   userName?: string;
+  teamId?: string;
 };
 
 export { classifyHugoIntent } from "./intent";
@@ -38,23 +41,24 @@ function disambiguation(action: string, candidates: Incident[]): string {
 }
 
 async function answerDataQuery(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   mention: HugoMention,
+  organizationId: string,
   incidentReference: string | null | undefined,
 ): Promise<string> {
-  const parts = [await buildOpenIncidentsContext(supabase)];
+  const parts = [await buildOpenIncidentsContext(supabase, organizationId)];
 
   const ref = (incidentReference ?? "").trim();
   if (ref) {
-    const { match } = await resolveIncident(supabase, ref);
+    const { match } = await resolveIncident(supabase, ref, organizationId);
     if (match) {
-      const detail = await getIncidentDetail(supabase, match.id);
+      const detail = await getIncidentDetail(supabase, match.id, organizationId);
       if (detail) parts.push(buildIncidentDetailContext(detail));
     }
   }
 
   if (wantsCatalog(mention.prompt)) {
-    parts.push(await buildCatalogContext(supabase));
+    parts.push(await buildCatalogContext(supabase, organizationId));
   }
 
   return generateDataReply(mention.prompt, parts.join("\n\n"));
@@ -71,11 +75,23 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
   try {
     const supabase = createAdminClient();
+    const organizationId = await resolveOrganizationIdForSlackTeam(supabase, mention.teamId);
+    if (!organizationId) {
+      await post(
+        "This Slack workspace is not linked to an organization. Set SLACK_ORGANIZATION_ID or add slack_team_id on the org.",
+      );
+      return;
+    }
+
     const intent = await classifyHugoIntent(mention.prompt);
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
-      const { match, candidates } = await resolveIncident(supabase, intent.incident_reference);
+      const { match, candidates } = await resolveIncident(
+        supabase,
+        intent.incident_reference,
+        organizationId,
+      );
       if (!match) {
         await post(disambiguation(verb, candidates));
         return;
@@ -96,7 +112,7 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
     }
 
     if (intent.intent === "data_query") {
-      await post(await answerDataQuery(supabase, mention, intent.incident_reference));
+      await post(await answerDataQuery(supabase, mention, organizationId, intent.incident_reference));
       return;
     }
 

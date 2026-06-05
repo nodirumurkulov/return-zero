@@ -1,0 +1,24 @@
+---
+description: Test pyramid expectations for Resolve domains and API routes
+globs: frontend/**/*.{test.ts,test.tsx}
+alwaysApply: false
+---
+
+# Testing (Resolve)
+
+## Pyramid
+
+| Layer | Command | Expectation |
+|-------|---------|-------------|
+| Unit `lib/` | `bun run test:lib` | Pure logic co-located `*.test.ts` |
+| Components | `bun run test` | `ComponentName.test.tsx` next to component |
+| API integration | `bun run test:integration` | Auth + Zod per route; mock Supabase at boundary |
+| DB / RLS | `bun run db:test:rls` | Local Supabase only |
+| E2E | `CI=true bun run e2e` | Critical flows after seed + build |
+
+## Conventions
+
+- Arrange-Act-Assert; use `frontend/test/fixtures/` for shared data.
+- Prefer testing behavior over implementation details.
+- After API auth changes, extend integration tests (cron, org, 401 paths).
+- `bun run check` must pass before PR.

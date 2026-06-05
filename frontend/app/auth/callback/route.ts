@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { safeRedirectPathFromQuery } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/catalog";
+  const next = safeRedirectPathFromQuery(searchParams.get("next"));
 
   if (code) {
     const supabase = await createClient();

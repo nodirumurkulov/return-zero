@@ -38,6 +38,8 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 
 Nested `AGENTS.md` files spell out **context-specific** rules; this section is the non-negotiable default everywhere.
 
+**Cursor rules:** [`.cursor/rules/`](.cursor/rules/) — file-scoped standards (TypeScript, Next.js, Supabase, API, React, testing). Quality audit runbook: [docs/quality-audit-checklist.md](docs/quality-audit-checklist.md).
+
 ## Setup commands
 
 ```bash

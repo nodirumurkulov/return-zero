@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 import type { BusinessProfile, ProductCostRow } from "./types";
 
 const DEFAULTS = {
@@ -13,14 +14,20 @@ function settingNum(map: Map<string, number>, key: string, fallback: number): nu
   return v !== undefined && Number.isFinite(v) ? v : fallback;
 }
 
-export async function loadBusinessProfile(supabase: SupabaseClient): Promise<BusinessProfile> {
+export async function loadBusinessProfile(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<BusinessProfile> {
   const [{ data: profileRow }, { data: settingRows }] = await Promise.all([
     supabase
       .from("business_profile")
       .select("platform, store_name, primary_goal, hero_product_ids")
-      .eq("id", true)
+      .eq("organization_id", organizationId)
       .maybeSingle(),
-    supabase.from("business_settings").select("key, value"),
+    supabase
+      .from("business_settings")
+      .select("key, value")
+      .eq("organization_id", organizationId),
   ]);
 
   const settings = new Map((settingRows ?? []).map((r) => [String(r.key), Number(r.value)]));
@@ -37,20 +44,33 @@ export async function loadBusinessProfile(supabase: SupabaseClient): Promise<Bus
   };
 }
 
-export async function loadProductCostRows(supabase: SupabaseClient): Promise<ProductCostRow[]> {
+export async function loadProductCostRows(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<ProductCostRow[]> {
   const [{ data: products }, { data: variants }, { data: poLines }, { data: overrides }] =
     await Promise.all([
-      supabase.from("products").select("product_id, title").order("title"),
-      supabase.from("variants").select("variant_id, product_id"),
-      supabase.from("po_line_items").select("variant_id, landed_cost_per_unit_gbp"),
-      supabase.from("product_cost_overrides").select("product_id, cost_per_unit"),
+      supabase
+        .from("products")
+        .select("id, title")
+        .eq("organization_id", organizationId)
+        .order("title"),
+      supabase.from("variants").select("id, product_id").eq("organization_id", organizationId),
+      supabase
+        .from("po_line_items")
+        .select("variant_id, landed_cost_per_unit_gbp")
+        .eq("organization_id", organizationId),
+      supabase
+        .from("product_cost_overrides")
+        .select("product_id, cost_per_unit")
+        .eq("organization_id", organizationId),
     ]);
 
   const overrideByProduct = new Map(
     (overrides ?? []).map((r) => [String(r.product_id), Number(r.cost_per_unit)]),
   );
   const variantToProduct = new Map(
-    (variants ?? []).map((v) => [String(v.variant_id), String(v.product_id)]),
+    (variants ?? []).map((v) => [String(v.id), String(v.product_id)]),
   );
 
   const defaultCostByProduct = new Map<string, number>();
@@ -63,7 +83,7 @@ export async function loadProductCostRows(supabase: SupabaseClient): Promise<Pro
   }
 
   return (products ?? []).map((p) => {
-    const productId = String(p.product_id);
+    const productId = String(p.id);
     const defaultCost = defaultCostByProduct.get(productId) ?? null;
     const costPerUnit = overrideByProduct.get(productId) ?? defaultCost ?? 0;
     return {

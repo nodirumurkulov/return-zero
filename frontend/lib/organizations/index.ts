@@ -10,3 +10,4 @@ export {
   tryRequireOrganizationId,
   type OrganizationIdResult,
 } from "./queries";
+export { resolveOrganizationIdForSlackTeam } from "./slack";

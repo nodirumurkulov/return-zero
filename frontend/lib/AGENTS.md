@@ -14,8 +14,10 @@ Use the service role only when RLS cannot perform the write. Document new except
 |----------------|-----------|
 | `POST /api/onboarding/upload` | Bulk replace of contract tables after user auth |
 | `POST /api/replay` | Cron replay cursor; also accepts session user when not cron |
-| `POST /api/learn` | Cross-tenant learning writes (authenticated user required first) |
-| Cron schedulers (`detect`, `forecast`, `recover`, …) | No user session; `assertCronAuthorized` |
+| `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
+| `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
+| `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
+| Cron schedulers (`detect`, `forecast`, `recover`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
 
 ## Domain modules
 

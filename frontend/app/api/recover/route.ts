@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
+import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { runRecovery } from "@/lib/detection/recover";
 import { recoverBodySchema } from "@/lib/detection/schemas";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
@@ -12,8 +12,7 @@ export const dynamic = "force-dynamic";
 // POST /api/recover — advance projected recovery for monitoring incidents.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
-  const cronMode =
-    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
+  const cronMode = isCronInvocation(req, cronDenied);
 
   const raw = await req.json().catch(() => ({}));
   const parsed = recoverBodySchema.safeParse(raw);

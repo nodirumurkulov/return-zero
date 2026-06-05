@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { assertCronAuthorized, hasCronAuth, isCronSecretConfigured } from "@/lib/cron-auth";
+import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { resetReplay, runReplay } from "@/lib/detection/replay";
 import { replayBodySchema } from "@/lib/detection/schemas";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
@@ -14,8 +14,7 @@ export const maxDuration = 300;
 // threshold. Body: { advance_days?: number }. Schedulable via CRON_SECRET.
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
-  const cronMode =
-    cronDenied === null && (!isCronSecretConfigured() || hasCronAuth(req));
+  const cronMode = isCronInvocation(req, cronDenied);
 
   const session = cronMode ? null : await createClient();
   if (!cronMode && session) {

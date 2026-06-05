@@ -44,6 +44,34 @@ function metricKeyFromJoin(
   return joined.metric_key;
 }
 
+async function loadThresholdsForProduct(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+  productId: string,
+): Promise<KpiThreshold[]> {
+  const { data, error } = await supabase
+    .from("product_kpi_thresholds")
+    .select(
+      "id, product_id, metric_definition_id, threshold, direction, active, created_at, metric_definitions!inner(metric_key)",
+    )
+    .eq("organization_id", organizationId)
+    .eq("product_id", productId)
+    .eq("active", true);
+
+  if (error) throw new Error(`load product_kpi_thresholds: ${error.message}`);
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    product_id: row.product_id,
+    metric_definition_id: row.metric_definition_id,
+    metric_key: metricKeyFromJoin(row.metric_definitions),
+    threshold: row.threshold,
+    direction: row.direction,
+    active: row.active,
+    created_at: row.created_at,
+  }));
+}
+
 async function loadThresholdsByProduct(
   supabase: SupabaseClient<Database>,
   organizationId: string,
@@ -125,16 +153,27 @@ export async function getProductCatalogDetail(
   monthly: ProductMonthlyMetric[];
   thresholds: KpiThreshold[];
 } | null> {
-  const [{ metrics, facts, productRows }, series, thresholdsByProduct] = await Promise.all([
-    buildCatalog(supabase, organizationId),
+  const [{ metrics, factsByWindow }, productRes, series, thresholds] = await Promise.all([
+    computeMetricsDetailed(supabase, { organizationId, productId }),
+    supabase
+      .from("products")
+      .select("id, external_id, title, product_type, gender_segment")
+      .eq("organization_id", organizationId)
+      .eq("id", productId)
+      .maybeSingle(),
     getProductSeries(supabase, organizationId, productId, 12),
-    loadThresholdsByProduct(supabase, organizationId),
+    loadThresholdsForProduct(supabase, organizationId, productId),
   ]);
 
-  const row = productRows.find((p) => p.id === productId);
-  if (!row) return null;
+  const row = productRes.data;
+  if (productRes.error || !row) return null;
 
+  const facts =
+    factsByWindow.get(30) ??
+    Array.from(factsByWindow.values())[0] ??
+    new Map<string, ProductSourceFacts>();
   const mv = metrics[productId] ?? [];
+
   return {
     product: toProductMetric(row, mv, facts.get(productId)),
     monthly: series.map((p) => ({
@@ -144,6 +183,6 @@ export async function getProductCatalogDetail(
       order_count: Math.round(p.units),
       return_rate: p.units > 0 ? p.refund_count / p.units : 0,
     })),
-    thresholds: thresholdsByProduct[productId] ?? [],
+    thresholds,
   };
 }

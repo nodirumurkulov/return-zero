@@ -26,7 +26,12 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
+vi.mock("@/lib/organizations", () => ({
+  resolveOrganizationIdForSlackTeam: vi.fn(async () => "org-1"),
+}));
+
 import { POST } from "@/app/api/slack/webhook/route";
+import { createIncidentFixture } from "@/test/fixtures/incidents";
 import {
   approveIncidentActions,
   getIncident,
@@ -51,7 +56,9 @@ describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
     listLowRiskMock.mockResolvedValue(["a1"]);
     approveMock.mockResolvedValue({ approved: 1 });
-    getIncidentMock.mockResolvedValue(null);
+    getIncidentMock.mockResolvedValue(
+      createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
+    );
   });
 
   afterEach(() => {
@@ -76,6 +83,7 @@ describe("POST /api/slack/webhook", () => {
 
   it("approves low-risk actions for valid Slack interaction", async () => {
     const { body, timestamp, signature, secret } = signedBody({
+      team: { id: "T123" },
       actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
       user: { name: "slack-user" },
     });

@@ -181,6 +181,7 @@ export async function notifyNewIncident(alert: NewIncidentAlert): Promise<void> 
 
 /** Slack interactive webhook: URL-encoded form with a JSON `payload` field. */
 export const slackInteractionPayloadSchema = z.object({
+  team: z.object({ id: z.string() }).optional(),
   actions: z
     .array(
       z.object({
@@ -267,6 +268,7 @@ export function verifySlackRequest(
 export const slackEventEnvelopeSchema = z.object({
   type: z.string(),
   challenge: z.string().optional(),
+  team_id: z.string().optional(),
   event: z
     .object({
       type: z.string(),
@@ -277,6 +279,7 @@ export const slackEventEnvelopeSchema = z.object({
       thread_ts: z.string().optional(),
       bot_id: z.string().optional(),
       subtype: z.string().optional(),
+      team: z.string().optional(),
     })
     .optional(),
 });

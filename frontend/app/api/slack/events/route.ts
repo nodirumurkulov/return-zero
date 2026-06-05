@@ -51,7 +51,15 @@ export async function POST(req: NextRequest) {
     const threadTs = event.thread_ts ?? event.ts;
     const prompt = stripSlackMentions(event.text);
 
-    after(() => handleHugoMention({ channel, threadTs, prompt, userName: event.user }));
+    after(() =>
+      handleHugoMention({
+        channel,
+        threadTs,
+        prompt,
+        userName: event.user,
+        teamId: envelope.team_id ?? event.team,
+      }),
+    );
   }
 
   return new NextResponse(null, { status: 200 });

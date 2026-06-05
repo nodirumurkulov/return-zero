@@ -62,6 +62,7 @@ export function createAgentFindingFixture(
   return {
     id: "find-00000000-0000-0000-0000-000000000001",
     incident_id: "inc-00000000-0000-0000-0000-000000000001",
+    organization_id: DEMO_ORG_ID,
     agent_name: "Returns Analyst",
     agent_icon: "📦",
     summary: "Return rate 3.2× baseline over 7 days",
@@ -77,6 +78,7 @@ export function createTimelineEventFixture(
   return {
     id: "evt-00000000-0000-0000-0000-000000000001",
     incident_id: "inc-00000000-0000-0000-0000-000000000001",
+    organization_id: DEMO_ORG_ID,
     event_type: "incident_created",
     description: "Incident opened from KPI breach",
     metadata: null,

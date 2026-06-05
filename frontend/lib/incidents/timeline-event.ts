@@ -4,6 +4,7 @@ import type { Json } from "@/lib/supabase/database.types";
 export type TimelineEvent = {
   id: string;
   incident_id: string;
+  organization_id: string;
   event_type: string;
   description: string;
   metadata: Json | null;

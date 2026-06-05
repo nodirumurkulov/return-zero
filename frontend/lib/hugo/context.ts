@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
 import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
-import { getCurrentOrganizationId } from "@/lib/organizations/queries";
+import type { Database } from "@/lib/supabase/database.types";
 
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
 
@@ -35,10 +35,11 @@ export function formatIncidentLine(incident: Incident): string {
  * reference is empty, candidates are the open incidents.
  */
 export async function resolveIncident(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   reference: string | null | undefined,
+  organizationId: string,
 ): Promise<{ match: Incident | null; candidates: Incident[] }> {
-  const incidents = await listIncidents(supabase);
+  const incidents = await listIncidents(supabase, organizationId);
   const ref = (reference ?? "").trim().toLowerCase();
 
   if (!ref) {
@@ -60,7 +61,6 @@ export async function resolveIncident(
 
   if (matches.length === 1) return { match: matches[0], candidates: matches };
 
-  // No textual match: fall back to open incidents as disambiguation candidates.
   if (matches.length === 0) {
     const open = incidents.filter(isOpenIncident);
     return { match: open.length === 1 ? open[0] : null, candidates: open };
@@ -70,8 +70,11 @@ export async function resolveIncident(
 }
 
 /** Compact, model-friendly summary of currently open incidents. */
-export async function buildOpenIncidentsContext(supabase: SupabaseClient): Promise<string> {
-  const incidents = await listIncidents(supabase);
+export async function buildOpenIncidentsContext(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<string> {
+  const incidents = await listIncidents(supabase, organizationId);
   const open = incidents.filter(isOpenIncident);
   const resolvedCount = incidents.length - open.length;
 
@@ -118,11 +121,10 @@ export function buildIncidentDetailContext(detail: IncidentDetail): string {
 }
 
 /** Summary of catalog KPI health, highlighting products that breach thresholds. */
-export async function buildCatalogContext(supabase: SupabaseClient): Promise<string> {
-  const organizationId = await getCurrentOrganizationId(supabase);
-  if (!organizationId) {
-    return "No organization context — catalog KPIs unavailable.";
-  }
+export async function buildCatalogContext(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<string> {
   const { products, thresholdsByProduct } = await listCatalogWithThresholds(supabase, organizationId);
 
   const breaches = products
