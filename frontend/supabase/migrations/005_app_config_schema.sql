@@ -1,6 +1,6 @@
 -- =============================================================
 -- 004_app_config_schema.sql
--- Org-scoped metrics config, baselines, forecast rules, replay.
+-- Org-scoped metrics config, baselines, forecast rules, store connections.
 -- =============================================================
 
 -- ---- metric_definitions --------------------------------------
@@ -101,8 +101,17 @@ create table public.business_reports (
 create index idx_business_reports_organization_created
   on public.business_reports (organization_id, created_at desc);
 
--- ---- replay_state (per org) ----------------------------------
-create table public.replay_state (
-  organization_id uuid primary key references public.organizations(id) on delete cascade,
-  cursor          date
+-- ---- store_connections (one active store per org) --------------
+create table public.store_connections (
+  organization_id  uuid primary key references public.organizations(id) on delete cascade,
+  platform         public.store_platform not null default 'mock_csv',
+  sync_mode        public.store_sync_mode not null default 'static',
+  status           public.store_connection_status not null default 'pending',
+  replay_cursor    date,
+  external_shop_id text,
+  connected_at     timestamptz,
+  last_synced_at   timestamptz,
+  metadata         jsonb not null default '{}'::jsonb,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
 );

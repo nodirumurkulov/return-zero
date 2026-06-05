@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
+
 import {
-  onboardingUploadPartialResponseSchema,
-  onboardingUploadResponseSchema,
-  onboardingUploadSuccessResponseSchema,
+  onboardingConnectPartialResponseSchema,
+  onboardingConnectResponseSchema,
+  onboardingConnectSuccessResponseSchema,
 } from "./api-schemas";
 
-describe("onboardingUploadResponseSchema", () => {
+describe("onboardingConnectResponseSchema", () => {
   it("accepts success responses", () => {
-    const parsed = onboardingUploadSuccessResponseSchema.safeParse({
+    const parsed = onboardingConnectSuccessResponseSchema.safeParse({
       success: true,
       results: [{ table: "orders", count: 10 }],
     });
@@ -15,7 +16,7 @@ describe("onboardingUploadResponseSchema", () => {
   });
 
   it("accepts partial failure responses", () => {
-    const parsed = onboardingUploadPartialResponseSchema.safeParse({
+    const parsed = onboardingConnectPartialResponseSchema.safeParse({
       success: false,
       results: [{ table: "orders", count: 0, error: "bad row" }],
     });
@@ -23,12 +24,12 @@ describe("onboardingUploadResponseSchema", () => {
   });
 
   it("accepts error-only responses", () => {
-    const parsed = onboardingUploadResponseSchema.safeParse({ error: "No CSV files provided" });
+    const parsed = onboardingConnectResponseSchema.safeParse({ error: "Connect failed" });
     expect(parsed.success).toBe(true);
   });
 
   it("rejects unknown keys on success body", () => {
-    const parsed = onboardingUploadSuccessResponseSchema.safeParse({
+    const parsed = onboardingConnectSuccessResponseSchema.safeParse({
       success: true,
       results: [],
       extra: true,

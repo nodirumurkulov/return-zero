@@ -1,4 +1,4 @@
-/** Stable demo data from scripts/seed.ts + E2E-only fixtures from global-setup. */
+/** Stable demo data from scripts/demo-fixtures.ts + E2E-only fixtures from global-setup. */
 
 export const E2E_USER_EMAIL =
   process.env.E2E_USER_EMAIL ?? "e2e@resolve.local";
@@ -18,7 +18,7 @@ export const E2E_DETECTED_INCIDENT_ID =
   "00000000-0000-0000-0000-000000000099";
 export const E2E_DETECTED_INCIDENT_TITLE = "E2E Detected Incident";
 
-/** Demo org from scripts/seed.ts */
+/** Demo org from scripts/seed.ts (store data from demo-fixtures in global-setup). */
 export const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
 
 /** First Pretty Fly trainer external id (uuid resolved at runtime). */

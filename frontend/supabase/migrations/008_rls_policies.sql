@@ -24,7 +24,9 @@ declare
   contract_tables text[] := array[
     'collections', 'products', 'variants', 'customers', 'orders', 'line_items',
     'refunds', 'meta_ads_daily', 'google_ads_daily', 'inventory_movements',
-    'support_tickets', 'purchase_orders', 'po_line_items'
+    'support_tickets', 'purchase_orders', 'po_line_items',
+    'suppliers', 'product_collections', 'addresses', 'discount_codes',
+    'email_campaigns', 'email_events', 'support_messages', 'bank_transactions'
   ];
 begin
   foreach t in array contract_tables loop
@@ -44,7 +46,7 @@ declare
   t text;
   config_read_tables text[] := array[
     'metric_definitions', 'product_baselines', 'forecast_rules',
-    'business_settings', 'business_reports', 'replay_state'
+    'business_settings', 'business_reports', 'store_connections'
   ];
 begin
   foreach t in array config_read_tables loop

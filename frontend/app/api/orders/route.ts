@@ -38,12 +38,12 @@ export async function GET(req: NextRequest) {
       listIncomingOrders(supabase, { organizationId, ...parsed.data }),
       dataEndDate(supabase, organizationId),
       supabase
-        .from("replay_state")
-        .select("cursor")
+        .from("store_connections")
+        .select("replay_cursor")
         .eq("organization_id", organizationId)
         .maybeSingle(),
     ]);
-    const cursor = cursorRow.data?.cursor?.slice(0, 10) ?? null;
+    const cursor = cursorRow.data?.replay_cursor?.slice(0, 10) ?? null;
     return NextResponse.json({
       orders,
       cursor,

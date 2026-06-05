@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionLabel } from "@/components/ui/section-label";
 import {
-  businessProfileInputSchema,
-  type BusinessProfileInput,
-  type BusinessProfileResponse,
-} from "@/lib/settings/schemas";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { BusinessProfileData } from "@/lib/onboarding/api";
+import { useBusinessProfile, useSaveBusinessProfile } from "@/lib/onboarding/hooks";
+import { businessProfileInputSchema, type BusinessProfileInput } from "@/lib/settings/schemas";
 import type { ProductCostRow } from "@/lib/settings/types";
 
 const PLATFORM_OPTIONS = [
@@ -26,49 +32,53 @@ const GOAL_OPTIONS = [
 ] as const;
 
 interface BusinessProfileFormProps {
-  initialProfile: BusinessProfileResponse | null;
-  onSaved: () => void | Promise<void>;
+  onSaved: () => void;
 }
 
-function profileToState({ profile, productCosts }: BusinessProfileResponse) {
-  return {
-    platform: profile.platform,
-    storeName: profile.storeName,
-    primaryGoal: profile.primaryGoal,
-    targetMarginPct: profile.targetMarginPct,
-    minRoas: profile.minRoas,
-    leadTimeDays: profile.leadTimeDays,
-    bufferDays: profile.bufferDays,
-    heroProductIds: profile.heroProductIds.join(", "),
-    productCosts,
-  };
+export default function BusinessProfileForm({ onSaved }: BusinessProfileFormProps) {
+  const profileQuery = useBusinessProfile();
+
+  if (profileQuery.isPending) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-muted-foreground">Loading business profile…</CardContent>
+      </Card>
+    );
+  }
+
+  if (profileQuery.isError || !profileQuery.data) {
+    const message =
+      profileQuery.error instanceof Error ? profileQuery.error.message : "Failed to load profile";
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-sev-critical">{message}</CardContent>
+      </Card>
+    );
+  }
+
+  return <BusinessProfileFormFields data={profileQuery.data} onSaved={onSaved} />;
 }
 
-const EMPTY_STATE = {
-  platform: "shopify" as BusinessProfileInput["platform"],
-  storeName: "",
-  primaryGoal: "growth" as BusinessProfileInput["primaryGoal"],
-  targetMarginPct: 55,
-  minRoas: 3,
-  leadTimeDays: 71,
-  bufferDays: 14,
-  heroProductIds: "",
-  productCosts: [] as ProductCostRow[],
-};
+function BusinessProfileFormFields({
+  data,
+  onSaved,
+}: {
+  data: BusinessProfileData;
+  onSaved: () => void;
+}) {
+  const saveProfile = useSaveBusinessProfile();
+  const { profile, productCosts: initialCosts } = data;
 
-export default function BusinessProfileForm({ initialProfile, onSaved }: BusinessProfileFormProps) {
-  const seeded = initialProfile ? profileToState(initialProfile) : EMPTY_STATE;
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [platform, setPlatform] = useState(seeded.platform);
-  const [storeName, setStoreName] = useState(seeded.storeName);
-  const [primaryGoal, setPrimaryGoal] = useState(seeded.primaryGoal);
-  const [targetMarginPct, setTargetMarginPct] = useState(seeded.targetMarginPct);
-  const [minRoas, setMinRoas] = useState(seeded.minRoas);
-  const [leadTimeDays, setLeadTimeDays] = useState(seeded.leadTimeDays);
-  const [bufferDays, setBufferDays] = useState(seeded.bufferDays);
-  const [heroProductIds, setHeroProductIds] = useState(seeded.heroProductIds);
-  const [productCosts, setProductCosts] = useState<ProductCostRow[]>(seeded.productCosts);
+  const [platform, setPlatform] = useState<BusinessProfileInput["platform"]>(profile.platform);
+  const [storeName, setStoreName] = useState(profile.storeName);
+  const [primaryGoal, setPrimaryGoal] = useState<BusinessProfileInput["primaryGoal"]>(profile.primaryGoal);
+  const [targetMarginPct, setTargetMarginPct] = useState(profile.targetMarginPct);
+  const [minRoas, setMinRoas] = useState(profile.minRoas);
+  const [leadTimeDays, setLeadTimeDays] = useState(profile.leadTimeDays);
+  const [bufferDays, setBufferDays] = useState(profile.bufferDays);
+  const [heroProductIds, setHeroProductIds] = useState(profile.heroProductIds.join(", "));
+  const [productCosts, setProductCosts] = useState<ProductCostRow[]>(initialCosts);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   function updateCost(productId: string, value: string) {
     const costPerUnit = Number(value);
@@ -80,7 +90,7 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
   }
 
   function submit() {
-    setError(null);
+    setValidationError(null);
     const payload = {
       platform,
       storeName,
@@ -97,32 +107,28 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
     };
     const parsed = businessProfileInputSchema.safeParse(payload);
     if (!parsed.success) {
-      setError(parsed.error.issues.map((i) => i.message).join("; "));
+      setValidationError(parsed.error.issues.map((i) => i.message).join("; "));
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/onboarding/profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed.data),
-        });
-        const json: unknown = await res.json();
-        if (!res.ok) {
-          const msg = typeof json === "object" && json && "error" in json ? String(json.error) : "Save failed";
-          throw new Error(msg);
-        }
-        await onSaved();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Save failed");
-      }
-    });
+    saveProfile.mutate(
+      { profile: parsed.data },
+      {
+        onSuccess: () => {
+          onSaved();
+        },
+      },
+    );
   }
+
+  const saveError =
+    saveProfile.error instanceof Error ? saveProfile.error.message : null;
+  const error = validationError ?? saveError;
+  const pending = saveProfile.isPending;
 
   return (
     <Card>
-      <CardContent className="space-y-6 p-4">
+      <CardContent className="flex flex-col gap-6 p-4">
         <div>
           <SectionLabel>About your store</SectionLabel>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -131,44 +137,47 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="platform">E-commerce platform</Label>
-            <select
-              id="platform"
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value as BusinessProfileInput["platform"])}
-            >
-              {PLATFORM_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+            <Select value={platform} onValueChange={(v) => setPlatform(v as BusinessProfileInput["platform"])}>
+              <SelectTrigger id="platform" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLATFORM_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="storeName">Store name</Label>
             <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} required />
-          </label>
+          </div>
 
-          <label className="space-y-1.5 text-sm sm:col-span-2">
+          <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
             <Label htmlFor="primaryGoal">Primary goal</Label>
-            <select
-              id="primaryGoal"
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+            <Select
               value={primaryGoal}
-              onChange={(e) => setPrimaryGoal(e.target.value as BusinessProfileInput["primaryGoal"])}
+              onValueChange={(v) => setPrimaryGoal(v as BusinessProfileInput["primaryGoal"])}
             >
-              {GOAL_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              <SelectTrigger id="primaryGoal" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GOAL_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="targetMargin">Target gross margin %</Label>
             <Input
               id="targetMargin"
@@ -179,9 +188,9 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
               value={targetMarginPct}
               onChange={(e) => setTargetMarginPct(Number(e.target.value))}
             />
-          </label>
+          </div>
 
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="minRoas">Min ROAS</Label>
             <Input
               id="minRoas"
@@ -191,9 +200,9 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
               value={minRoas}
               onChange={(e) => setMinRoas(Number(e.target.value))}
             />
-          </label>
+          </div>
 
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="leadTime">Supplier lead time (days)</Label>
             <Input
               id="leadTime"
@@ -203,9 +212,9 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
               value={leadTimeDays}
               onChange={(e) => setLeadTimeDays(Number(e.target.value))}
             />
-          </label>
+          </div>
 
-          <label className="space-y-1.5 text-sm">
+          <div className="flex flex-col gap-1.5 text-sm">
             <Label htmlFor="bufferDays">Safety buffer (days)</Label>
             <Input
               id="bufferDays"
@@ -215,9 +224,9 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
               value={bufferDays}
               onChange={(e) => setBufferDays(Number(e.target.value))}
             />
-          </label>
+          </div>
 
-          <label className="space-y-1.5 text-sm sm:col-span-2">
+          <div className="flex flex-col gap-1.5 text-sm sm:col-span-2">
             <Label htmlFor="heroProducts">Hero products (optional, comma-separated product IDs)</Label>
             <Input
               id="heroProducts"
@@ -225,13 +234,13 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
               onChange={(e) => setHeroProductIds(e.target.value)}
               placeholder="prod_00001, prod_00005"
             />
-          </label>
+          </div>
         </div>
 
         {productCosts.length > 0 && (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             <SectionLabel>Confirm cost per product</SectionLabel>
-            <div className="max-h-64 space-y-2 overflow-y-auto">
+            <div className="max-h-64 flex flex-col gap-2 overflow-y-auto">
               {productCosts.map((row) => (
                 <div
                   key={row.productId}
@@ -241,7 +250,7 @@ export default function BusinessProfileForm({ initialProfile, onSaved }: Busines
                     <p className="text-sm font-medium">{row.title}</p>
                     <p className="font-mono text-[11px] text-muted-foreground">{row.productId}</p>
                   </div>
-                  <label className="space-y-1 text-xs">
+                  <label className="flex flex-col gap-1 text-xs">
                     <span className="text-muted-foreground">Cost (£)</span>
                     <Input
                       type="number"

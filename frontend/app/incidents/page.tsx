@@ -24,8 +24,8 @@ export default async function IncidentsPage() {
     ),
     organizationId
       ? supabase
-          .from("replay_state")
-          .select("cursor")
+          .from("store_connections")
+          .select("replay_cursor")
           .eq("organization_id", organizationId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -43,7 +43,9 @@ export default async function IncidentsPage() {
   const totalImpact = rows.reduce((sum, i) => sum + (Number(i.impact_amount) || 0), 0);
   const open = rows.filter((i) => i.status !== "resolved").length;
 
-  const replayCursor = replayRes.data?.cursor ? String(replayRes.data.cursor).slice(0, 10) : null;
+  const replayCursor = replayRes.data?.replay_cursor
+    ? String(replayRes.data.replay_cursor).slice(0, 10)
+    : null;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
