@@ -45,7 +45,7 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
         return (
           <div key={col.status} className="flex w-72 shrink-0 flex-col">
             <div className="mb-3 flex items-center gap-2 px-1">
-              <span className={`size-2 shrink-0 rounded-full ${COL_ACCENT[col.status] ?? "bg-zinc-300"}`} />
+              <span className={`size-2 shrink-0 rounded-full ${COL_ACCENT[col.status] ?? "bg-muted-foreground/40"}`} />
               {col.status === "__other__" ? (
                 <span className="text-xs font-medium text-muted-foreground">{col.label}</span>
               ) : (

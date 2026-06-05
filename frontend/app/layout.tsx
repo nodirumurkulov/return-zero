@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import AppShell from "@/components/layout/AppShell";
 import QueryProvider from "@/components/providers/QueryProvider";
+import ThemeProvider from "@/components/providers/ThemeProvider";
 import { listSearchTargets } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
@@ -38,17 +39,19 @@ export default async function RootLayout({
     : [];
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
-        <QueryProvider>
-          {shellUser ? (
-            <AppShell user={shellUser} searchTargets={searchTargets}>
-              {children}
-            </AppShell>
-          ) : (
-            children
-          )}
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            {shellUser ? (
+              <AppShell user={shellUser} searchTargets={searchTargets}>
+                {children}
+              </AppShell>
+            ) : (
+              children
+            )}
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
