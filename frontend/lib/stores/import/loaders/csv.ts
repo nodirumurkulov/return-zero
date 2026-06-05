@@ -3,7 +3,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import type { Database, TablesInsert } from "@/lib/supabase/db";
-import type { ImportTableResult } from "..";
+import type { ImportTableResult } from "../types";
 
 export type ContractTable =
   | "collections"

@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { replayBodySchema } from "./replay-request";
 
-describe("replayBodySchema", () => {
+import { advanceBodySchema } from "./types";
+
+describe("advanceBodySchema", () => {
   it("accepts reset flag", () => {
-    expect(replayBodySchema.safeParse({ reset: true }).success).toBe(true);
+    expect(advanceBodySchema.safeParse({ reset: true }).success).toBe(true);
   });
 
   it("rejects non-positive advance_days", () => {
-    expect(replayBodySchema.safeParse({ advance_days: 0 }).success).toBe(false);
-    expect(replayBodySchema.safeParse({ advance_days: -1 }).success).toBe(false);
+    expect(advanceBodySchema.safeParse({ advance_days: 0 }).success).toBe(false);
+    expect(advanceBodySchema.safeParse({ advance_days: -1 }).success).toBe(false);
   });
 });

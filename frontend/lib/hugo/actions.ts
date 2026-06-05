@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Incident } from "@/lib/stores";
-import { approveIncidentAndNotify, listIncidentActionIds } from "@/lib/stores/server";
+import { getStore } from "@/lib/stores/server";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
 import { investigateIncident } from "./investigate-incident";
@@ -60,7 +60,7 @@ export async function runHugoApproval(
   incident: Incident,
   approvedBy: string,
 ): Promise<string> {
-  const actionIds = await listIncidentActionIds(supabase, {
+  const actionIds = await getStore(supabase).incidents.listActionIds({
     incidentId: incident.id,
     organizationId: incident.organization_id,
     filter: { status: "proposed", riskLevel: "low" },
@@ -70,7 +70,7 @@ export async function runHugoApproval(
   }
 
   try {
-    await approveIncidentAndNotify(supabase, {
+    await getStore(supabase).incidents.approveAndNotify({
       incidentId: incident.id,
       actionIds,
       approvedByUserId: approvedBy,

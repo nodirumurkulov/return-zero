@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { persistInvestigation, type PersistInvestigationResult } from "@/lib/agents";
-import type { CreatedIncident } from "@/lib/stores/incidents/detect";
+import type { CreatedIncident } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
 
 export async function investigateIncident(

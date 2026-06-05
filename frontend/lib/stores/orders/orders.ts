@@ -5,40 +5,26 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { Incidents } from "../incidents";
-import { readReplayCursor, writeReplayCursor } from "./cursor";
-import type { OrderFeedItem, OrderFeedLineItem } from "./feed/order-feed-item";
-import {
-  advanceReplayCursor,
-  dataEndDate,
-  REPLAY_START,
-  streamStartDate,
-  streamStartFromEnd,
-} from "./replay-bounds";
-import type { OrdersAdvanceResult } from "./replay-result";
+import { mergeDetectionResults } from "../incidents/types";
+import { OrdersError } from "./errors";
+import type {
+  OrderFeedItem,
+  OrderFeedLineItem,
+  OrdersAdvanceOpts,
+  OrdersAdvanceResult,
+  OrdersBoundsOpts,
+  OrdersListOpts,
+  OrdersResetOpts,
+} from "./types";
 
 const DEFAULT_ADVANCE_DAYS = 7;
 
-export type OrdersListOpts = {
-  organizationId: string;
-  after: string;
-  limit?: number;
-};
-
-export type OrdersAdvanceOpts = {
-  organizationId: string;
-  days?: number;
-};
-
-export type OrdersBoundsOpts = {
-  organizationId: string;
-};
-
-export type OrdersResetOpts = {
-  organizationId: string;
-};
-
 export class Orders {
-  static readonly STREAM_START_FALLBACK = REPLAY_START;
+  // Fallback when uploaded data has no orders.
+  private static readonly REPLAY_START = "2025-12-01";
+  private static readonly STREAM_WINDOW_MONTHS = 3;
+
+  static readonly STREAM_START_FALLBACK = Orders.REPLAY_START;
 
   constructor(
     private readonly supabase: SupabaseClient<Database>,
@@ -51,13 +37,13 @@ export class Orders {
     dataEnd: string | null;
   }> {
     const [cursor, dataEnd, streamStart] = await Promise.all([
-      readReplayCursor(this.supabase, opts.organizationId),
-      dataEndDate(this.supabase, opts.organizationId),
-      streamStartDate(this.supabase, opts.organizationId),
+      this.#readReplayCursor(opts.organizationId),
+      this.#dataEndDate(opts.organizationId),
+      this.#streamStartDate(opts.organizationId),
     ]);
     return {
       cursor,
-      streamStart: streamStart ?? REPLAY_START,
+      streamStart: streamStart ?? Orders.REPLAY_START,
       dataEnd,
     };
   }
@@ -74,7 +60,7 @@ export class Orders {
       .gt("created_at", opts.after)
       .order("created_at", { ascending: true })
       .limit(limit);
-    if (error) throw new Error(`orders feed failed: ${error.message}`);
+    if (error) throw new OrdersError(`orders feed failed: ${error.message}`);
 
     const orders = orderRows ?? [];
     if (orders.length === 0) return [];
@@ -129,22 +115,35 @@ export class Orders {
   async advance(opts: OrdersAdvanceOpts): Promise<OrdersAdvanceResult> {
     const days = opts.days ?? DEFAULT_ADVANCE_DAYS;
 
-    const end = await dataEndDate(this.supabase, opts.organizationId);
-    const start = streamStartFromEnd(end);
-    const previous = (await readReplayCursor(this.supabase, opts.organizationId)) ?? start;
+    const end = await this.#dataEndDate(opts.organizationId);
+    const start = this.#streamStartFromEnd(end);
+    const previous = (await this.#readReplayCursor(opts.organizationId)) ?? start;
 
-    const { cursor, at_end } = advanceReplayCursor({
+    const { cursor, at_end } = this.#advanceReplayCursor({
       previous,
       advanceDays: days,
       end,
     });
 
-    await writeReplayCursor(this.supabase, opts.organizationId, cursor);
+    await this.#writeReplayCursor(opts.organizationId, cursor);
 
-    const breaches = await this.incidents.detect({
-      organizationId: opts.organizationId,
-      asOf: cursor,
-    });
+    const { data: products, error: prodErr } = await this.supabase
+      .from("products")
+      .select("id")
+      .eq("organization_id", opts.organizationId);
+    if (prodErr) throw new OrdersError(`load products failed: ${prodErr.message}`);
+
+    const breaches = mergeDetectionResults(
+      await Promise.all(
+        (products ?? []).map((p) =>
+          this.incidents.detect({
+            organizationId: opts.organizationId,
+            productId: p.id,
+            asOf: cursor,
+          }),
+        ),
+      ),
+    );
 
     return {
       previous_cursor: previous,
@@ -156,8 +155,76 @@ export class Orders {
 
   async reset(opts: OrdersResetOpts): Promise<{ cursor: string }> {
     const cursor =
-      (await streamStartDate(this.supabase, opts.organizationId)) ?? REPLAY_START;
-    await writeReplayCursor(this.supabase, opts.organizationId, cursor);
+      (await this.#streamStartDate(opts.organizationId)) ?? Orders.REPLAY_START;
+    await this.#writeReplayCursor(opts.organizationId, cursor);
     return { cursor };
+  }
+
+  #asDate(value: string): string {
+    return value.slice(0, 10);
+  }
+
+  async #readReplayCursor(organizationId: string): Promise<string | null> {
+    const { data } = await this.supabase
+      .from("store_connections")
+      .select("replay_cursor")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    return data?.replay_cursor ? this.#asDate(String(data.replay_cursor)) : null;
+  }
+
+  async #writeReplayCursor(organizationId: string, cursor: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("store_connections")
+      .update({ replay_cursor: cursor, updated_at: new Date().toISOString() })
+      .eq("organization_id", organizationId);
+    if (error) {
+      throw new OrdersError(`store_connections replay_cursor update failed: ${error.message}`);
+    }
+  }
+
+  async #dataEndDate(organizationId: string): Promise<string | null> {
+    const { data } = await this.supabase
+      .from("orders")
+      .select("created_at")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.created_at ? this.#asDate(String(data.created_at)) : null;
+  }
+
+  async #streamStartDate(organizationId: string): Promise<string | null> {
+    const end = await this.#dataEndDate(organizationId);
+    return end ? this.#minusMonths(end, Orders.STREAM_WINDOW_MONTHS) : null;
+  }
+
+  #streamStartFromEnd(end: string | null): string {
+    return end ? this.#minusMonths(end, Orders.STREAM_WINDOW_MONTHS) : Orders.REPLAY_START;
+  }
+
+  #advanceReplayCursor(opts: {
+    previous: string;
+    advanceDays: number;
+    end: string | null;
+  }): { cursor: string; at_end: boolean } {
+    const advanced = this.#addDays(opts.previous, opts.advanceDays);
+    const cursor = opts.end && advanced > opts.end ? opts.end : advanced;
+    return {
+      cursor,
+      at_end: Boolean(opts.end) && cursor >= opts.end!,
+    };
+  }
+
+  #addDays(iso: string, days: number): string {
+    const d = new Date(`${iso}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  #minusMonths(iso: string, months: number): string {
+    const d = new Date(`${iso}T00:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() - months);
+    return d.toISOString().slice(0, 10);
   }
 }

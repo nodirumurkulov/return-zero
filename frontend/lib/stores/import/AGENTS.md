@@ -6,10 +6,11 @@ Platform import loaders and `Import` domain. **Parent:** [../AGENTS.md](../AGENT
 
 | Path | Role |
 |------|------|
-| `import.ts` | `Import` class — `run`, `status`, `externalIdMap` |
-| `mock.ts` | `MockImportLoader` (Pretty Fly CSV) |
-| `shopify.ts` | `ShopifyImportLoader` (stub) |
-| `loaders/` | CSV loader utilities |
-| `schemas.ts` | Import API Zod schemas |
+| `import.ts` | **`Import`** class — run, status, externalIdMap |
+| `types.ts` | Types, Zod schemas |
+| `errors.ts` | `ImportError` |
+| `index.ts` | Barrel |
+
+Internal only (not in barrel): `mock.ts`, `shopify.ts`, `provision.ts`, `loaders/`.
 
 Import via `@/lib/stores` (types/schemas) or `@/lib/stores/server` (`getStore().import.*`).

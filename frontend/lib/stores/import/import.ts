@@ -4,27 +4,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import type { ExternalIdTable } from "./loaders/csv";
+import { ImportError } from "./errors";
 import type { PrettyFlyFiles } from "./mock/pack";
 import { fetchProductExternalIdMap, markStoreImported, provisionMockCsvStore } from "./provision";
 import { ShopifyImportLoader } from "./shopify";
-import type { ImportRunResult, StoreConnection, StorePlatform } from "./index";
-
-export interface ImportRunOpts {
-  organizationId: string;
-  platform: StorePlatform;
-  source?: unknown;
-  replace?: boolean;
-}
-
-export interface ImportStatusOpts {
-  organizationId: string;
-}
-
-export interface ImportExternalIdMapOpts {
-  organizationId: string;
-  table: ExternalIdTable;
-}
+import type {
+  ImportExternalIdMapOpts,
+  ImportRunOpts,
+  ImportRunResult,
+  ImportStatusOpts,
+  StoreConnection,
+} from "./types";
 
 export class Import {
   private readonly shopifyLoader = new ShopifyImportLoader();
@@ -37,7 +27,7 @@ export class Import {
       .select("*")
       .eq("organization_id", opts.organizationId)
       .maybeSingle();
-    if (error) throw new Error(`store_connections read failed: ${error.message}`);
+    if (error) throw new ImportError(`store_connections read failed: ${error.message}`);
     return data;
   }
 

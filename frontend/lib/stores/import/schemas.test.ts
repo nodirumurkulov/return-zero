@@ -4,7 +4,7 @@ import {
   importPartialResponseSchema,
   importResponseSchema,
   importSuccessResponseSchema,
-} from "./schemas";
+} from "./types";
 
 describe("importResponseSchema", () => {
   it("accepts success responses", () => {

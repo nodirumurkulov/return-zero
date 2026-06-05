@@ -17,7 +17,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
-| Cron schedulers (`detect`, `forecast`, `recover`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
+| Cron schedulers (`detect`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
 
 ## Domain modules
 
@@ -27,7 +27,6 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `stores/incidents/` | `@/lib/stores/incidents` | KPI breach detect + incident CRUD |
 | `stores/analytics/catalog/` | `@/lib/stores/analytics/catalog` | Metrics, thresholds, health, catalog queries |
 | `stores/analytics/metrics/` | `@/lib/stores/analytics/metrics` | KPI engine, definitions, series |
-| `stores/analytics/forecast/` | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
 | `stores/analytics/search/` | `@/lib/stores/analytics/search` | Global search targets |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
 | `api/` | `@/lib/api/*` | Client HTTP boundary (`@better-fetch/fetch`); see [api/AGENTS.md](api/AGENTS.md) |
@@ -47,7 +46,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 ### Multi-tenant organization context
 
 - **User routes / server actions:** `const organizationId = await requireOrganizationId(await createClient())`, then pass `organizationId` into domain functions and scoped queries.
-- **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `forecast`, `recover`, `replay`).
+- **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `replay`).
 - **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (service role for member insert).
 - See [organizations/AGENTS.md](organizations/AGENTS.md) for module layout.
 
@@ -58,7 +57,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 - **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules. `lib/` owns domain logic and **shared** Zod schemas — not one-off 3-line utilities for a single server action.
 - **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.
 - Prefer **TypeScript advanced types** only when they clarify domain invariants; avoid clever types that obscure DB shape.
-- Cross-domain: `stores/incidents` → `metrics` / `forecast` OK; avoid `catalog` ↔ `stores/incidents` coupling.
+- Cross-domain: `stores/incidents` → `metrics` OK; avoid `catalog` ↔ `stores/incidents` coupling.
 
 ## Code style
 

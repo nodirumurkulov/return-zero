@@ -6,11 +6,10 @@ KPI breach detection and incident CRUD. **Parent:** [../../AGENTS.md](../../AGEN
 
 | Path | Role |
 |------|------|
-| `incidents.ts` | **`Incidents`** class + route helpers (`listIncidentActionIds`, `approveIncidentAndNotify`) |
-| `detect.ts` | Threshold breach → insert incident row |
-| `index.ts` | Barrel: types, schemas, status |
-| `types.ts`, `schemas.ts`, `status.ts`, `errors.ts` | Types and API validation |
-| `notify-new-incidents.ts` | Slack fan-out for new breaches |
+| `incidents.ts` | **`Incidents`** class — CRUD, detect, notify, approve |
+| `types.ts` | Types, Zod schemas, status/kanban constants |
+| `errors.ts` | `IncidentsError` |
+| `index.ts` | Barrel re-export |
 
 AI investigation lives in **`@/lib/hugo`** — route handlers call it after detect, not this module.
 
@@ -27,10 +26,13 @@ await incidents.get({ id, organizationId });
 await incidents.getDetail({ id, organizationId });
 await incidents.update({ id, organizationId, patch });
 await incidents.approve({ incidentId, actionIds, approvedByUserId });
-await incidents.detect({ organizationId, asOf });
+await incidents.approveAndNotify({ incidentId, actionIds, approvedByUserId, organizationId, appUrl });
+await incidents.listActionIds({ incidentId, organizationId, filter });
+await incidents.detect({ organizationId, productId, asOf });
+await incidents.notifyNew(createdIncidents);
 ```
 
-`detect` scans product KPIs (via metrics engine + catalog thresholds) and opens one incident per breached product with no open incident.
+`detect` evaluates one product's KPIs against thresholds (via metrics engine) and opens an incident when any metric is in breach and no open incident exists on that product.
 
 ## Usage
 

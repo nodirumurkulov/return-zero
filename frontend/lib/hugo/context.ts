@@ -1,11 +1,11 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SlackThreadMessage } from "@/lib/slack";
-import { forecastStockout, type Incident, type IncidentDetail } from "@/lib/stores";
+import type { Incident, IncidentDetail } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
 
-// Mirror the reorder horizon defaults used by the detector/forecast modules.
+// Reorder horizon defaults from business_settings seed.
 const LEAD_DAYS_DEFAULT = 71;
 const BUFFER_DAYS_DEFAULT = 14;
 const OUTFLOW_WINDOW_DAYS = 28;
@@ -133,14 +133,9 @@ export async function buildCatalogContext(
   organizationId: string,
 ): Promise<string> {
   const store = getStore(supabase);
-  const { products, thresholdsByProduct } = await store.catalog.list({ organizationId });
+  const { products } = await store.catalog.list({ organizationId });
 
-  const breaches = products
-    .map((p) => ({
-      product: p,
-      level: store.catalog.health({ product: p, thresholds: thresholdsByProduct[p.product_id] ?? [] }),
-    }))
-    .filter((row) => row.level !== "healthy");
+  const breaches = products.filter((p) => p.health !== "healthy");
 
   if (breaches.length === 0) {
     return `All ${products.length} products are within their KPI thresholds (no breaches).`;
@@ -149,8 +144,8 @@ export async function buildCatalogContext(
   const lines = breaches
     .slice(0, 15)
     .map(
-      ({ product, level }) =>
-        `- ${product.title} (${product.product_id}) — ${level}: return_rate=${
+      (product) =>
+        `- ${product.title} (${product.product_id}) — ${product.health}: return_rate=${
           product.return_rate ?? "—"
         }, refund_rate=${product.refund_rate ?? "—"}, ad_roas=${product.ad_roas ?? "—"}`,
     );
@@ -247,9 +242,23 @@ function formatStockoutDays(days: number): string {
   return `~${Math.round(days)}d to stockout`;
 }
 
+function daysToStockout(currentUnits: number, dailyOutflow: number): number {
+  if (dailyOutflow <= 0) return Infinity;
+  return currentUnits <= 0 ? 0 : currentUnits / dailyOutflow;
+}
+
+function reorderUrgent(
+  currentUnits: number,
+  dailyOutflow: number,
+  leadDays: number,
+  bufferDays: number,
+): boolean {
+  const days = daysToStockout(currentUnits, dailyOutflow);
+  return currentUnits > 0 && Number.isFinite(days) && days <= leadDays + bufferDays;
+}
+
 /**
- * Per-product stock levels: current units on hand, recent daily outflow, and the
- * resulting days-to-stockout (reusing the forecast module's reorder logic).
+ * Per-product stock levels: current units on hand, recent daily outflow, and days-to-stockout.
  * Most-urgent products are listed first so low/out-of-stock items always surface.
  */
 export async function buildInventoryContext(
@@ -279,26 +288,28 @@ export async function buildInventoryContext(
     .map((r) => {
       const currentUnits = Number(r.current_balance ?? 0);
       const dailyOutflow = Number(r.daily_outflow ?? 0);
+      const days_to_stockout = daysToStockout(currentUnits, dailyOutflow);
       return {
         title: titleById.get(r.product_id) ?? "(untitled product)",
         productId: r.product_id,
         currentUnits,
         dailyOutflow,
-        forecast: forecastStockout({ currentUnits, dailyOutflow, leadDays, bufferDays }),
+        days_to_stockout,
+        reorder_urgent: reorderUrgent(currentUnits, dailyOutflow, leadDays, bufferDays),
       };
     })
-    .sort((a, b) => a.forecast.days_to_stockout - b.forecast.days_to_stockout);
+    .sort((a, b) => a.days_to_stockout - b.days_to_stockout);
 
   const outOfStock = stock.filter((s) => s.currentUnits <= 0).length;
-  const reorderUrgent = stock.filter((s) => s.forecast.reorder_urgent).length;
+  const reorderUrgentCount = stock.filter((s) => s.reorder_urgent).length;
 
   const lines = stock.slice(0, INVENTORY_MAX_LINES).map((s) => {
-    const flag = s.currentUnits <= 0 ? " — OUT OF STOCK" : s.forecast.reorder_urgent ? " — reorder urgent" : "";
-    return `- ${s.title} (${shortId(s.productId)}): ${Math.round(s.currentUnits)} units in stock, ~${s.dailyOutflow.toFixed(1)} units/day, ${formatStockoutDays(s.forecast.days_to_stockout)}${flag}`;
+    const flag = s.currentUnits <= 0 ? " — OUT OF STOCK" : s.reorder_urgent ? " — reorder urgent" : "";
+    return `- ${s.title} (${shortId(s.productId)}): ${Math.round(s.currentUnits)} units in stock, ~${s.dailyOutflow.toFixed(1)} units/day, ${formatStockoutDays(s.days_to_stockout)}${flag}`;
   });
 
   return [
-    `Inventory / stock (${stock.length} products; ${outOfStock} out of stock, ${reorderUrgent} need reorder within lead+buffer time):`,
+    `Inventory / stock (${stock.length} products; ${outOfStock} out of stock, ${reorderUrgentCount} need reorder within lead+buffer time):`,
     ...lines,
     stock.length > INVENTORY_MAX_LINES
       ? `…and ${stock.length - INVENTORY_MAX_LINES} more — ask about a specific product for its exact stock.`

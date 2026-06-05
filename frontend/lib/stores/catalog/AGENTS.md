@@ -1,23 +1,26 @@
-# AGENTS.md — lib/stores/analytics/catalog
+# AGENTS.md — lib/stores/catalog
 
-Catalog metrics, thresholds, health. **Parent:** [../../AGENTS.md](../../AGENTS.md)
+Product catalog metrics, thresholds, health. **Parent:** [../AGENTS.md](../AGENTS.md)
 
-## Files
+## Layout
 
-| File | Role |
+| Path | Role |
 |------|------|
-| `types.ts` | `ProductMetric`, `KpiThreshold`, `ProductMonthlyMetric` |
-| `queries.ts` | `listCatalogWithThresholds`, `getProductCatalogDetail` |
-| `health.ts` | `computeProductHealth`, `computeHealthLevel` |
-| `api/` | `catalogKeys`, `updateThresholdApi` — see `api/index.ts` |
-| `hooks/` | `useUpdateThreshold` wraps `updateThresholdApi` |
-| `index.ts` | Public exports |
+| `catalog.ts` | **`Catalog`** class — list, get, health, update |
+| `types.ts` | Types, KPI keys, Zod schemas |
+| `errors.ts` | `CatalogError` |
+| `index.ts` | Barrel |
 
-## Best practices
+## Public API
 
-- Health and threshold logic stay here — **redesign** catalog pages to use queries rather than inlining Supabase or legacy shapes.
+```typescript
+import { getStore } from "@/lib/stores/server";
 
-## Rules
+const { catalog } = getStore(supabase);
+await catalog.list({ organizationId });
+await catalog.get({ organizationId, productId });
+catalog.health({ product, thresholds });
+await catalog.update({ organizationId, productId, metricKey, threshold });
+```
 
-- Pages call **queries** — do not cast raw Supabase rows in `app/catalog/*`.
-- Threshold updates go through `PATCH /api/catalog/[productId]/threshold` via `@/lib/api/stores/analytics/catalog` and `@/hooks/stores/analytics/catalog`.
+Client types: `@/lib/stores`.

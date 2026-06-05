@@ -1,31 +1,18 @@
-# Catalog domain
+# lib/stores/catalog
 
-Product catalog metrics, per-KPI thresholds, and health scoring (`healthy` / `warning` / `critical`).
+Product catalog metrics, per-KPI thresholds, and health scoring.
 
-## What's here
-
-| File | Purpose |
-|------|---------|
-| `types.ts` | `ProductMetric`, `KpiThreshold`, `ProductMonthlyMetric` |
-| `queries.ts` | `listCatalogWithThresholds`, `getProductCatalogDetail` |
-| `health.ts` | `computeProductHealth`, `computeHealthLevel` |
-
-## Usage
+| File | Role |
+|------|------|
+| `catalog.ts` | **`Catalog`** class — list, get, health, update |
+| `types.ts` | Types, KPI constants, threshold PATCH Zod |
+| `errors.ts` | `CatalogError` |
 
 ```typescript
-import {
-  computeProductHealth,
-  listCatalogWithThresholds,
-  type ProductMetric,
-} from "@/lib/stores/analytics/catalog";
+import { getStore } from "@/lib/stores/server";
+
+const { products } = await getStore(supabase).catalog.list({ organizationId });
+// each product includes `health`
 ```
 
-Catalog pages should call **queries** instead of casting raw Supabase rows.
-
-## Notes
-
-- Replaces the old monolithic `types/database.ts` catalog section.
-
-**Agents:** [AGENTS.md](AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+Client types: `@/lib/stores`.

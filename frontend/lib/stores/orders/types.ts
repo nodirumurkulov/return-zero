@@ -1,5 +1,31 @@
 import { z } from "zod";
 
+import type { DetectionResult } from "../incidents/types";
+
+export interface OrderFeedLineItem {
+  title: string;
+  quantity: number;
+  price: number;
+}
+
+export interface OrderFeedItem {
+  order_id: string;
+  order_number: string | null;
+  created_at: string;
+  total_price: number;
+  financial_status: string | null;
+  utm_campaign: string | null;
+  country: string | null;
+  items: OrderFeedLineItem[];
+}
+
+export const ordersQuerySchema = z.object({
+  after: z.string().min(1),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+
+export type OrdersQuery = z.infer<typeof ordersQuerySchema>;
+
 export const advanceBodySchema = z.object({
   advance_days: z.number().finite().positive().optional(),
   reset: z.boolean().optional(),
@@ -67,3 +93,29 @@ export const feedResponseSchema = z.union([
 
 export type AdvanceResponse = z.infer<typeof advanceResponseSchema>;
 export type FeedResponse = z.infer<typeof feedResponseSchema>;
+
+export type OrdersAdvanceResult = {
+  previous_cursor: string;
+  cursor: string;
+  at_end: boolean;
+  breaches: DetectionResult;
+};
+
+export type OrdersListOpts = {
+  organizationId: string;
+  after: string;
+  limit?: number;
+};
+
+export type OrdersAdvanceOpts = {
+  organizationId: string;
+  days?: number;
+};
+
+export type OrdersBoundsOpts = {
+  organizationId: string;
+};
+
+export type OrdersResetOpts = {
+  organizationId: string;
+};

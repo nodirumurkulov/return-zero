@@ -1,8 +1,3 @@
-export { getProductCatalogDetail, listCatalogWithThresholds } from "./queries";
-export { computeHealthLevel, computeProductHealth } from "./health";
-export type {
-  HealthLevel,
-  KpiThreshold,
-  ProductMetric,
-  ProductMonthlyMetric,
-} from "./types";
+export { Catalog } from "./catalog";
+export { CatalogError } from "./errors";
+export * from "./types";

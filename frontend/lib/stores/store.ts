@@ -4,12 +4,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import { Catalog } from "./catalog/catalog";
-import { Import } from "./import/import";
-import { Incidents } from "./incidents/incidents";
-import { Learn } from "./learn/learn";
-import { Orders } from "./orders/orders";
-import { Search } from "./search/search";
+import { Catalog } from "./catalog";
+import { Import } from "./import";
+import { Incidents } from "./incidents";
+import { Learn } from "./learn";
+import { Orders } from "./orders";
+import { Search } from "./search";
 
 export class Store {
   readonly import: Import;

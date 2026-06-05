@@ -4,9 +4,10 @@
 // Analyst's anomaly tool (which falls back to on-the-fly stats when no baseline
 // row exists yet). Pure: no DB, no `server-only`, trivially testable.
 
+import type { MetricKey } from "../catalog/types";
 import type { MonthlyPoint } from "./monthly-point";
 
-/** KPIs we can derive per-month from the series (ratio metrics with the inputs we have). */
+/** Ratio KPIs derivable from monthly series. */
 export const LEARNABLE_KPIS = ["refund_rate", "return_rate", "ad_roas"] as const;
 
 export interface BaselineStats {
@@ -19,7 +20,8 @@ export interface BaselineStats {
  * Per-month ratio for a KPI, skipping months whose denominator is zero (the
  * ratio is undefined that month, not 0). Returns [] for non-ratio KPIs.
  */
-export function kpiRatioSeries(series: MonthlyPoint[], metricKey: string): number[] {
+export function kpiRatioSeries(series: MonthlyPoint[], metricKey: MetricKey): number[] {
+  if (metricKey === "support_volume") return [];
   return series
     .map((p): number | null => {
       if (metricKey === "refund_rate") return p.revenue > 0 ? p.refund_amount / p.revenue : null;

@@ -71,3 +71,26 @@ export function parseReportSummary(value: unknown): ReportSummary | null {
   const parsed = reportSummarySchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 }
+
+export interface LearnResult {
+  baselines: number;
+  thresholds: number;
+  products: number;
+}
+
+export type LearnRunOpts = {
+  organizationId: string;
+};
+
+export type LearnRunResult = {
+  learn: LearnResult;
+  reportId: string;
+  replayCursor: string;
+};
+
+export type BusinessReport = {
+  id: string;
+  summary: ReportSummary;
+  narrative: string;
+  created_at: string;
+};

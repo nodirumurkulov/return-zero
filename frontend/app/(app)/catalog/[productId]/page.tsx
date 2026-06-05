@@ -30,13 +30,11 @@ export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = await createClient();
   const organizationId = await requireOrganizationId(supabase);
-  const store = getStore(supabase);
-  const detail = await store.catalog.get({ organizationId, productId: params.productId });
+  const detail = await getStore(supabase).catalog.get({ organizationId, productId: params.productId });
 
   if (!detail) notFound();
 
-  const { product: metrics, monthly: monthlyRows, thresholds: thresholdRows } = detail;
-  const health = store.catalog.health({ product: metrics, thresholds: thresholdRows });
+  const { product, monthly: monthlyRows, thresholds: thresholdRows } = detail;
   const returnTrend = monthlyRows.map((row) => Number(row.return_rate ?? 0));
   const revenueTrend = monthlyRows.map((row) => Number(row.revenue_gbp ?? 0));
 
@@ -48,11 +46,11 @@ export default async function ProductDetailPage(props: PageProps) {
             <Link href="/catalog">← Back to catalog</Link>
           </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{metrics.title}</h1>
-            <HealthBadge level={health} />
+            <h1 className="text-2xl font-semibold tracking-tight">{product.title}</h1>
+            <HealthBadge level={product.health} />
           </div>
           <p className="mt-1 text-sm capitalize text-muted-foreground">
-            {metrics.product_type} · {metrics.gender_segment} · {metrics.product_id}
+            {product.product_type} · {product.gender_segment} · {product.product_id}
           </p>
         </div>
       </div>
@@ -61,29 +59,29 @@ export default async function ProductDetailPage(props: PageProps) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Return rate"
-          value={`${((metrics.return_rate ?? 0) * 100).toFixed(1)}%`}
+          value={`${((product.return_rate ?? 0) * 100).toFixed(1)}%`}
           subtext={rateTrendSubtext(returnTrend, "Return rate")}
           trend={returnTrend}
-          accent={(metrics.return_rate ?? 0) > 0.2 ? "danger" : "default"}
+          accent={(product.return_rate ?? 0) > 0.2 ? "danger" : "default"}
         />
         <KpiCard
           label="Refund rate"
-          value={`${((metrics.refund_rate ?? 0) * 100).toFixed(1)}%`}
+          value={`${((product.refund_rate ?? 0) * 100).toFixed(1)}%`}
           subtext="Share of revenue refunded"
           trend={returnTrend}
-          accent={(metrics.refund_rate ?? 0) > 0.12 ? "danger" : "default"}
+          accent={(product.refund_rate ?? 0) > 0.12 ? "danger" : "default"}
         />
         <KpiCard
           label="Revenue (30d)"
-          value={`£${Number(metrics.revenue_gbp ?? 0).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`}
-          subtext={`${metrics.order_count ?? 0} orders`}
+          value={`£${Number(product.revenue_gbp ?? 0).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`}
+          subtext={`${product.order_count ?? 0} orders`}
           trend={revenueTrend}
         />
         <KpiCard
           label="Support tickets"
-          value={String(metrics.support_tickets ?? 0)}
+          value={String(product.support_tickets ?? 0)}
           subtext={
-            metrics.ad_roas != null ? `Ad ROAS ${metrics.ad_roas.toFixed(1)}x` : "No ad attribution"
+            product.ad_roas != null ? `Ad ROAS ${product.ad_roas.toFixed(1)}x` : "No ad attribution"
           }
         />
       </div>

@@ -1,2 +1,3 @@
-export { listSearchTargets } from "./queries";
-export type { SearchTarget } from "./types";
+export { Search } from "./search";
+export { SearchError } from "./errors";
+export * from "./types";

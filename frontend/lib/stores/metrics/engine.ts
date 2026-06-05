@@ -2,12 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type {
   ComputeOpts,
-  Direction,
+  KpiDirection,
+  KpiHealthStatus,
   MetricDefinition,
-  MetricStatus,
   MetricValue,
   ThresholdOverride,
 } from "./metric-definition";
+import { METRIC_KEYS, type MetricKey } from "../catalog/types";
 import { getSourceFacts, type ProductSourceFacts } from "./source-facts";
 
 export type { ComputeOpts };
@@ -36,8 +37,8 @@ function evalValue(def: MetricDefinition, facts: ProductSourceFacts): number | n
 export function metricStatusFor(
   value: number | null,
   threshold: number,
-  direction: Direction,
-): MetricStatus {
+  direction: KpiDirection,
+): KpiHealthStatus {
   if (value === null) return "healthy";
   const breached = direction === "above" ? value > threshold : value < threshold;
   if (breached) return "critical";
@@ -108,6 +109,7 @@ export async function computeMetricsDetailed(
 
   const metrics: Record<string, MetricValue[]> = {};
   for (const def of defs) {
+    if (!(METRIC_KEYS as readonly string[]).includes(def.metric_key)) continue;
     const facts = factsByWindow.get(opts.windowDays ?? def.window_days)!;
     for (const [productId, f] of Array.from(facts)) {
       if (opts.productId && productId !== opts.productId) continue;
@@ -116,7 +118,7 @@ export async function computeMetricsDetailed(
       const direction = override?.direction ?? def.direction;
       const value = evalValue(def, f);
       (metrics[productId] ??= []).push({
-        metric_key: def.metric_key,
+        metric_key: def.metric_key as MetricKey,
         display_name: def.display_name,
         unit: def.unit,
         value,

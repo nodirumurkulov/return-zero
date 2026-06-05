@@ -4,3 +4,8 @@ export type SearchTarget = {
   href: string;
   kind: "product" | "incident";
 };
+
+export type SearchListOpts = {
+  organizationId: string;
+  query?: string;
+};

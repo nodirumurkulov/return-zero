@@ -2,16 +2,25 @@
 
 Ecommerce store product domain. **Parent:** [../AGENTS.md](../AGENTS.md)
 
-## Public API
+## Module layout (every domain)
 
-Two entry points:
+Each folder under `stores/` follows the **incidents** pattern:
+
+| File | Role |
+|------|------|
+| `{domain}.ts` | Domain class — all behavior (private helpers inline) |
+| `types.ts` | Types, Zod schemas, constants |
+| `errors.ts` | `{Domain}Error` |
+| `index.ts` | `export { Class }`, `export { Error }`, `export * from "./types"` |
+
+Implementation-only files (e.g. `import/loaders/`, `import/mock/`) stay internal — not exported from `index.ts`.
+
+## Public API
 
 | Entry | Use for |
 |-------|---------|
-| `@/lib/stores` | Types, Zod schemas, pure helpers (client + server) |
-| `@/lib/stores/server` | `getStore(supabase)` and server-only exports (RSC, API routes) |
-
-Scripts and seed use `provisionMockCsvStore` from `lib/stores/import/provision.ts` (relative import — no `server-only`).
+| `@/lib/stores` | Types, Zod schemas (client + server) |
+| `@/lib/stores/server` | `getStore(supabase)`, domain errors |
 
 ```typescript
 import { getStore } from "@/lib/stores/server";
@@ -23,33 +32,22 @@ await store.incidents.list({ organizationId });
 await store.learn.run({ organizationId });
 await store.search.list({ organizationId });
 await store.import.run({ organizationId, platform: "mock_csv" });
-await store.import.status({ organizationId });
 ```
 
-**`getStore`** returns the facade only (no DB side effects). **`store.import.run`** creates/refreshes org store data in Postgres.
+## Domains
 
-## Layout
+| Path | Class |
+|------|-------|
+| `catalog/` | `Catalog` — metrics, thresholds, health |
+| `orders/` | `Orders` — replay cursor, feed, advance + detect |
+| `incidents/` | `Incidents` — KPI breach detect, CRUD, approve |
+| `learn/` | `Learn` — baselines, business report, profile seed |
+| `search/` | `Search` — global search targets |
+| `import/` | `Import` — platform loaders |
+| `metrics/` | Internal KPI engine (used by catalog + incidents) |
 
-| Path | Role |
-|------|------|
-| `index.ts` | Client-safe types, schemas, pure helpers |
-| `server.ts` | `getStore`, server-only re-exports |
-| `store.ts` | `Store` + `getStore` |
-| `import/` | Platform import loaders + `Import` domain |
-| `catalog/` | Product metrics, thresholds, health, forecast |
-| `orders/` | Replay cursor + orders feed |
-| `incidents/` | Detection and lifecycle |
-| `learn/` | Post-import baselines + business report |
-| `search/` | Global search targets |
-| `metrics/` | **Internal** KPI engine |
+## Commands
 
-## Method naming
-
-Verb + opts on every domain class (`list`, `get`, `update`, `advance`, `run`, …). Domain context is implicit from the struct member.
-
-## Rules
-
-- Outside `lib/stores/`, ESLint blocks `@/lib/stores/*` subpaths.
-- Client components must not import `@/lib/stores/server`.
-- Client fetch: `lib/api/stores/*`; hooks: `hooks/stores/*`.
-- No backward-compat factories (`createIncidents`, `createReplay`, `createStore`).
+```bash
+cd frontend && bun run lint && bun run typecheck
+```

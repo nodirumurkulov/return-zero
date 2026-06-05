@@ -3,10 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { approveIncidentBodySchema } from "@/lib/stores";
-import {
-  approveIncidentAndNotify,
-  listIncidentActionIds,
-} from "@/lib/stores/server";
+import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -38,8 +35,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
 
   const body = parsed.data;
+  const store = getStore(supabase);
   const lowRiskIds = body.approve_all_low_risk
-    ? await listIncidentActionIds(supabase, {
+    ? await store.incidents.listActionIds({
         incidentId: params.id,
         organizationId,
         filter: { status: "proposed", riskLevel: "low" },
@@ -54,7 +52,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    await approveIncidentAndNotify(supabase, {
+    await store.incidents.approveAndNotify({
       incidentId: params.id,
       actionIds,
       approvedByUserId: user.id,

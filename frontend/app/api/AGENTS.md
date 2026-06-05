@@ -30,7 +30,7 @@ if (!parsed.success) {
 | `POST /api/stores/learn` | `getStore().learn.run` |
 | `POST /api/stores/incidents/detect` | `getStore().incidents.detect` + `hugo/investigate-incident` |
 | `POST /api/investigate` | `hugo/investigate-incident` |
-| `POST /api/stores/incidents/[id]/approve` | `approveIncidentAndNotify` |
+| `POST /api/stores/incidents/[id]/approve` | `getStore().incidents.approveAndNotify` |
 | `PATCH /api/stores/incidents/[id]` | `getStore().incidents.update` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 | `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |

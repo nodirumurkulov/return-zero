@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
 
-import type { ImportLoadOpts, ImportTableResult, ImportLoader } from ".";
+import type { ImportLoadOpts, ImportLoader, ImportTableResult } from "./types";
 
 export class ShopifyImportLoader implements ImportLoader {
   readonly platform = "shopify" as const;

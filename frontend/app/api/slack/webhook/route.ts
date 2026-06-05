@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
-import { approveIncidentAndNotify, getStore, listIncidentActionIds } from "@/lib/stores/server";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
-    const actionIds = await listIncidentActionIds(supabase, {
+    const actionIds = await store.incidents.listActionIds({
       incidentId,
       organizationId,
       filter: { status: "proposed", riskLevel: "low" },
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (actionIds.length > 0) {
       try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-        await approveIncidentAndNotify(supabase, {
+        await store.incidents.approveAndNotify({
           incidentId,
           actionIds,
           approvedByUserId: null,

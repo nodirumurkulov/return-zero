@@ -5,7 +5,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import type { ExternalIdTable } from "./loaders/csv";
 import { MockImportLoader } from "./mock";
 import { prettyFlyPack, type PrettyFlyFiles } from "./mock/pack";
-import type { ImportRunResult, StorePlatform } from "./index";
+import type { ImportRunResult, StorePlatform } from "./types";
 
 export type ProvisionMockCsvOpts = {
   organizationId: string;

@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api/client";
 import {
   updateThresholdBodySchema,
   updateThresholdResponseSchema,
+  type MetricKey,
 } from "@/lib/stores";
 
 export type ProductRef = {
@@ -10,7 +11,7 @@ export type ProductRef = {
 
 export type UpdateThresholdInput = {
   readonly product: ProductRef;
-  readonly metricKey: string;
+  readonly metricKey: MetricKey;
   readonly threshold: number;
 };
 
@@ -26,12 +27,13 @@ export async function patchProductThreshold(input: UpdateThresholdInput): Promis
   updateThresholdResponseSchema.parse({ ok: true });
 }
 
-export function parseThresholdFormData(formData: FormData): { metricKey: string; threshold: number } {
+export function parseThresholdFormData(formData: FormData): { metricKey: MetricKey; threshold: number } {
   const rawKey = formData.get("metric_key");
   const metricKey = typeof rawKey === "string" ? rawKey : "";
   const threshold = Number(formData.get("threshold"));
-  if (!metricKey || Number.isNaN(threshold)) {
+  const parsed = updateThresholdBodySchema.safeParse({ metric_key: metricKey, threshold });
+  if (!parsed.success) {
     throw new Error("Invalid threshold values");
   }
-  return { metricKey, threshold };
+  return { metricKey: parsed.data.metric_key, threshold: parsed.data.threshold };
 }

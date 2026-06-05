@@ -1,36 +1,49 @@
 export type {
-  CatalogForecastOpts,
   CatalogGetOpts,
   CatalogHealthOpts,
   CatalogInclude,
   CatalogListOpts,
+  CatalogProduct,
   CatalogUpdateOpts,
   HealthLevel,
+  KpiDirection,
+  KpiHealthStatus,
+  KpiSeverity,
   KpiThreshold,
+  MetricKey,
   ProductMetric,
   ProductMonthlyMetric,
+  UpdateThresholdBody,
 } from "./catalog/types";
-export { updateThresholdBodySchema, updateThresholdResponseSchema, type UpdateThresholdBody } from "./catalog/schemas";
-export { computeHealthLevel, computeProductHealth } from "./catalog/health";
-export type { ProductForecast } from "./catalog/forecast/product";
-export type { MarginBridgeInput, MarginDriver } from "./catalog/forecast/margin";
-export type { ReorderPlan } from "./catalog/forecast/reorder";
+export {
+  METRIC_KEYS,
+  metricKeySchema,
+  updateThresholdBodySchema,
+  updateThresholdResponseSchema,
+} from "./catalog/types";
 
-export type { OrderFeedItem, OrderFeedLineItem } from "./orders/feed/order-feed-item";
-export { ordersQuerySchema, type OrdersQuery } from "./orders/feed/orders-query";
+export type {
+  AdvanceBody,
+  AdvanceResponse,
+  FeedResponse,
+  OrderFeedItem,
+  OrderFeedLineItem,
+  OrdersQuery,
+} from "./orders/types";
 export {
   advanceBodySchema,
   advanceResponseSchema,
   feedResponseSchema,
-  type AdvanceBody,
-  type AdvanceResponse,
-  type FeedResponse,
-} from "./orders/schemas";
+  ordersQuerySchema,
+} from "./orders/types";
 
 export type {
   AgentFinding,
   ApproveActionsInput,
   ApproveIncidentAndNotifyOpts,
+  CreatedIncident,
+  DetectOpts,
+  DetectionResult,
   Incident,
   IncidentAction,
   IncidentDetail,
@@ -41,34 +54,35 @@ export type {
   ListIncidentActionIdsOpts,
   TimelineEvent,
 } from "./incidents/types";
-export type { DetectOpts, DetectionResult, CreatedIncident } from "./incidents/detect";
 export {
   approveIncidentBodySchema,
   approveIncidentResponseSchema,
+  detectBodySchema,
   incidentDetailSchema,
+  mergeDetectionResults,
   patchIncidentStatusBodySchema,
   updateIncidentBodySchema,
+  INCIDENT_STATUSES,
+  KANBAN_COLUMNS,
   type ApproveIncidentBody,
   type ApproveIncidentResponse,
+  type DetectBody,
   type PatchIncidentStatusBody,
   type UpdateIncidentBody,
-} from "./incidents/schemas";
-export { INCIDENT_STATUSES, KANBAN_COLUMNS } from "./incidents/status";
+} from "./incidents/types";
 
 export {
   learnBodySchema,
   learnResponseSchema,
   parseReportSummary,
   type LearnBody,
+  type LearnResult,
+  type LearnRunOpts,
+  type LearnRunResult,
   type ReportSummary,
-} from "./learn/schemas";
-export type { LearnResult } from "./learn/baselines";
-export type { LearnRunOpts, LearnRunResult } from "./learn/learn";
+} from "./learn";
 
-export type { SearchListOpts } from "./search/search";
-export type { SearchTarget } from "./search/types";
-
-export { forecastStockout } from "./catalog/forecast/predictors";
+export type { SearchListOpts, SearchTarget } from "./search";
 
 export type { StoreConnection, StorePlatform } from "./import";
 export {

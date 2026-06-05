@@ -7,7 +7,7 @@ import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
 import type { PrettyFlyFiles } from "./mock/pack";
 import { type IdMaps, prettyFlyRows } from "./mock/rows";
-import type { ImportLoadOpts, ImportTableResult, ImportLoader } from ".";
+import type { ImportLoadOpts, ImportLoader, ImportTableResult } from "./types";
 
 export type { PrettyFlyFile, PrettyFlyFiles } from "./mock/pack";
 

@@ -5,7 +5,7 @@ import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { advanceBodySchema } from "@/lib/stores";
-import { getStore, notifyNewIncidents } from "@/lib/stores/server";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const createdIncidents = results.flatMap((r) => r.breaches.created);
-    await notifyNewIncidents(createdIncidents);
+    await store.incidents.notifyNew(createdIncidents);
     void investigateCreatedIncidents(supabase, createdIncidents);
 
     return NextResponse.json({

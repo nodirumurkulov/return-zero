@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approveIncidentBodySchema, updateIncidentBodySchema } from "./schemas";
+import { approveIncidentBodySchema, updateIncidentBodySchema } from "./types";
 
 describe("updateIncidentBodySchema", () => {
   it("accepts partial updates", () => {

@@ -1,30 +1,24 @@
-# AGENTS.md — lib/stores/analytics/replay
+# AGENTS.md — lib/stores/orders
 
-Analytics time-travel: replay cursor + live orders feed. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
+Replay cursor, orders feed, advance + breach detect. **Parent:** [../AGENTS.md](../AGENTS.md)
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `replay.ts` | **`Replay`** — sole public API (`run`, `reset`, `listIncomingOrders`, bounds) |
-| `cursor.ts`, `replay-bounds.ts` | Internal cursor/bounds helpers |
-| `replay-request.ts` | `ReplayOpts`, `replayBodySchema` for `/api/stores/analytics/replay` |
-| `replay-result.ts` | `ReplayResult` |
-| `feed/` | `ordersQuerySchema`, `OrderFeedItem` types |
+| `orders.ts` | **`Orders`** class — bounds, list, advance, reset |
+| `types.ts` | Feed types, replay opts, API Zod schemas |
+| `errors.ts` | `OrdersError` |
+| `index.ts` | Barrel |
 
 ## Public API
 
-All operations are methods on `Replay`. Instantiate via `createReplay(supabase)`:
-
 ```typescript
-const replay = createReplay(supabase);
-await replay.run({ organizationId, advanceDays });
-await replay.listIncomingOrders({ organizationId, after, limit });
+import { getStore } from "@/lib/stores/server";
+
+const { orders } = getStore(supabase);
+await orders.bounds({ organizationId });
+await orders.list({ organizationId, after, limit });
+await orders.advance({ organizationId, days });
+await orders.reset({ organizationId });
 ```
-
-`Replay.REPLAY_START` is the fallback when uploaded data has no orders.
-
-## Rules
-
-- Replay owns cursor + feed only; detection delegates to `createIncidents(supabase).detectBreaches` with `asOf`.
-- Import from `@/lib/stores/analytics/replay`; do not import legacy `lib/orders/` or `lib/detection/`.

@@ -24,9 +24,6 @@ export default async function CatalogPage() {
   }
 
   return (
-    <CatalogGrid
-      products={result.products}
-      thresholdsByProduct={result.thresholdsByProduct}
-    />
+    <CatalogGrid products={result.products} />
   );
 }
