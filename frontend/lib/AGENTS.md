@@ -27,7 +27,8 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `detection/` | `@/lib/detection/*` | Detect, severity, recover |
 | `forecast/` | `@/lib/forecast` | Deterministic forecasts |
 | `agents/` | `@/lib/agents` | LLM investigation (`LlmAgentFinding` ≠ DB `AgentFinding`) |
-| `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod |
+| `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
+| `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
 Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client/TanStack code lives in `api/` (functions) and `hooks/` (thin wrappers around `api/`); import via `@/lib/<domain>/api` and `@/lib/<domain>/hooks`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
