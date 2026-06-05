@@ -1,5 +1,6 @@
 import "server-only";
-import { callLLMJson } from "@/lib/llm";
+import { callLLMJson, isLlmConfigured } from "@/lib/llm";
+import { synthesiseDeterministicRootCause } from "./deterministic-synthesis";
 import { synthesiserLlmSchema } from "./schemas";
 import type { InvestigationAction, LlmAgentFinding } from "./types";
 
@@ -8,12 +9,16 @@ export async function synthesiseRootCause(findings: LlmAgentFinding[]): Promise<
   root_cause_confidence: number;
   actions: InvestigationAction[];
 }> {
+  if (!isLlmConfigured()) {
+    return synthesiseDeterministicRootCause(findings);
+  }
+
   const result = await callLLMJson(
     [
       {
         role: "system",
         content: `You are the root cause synthesiser for Resolve, a commerce incident response platform.
-Given findings from 4 agents, produce a concise root cause narrative and 3-4 concrete action recommendations.
+Given findings from 5 agents (Returns, Merchandising, Marketing, Inventory, Forecasting), produce a concise root cause narrative and 3-4 concrete action recommendations.
 Respond with JSON:
 {
   "root_cause": "...",
@@ -39,9 +44,13 @@ Auto-deploy should only be true for low-risk, purely additive actions (e.g. addi
     synthesiserLlmSchema,
   );
 
+  if (!result?.root_cause || !result.actions?.length) {
+    return synthesiseDeterministicRootCause(findings);
+  }
+
   return {
-    root_cause: result?.root_cause ?? "Under investigation",
-    root_cause_confidence: result?.root_cause_confidence ?? 70,
-    actions: result?.actions ?? [],
+    root_cause: result.root_cause,
+    root_cause_confidence: result.root_cause_confidence ?? 70,
+    actions: result.actions,
   };
 }

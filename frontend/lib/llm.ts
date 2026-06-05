@@ -12,6 +12,13 @@ export type Message = { role: "system" | "user" | "assistant"; content: string }
 
 const provider = process.env.LLM_PROVIDER ?? "openai";
 
+export function isLlmConfigured(): boolean {
+  if (provider === "anthropic") {
+    return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+  }
+  return Boolean(process.env.OPENAI_API_KEY?.trim());
+}
+
 async function callOpenAI(messages: Message[]): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const model = process.env.OPENAI_MODEL ?? "gpt-5.5";

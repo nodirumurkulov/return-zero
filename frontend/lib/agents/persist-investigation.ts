@@ -23,7 +23,8 @@ export async function persistInvestigation(
   await supabase.from("incident_timeline").insert({
     incident_id: incidentId,
     event_type: "agent_assigned",
-    description: "4 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory",
+    description:
+      "5 agents dispatched in parallel: Returns, Merchandising, Marketing, Inventory, Forecasting",
   });
 
   const result = await runInvestigation(supabase, incidentId, productId);

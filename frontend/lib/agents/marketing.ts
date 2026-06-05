@@ -10,17 +10,26 @@ export async function runMarketingAgent(
 ): Promise<LlmAgentFinding> {
   const productCampaigns = await campaignNamesForProduct(supabase, productId);
 
-  const { data: metaAds } = await supabase
-    .from("meta_ads_daily")
-    .select("campaign_name, spend_gbp, conversions, conversion_value_gbp")
-    .order("date", { ascending: false })
-    .limit(1000);
+  const [{ data: metaAds }, { data: googleAds }] = await Promise.all([
+    supabase
+      .from("meta_ads_daily")
+      .select("campaign_name, spend_gbp, conversions, conversion_value_gbp")
+      .order("date", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("google_ads_daily")
+      .select("campaign_name, spend_gbp, conversions, conversion_value_gbp")
+      .order("date", { ascending: false })
+      .limit(1000),
+  ]);
 
   const campaignSet = new Set(productCampaigns);
   const scopedRows =
     productCampaigns.length === 0
       ? []
-      : (metaAds ?? []).filter((row) => row.campaign_name && campaignSet.has(row.campaign_name));
+      : [...(metaAds ?? []), ...(googleAds ?? [])].filter(
+          (row) => row.campaign_name && campaignSet.has(row.campaign_name),
+        );
 
   const campaigns: Record<string, { spend: number; revenue: number; conversions: number }> = {};
   scopedRows.forEach((row) => {
