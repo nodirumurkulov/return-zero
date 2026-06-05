@@ -273,7 +273,7 @@ export function OrdersFeed({
               }
             >
               <span
-                className={`size-1.5 rounded-full ${playing ? "animate-pulse bg-sev-resolved" : "bg-zinc-400"}`}
+                className={`size-1.5 rounded-full ${playing ? "motion-safe:animate-pulse bg-sev-resolved" : "bg-zinc-400"}`}
               />
               {playing ? "Live" : entries.length > 0 ? "Paused" : "Idle"}
             </Badge>

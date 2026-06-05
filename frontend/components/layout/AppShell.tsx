@@ -101,7 +101,7 @@ export default function AppShell({
             <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-sev-resolved/50" />
+                  <span className="absolute inline-flex size-full motion-safe:animate-ping rounded-full bg-sev-resolved/50" />
                   <span className="relative inline-flex size-2 rounded-full bg-sev-resolved" />
                 </span>
                 <span className="text-xs font-semibold text-foreground">Hugo is online</span>
