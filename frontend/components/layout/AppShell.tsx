@@ -79,9 +79,13 @@ export default function AppShell({
       </a>
       <SidebarProvider>
         <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="gap-3 border-b border-sidebar-border p-4">
-            <BrandLogo />
-            <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
+          <SidebarHeader className="gap-0 border-b border-sidebar-border p-0">
+            <div className="px-4 py-3">
+              <BrandLogo />
+            </div>
+            <div className="border-t border-sidebar-border px-2 py-2">
+              <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
+            </div>
           </SidebarHeader>
 
           <SidebarContent>

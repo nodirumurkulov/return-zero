@@ -51,7 +51,7 @@ function ShopAvatar({
           alt=""
           fill
           className="object-cover"
-          sizes="32px"
+          sizes="28px"
         />
       </div>
     );
@@ -95,9 +95,9 @@ export function ShopSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="h-auto min-h-10 py-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <ShopAvatar shop={activeShop} className="size-8" textClassName="text-xs" />
+              <ShopAvatar shop={activeShop} className="size-7" textClassName="text-[11px]" />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeShop.name}</span>
                 <span className="truncate text-xs text-muted-foreground">
