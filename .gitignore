@@ -27,6 +27,9 @@ scripts/node_modules/
 supabase/.temp/
 
 # Playwright
+.playwright-mcp/
+ui-audit-*.png
+ui-review-*.png
 frontend/e2e/.auth/
 frontend/playwright-report/
 frontend/test-results/
