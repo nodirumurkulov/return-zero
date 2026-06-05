@@ -14,13 +14,21 @@ const provider = process.env.LLM_PROVIDER ?? "openai";
 
 async function callOpenAI(messages: Message[]): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const res = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-  });
-  return res.choices[0].message.content ?? "";
+  const model = process.env.OPENAI_MODEL ?? "gpt-5.5";
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+    });
+    return res.choices[0]?.message?.content ?? "";
+  } catch {
+    // Some newer models reject a custom temperature / response_format. Retry with
+    // defaults so JSON-capable models still work (prompts already ask for JSON).
+    const res = await client.chat.completions.create({ model, messages });
+    return res.choices[0]?.message?.content ?? "";
+  }
 }
 
 async function callAnthropic(messages: Message[]): Promise<string> {
@@ -54,12 +62,14 @@ async function callLLMRaw(messages: Message[]): Promise<string> {
  * Returns null when the response is missing or invalid (callers use deterministic fallbacks).
  */
 export async function callLLMJson<T>(messages: Message[], schema: z.ZodType<T>): Promise<T | null> {
-  const raw = await callLLMRaw(messages);
   try {
+    const raw = await callLLMRaw(messages);
     const parsed: unknown = JSON.parse(raw);
     const result = schema.safeParse(parsed);
     return result.success ? result.data : null;
   } catch {
+    // Any failure (missing/invalid key, unknown model, network, bad JSON) →
+    // null, so callers fall back to deterministic findings instead of erroring.
     return null;
   }
 }
