@@ -15,7 +15,7 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/recover` | Advance monitoring recovery (cron-capable) |
 | `POST` | `/api/replay` | Advance replay clock (cron or signed-in user) |
 | `POST` | `/api/learn` | Learn baselines + business report after upload |
-| `POST` | `/api/onboarding/upload` | Multipart CSV import |
+| `POST` | `/api/onboarding/connect` | Choose store platform; loads Pretty Fly demo for `mock_csv` |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 | `POST` | `/api/slack/events` | Slack Events API — `@hugo` mentions → LLM reply (URL verify + signing secret) |
 

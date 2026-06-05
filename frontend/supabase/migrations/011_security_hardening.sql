@@ -52,8 +52,10 @@ declare
     'collections', 'products', 'variants', 'customers', 'orders', 'line_items',
     'refunds', 'meta_ads_daily', 'google_ads_daily', 'inventory_movements',
     'support_tickets', 'purchase_orders', 'po_line_items',
+    'suppliers', 'product_collections', 'addresses', 'discount_codes',
+    'email_campaigns', 'email_events', 'support_messages', 'bank_transactions',
     'metric_definitions', 'product_kpi_thresholds', 'product_baselines',
-    'forecast_rules', 'business_settings', 'business_reports', 'replay_state',
+    'forecast_rules', 'business_settings', 'business_reports', 'store_connections',
     'incidents', 'agent_findings', 'incident_actions', 'incident_timeline'
   ];
 begin

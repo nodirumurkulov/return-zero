@@ -1,29 +1,37 @@
 import { z } from "zod";
 
-export const onboardingUploadResultSchema = z.object({
+import type { StorePlatform } from "@/lib/stores/connect/store-connection";
+
+export const onboardingConnectBodySchema = z
+  .object({
+    platform: z.enum(["mock_csv", "shopify"] satisfies [StorePlatform, StorePlatform]),
+  })
+  .strict();
+
+export const onboardingConnectResultSchema = z.object({
   table: z.string(),
   count: z.number(),
   error: z.string().optional(),
 });
 
-export const onboardingUploadSuccessResponseSchema = z
+export const onboardingConnectSuccessResponseSchema = z
   .object({
     success: z.literal(true),
-    results: z.array(onboardingUploadResultSchema),
+    results: z.array(onboardingConnectResultSchema),
   })
   .strict();
 
-export const onboardingUploadPartialResponseSchema = z
+export const onboardingConnectPartialResponseSchema = z
   .object({
     success: z.literal(false),
-    results: z.array(onboardingUploadResultSchema),
+    results: z.array(onboardingConnectResultSchema),
   })
   .strict();
 
-export const onboardingUploadResponseSchema = z.union([
-  onboardingUploadSuccessResponseSchema,
-  onboardingUploadPartialResponseSchema,
+export const onboardingConnectResponseSchema = z.union([
+  onboardingConnectSuccessResponseSchema,
+  onboardingConnectPartialResponseSchema,
   z.object({ error: z.string() }),
 ]);
 
-export type OnboardingUploadResponse = z.infer<typeof onboardingUploadResponseSchema>;
+export type OnboardingConnectResponse = z.infer<typeof onboardingConnectResponseSchema>;

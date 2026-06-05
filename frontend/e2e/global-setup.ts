@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+
+import { bootstrapDemoFixtures } from "../scripts/demo-fixtures";
 import {
   COURT_TRAINER_PRODUCT_EXTERNAL_ID,
   DEMO_ORG_ID,
@@ -51,6 +53,8 @@ export default async function globalSetup() {
     throw new Error(`E2E global-setup: org membership failed: ${memberError.message}`);
   }
 
+  await bootstrapDemoFixtures(admin, DEMO_ORG_ID);
+
   const { data: heroProduct, error: productError } = await admin
     .from("products")
     .select("id")
@@ -61,9 +65,7 @@ export default async function globalSetup() {
     throw new Error(`E2E global-setup: hero product lookup failed: ${productError.message}`);
   }
   if (!heroProduct?.id) {
-    throw new Error(
-      "E2E global-setup: Court Trainer product not found — run `bun run seed` before E2E",
-    );
+    throw new Error("E2E global-setup: Court Trainer product not found after demo fixtures");
   }
 
   const { error: incidentError } = await admin.from("incidents").upsert(

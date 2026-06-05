@@ -48,8 +48,11 @@ begin
     (p_organization_id, 'roas_decay_down', 'roas_decay', 30, 1.5, 'medium'),
     (p_organization_id, 'revenue_drop', 'revenue_drop', 90, 0.20, 'medium');
 
-  insert into public.replay_state (organization_id, cursor)
-  values (p_organization_id, date '2025-12-01')
+  insert into public.store_connections (
+    organization_id, platform, sync_mode, status, replay_cursor
+  ) values (
+    p_organization_id, 'mock_csv', 'static', 'pending', date '2025-12-01'
+  )
   on conflict (organization_id) do nothing;
 end;
 $$;
