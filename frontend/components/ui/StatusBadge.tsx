@@ -12,13 +12,13 @@ const labels: Record<string, string> = {
 };
 
 const styles: Record<string, string> = {
-  detected: "bg-zinc-700/50 text-zinc-300 border-zinc-600/50",
-  investigating: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  fix_proposed: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  awaiting_approval: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  deploying: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  monitoring: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  resolved: "bg-green-500/20 text-green-400 border-green-500/30",
+  detected: "bg-sev-idleBg text-sev-idle border-sev-idleBd",
+  investigating: "bg-sev-highBg text-sev-high border-sev-highBd",
+  fix_proposed: "bg-primary-subtle text-primary border-primary/20",
+  awaiting_approval: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
+  deploying: "bg-sev-highBg text-sev-high border-sev-highBd",
+  monitoring: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
+  resolved: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",
 };
 
 export function StatusBadge({ status }: { status: string }) {

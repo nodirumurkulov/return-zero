@@ -3,14 +3,14 @@ import type { HealthLevel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
 const styles: Record<HealthLevel, string> = {
-  healthy: "bg-sev-low/20 text-green-400 border-sev-low/30",
-  warning: "bg-sev-medium/20 text-yellow-400 border-sev-medium/30",
-  critical: "bg-sev-critical/20 text-red-400 border-sev-critical/30",
+  healthy: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",
+  warning: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
+  critical: "bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
 };
 
 const dots: Record<HealthLevel, string> = {
-  healthy: "bg-sev-low",
-  warning: "bg-sev-medium",
+  healthy: "bg-sev-resolved",
+  warning: "bg-sev-monitor",
   critical: "bg-sev-critical",
 };
 

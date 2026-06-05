@@ -37,7 +37,11 @@ vi.mock("recharts", () => ({
     React.createElement("div", { "data-testid": "recharts-container" }, children),
   LineChart: ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", { "data-testid": "line-chart" }, children),
+  ComposedChart: ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "composed-chart" }, children),
   Line: () => React.createElement("div", { "data-testid": "line" }),
+  Area: () => React.createElement("div", { "data-testid": "area" }),
+  ReferenceLine: () => React.createElement("div", { "data-testid": "reference-line" }),
 }));
 
 class ResizeObserverMock {

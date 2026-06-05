@@ -44,6 +44,6 @@ describe("IncidentCard", () => {
       root_cause: "Batch issue",
     });
     renderWithProviders(<IncidentCard incident={incident} />);
-    expect(screen.getByText("72% confidence")).toBeInTheDocument();
+    expect(screen.getByText("72%")).toBeInTheDocument();
   });
 });
