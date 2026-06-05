@@ -6,12 +6,16 @@ Ecommerce store product domain. **Parent:** [../AGENTS.md](../AGENTS.md)
 
 | Path | Role |
 |------|------|
-| `index.ts` | Re-exports `Store`, platform classes |
-| `connect/` | Connectors and platform stores |
+| `index.ts` | Public exports |
+| `store.ts` | `Store` interface, `StoreConnections` |
+| `mock.ts` | `MockStore` |
+| `shopify.ts` | `ShopifyStore` |
+| `connect/` | `StoreConnector` types and platform connectors |
 | `analytics/` | Replay time-travel, orders feed |
 | `incidents/` | Detection and incident lifecycle |
 
 ## Rules
 
 - Import from `@/lib/stores` only.
-- Instantiate platform stores at the call site (`new MockStore()`, `new ShopifyStore()`).
+- `MockStore` / `ShopifyStore` implement `Store` and dispatch to `connector` + `connections`.
+- Connectors live in `connect/` — not here.

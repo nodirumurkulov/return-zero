@@ -1,12 +1,14 @@
 export type {
   LoadResult,
-  Store,
   StoreConnection,
   StoreConnector,
   StoreLoadOpts,
   StorePlatform,
 } from "./connect";
-export { StoreConnections } from "./connect";
-export { MockStore, MockStoreConnector } from "./connect/mock";
+export type { Store } from "./store";
+export { StoreConnections } from "./store";
+export { MockStore } from "./mock";
+export { ShopifyStore } from "./shopify";
+export { MockStoreConnector } from "./connect/mock";
 export type { PrettyFlyFile, PrettyFlyFiles } from "./connect/mock";
-export { ShopifyStore, ShopifyStoreConnector } from "./connect/shopify";
+export { ShopifyStoreConnector } from "./connect/shopify";
