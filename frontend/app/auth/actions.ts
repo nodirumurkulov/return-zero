@@ -44,7 +44,7 @@ export async function signUp(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     ...parsed.data,
     options: {
       // New accounts go straight to onboarding — both when a session is created
@@ -54,6 +54,25 @@ export async function signUp(formData: FormData) {
     },
   });
   if (error) return { ok: false as const, error: error.message };
+
+  // Supabase returns a user with an empty `identities` array when the email is
+  // already registered (it avoids leaking which emails exist). Nudge to sign in.
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    return {
+      ok: false as const,
+      error: "An account with this email already exists. Try signing in instead.",
+    };
+  }
+
+  // When email confirmation is enabled, sign-up creates no session. Redirecting
+  // into /onboarding would just bounce back to /sign-in (proxy sees no user), so
+  // surface a confirmation notice instead.
+  if (!data.session) {
+    return {
+      ok: true as const,
+      message: `Account created. Check ${parsed.data.email} for a confirmation link to finish signing in.`,
+    };
+  }
 
   redirect("/onboarding");
 }
