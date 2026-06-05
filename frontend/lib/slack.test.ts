@@ -1,7 +1,6 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  generateHugoReply,
   parseSlackEventEnvelope,
   parseSlackInteractionPayload,
   slackInteractionPayloadSchema,
@@ -97,12 +96,5 @@ describe("stripSlackMentions", () => {
 
   it("removes multiple mentions", () => {
     expect(stripSlackMentions("hi <@U1> and <@U2>")).toBe("hi and");
-  });
-});
-
-describe("generateHugoReply", () => {
-  it("returns a greeting fallback for empty prompts without calling the LLM", async () => {
-    const reply = await generateHugoReply("   ");
-    expect(reply).toMatch(/Hugo/);
   });
 });

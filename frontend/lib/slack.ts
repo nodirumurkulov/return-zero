@@ -6,7 +6,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { callLLMText, type Message } from "@/lib/llm";
 
 export type SlackIncidentPayload = {
   title: string;
@@ -333,27 +332,3 @@ export async function postSlackMessage(args: {
   }
 }
 
-const HUGO_SYSTEM_PROMPT =
-  "You are Hugo, a helpful assistant for the Resolve ecommerce incident-response app. " +
-  "You are chatting inside Slack. Be concise, friendly, and use plain language. " +
-  "Slack does not render Markdown headings or tables, so prefer short paragraphs and " +
-  "simple bullet points ('- '). Keep replies under ~1500 characters unless asked for more.";
-
-/**
- * Generate Hugo's reply to a Slack message. Returns a friendly fallback when
- * the LLM is unavailable (missing key / network) so the bot always responds.
- */
-export async function generateHugoReply(userText: string): Promise<string> {
-  const prompt = userText.trim();
-  if (!prompt) {
-    return "Hi! I'm Hugo 👋 — mention me with a question and I'll do my best to help.";
-  }
-
-  const messages: Message[] = [
-    { role: "system", content: HUGO_SYSTEM_PROMPT },
-    { role: "user", content: prompt },
-  ];
-
-  const reply = await callLLMText(messages);
-  return reply.trim() || "Sorry, I couldn't generate a reply right now. Please try again in a moment.";
-}
