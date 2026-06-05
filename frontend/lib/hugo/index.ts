@@ -1,8 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getIncidentDetail, type Incident } from "@/lib/incidents";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { postSlackMessage } from "@/lib/slack";
+import { createIncidents, type Incident } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import { runHugoApproval, runHugoInvestigation } from "./actions";
@@ -54,7 +54,7 @@ async function answerDataQuery(
   if (ref) {
     const { match } = await resolveIncident(supabase, ref, organizationId);
     if (match) {
-      const detail = await getIncidentDetail(supabase, match.id, organizationId);
+      const detail = await createIncidents(supabase).getIncidentDetail(match.id, organizationId);
       if (detail) parts.push(buildIncidentDetailContext(detail));
     }
   }

@@ -5,8 +5,8 @@ import {
   triggerInvestigation,
   type TriggerInvestigationInput,
 } from "@/lib/agents/api";
-import { incidentKeys } from "@/lib/incidents/api";
-import type { IncidentRef } from "@/lib/incidents/incident";
+import type { IncidentRef } from "@/lib/stores/incidents";
+import { incidentKeys } from "@/lib/stores/incidents/api";
 
 export function useTriggerInvestigation(incident: IncidentRef) {
   const queryClient = useQueryClient();

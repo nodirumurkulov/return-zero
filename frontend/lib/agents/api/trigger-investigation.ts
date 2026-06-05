@@ -1,4 +1,4 @@
-import type { IncidentRef } from "@/lib/incidents/incident";
+import type { IncidentRef } from "@/lib/stores/incidents";
 
 export type ProductRef = {
   readonly id: string;

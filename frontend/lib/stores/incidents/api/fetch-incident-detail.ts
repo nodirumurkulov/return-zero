@@ -1,5 +1,4 @@
-import type { IncidentRef } from "../incident";
-import type { IncidentDetail } from "../incident-detail";
+import type { IncidentDetail, IncidentRef } from "../types";
 
 export type FetchIncidentDetailInput = {
   readonly incident: IncidentRef;

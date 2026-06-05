@@ -6,10 +6,10 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 
 | Module | Import | Responsibility |
 |--------|--------|----------------|
-| [`incidents/`](incidents/) | `@/lib/incidents` | Incidents, actions, findings, timeline |
+| [`incidents/`](incidents/) | `@/lib/stores/incidents` | Incidents, actions, findings, timeline |
 | [`catalog/`](catalog/) | `@/lib/catalog` | Product metrics, thresholds, health |
 | [`metrics/`](metrics/) | `@/lib/metrics/*` | KPI definitions, engine, series |
-| [`detection/`](detection/) | `@/lib/detection/*` | Breach detect, severity, recovery |
+| [`stores/incidents/`](stores/incidents/) | `@/lib/stores/incidents` | Incidents, detection, recovery |
 | [`forecast/`](forecast/) | `@/lib/forecast` | Deterministic forecasts |
 | [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |
@@ -18,7 +18,7 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 ## Usage
 
 ```typescript
-import { getIncidentDetail, type Incident } from "@/lib/incidents";
+import { getIncidentDetail, type Incident } from "@/lib/stores/incidents";
 import { createServiceClient } from "@/lib/supabase/server";
 
 const supabase = createServiceClient();

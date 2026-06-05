@@ -1,4 +1,4 @@
-import type { TimelineEvent } from "@/lib/incidents";
+import type { TimelineEvent } from "@/lib/stores/incidents";
 
 const icons: Record<string, string> = {
   anomaly_detected: "🔍",

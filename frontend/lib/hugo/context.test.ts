@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Incident } from "@/lib/incidents";
+import type { Incident } from "@/lib/stores/incidents";
 import {
   buildInventoryContext,
   buildOpenIncidentsContext,
@@ -13,7 +13,9 @@ import {
 
 const { listIncidentsMock } = vi.hoisted(() => ({ listIncidentsMock: vi.fn() }));
 
-vi.mock("@/lib/incidents", () => ({ listIncidents: listIncidentsMock }));
+vi.mock("@/lib/stores/incidents", () => ({
+  createIncidents: vi.fn(() => ({ listIncidents: listIncidentsMock })),
+}));
 vi.mock("@/lib/catalog", () => ({
   computeProductHealth: vi.fn(),
   listCatalogWithThresholds: vi.fn(),
@@ -57,7 +59,7 @@ describe("isOpenIncident", () => {
   it("treats resolved/closed as not open", () => {
     expect(isOpenIncident(incident({ status: "detected" }))).toBe(true);
     expect(isOpenIncident(incident({ status: "resolved" }))).toBe(false);
-    expect(isOpenIncident(incident({ status: "CLOSED" }))).toBe(false);
+    expect(isOpenIncident(incident({ status: "canceled" }))).toBe(false);
   });
 });
 

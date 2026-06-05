@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
-import { runRecovery } from "@/lib/detection/recover";
-import { recoverBodySchema } from "@/lib/detection/schemas";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
+import { createIncidents, recoverBodySchema } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,9 +35,10 @@ export async function POST(req: NextRequest) {
       ? await listAllOrganizationIds(supabase)
       : [await requireOrganizationId(supabase)];
 
+    const store = createIncidents(supabase);
     const results = await Promise.all(
       organizationIds.map((organizationId) =>
-        runRecovery(supabase, {
+        store.runRecovery({
           organizationId,
           advanceDays: parsed.data.advance_days,
         }),

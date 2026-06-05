@@ -1,14 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { persistInvestigation } from "@/lib/agents";
-import { captureRecoveryBaseline } from "@/lib/detection/recover";
-import {
-  approveIncidentActions,
-  getIncident,
-  type Incident,
-  listLowRiskProposedActionIds,
-} from "@/lib/incidents";
 import { sendIncidentNotification } from "@/lib/slack";
+import { createIncidents, type Incident } from "@/lib/stores/incidents";
 
 function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -64,23 +58,27 @@ export async function runHugoApproval(
   incident: Incident,
   approvedBy: string,
 ): Promise<string> {
-  const actionIds = await listLowRiskProposedActionIds(supabase, incident.id);
+  const store = createIncidents(supabase);
+  const actionIds = await store.listLowRiskProposedActionIds(incident.id);
   if (actionIds.length === 0) {
     return `There are no low-risk actions awaiting approval on "${incident.title}". You may need to investigate it first, or approve higher-risk actions in the app: ${incidentLink(incident.id)}`;
   }
 
   try {
-    await approveIncidentActions(supabase, incident.id, actionIds, approvedBy);
+    await store.approveIncidentActions({
+      incidentId: incident.id,
+      actionIds,
+      approvedByUserId: approvedBy,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
     return `Approval for "${incident.title}" failed: ${message}`;
   }
 
-  const updated = await getIncident(supabase, incident.id);
+  const updated = await store.getIncident(incident.id);
   if (updated) {
     if (updated.product_id) {
-      await captureRecoveryBaseline(
-        supabase,
+      await store.captureRecoveryBaseline(
         updated.organization_id,
         updated.id,
         updated.product_id,

@@ -3,9 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/detection/recover", () => ({
-  runRecovery: vi.fn(),
-}));
+const { runRecoveryMock } = vi.hoisted(() => ({ runRecoveryMock: vi.fn() }));
+
+vi.mock("@/lib/stores/incidents", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/stores/incidents")>();
+  return {
+    ...actual,
+    createIncidents: vi.fn(() => ({ runRecovery: runRecoveryMock })),
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
@@ -17,9 +23,6 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { POST } from "@/app/api/recover/route";
-import { runRecovery } from "@/lib/detection/recover";
-
-const runRecoveryMock = vi.mocked(runRecovery);
 
 describe("POST /api/recover", () => {
   beforeEach(() => {
@@ -60,6 +63,6 @@ describe("POST /api/recover", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runRecoveryMock).toHaveBeenCalledWith({}, { organizationId: "org-1", advanceDays: 7 });
+    expect(runRecoveryMock).toHaveBeenCalledWith({ organizationId: "org-1", advanceDays: 7 });
   });
 });

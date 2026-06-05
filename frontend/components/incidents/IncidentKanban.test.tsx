@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import IncidentKanban from "@/components/incidents/IncidentKanban";
 
-vi.mock("@/lib/incidents/hooks", () => ({
+vi.mock("@/lib/stores/incidents/hooks", () => ({
   useUpdateIncidentStatus: () => ({
     mutate: vi.fn(),
     isPending: false,

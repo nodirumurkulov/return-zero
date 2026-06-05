@@ -6,14 +6,25 @@ Analytics time-travel: replay cursor + live orders feed. **Parent:** [../../../A
 
 | Path | Role |
 |------|------|
-| `replay.ts` | `runReplay`, `resetReplay` — advance cursor, delegate detection with `asOf` |
-| `cursor.ts` | Read/write `store_connections.replay_cursor` |
-| `replay-bounds.ts` | Stream window bounds (`dataEndDate`, `streamStartDate`, `REPLAY_START`) |
+| `replay.ts` | **`Replay`** — sole public API (`run`, `reset`, `listIncomingOrders`, bounds) |
+| `cursor.ts`, `replay-bounds.ts` | Internal cursor/bounds helpers |
 | `replay-request.ts` | `ReplayOpts`, `replayBodySchema` for `/api/replay` |
 | `replay-result.ts` | `ReplayResult` |
-| `feed/` | Orders stream query + `OrderFeedItem` types |
+| `feed/` | `ordersQuerySchema`, `OrderFeedItem` types |
+
+## Public API
+
+All operations are methods on `Replay`. Instantiate via `createReplay(supabase)`:
+
+```typescript
+const replay = createReplay(supabase);
+await replay.run({ organizationId, advanceDays });
+await replay.listIncomingOrders({ organizationId, after, limit });
+```
+
+`Replay.REPLAY_START` is the fallback when uploaded data has no orders.
 
 ## Rules
 
-- Replay owns cursor + feed only; detection stays in `@/lib/detection/*` until `stores/incidents` lands.
-- Import from `@/lib/stores/analytics/replay`; do not import `lib/orders/` or `lib/detection/replay.ts`.
+- Replay owns cursor + feed only; detection delegates to `createIncidents(supabase).detectBreaches` with `asOf`.
+- Import from `@/lib/stores/analytics/replay`; do not import legacy `lib/orders/` or `lib/detection/`.

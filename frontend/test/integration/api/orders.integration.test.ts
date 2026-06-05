@@ -3,12 +3,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+const { replayStoreMock } = vi.hoisted(() => ({
+  replayStoreMock: { listIncomingOrders: vi.fn(), dataEndDate: vi.fn() },
+}));
+
 vi.mock("@/lib/stores/analytics/replay", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/stores/analytics/replay")>();
   return {
     ...actual,
-    listIncomingOrders: vi.fn(),
-    dataEndDate: vi.fn(),
+    createReplay: vi.fn(() => replayStoreMock),
   };
 });
 
@@ -21,12 +24,11 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { GET } from "@/app/api/orders/route";
-import { dataEndDate, listIncomingOrders } from "@/lib/stores/analytics/replay";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const listIncomingOrdersMock = vi.mocked(listIncomingOrders);
-const dataEndDateMock = vi.mocked(dataEndDate);
+const listIncomingOrdersMock = replayStoreMock.listIncomingOrders;
+const dataEndDateMock = replayStoreMock.dataEndDate;
 const createClientMock = vi.mocked(createClient);
 const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 

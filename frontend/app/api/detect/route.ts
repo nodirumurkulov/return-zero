@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
-import { detectBreaches } from "@/lib/detection/detect";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
+import { createIncidents } from "@/lib/stores/incidents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,8 +26,9 @@ export async function POST(req: NextRequest) {
       ? await listAllOrganizationIds(supabase)
       : [await requireOrganizationId(supabase)];
 
+    const store = createIncidents(supabase);
     const results = await Promise.all(
-      organizationIds.map((organizationId) => detectBreaches(supabase, { organizationId })),
+      organizationIds.map((organizationId) => store.detectBreaches({ organizationId })),
     );
     const scanned = results.reduce((sum, r) => sum + r.scanned, 0);
     const created = results.flatMap((r) => r.created);

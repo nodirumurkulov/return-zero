@@ -1,0 +1,180 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { computeMetricsDetailed } from "@/lib/metrics/engine";
+import { getMonthlySeries } from "@/lib/metrics/series";
+import type { ProductSourceFacts } from "@/lib/metrics/types";
+import { notifyNewIncident } from "@/lib/slack";
+
+import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
+import { TERMINAL_INCIDENT_STATUSES } from "./status";
+
+function factColumn(facts: ProductSourceFacts, source: string | null, field: string | null): number {
+  if (!source || !field) return 0;
+  const key = `${source}_${field}` as keyof ProductSourceFacts;
+  const v = facts[key];
+  return typeof v === "number" ? v : 0;
+}
+
+function fmtValue(unit: string, value: number): string {
+  if (unit === "ratio" || unit === "percentage") return `${(value * 100).toFixed(1)}%`;
+  if (unit === "currency") return `£${Math.round(value).toLocaleString("en-GB")}`;
+  return `${Math.round(value)}`;
+}
+
+export interface CreatedIncident {
+  incident_id: string;
+  product_id: string;
+  title: string;
+  severity: string;
+  affected_kpi_keys: string[];
+  impact_amount: number;
+}
+
+export interface DetectionResult {
+  scanned: number;
+  created: CreatedIncident[];
+  skipped: { product_id: string; reason: string }[];
+}
+
+export interface DetectOpts {
+  organizationId: string;
+  asOf?: string;
+}
+
+export class BreachDetector {
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  async run(opts: DetectOpts): Promise<DetectionResult> {
+    const { defs, factsByWindow, metrics } = await computeMetricsDetailed(this.supabase, {
+      organizationId: opts.organizationId,
+      asOf: opts.asOf,
+    });
+    const defByKey = new Map(defs.map((d) => [d.metric_key, d]));
+
+    const { data: incidentRows, error: incErr } = await this.supabase
+      .from("incidents")
+      .select("product_id, status")
+      .eq("organization_id", opts.organizationId);
+    if (incErr) throw new Error(`load incidents: ${incErr.message}`);
+    const openProducts = new Set(
+      (incidentRows ?? [])
+        .filter(
+          (r) =>
+            r.product_id && !(TERMINAL_INCIDENT_STATUSES as readonly string[]).includes(r.status as string),
+        )
+        .map((r) => r.product_id as string),
+    );
+
+    const { data: prodRows } = await this.supabase
+      .from("products")
+      .select("id, title")
+      .eq("organization_id", opts.organizationId);
+    const titleById = new Map(
+      (prodRows ?? []).map((p) => [p.id as string, (p.title as string) ?? (p.id as string)]),
+    );
+
+    const seriesByProduct = await getMonthlySeries(this.supabase, {
+      organizationId: opts.organizationId,
+      months: 24,
+    });
+
+    const created: CreatedIncident[] = [];
+    const skipped: DetectionResult["skipped"] = [];
+    const productIds = Object.keys(metrics);
+
+    for (const productId of productIds) {
+      const breached = metrics[productId].filter((m) => m.status === "critical");
+      if (breached.length === 0) continue;
+      if (openProducts.has(productId)) {
+        skipped.push({ product_id: productId, reason: "open incident exists" });
+        continue;
+      }
+
+      const ranked = breached
+        .map((m) => {
+          const def = defByKey.get(m.metric_key)!;
+          const facts = factsByWindow.get(def.window_days)!.get(productId)!;
+          return { m, def, impact: factColumn(facts, def.impact_source, def.impact_field) };
+        })
+        .sort(
+          (a, b) => severityRank(b.def.severity) - severityRank(a.def.severity) || b.impact - a.impact,
+        );
+      const primary = ranked[0];
+
+      const value = primary.m.value ?? 0;
+      const fullSeries = seriesByProduct.get(productId) ?? [];
+      const series = opts.asOf ? fullSeries.filter((p) => p.month <= opts.asOf!) : fullSeries;
+      const severity = scoreSeverity({
+        baseSeverity: primary.def.severity,
+        magnitude: breachMagnitude(value, primary.m.threshold, primary.m.direction),
+        impactAmount: primary.impact,
+        worsening: metricTrendWorsening(primary.m.metric_key, series, primary.m.direction),
+      });
+
+      const productTitle = titleById.get(productId) ?? productId;
+      const target = `${primary.m.direction === "above" ? "≤" : "≥"}${fmtValue(primary.m.unit, primary.m.threshold)}`;
+      const title = `${productTitle}: ${primary.m.display_name} ${fmtValue(primary.m.unit, value)} (target ${target})`;
+      const affected_kpi_keys = breached.map((m) => m.metric_key);
+
+      const { data: inc, error: insErr } = await this.supabase
+        .from("incidents")
+        .insert({
+          organization_id: opts.organizationId,
+          title,
+          status: "detected",
+          severity,
+          impact_amount: Math.round(primary.impact),
+          impact_label: primary.def.impact_label,
+          product_id: productId,
+          affected_kpi_keys,
+        })
+        .select("id")
+        .single();
+      if (insErr || !inc) {
+        skipped.push({ product_id: productId, reason: `insert failed: ${insErr?.message ?? "no row"}` });
+        continue;
+      }
+
+      await this.supabase.from("incident_timeline").insert([
+        {
+          incident_id: inc.id,
+          event_type: "anomaly_detected",
+          description: `${affected_kpi_keys.length} KPI breach(es): ${affected_kpi_keys.join(", ")}`,
+          metadata: {
+            breaches: ranked.map((r) => ({
+              metric: r.m.metric_key,
+              value: r.m.value,
+              threshold: r.m.threshold,
+              direction: r.m.direction,
+            })),
+          },
+        },
+        {
+          incident_id: inc.id,
+          event_type: "incident_created",
+          description: `Incident opened for ${productTitle} (severity: ${severity})`,
+        },
+      ]);
+
+      created.push({
+        incident_id: inc.id as string,
+        product_id: productId,
+        title,
+        severity,
+        affected_kpi_keys,
+        impact_amount: Math.round(primary.impact),
+      });
+
+      await notifyNewIncident({
+        incident_id: inc.id as string,
+        title,
+        severity,
+        impact_amount: Math.round(primary.impact),
+        impact_label: primary.def.impact_label,
+      });
+    }
+
+    return { scanned: productIds.length, created, skipped };
+  }
+}
+

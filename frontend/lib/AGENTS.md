@@ -24,10 +24,9 @@ Use the service role only when RLS cannot perform the write. Document new except
 | Module | Import | Owns |
 |--------|--------|------|
 | `organizations/` | `@/lib/organizations` | Tenancy: org membership, `requireOrganizationId`, cron tenant iteration |
-| `incidents/` | `@/lib/incidents` | Incidents, actions, findings, timeline, approve |
+| `stores/incidents/` | `@/lib/stores/incidents` | Incident lifecycle, detection, forecast-risk, recover |
 | `catalog/` | `@/lib/catalog` | Metrics, thresholds, health, catalog queries |
 | `metrics/` | `@/lib/metrics/*` | KPI engine, definitions, series |
-| `detection/` | `@/lib/detection/*` | Detect, severity, recover |
 | `forecast/` | `@/lib/forecast` | Deterministic forecasts |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
@@ -54,7 +53,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 - **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules. `lib/` owns domain logic and **shared** Zod schemas — not one-off 3-line utilities for a single server action.
 - **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.
 - Prefer **TypeScript advanced types** only when they clarify domain invariants; avoid clever types that obscure DB shape.
-- Cross-domain: `detection` → `metrics` / `forecast` OK; avoid `catalog` ↔ `incidents` coupling.
+- Cross-domain: `stores/incidents` → `metrics` / `forecast` OK; avoid `catalog` ↔ `stores/incidents` coupling.
 
 ## Code style
 
