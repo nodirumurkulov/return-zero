@@ -3,6 +3,7 @@ import { signUp } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
 import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
+import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 
 export default function SignUpPage() {
   return (
@@ -13,6 +14,7 @@ export default function SignUpPage() {
       </div>
       <AuthForm title="Create account" action={signUp} />
       <OAuthButtons />
+      <ShopifyLoginButton />
       <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         <Link href="/sign-in" className="text-primary hover:underline">
