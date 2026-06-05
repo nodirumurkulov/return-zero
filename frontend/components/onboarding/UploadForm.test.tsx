@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import UploadForm from "./UploadForm";
 
 describe("UploadForm", () => {
-  it("renders upload controls for contract files", () => {
+  it("renders the multi-file upload drop-zone", () => {
     render(<UploadForm />);
     expect(screen.getByRole("button", { name: "Upload & analyse" })).toBeInTheDocument();
-    expect(screen.getByText("products.csv")).toBeInTheDocument();
+    expect(screen.getByText(/Drop your CSVs here/)).toBeInTheDocument();
   });
 });

@@ -35,6 +35,16 @@ export default function GlobalSearch({ targets }: { targets: SearchTarget[] }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const desktop = window.matchMedia("(min-width: 768px)").matches;
+    if (!desktop) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("global-search-input")?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const matches = normalized
@@ -81,7 +91,7 @@ export default function GlobalSearch({ targets }: { targets: SearchTarget[] }) {
                 aria-hidden
               />
               <Input
-                autoFocus
+                id="global-search-input"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search products or incidents…"
