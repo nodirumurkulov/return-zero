@@ -25,9 +25,10 @@ Use the service role only when RLS cannot perform the write. Document new except
 |--------|--------|------|
 | `organizations/` | `@/lib/organizations` | Tenancy: org membership, `requireOrganizationId`, cron tenant iteration |
 | `stores/incidents/` | `@/lib/stores/incidents` | Incident lifecycle, detection, forecast-risk, recover |
-| `catalog/` | `@/lib/catalog` | Metrics, thresholds, health, catalog queries |
-| `metrics/` | `@/lib/metrics/*` | KPI engine, definitions, series |
-| `forecast/` | `@/lib/forecast` | Deterministic forecasts |
+| `stores/analytics/catalog/` | `@/lib/stores/analytics/catalog` | Metrics, thresholds, health, catalog queries |
+| `stores/analytics/metrics/` | `@/lib/stores/analytics/metrics` | KPI engine, definitions, series |
+| `stores/analytics/forecast/` | `@/lib/stores/analytics/forecast` | Deterministic forecasts |
+| `stores/analytics/search/` | `@/lib/stores/analytics/search` | Global search targets |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |

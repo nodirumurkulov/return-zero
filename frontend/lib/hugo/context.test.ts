@@ -16,7 +16,7 @@ const { listIncidentsMock } = vi.hoisted(() => ({ listIncidentsMock: vi.fn() }))
 vi.mock("@/lib/stores/incidents", () => ({
   createIncidents: vi.fn(() => ({ listIncidents: listIncidentsMock })),
 }));
-vi.mock("@/lib/catalog", () => ({
+vi.mock("@/lib/stores/analytics/catalog", () => ({
   computeProductHealth: vi.fn(),
   listCatalogWithThresholds: vi.fn(),
 }));

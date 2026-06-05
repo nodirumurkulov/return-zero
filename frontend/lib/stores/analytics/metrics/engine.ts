@@ -1,15 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { getSourceFacts } from "./sources";
 import type {
   ComputeOpts,
   Direction,
   MetricDefinition,
   MetricStatus,
   MetricValue,
-  ProductSourceFacts,
   ThresholdOverride,
-} from "./types";
+} from "./metric-definition";
+import { getSourceFacts, type ProductSourceFacts } from "./source-facts";
 
 export type { ComputeOpts };
 

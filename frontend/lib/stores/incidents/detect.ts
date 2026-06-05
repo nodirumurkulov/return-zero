@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { computeMetricsDetailed } from "@/lib/metrics/engine";
-import { getMonthlySeries } from "@/lib/metrics/series";
-import type { ProductSourceFacts } from "@/lib/metrics/types";
+import { computeMetricsDetailed } from "@/lib/stores/analytics/metrics/engine";
+import { getMonthlySeries } from "@/lib/stores/analytics/metrics/series";
+import type { ProductSourceFacts } from "@/lib/stores/analytics/metrics/source-facts";
 import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
 import { TERMINAL_INCIDENT_STATUSES } from "./status";
 

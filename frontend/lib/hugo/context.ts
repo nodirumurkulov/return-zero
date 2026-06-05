@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
-import { forecastStockout } from "@/lib/forecast/predictors";
+import { computeProductHealth, listCatalogWithThresholds } from "@/lib/stores/analytics/catalog";
+import { forecastStockout } from "@/lib/stores/analytics/forecast/predictors";
 import { createIncidents, type Incident, type IncidentDetail } from "@/lib/stores/incidents";
 import type { Database } from "@/lib/supabase/database.types";
 

@@ -26,8 +26,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type { SearchTarget } from "@/lib/search";
 import { DEMO_SHOPS } from "@/lib/shops";
+import type { SearchTarget } from "@/lib/stores/analytics/search";
 
 const NAV = [
   { href: "/orders", label: "Orders", icon: Receipt },

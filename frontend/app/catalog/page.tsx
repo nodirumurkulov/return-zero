@@ -1,7 +1,7 @@
 import CatalogGrid from "@/components/catalog/CatalogGrid";
 import { EmptyState } from "@/components/ui/empty-state";
-import { listCatalogWithThresholds } from "@/lib/catalog";
 import { requireOrganizationId } from "@/lib/organizations/queries";
+import { listCatalogWithThresholds } from "@/lib/stores/analytics/catalog";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

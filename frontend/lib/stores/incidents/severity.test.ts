@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MonthlyPoint } from "@/lib/metrics/types";
+import type { MonthlyPoint } from "@/lib/stores/analytics/metrics/monthly-point";
 import {
   breachMagnitude,
   metricTrendWorsening,

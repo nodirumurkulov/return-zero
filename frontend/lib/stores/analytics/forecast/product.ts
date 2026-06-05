@@ -3,7 +3,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getProductSeries } from "@/lib/metrics/series";
+import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { MonthlyPoint } from "../metrics/series";

@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { SearchTarget } from "@/lib/search";
+import type { SearchTarget } from "@/lib/stores/analytics/search";
 
 function TargetIcon({ kind }: { kind: SearchTarget["kind"] }) {
   if (kind === "incident") {
