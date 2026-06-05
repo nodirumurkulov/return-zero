@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveOwnerUserId } from "@/lib/tenant/resolve-owner";
 import { detectBreaches, type DetectionResult } from "./detect";
 import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
-
 // BYOD — the replay clock with real ingest (RUN-82 / RUN-109).
 //
 // The client uploads their HISTORY (≤ cutoff) into the live tables; the FUTURE
@@ -12,15 +11,7 @@ import { detectForecastRisks, type ForecastDetectionResult } from "./forecast";
 // emerge from newly-arrived data. Deduped against open incidents (idempotent).
 
 export const REPLAY_START = "2025-12-01"; // fallback only when there is no data
-/** History ends here; rows after this date live in *_stream until replay ingests them. */
-export const STREAM_CUTOFF = "2025-11-30";
 const DEFAULT_ADVANCE_DAYS = 7;
-
-/** Move future rows from live tables into *_stream staging (idempotent). */
-export async function stageFutureStream(supabase: SupabaseClient): Promise<void> {
-  const { error } = await supabase.rpc("stage_future_stream", { p_cutoff: STREAM_CUTOFF });
-  if (error) throw new Error(`stage_future_stream failed: ${error.message}`);
-}
 
 function asDate(value: string): string {
   return value.slice(0, 10);

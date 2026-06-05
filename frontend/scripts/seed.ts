@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
-import { stageFutureStream } from "../lib/detection/replay";
+import { stageFutureStream } from "../lib/detection/stream-stage";
 import { resolveDemoCredentials } from "../lib/auth/demo";
 
 type CsvRow = Record<string, string | number | boolean | null | undefined>;

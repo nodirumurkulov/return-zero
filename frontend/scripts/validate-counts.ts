@@ -5,7 +5,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
-import { STREAM_CUTOFF } from "../lib/detection/replay";
+import { STREAM_CUTOFF } from "../lib/detection/stream-stage";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

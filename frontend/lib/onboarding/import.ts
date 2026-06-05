@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse/sync";
 
-import { stageFutureStream } from "@/lib/detection/replay";
+import { stageFutureStream } from "@/lib/detection/stream-stage";
 import { TABLE_SPECS, type TableSpec } from "./schemas";
 
 // Import uploaded CSVs into the contract tables. Mirrors frontend/scripts/seed.ts
