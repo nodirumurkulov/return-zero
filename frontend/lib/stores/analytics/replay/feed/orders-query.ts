@@ -1,13 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import type { OrderFeedItem, OrderFeedLineItem } from "./types";
+import type { OrderFeedItem, OrderFeedLineItem } from "./order-feed-item";
+
+export const ordersQuerySchema = z.object({
+  after: z.string().min(1),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+
+export type OrdersQuery = z.infer<typeof ordersQuerySchema>;
 
 // The next batch of orders that "arrive" after a timestamp, in arrival order.
-// One orders query + a grouped line_items fetch (line_items already carries the
-// product title — no products join) + customer country. Mirrors the .in()
-// grouping pattern in lib/agents/product-orders.ts.
 export async function listIncomingOrders(
   supabase: SupabaseClient<Database>,
   opts: { organizationId: string; after: string; limit?: number },

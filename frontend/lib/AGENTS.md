@@ -34,6 +34,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
 | `stores/connect/` | `@/lib/stores/connect` | Store connectors (`mock_csv`, `shopify`) |
+| `stores/analytics/replay/` | `@/lib/stores/analytics/replay` | Replay cursor, bounds, orders feed |
 | `onboarding/` | `@/lib/onboarding/api`, `@/lib/onboarding/hooks` | Connect flow client API + TanStack hooks |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 

@@ -3,13 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/orders/queries", () => ({
-  listIncomingOrders: vi.fn(),
-}));
-
-vi.mock("@/lib/detection/replay", () => ({
-  dataEndDate: vi.fn(),
-}));
+vi.mock("@/lib/stores/analytics/replay", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/stores/analytics/replay")>();
+  return {
+    ...actual,
+    listIncomingOrders: vi.fn(),
+    dataEndDate: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
@@ -20,8 +21,7 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 import { GET } from "@/app/api/orders/route";
-import { dataEndDate } from "@/lib/detection/replay";
-import { listIncomingOrders } from "@/lib/orders/queries";
+import { dataEndDate, listIncomingOrders } from "@/lib/stores/analytics/replay";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
