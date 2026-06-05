@@ -11,7 +11,9 @@ Incident lifecycle, detection, and recovery. **Parent:** [../../AGENTS.md](../..
 | `schemas.ts` | Zod request bodies for API routes |
 | `index.ts` | **`Incidents`** + `createIncidents` — sole public API |
 | `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation (not re-exported) |
-| `api/`, `hooks/` | Client TanStack wrappers |
+| `api/` | Server query options + client fetch helpers |
+
+Client hooks: `@/hooks/incidents` (approve, status updates, detail queries).
 
 ## Public API
 
@@ -38,5 +40,5 @@ export type Incident = Database["public"]["Tables"]["incidents"]["Row"];
 
 ```typescript
 import { createIncidents, type Incident } from "@/lib/stores/incidents";
-import { useApproveActions } from "@/lib/stores/incidents/hooks";
+import { useApproveActions } from "@/hooks/incidents";
 ```

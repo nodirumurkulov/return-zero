@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
-import {
-  onboardingConnectPartialResponseSchema,
-  onboardingConnectSuccessResponseSchema,
-} from "@/lib/onboarding/api-schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { MockStore } from "@/lib/stores";
+import {
+  connectPartialResponseSchema,
+  connectSuccessResponseSchema,
+} from "@/lib/stores/connect/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,8 +31,8 @@ export async function POST() {
   try {
     const { results, success } = await new MockStore().connect(supabase, org.organizationId);
     const body = success
-      ? onboardingConnectSuccessResponseSchema.parse({ success: true, results })
-      : onboardingConnectPartialResponseSchema.parse({ success: false, results });
+      ? connectSuccessResponseSchema.parse({ success: true, results })
+      : connectPartialResponseSchema.parse({ success: false, results });
     return NextResponse.json(body, { status: success ? 200 : 207 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Connect failed";

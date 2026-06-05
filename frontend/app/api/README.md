@@ -10,16 +10,19 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `PATCH` | `/api/incidents/[id]` | Update incident fields |
 | `POST` | `/api/incidents/[id]/approve` | Approve proposed actions |
 | `POST` | `/api/investigate` | Run AI investigation |
-| `POST` | `/api/detect` | KPI breach detection (cron-capable) |
-| `POST` | `/api/forecast` | Forecast-risk detection (cron-capable) |
-| `POST` | `/api/recover` | Advance monitoring recovery (cron-capable) |
-| `POST` | `/api/replay` | Advance replay clock (cron or signed-in user) |
+| `POST` | `/api/stores/incidents/detect` | KPI breach detection (cron-capable) |
+| `POST` | `/api/stores/incidents/forecast-risk` | Forecast-risk detection (cron-capable) |
+| `POST` | `/api/stores/incidents/recover` | Advance monitoring recovery (cron-capable) |
+| `POST` | `/api/stores/analytics/replay` | Advance replay clock (cron or signed-in user) |
+| `GET` | `/api/stores/analytics/replay/orders` | Orders feed for replay UI |
 | `POST` | `/api/learn` | Learn baselines + business report after upload |
-| `POST` | `/api/onboarding/connect` | Choose store platform; loads Pretty Fly demo for `mock_csv` |
+| `POST` | `/api/stores/connect/mock` | Load Pretty Fly demo pack (mock CSV) |
+| `POST` | `/api/stores/connect/shopify` | Connect Shopify store |
+| `GET` | `/api/stores/connection` | Current store connection status |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 | `POST` | `/api/slack/events` | Slack Events API — `@hugo` mentions → LLM reply (URL verify + signing secret) |
 
-When `CRON_SECRET` is set, scheduler routes (`detect`, `forecast`, `recover`, `replay`) require `Authorization: Bearer <secret>` or `x-cron-secret`.
+When `CRON_SECRET` is set, scheduler routes (`detect`, `forecast-risk`, `recover`, `replay`) require `Authorization: Bearer <secret>` or `x-cron-secret`.
 
 ## Slack approval cards (RUN-51)
 
@@ -45,8 +48,8 @@ User routes: `await createClient()` from `@/lib/supabase/server` + `getUser()`. 
 
 ## Notes
 
-- Prefer thin routes: auth, parse body, delegate to `lib/<domain>/`.
-- Incident lists load via RSC (`listIncidents`); there is no `GET /api/incidents`.
+- Prefer thin routes: auth, parse body, delegate to `lib/stores/<domain>/`.
+- Incident lists load via RSC (`createIncidents(supabase).listIncidents`); there is no `GET /api/incidents`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

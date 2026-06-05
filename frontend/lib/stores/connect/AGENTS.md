@@ -7,6 +7,7 @@ Store connector implementations. **Parent:** [../AGENTS.md](../AGENTS.md)
 | Path | Role |
 |------|------|
 | `index.ts` | `StoreConnector` types |
+| `schemas.ts` | Connect API response Zod schemas |
 | `mock.ts` | `MockStoreConnector` |
 | `shopify.ts` | `ShopifyStoreConnector` (stub) |
 | `loaders/csv.ts` | Shared CSV/JSON parse + batched upsert |

@@ -14,9 +14,9 @@ UI for the product catalog: grid, KPI cards, health badges, and inline threshold
 
 ## Usage
 
-Rendered from server pages that call `listCatalogWithThresholds` / `getProductCatalogDetail` in `@/lib/catalog`.
+Rendered from server pages that call `listCatalogWithThresholds` / `getProductCatalogDetail` in `@/lib/stores/analytics/catalog`.
 
-Types: `ProductMetric`, `KpiThreshold`, `HealthLevel` from `@/lib/catalog`.
+Types: `ProductMetric`, `KpiThreshold`, `HealthLevel` from `@/lib/stores/analytics/catalog`.
 
 ## Notes
 

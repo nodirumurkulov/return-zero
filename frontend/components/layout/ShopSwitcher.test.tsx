@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { ShopSwitcher } from "@/components/layout/ShopSwitcher";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { DEMO_SHOPS } from "@/lib/shops";
+import { DEMO_SHOPS } from "@/lib/organizations/demo-shops";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
 function renderShopSwitcher(
