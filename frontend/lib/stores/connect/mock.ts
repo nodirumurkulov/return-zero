@@ -1,16 +1,19 @@
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
 
-import type { LoadResult, StoreConnector, StoreConnectorLoadOpts } from "..";
-import { type ExternalIdTable, csvLoader } from "../loaders/csv";
-import { IdMapCache } from "./id-maps";
-import type { PrettyFlyFiles } from "./pack";
-import { type IdMaps, prettyFlyRows } from "./rows";
 
-export type { PrettyFlyFile, PrettyFlyFiles } from "./pack";
+import { type ExternalIdTable, csvLoader } from "./loaders/csv";
+import { IdMapCache } from "./mock/id-maps";
+import type { PrettyFlyFiles } from "./mock/pack";
+import { type IdMaps, prettyFlyRows } from "./mock/rows";
+import type { LoadResult, StoreConnector, StoreLoadOpts } from ".";
 
-export class MockStore implements StoreConnector {
+export type { PrettyFlyFile, PrettyFlyFiles } from "./mock/pack";
+
+export class MockStoreConnector implements StoreConnector {
   readonly platform = "mock_csv" as const;
 
   private readonly loader = csvLoader;
@@ -20,28 +23,20 @@ export class MockStore implements StoreConnector {
     supabase: SupabaseClient<Database>,
     organizationId: string,
     source: unknown,
-    opts?: StoreConnectorLoadOpts,
+    opts?: StoreLoadOpts,
   ): Promise<LoadResult[]> {
     const files = source as PrettyFlyFiles;
-    if (opts?.replace) await this.resetOrganizationData(supabase, organizationId);
+    if (opts?.replace) {
+      const { error } = await supabase.rpc("reset_organization_data", {
+        p_organization_id: organizationId,
+      });
+      if (error) throw new Error(`reset_organization_data: ${error.message}`);
+    }
 
     const maps = new IdMapCache();
     const parents = await this.loadParents(supabase, organizationId, files, maps);
     const children = await this.loadChildren(supabase, organizationId, files, maps);
     return [...parents, ...children];
-  }
-
-  async markConnected(supabase: SupabaseClient<Database>, organizationId: string): Promise<void> {
-    const { error } = await supabase
-      .from("store_connections")
-      .update({
-        platform: "mock_csv",
-        status: "connected",
-        connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("organization_id", organizationId);
-    if (error) throw new Error(`store_connections update: ${error.message}`);
   }
 
   fetchExternalIdMap(
@@ -50,16 +45,6 @@ export class MockStore implements StoreConnector {
     organizationId: string,
   ): Promise<Map<string, string>> {
     return this.loader.fetchExternalIdMap(supabase, table, organizationId);
-  }
-
-  private async resetOrganizationData(
-    supabase: SupabaseClient<Database>,
-    organizationId: string,
-  ): Promise<void> {
-    const { error } = await supabase.rpc("reset_organization_data", {
-      p_organization_id: organizationId,
-    });
-    if (error) throw new Error(`reset_organization_data: ${error.message}`);
   }
 
   private async refreshIdMap(
@@ -426,5 +411,3 @@ export class MockStore implements StoreConnector {
     return results;
   }
 }
-
-export const mockStore = new MockStore();

@@ -37,8 +37,8 @@ export default async function ReportPage() {
       <div className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">Your business report</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We&apos;ll analyze the data you uploaded, learn what&apos;s normal for your store, and
-          surface the patterns worth watching. This takes a few seconds.
+          We&apos;ll analyze your store data, learn what&apos;s normal, and surface the patterns worth
+          watching. This takes a few seconds.
         </p>
         <div className="mt-6">
           <RunAnalysis label="Analyze my data" />

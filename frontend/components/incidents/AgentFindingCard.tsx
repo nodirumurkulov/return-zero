@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import type { AgentFinding } from "@/lib/stores/incidents";
+import type { AgentFinding } from "@/types/incidents";
 
 export default function AgentFindingCard({ finding }: { finding: AgentFinding }) {
   const hasDetail = finding.detail && Object.keys(finding.detail).length > 0;

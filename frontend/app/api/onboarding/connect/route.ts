@@ -6,8 +6,7 @@ import {
   onboardingConnectSuccessResponseSchema,
 } from "@/lib/onboarding/api-schemas";
 import { tryRequireOrganizationId } from "@/lib/organizations";
-import { storeConnectors } from "@/lib/stores/connect";
-import { prettyFlyPack } from "@/lib/stores/connect/mock/pack";
+import { MockStore, ShopifyStore } from "@/lib/stores";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,9 +29,6 @@ export async function POST(req: Request) {
   }
 
   const { platform } = parsed.data;
-  if (platform === "shopify") {
-    return NextResponse.json({ error: "Shopify is not available yet" }, { status: 501 });
-  }
 
   const org = await tryRequireOrganizationId(auth);
   if (!org.ok) {
@@ -40,21 +36,18 @@ export async function POST(req: Request) {
   }
   const { organizationId } = org;
 
-  const connector = storeConnectors[platform];
   const supabase = createAdminClient();
 
   try {
-    const source = prettyFlyPack.read();
-    const results = await connector.load(supabase, organizationId, source, { replace: true });
-    await connector.markConnected(supabase, organizationId);
-
-    const ok = results.every((r) => !r.error);
-    const body = ok
+    const store = platform === "mock_csv" ? new MockStore() : new ShopifyStore();
+    const { results, success } = await store.connect(supabase, organizationId);
+    const body = success
       ? onboardingConnectSuccessResponseSchema.parse({ success: true, results })
       : onboardingConnectPartialResponseSchema.parse({ success: false, results });
-    return NextResponse.json(body, { status: ok ? 200 : 207 });
+    return NextResponse.json(body, { status: success ? 200 : 207 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Connect failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message.includes("Shopify") ? 501 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

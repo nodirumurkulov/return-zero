@@ -1,6 +1,6 @@
 import { Bot } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import type { KpiThreshold } from "@/lib/catalog";
+import type { KpiThreshold } from "@/types/catalog";
 
 // "Hugo is watching this product" — the per-product monitor (design: product.jsx).
 export default function AgentMonitor({ kpis }: { kpis: KpiThreshold[] }) {

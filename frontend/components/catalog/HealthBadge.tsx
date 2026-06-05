@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import type { HealthLevel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
+import type { HealthLevel } from "@/types/catalog";
 
 const styles: Record<HealthLevel, string> = {
   healthy: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",

@@ -13,11 +13,7 @@ export class OnboardingPage {
   }
 
   connectButton() {
-    return this.page.getByRole("button", { name: /Use Pretty Fly demo store/i });
-  }
-
-  profileSaveButton() {
-    return this.page.getByRole("button", { name: /Save profile & build report/i });
+    return this.page.getByRole("button", { name: /Connect Pretty Fly demo store/i });
   }
 
   seededProductBanner(count: number) {

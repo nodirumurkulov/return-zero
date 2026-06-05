@@ -40,10 +40,8 @@ export async function POST(req: NextRequest) {
   try {
     const learn = await learnBaselines(supabase, organizationId);
     const report = await buildBusinessReport(supabase, organizationId);
-    // Rewind the replay clock to the start of the live window so the incidents
-    // board stays empty until the user presses Start on the Orders stream.
-    const { cursor } = await createReplay(supabase).reset(organizationId);
-    return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor: cursor });
+    const { cursor: replayCursor } = await createReplay(supabase).reset(organizationId);
+    return NextResponse.json({ success: true, learn, reportId: report.id, replayCursor });
   } catch (err) {
     const message = err instanceof Error ? err.message : "learn failed";
     return NextResponse.json({ success: false, error: message }, { status: 500 });

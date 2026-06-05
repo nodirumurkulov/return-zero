@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  triggerInvestigation,
-  type TriggerInvestigationInput,
-} from "@/lib/agents/api";
-import type { IncidentRef } from "@/lib/stores/incidents";
-import { incidentKeys } from "@/lib/stores/incidents/api";
+
+import { incidentKeys } from "@/hooks/incidents/keys";
+import type { IncidentRef } from "@/types/incidents";
+
+import { triggerInvestigation, type TriggerInvestigationInput } from "./api";
 
 export function useTriggerInvestigation(incident: IncidentRef) {
   const queryClient = useQueryClient();

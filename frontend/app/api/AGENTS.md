@@ -24,7 +24,7 @@ if (!parsed.success) {
 | `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
 | `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
 | `POST /api/learn` | `learn/schemas.ts` |
-| `POST /api/onboarding/connect` | `stores/connect` + `onboarding/api-schemas.ts` (JSON body; admin after auth) |
+| `POST /api/onboarding/connect` | `@/lib/stores` + `onboarding/api-schemas.ts` (JSON body; admin after auth) |
 | `POST /api/replay` | `assertCronAuthorized` or session user |
 | `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
 | `GET/PATCH /api/incidents/[id]` | `incidents/queries` |

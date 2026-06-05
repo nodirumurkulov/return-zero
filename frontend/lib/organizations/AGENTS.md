@@ -7,7 +7,7 @@ Multi-tenant organization context. **Parent:** [../../AGENTS.md](../../AGENTS.md
 | File | Role |
 |------|------|
 | `organization.ts`, `organization-member.ts` | DB row types |
-| `queries.ts` | `getCurrentOrganizationId`, `requireOrganizationId`, `tryRequireOrganizationId`, bootstrap |
+| `queries.ts` | `getCurrentOrganizationId`, `requireOrganizationId`, `tryRequireOrganizationId`, bootstrap + demo store provision |
 
 ## Rules
 

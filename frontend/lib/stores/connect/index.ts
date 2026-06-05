@@ -1,10 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/lib/supabase/db";
+import type { Database, Enums, Tables } from "@/lib/supabase/db";
 
-import { mockStore } from "./mock";
-import { shopifyStore } from "./shopify";
-import type { StorePlatform } from "./store-connection";
+export type StorePlatform = Enums<"store_platform">;
+export type StoreConnection = Tables<"store_connections">;
 
 export interface LoadResult {
   table: string;
@@ -12,34 +11,16 @@ export interface LoadResult {
   error?: string;
 }
 
-export interface StoreConnectorLoadOpts {
+export interface StoreLoadOpts {
   replace?: boolean;
 }
 
-/** Loads store data into org-scoped contract tables and marks the connection ready. */
 export interface StoreConnector {
   readonly platform: StorePlatform;
   load(
     supabase: SupabaseClient<Database>,
     organizationId: string,
     source: unknown,
-    opts?: StoreConnectorLoadOpts,
+    opts?: StoreLoadOpts,
   ): Promise<LoadResult[]>;
-  markConnected(supabase: SupabaseClient<Database>, organizationId: string): Promise<void>;
 }
-
-export const storeConnectors: Record<StorePlatform, StoreConnector> = {
-  mock_csv: mockStore,
-  shopify: shopifyStore,
-};
-
-export type {
-  StoreConnection,
-  StoreConnectionInsert,
-  StoreConnectionStatus,
-  StoreConnectionUpdate,
-  StorePlatform,
-  StoreSyncMode,
-} from "./store-connection";
-export { mockStore, type PrettyFlyFile, type PrettyFlyFiles } from "./mock";
-export { shopifyStore } from "./shopify";

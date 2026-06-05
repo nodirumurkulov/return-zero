@@ -112,8 +112,6 @@ export default tseslint.config(
       "lib/detection/severity.ts",
       "lib/learn/schemas.ts",
       "lib/onboarding/api-schemas.ts",
-      "lib/settings/queries.ts",
-      "lib/settings/mutations.ts",
       "lib/incidents/queries.ts",
       "lib/incidents/approve.ts",
       "lib/organizations/queries.ts",

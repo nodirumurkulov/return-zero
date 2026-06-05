@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { mockStore } from "../lib/stores/connect/mock";
 import { PrettyFlyPack } from "../lib/stores/connect/mock/pack";
+import { MockStore } from "../lib/stores";
 
 const HERO_PRODUCT_EXTERNAL_ID = "prod_00005";
 const BATCH_SIZE = 500;
@@ -37,12 +37,10 @@ async function upsert(
 
 export async function loadDemoStore(supabase: SupabaseClient, organizationId: string) {
   console.log("  loading Pretty Fly demo store…");
-  const results = await mockStore.load(supabase, organizationId, prettyFlyPack.read(), { replace: true });
-  const failed = results.some((result) => result.error);
-  if (failed) {
+  const { success } = await new MockStore().connect(supabase, organizationId, prettyFlyPack.read());
+  if (!success) {
     throw new Error("Demo store load failed");
   }
-  await mockStore.markConnected(supabase, organizationId);
   console.log("  ✓ demo store connected");
 }
 
@@ -398,7 +396,11 @@ export async function seedDemoIncidents(
 /** E2E bootstrap: load mock store, KPI thresholds, and kanban demo incidents. */
 export async function bootstrapDemoFixtures(supabase: SupabaseClient, organizationId: string) {
   await loadDemoStore(supabase, organizationId);
-  const productIdByExternalId = await mockStore.fetchExternalIdMap(supabase, "products", organizationId);
+  const productIdByExternalId = await new MockStore().fetchExternalIdMap(
+    supabase,
+    "products",
+    organizationId,
+  );
   await seedProductKpiThresholds(supabase, organizationId);
   await seedDemoIncidents(supabase, organizationId, productIdByExternalId);
 }
