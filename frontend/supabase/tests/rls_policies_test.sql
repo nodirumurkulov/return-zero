@@ -47,7 +47,9 @@ do $$ begin
   insert into incidents(title) values ('authed-incident');
   insert into agent_findings(incident_id, agent_name, summary)
     values ((select id from incidents limit 1), 'Returns Agent', 'test finding');
-  insert into product_kpi_thresholds(product_id, metric_key, threshold) values ('P1', 'ad_roas', 2.0);
+  insert into product_kpi_thresholds(product_id, metric_key, threshold)
+  values ((select product_id from products limit 1), 'ad_roas', 2.0)
+  on conflict (product_id, metric_key) do update set threshold = excluded.threshold;
   raise notice 'PASS: authenticated wrote incidents / agent_findings / product_kpi_thresholds';
 end $$;
 
