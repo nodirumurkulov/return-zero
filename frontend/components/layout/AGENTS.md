@@ -1,5 +1,13 @@
-# components/layout/
+# AGENTS.md — components/layout
 
-App chrome: `AppShell` wraps authenticated pages with nav and Clerk user button.
+`AppShell` — shadcn `Sidebar` nav, header search slot, Supabase sign-out. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
-Client component only for interactive nav. No data fetching.
+## Best practices
+
+- Shell stays **presentational** — nav/auth chrome only; never add data fetching or domain types here.
+
+## Rules
+
+- Client component (`usePathname`, `SidebarProvider`, `TooltipProvider`).
+- No data fetching; auth enforced in `proxy.ts`.
+- Sign-out via server action `signOut` from `@/app/auth/actions`.

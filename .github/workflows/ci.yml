@@ -5,25 +5,22 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+  OPENAI_API_KEY: sk-test
+  LLM_PROVIDER: openai
+
 jobs:
-  frontend:
+  lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
-    env:
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci
-      CLERK_SECRET_KEY: sk_test_ci
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /catalog
-      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /catalog
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSJ9.ci
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSJ9.ci
-      OPENAI_API_KEY: sk-test
-      LLM_PROVIDER: openai
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
 
@@ -40,5 +37,205 @@ jobs:
 
       - run: bun ci
       - run: bun run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun ci
       - run: bun run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun ci
+      - run: bun run test
+      - run: bun run test:integration
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-
+            next-${{ runner.os }}-
+
+      - run: bun ci
       - run: bun run build
+
+  integration-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [build]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.105.0
+
+      - name: Supabase
+        working-directory: frontend/supabase
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          eval "$(supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+
+      - run: bun run seed
+        env:
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+
+      - name: Install psql (RLS test runner)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - run: bun run db:test:rls
+      - run: bun run validate
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [lint, typecheck, test, build, integration-db]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - run: bun ci
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('frontend/bun.lock') }}-
+            next-${{ runner.os }}-
+
+      - run: bun run build
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.105.0
+
+      - name: Supabase
+        working-directory: frontend/supabase
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          eval "$(supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
+
+      - run: bun run seed
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run e2e
+        env:
+          CI: true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7

@@ -1,95 +1,147 @@
 "use client";
 
-import { UserButton, useUser } from "@clerk/nextjs";
-import { LayoutGrid, Search, Siren } from "lucide-react";
+import { LayoutGrid, LogOut, Receipt, Siren } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/app/auth/actions";
 import { BrandLogo } from "@/components/layout/BrandLogo";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import GlobalSearch from "@/components/layout/GlobalSearch";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import type { SearchTarget } from "@/lib/search";
 
 const NAV = [
+  { href: "/orders", label: "Orders", icon: Receipt },
   { href: "/catalog", label: "Catalog", icon: LayoutGrid },
   { href: "/incidents", label: "Incidents", icon: Siren },
-];
+] as const;
+
+export type ShellUser = {
+  id: string;
+  email: string | null;
+  name: string | null;
+};
+
+function SignOutButton({ className }: { className?: string }) {
+  return (
+    <form action={signOut}>
+      <Button
+        type="submit"
+        variant="ghost"
+        size="icon-sm"
+        className={className}
+        aria-label="Sign out"
+      >
+        <LogOut className="size-4" />
+      </Button>
+    </form>
+  );
+}
 
 export default function AppShell({
   children,
-  searchSlot,
+  user,
+  searchTargets,
 }: {
   children: React.ReactNode;
-  searchSlot?: React.ReactNode;
+  user: ShellUser;
+  searchTargets: SearchTarget[];
 }) {
   const pathname = usePathname();
-  const { user } = useUser();
-  const displayName = user?.fullName ?? user?.username ?? "Account";
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const displayName = user.name ?? user.email ?? "Account";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-card md:flex md:flex-col">
-        <div className="border-b border-border p-5">
-          <BrandLogo />
-        </div>
+    <TooltipProvider>
+      <SidebarProvider>
+        <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
+          <SidebarHeader className="border-b border-sidebar-border p-4">
+            <BrandLogo />
+          </SidebarHeader>
 
-        <nav className="flex-1 space-y-1 p-3">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {NAV.map(({ href, label, icon: Icon }) => {
+                    const active =
+                      pathname === href || pathname.startsWith(`${href}/`);
+                    return (
+                      <SidebarMenuItem key={href}>
+                        <SidebarMenuButton asChild isActive={active} tooltip={label}>
+                          <Link href={href}>
+                            <Icon />
+                            <span>{label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
 
-        <div className="border-t border-border p-4">
-          <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-sev-low" />
-            <span className="text-xs text-muted-foreground">Agents monitoring</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <UserButton />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">
-                {displayName}
+          <SidebarFooter className="border-t border-sidebar-border p-4">
+            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-sev-resolved/50" />
+                  <span className="relative inline-flex size-2 rounded-full bg-sev-resolved" />
+                </span>
+                <span className="text-xs font-semibold text-foreground">Hugo is online</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                Watching your KPIs in real time. You&apos;ll hear from it only when something breaks.
               </p>
-              {email ? (
-                <p className="truncate text-xs text-muted-foreground">{email}</p>
-              ) : null}
             </div>
-          </div>
-        </div>
-      </aside>
+            <div className="flex items-center gap-3">
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-primary-subtle text-sm font-medium text-primary">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-sidebar-foreground">
+                  {displayName}
+                </p>
+                {user.email ? (
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                ) : null}
+              </div>
+              <SignOutButton />
+            </div>
+          </SidebarFooter>
+        </Sidebar>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            {searchSlot ?? (
-              <Input
-                placeholder="Search products or incidents…"
-                className="pl-9"
-                disabled
-              />
-            )}
-          </div>
-          <div className="md:hidden">
-            <UserButton />
-          </div>
-        </header>
-        <main className="flex-1">{children}</main>
-      </div>
-    </div>
+        <SidebarInset>
+          <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
+            <SidebarTrigger className="md:hidden" />
+            <div className="relative max-w-md flex-1">
+              <GlobalSearch targets={searchTargets} />
+            </div>
+            <div className="md:hidden">
+              <SignOutButton />
+            </div>
+          </header>
+          <div className="flex-1">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

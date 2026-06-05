@@ -6,16 +6,18 @@ const BRAND = {
   sidebar: {
     title: "Hugo",
     subtitle: "Pretty Fly · Commerce IR",
-    imageSize: 40,
-    titleClass: "text-lg font-semibold tracking-tight",
-    subtitleClass: "text-xs text-muted-foreground",
+    imageSize: 28,
+    titleClass: "text-[15px] font-semibold leading-tight tracking-tight",
+    subtitleClass: "text-[11px] text-muted-foreground",
+    titleTag: "p" as const,
   },
   auth: {
-    title: "Resolve",
+    title: "Hugo",
     subtitle: "Commerce Incident Response",
     imageSize: 64,
-    titleClass: "text-2xl font-semibold tracking-tight text-white",
-    subtitleClass: "mt-1 text-sm text-zinc-500",
+    titleClass: "text-2xl font-semibold tracking-tight text-foreground",
+    subtitleClass: "mt-1 text-sm text-muted-foreground",
+    titleTag: "h1" as const,
   },
 } as const;
 
@@ -24,26 +26,27 @@ export function BrandLogo({
 }: {
   variant?: keyof typeof BRAND;
 }) {
-  const { title, subtitle, imageSize, titleClass, subtitleClass } =
+  const { title, subtitle, imageSize, titleClass, subtitleClass, titleTag } =
     BRAND[variant];
+  const Title = titleTag;
 
   const content = (
     <div
       className={cn(
-        "flex items-center gap-3",
-        variant === "auth" && "flex-col text-center"
+        "flex items-center",
+        variant === "sidebar" ? "gap-2.5" : "flex-col gap-4 text-center",
       )}
     >
       <Image
         src="/catLogo.png"
-        alt="Resolve"
+        alt="Hugo"
         width={imageSize}
         height={imageSize}
-        className="shrink-0 rounded-lg"
+        className="shrink-0 rounded-lg shadow-card"
         priority
       />
-      <div className={cn(variant === "auth" && "text-center")}>
-        <p className={titleClass}>{title}</p>
+      <div className={cn("min-w-0", variant === "auth" && "text-center")}>
+        <Title className={titleClass}>{title}</Title>
         <p className={subtitleClass}>{subtitle}</p>
       </div>
     </div>

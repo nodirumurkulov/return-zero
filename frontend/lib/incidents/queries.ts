@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AgentFinding } from "@/lib/incidents/agent-finding";
+import type { Incident } from "@/lib/incidents/incident";
+import type { IncidentAction } from "@/lib/incidents/incident-action";
+import type { IncidentDetail } from "@/lib/incidents/incident-detail";
+import type { UpdateIncidentBody } from "@/lib/incidents/schemas";
+import type { TimelineEvent } from "@/lib/incidents/timeline-event";
 
-import type { AgentFinding, Incident, IncidentAction, TimelineEvent } from "./types";
+export type { IncidentDetail } from "@/lib/incidents/incident-detail";
 
 export async function listIncidents(supabase: SupabaseClient): Promise<Incident[]> {
   const { data, error } = await supabase
@@ -11,13 +17,6 @@ export async function listIncidents(supabase: SupabaseClient): Promise<Incident[
   if (error) throw new Error(error.message);
   return (data ?? []) as Incident[];
 }
-
-export type IncidentDetail = {
-  incident: Incident;
-  findings: AgentFinding[];
-  actions: IncidentAction[];
-  timeline: TimelineEvent[];
-};
 
 export async function getIncident(
   supabase: SupabaseClient,
@@ -59,4 +58,14 @@ export async function getIncidentDetail(
     actions: (actionsRes.data ?? []) as IncidentAction[],
     timeline: (timelineRes.data ?? []) as TimelineEvent[],
   };
+}
+
+export async function patchIncident(
+  supabase: SupabaseClient,
+  id: string,
+  patch: UpdateIncidentBody,
+): Promise<Incident> {
+  const { data, error } = await supabase.from("incidents").update(patch).eq("id", id).select().single();
+  if (error) throw new Error(error.message);
+  return data as Incident;
 }

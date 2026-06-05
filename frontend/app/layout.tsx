@@ -1,33 +1,55 @@
-import { ClerkProvider, Show } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import AppShell from "@/components/layout/AppShell";
+import QueryProvider from "@/components/providers/QueryProvider";
+import { listSearchTargets } from "@/lib/search";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Resolve",
+  title: "Hugo",
   description: "Commerce Incident Response Platform",
   icons: {
     icon: "/catLogo.png",
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const shellUser = user
+    ? {
+        id: user.id,
+        email: user.email ?? null,
+        name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+      }
+    : null;
+
+  const searchTargets = shellUser
+    ? await listSearchTargets(supabase).catch(() => [])
+    : [];
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={inter.className}>
-        <ClerkProvider afterSignOutUrl="/sign-in">
-          <Show when="signed-out">{children}</Show>
-          <Show when="signed-in">
-            <AppShell>{children}</AppShell>
-          </Show>
-        </ClerkProvider>
+        <QueryProvider>
+          {shellUser ? (
+            <AppShell user={shellUser} searchTargets={searchTargets}>
+              {children}
+            </AppShell>
+          ) : (
+            children
+          )}
+        </QueryProvider>
       </body>
     </html>
   );

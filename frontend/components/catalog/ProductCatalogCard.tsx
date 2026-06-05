@@ -1,5 +1,5 @@
 import Link from "next/link";
-import HealthBadge from "@/components/catalog/HealthBadge";
+import { HealthBadge } from "@/components/catalog/HealthBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { HealthLevel, ProductMetric } from "@/lib/catalog";
 
@@ -16,7 +16,7 @@ function formatPct(value: number | null) {
 export default function ProductCatalogCard({ product, health }: ProductCatalogCardProps) {
   return (
     <Link href={`/catalog/${product.product_id}`}>
-      <Card className="group h-full transition-colors hover:border-primary/40 hover:bg-accent/30">
+      <Card className="group h-full transition-all hover:border-primary/40 hover:shadow-pop">
         <CardContent className="space-y-4 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>

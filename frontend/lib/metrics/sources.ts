@@ -1,8 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 import type { ProductSourceFacts } from "./types";
 
+type SourceRow = Database["public"]["Functions"]["product_source_facts"]["Returns"][number];
+
 // PostgREST returns numeric columns as strings; coerce to numbers.
-function toFacts(row: Record<string, unknown>): ProductSourceFacts {
+function toFacts(row: SourceRow): ProductSourceFacts {
   return {
     product_id: String(row.product_id),
     sales_revenue: Number(row.sales_revenue ?? 0),
@@ -23,17 +26,19 @@ function toFacts(row: Record<string, unknown>): ProductSourceFacts {
  * data say about each product in this window."
  */
 export async function getSourceFacts(
-  supabase: SupabaseClient,
-  windowDays: number
+  supabase: SupabaseClient<Database>,
+  windowDays: number,
+  asOf?: string | null
 ): Promise<Map<string, ProductSourceFacts>> {
   const { data, error } = await supabase.rpc("product_source_facts", {
     p_window_days: windowDays,
+    ...(asOf ? { p_asof: asOf } : {}),
   });
   if (error) {
     throw new Error(`product_source_facts(${windowDays}) failed: ${error.message}`);
   }
   const map = new Map<string, ProductSourceFacts>();
-  for (const row of (data ?? []) as Record<string, unknown>[]) {
+  for (const row of data ?? []) {
     const facts = toFacts(row);
     map.set(facts.product_id, facts);
   }

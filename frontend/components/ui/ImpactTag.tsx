@@ -1,3 +1,6 @@
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
 function formatGBP(amount: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -6,7 +9,7 @@ function formatGBP(amount: number) {
   }).format(amount);
 }
 
-export default function ImpactTag({
+export function ImpactTag({
   amount,
   label,
 }: {
@@ -15,9 +18,16 @@ export default function ImpactTag({
 }) {
   if (!amount) return null;
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded font-mono font-semibold bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
+      )}
+    >
       {formatGBP(amount)}
-      {label && <span className="text-red-400/60 font-normal">{label}</span>}
-    </span>
+      {label ? (
+        <span className="font-normal text-sev-critical/60">{label}</span>
+      ) : null}
+    </Badge>
   );
 }

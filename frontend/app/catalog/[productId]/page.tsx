@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import HealthBadge from "@/components/catalog/HealthBadge";
+import AgentMonitor from "@/components/catalog/AgentMonitor";
+import { HealthBadge } from "@/components/catalog/HealthBadge";
 import KpiCard from "@/components/catalog/KpiCard";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import { computeProductHealth, getProductCatalogDetail } from "@/lib/catalog";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ type PageProps = {
 
 export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const detail = await getProductCatalogDetail(supabase, params.productId);
 
   if (!detail) notFound();
@@ -74,7 +75,10 @@ export default async function ProductDetailPage(props: PageProps) {
         />
       </div>
 
-      <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AgentMonitor kpis={thresholdRows} />
+        <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
+      </div>
     </div>
   );
 }

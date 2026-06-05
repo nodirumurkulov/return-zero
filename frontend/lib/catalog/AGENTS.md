@@ -1,12 +1,23 @@
-# lib/catalog/
+# AGENTS.md — lib/catalog
 
-Product catalog metrics, KPI thresholds, and health scoring.
+Catalog metrics, thresholds, health. **Parent:** [../../AGENTS.md](../../AGENTS.md)
 
 ## Files
 
-- `types.ts` — `ProductMetric`, `KpiThreshold`, … (**same shape as DB/views**)
-- `health.ts` — `computeProductHealth`, `computeHealthLevel`
-- `queries.ts` — `listCatalogWithThresholds`, `getProductCatalogDetail`
-- `index.ts` — public exports
+| File | Role |
+|------|------|
+| `types.ts` | `ProductMetric`, `KpiThreshold`, `ProductMonthlyMetric` |
+| `queries.ts` | `listCatalogWithThresholds`, `getProductCatalogDetail` |
+| `health.ts` | `computeProductHealth`, `computeHealthLevel` |
+| `api/` | `catalogKeys`, `updateThresholdApi` — see `api/index.ts` |
+| `hooks/` | `useUpdateThreshold` wraps `updateThresholdApi` |
+| `index.ts` | Public exports |
 
-Pages call **queries** and use types from `types.ts` directly — no separate row types or mappers.
+## Best practices
+
+- Health and threshold logic stay here — **redesign** catalog pages to use queries rather than inlining Supabase or legacy shapes.
+
+## Rules
+
+- Pages call **queries** — do not cast raw Supabase rows in `app/catalog/*`.
+- Threshold updates go through `app/actions.ts` (`updateThreshold`).

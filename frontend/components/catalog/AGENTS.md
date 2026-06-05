@@ -1,11 +1,19 @@
-# components/catalog/
+# AGENTS.md — components/catalog
 
-Product catalog UI: grid, product card, health badge, KPI cards, threshold editor.
-
-## Types
-
-Use `@/lib/catalog` for `ProductMetric`, `KpiThreshold`, `HealthLevel`, and `computeProductHealth`.
+Catalog UI. **Parent:** [../../../AGENTS.md](../../../AGENTS.md)
 
 ## Data flow
 
-Server pages load metrics/thresholds; pass props into `CatalogGrid` and `ProductCatalogCard`. `ThresholdEditor` calls server action `updateThreshold`.
+Server pages pass props from `@/lib/catalog` queries. `ThresholdEditor` calls server action `updateThreshold` in `app/actions.ts`.
+
+## Types
+
+`ProductMetric`, `KpiThreshold`, `HealthLevel`, `computeProductHealth` from `@/lib/catalog`.
+
+## Best practices
+
+- Props-only data — refactor toward server-passed catalog types; no optional “legacy” prop shapes.
+
+## Rules
+
+- No Supabase in components.

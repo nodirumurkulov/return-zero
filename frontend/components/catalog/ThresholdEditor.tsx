@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { updateThreshold } from "@/app/actions";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import type { KpiThreshold } from "@/lib/catalog";
+import { useUpdateThreshold } from "@/lib/catalog/hooks";
 
-const KPI_LABELS: Record<string, string> = {
+const METRIC_LABELS: Record<string, string> = {
   return_rate: "Return rate",
   refund_rate: "Refund rate",
-  support_tickets: "Support tickets",
+  support_volume: "Support volume",
   ad_roas: "Ad ROAS",
 };
 
@@ -22,15 +22,32 @@ export default function ThresholdEditor({
   productId: string;
   thresholds: KpiThreshold[];
 }) {
-  const [pending, startTransition] = useTransition();
+  const updateThreshold = useUpdateThreshold({ id: productId });
   const [message, setMessage] = useState<string | null>(null);
 
   function onSave(formData: FormData) {
     setMessage(null);
-    startTransition(async () => {
-      const result = await updateThreshold(productId, formData);
-      setMessage(result.ok ? "Saved" : result.error ?? "Failed to save");
+    updateThreshold.mutate(formData, {
+      onSuccess: (result) => {
+        setMessage(result.ok ? "Saved" : (result.error ?? "Failed to save"));
+      },
+      onError: () => {
+        setMessage("Failed to save");
+      },
     });
+  }
+
+  if (thresholds.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <SectionLabel>KPI thresholds</SectionLabel>
+          <p className="text-sm text-muted-foreground">
+            No per-product overrides — defaults from metric definitions apply.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -41,46 +58,40 @@ export default function ThresholdEditor({
           <form
             key={threshold.id}
             action={onSave}
-            className="grid gap-3 rounded-md border border-border p-3 md:grid-cols-4"
+            className="grid gap-3 rounded-md border border-border p-3 md:grid-cols-3"
           >
-            <input type="hidden" name="kpi_name" value={threshold.kpi_name} />
-            <div className="md:col-span-4">
+            <input type="hidden" name="metric_key" value={threshold.metric_key} />
+            <div className="md:col-span-3">
               <p className="text-sm font-medium">
-                {KPI_LABELS[threshold.kpi_name] ?? threshold.kpi_name}
+                {METRIC_LABELS[threshold.metric_key] ?? threshold.metric_key}
               </p>
               <p className="text-xs text-muted-foreground">
-                Alert when {threshold.direction === "below" ? "below" : "above"} thresholds
+                Alert when {effectiveDirection(threshold) === "below" ? "below" : "above"} threshold
               </p>
             </div>
-            <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">Warning</span>
+            <label className="space-y-1 text-xs md:col-span-2">
+              <span className="text-muted-foreground">Threshold</span>
               <Input
-                name="warning_value"
+                name="threshold"
                 type="number"
-                step="0.01"
-                defaultValue={threshold.warning_value}
+                step="any"
+                defaultValue={threshold.threshold}
                 required
               />
             </label>
-            <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">Critical</span>
-              <Input
-                name="critical_value"
-                type="number"
-                step="0.01"
-                defaultValue={threshold.critical_value}
-                required
-              />
-            </label>
-            <div className="flex items-end md:col-span-2">
-              <Button type="submit" size="sm" disabled={pending}>
+            <div className="flex items-end">
+              <Button type="submit" size="sm" disabled={updateThreshold.isPending}>
                 Save
               </Button>
             </div>
           </form>
         ))}
-        {message && <p className="text-xs text-muted-foreground">{message}</p>}
+        {message ? <p className="text-xs text-muted-foreground">{message}</p> : null}
       </CardContent>
     </Card>
   );
+}
+
+function effectiveDirection(threshold: KpiThreshold): "above" | "below" {
+  return threshold.direction === "below" ? "below" : "above";
 }

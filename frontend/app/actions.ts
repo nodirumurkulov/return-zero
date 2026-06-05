@@ -2,28 +2,31 @@
 
 import { revalidatePath } from "next/cache";
 import { isIncidentStatus } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function updateThreshold(productId: string, formData: FormData) {
-  const rawKpi = formData.get("kpi_name");
-  const kpiName = typeof rawKpi === "string" ? rawKpi : "";
-  const warningValue = Number(formData.get("warning_value"));
-  const criticalValue = Number(formData.get("critical_value"));
+  const rawKey = formData.get("metric_key");
+  const metricKey = typeof rawKey === "string" ? rawKey : "";
+  const threshold = Number(formData.get("threshold"));
 
-  if (!kpiName || Number.isNaN(warningValue) || Number.isNaN(criticalValue)) {
+  if (!metricKey || Number.isNaN(threshold)) {
     return { ok: false, error: "Invalid threshold values" };
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
   const { error } = await supabase
     .from("product_kpi_thresholds")
-    .update({
-      warning_value: warningValue,
-      critical_value: criticalValue,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("product_id", productId)
-    .eq("kpi_name", kpiName);
+    .upsert(
+      { product_id: productId, metric_key: metricKey, threshold, active: true },
+      { onConflict: "product_id,metric_key" },
+    );
 
   if (error) return { ok: false, error: error.message };
 
@@ -37,17 +40,20 @@ export async function updateIncidentStatus(incidentId: string, status: string) {
     return { ok: false, error: "Invalid incident status" };
   }
 
-  const supabase = createServiceClient();
-  const payload: { status: string; resolved_at?: string | null } = { status };
-
-  if (status === "resolved") {
-    payload.resolved_at = new Date().toISOString();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Unauthorized" };
   }
 
-  const { error } = await supabase
-    .from("incidents")
-    .update(payload)
-    .eq("id", incidentId);
+  const payload: { status: string; resolved_at: string | null } = {
+    status,
+    resolved_at: status === "resolved" ? new Date().toISOString() : null,
+  };
+
+  const { error } = await supabase.from("incidents").update(payload).eq("id", incidentId);
 
   if (error) return { ok: false, error: error.message };
 

@@ -6,6 +6,7 @@
 
 import "server-only";
 import OpenAI from "openai";
+import type { z } from "zod";
 
 export type Message = { role: "system" | "user" | "assistant"; content: string };
 
@@ -13,13 +14,17 @@ const provider = process.env.LLM_PROVIDER ?? "openai";
 
 async function callOpenAI(messages: Message[]): Promise<string> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const res = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages,
-    temperature: 0.2,
-    response_format: { type: "json_object" },
-  });
-  return res.choices[0].message.content ?? "";
+  const model = process.env.OPENAI_MODEL ?? "gpt-5.5";
+  const base = { model, messages, response_format: { type: "json_object" as const } };
+  try {
+    const res = await client.chat.completions.create({ ...base, temperature: 0.2 });
+    return res.choices[0]?.message?.content ?? "";
+  } catch {
+    // Some models (e.g. gpt-5.5) only allow the default temperature — retry
+    // without the override, keeping JSON mode so output stays valid JSON.
+    const res = await client.chat.completions.create(base);
+    return res.choices[0]?.message?.content ?? "";
+  }
 }
 
 async function callAnthropic(messages: Message[]): Promise<string> {
@@ -44,21 +49,23 @@ async function callAnthropic(messages: Message[]): Promise<string> {
   return json.content?.[0]?.text ?? "";
 }
 
-/**
- * Call the LLM and parse the JSON response.
- * Both providers are instructed to return a JSON object.
- */
-export async function callLLM<T = Record<string, unknown>>(
-  messages: Message[]
-): Promise<T> {
-  const raw = provider === "anthropic"
-    ? await callAnthropic(messages)
-    : await callOpenAI(messages);
+async function callLLMRaw(messages: Message[]): Promise<string> {
+  return provider === "anthropic" ? await callAnthropic(messages) : await callOpenAI(messages);
+}
 
+/**
+ * Call the LLM and parse the JSON response with Zod.
+ * Returns null when the response is missing or invalid (callers use deterministic fallbacks).
+ */
+export async function callLLMJson<T>(messages: Message[], schema: z.ZodType<T>): Promise<T | null> {
   try {
-    return JSON.parse(raw) as T;
+    const raw = await callLLMRaw(messages);
+    const parsed: unknown = JSON.parse(raw);
+    const result = schema.safeParse(parsed);
+    return result.success ? result.data : null;
   } catch {
-    // If not valid JSON, wrap in a text field
-    return { text: raw } as T;
+    // Any failure (missing/invalid key, unknown model, network, bad JSON) →
+    // null, so callers fall back to deterministic findings instead of erroring.
+    return null;
   }
 }

@@ -1,21 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { assertCronAuthorized } from "@/lib/cron-auth";
 import { runRecovery } from "@/lib/detection/recover";
 import { recoverBodySchema } from "@/lib/detection/schemas";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/recover — advance projected recovery for monitoring incidents and
-// auto-resolve those that reach 100%. Body: { advance_days?: number } to
-// fast-forward the monitoring clock (demo). Schedulable via CRON_SECRET.
+// POST /api/recover — advance projected recovery for monitoring incidents.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
   const raw = await req.json().catch(() => ({}));
   const parsed = recoverBodySchema.safeParse(raw);
@@ -26,13 +21,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
 
   try {
     const result = await runRecovery(supabase, { advanceDays: parsed.data.advance_days });
     return NextResponse.json({ success: true, ...result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/recover", err);
+    return apiErrorResponse(err);
   }
 }

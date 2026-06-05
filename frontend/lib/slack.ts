@@ -1,9 +1,10 @@
 /**
- * lib/slack.ts
- * Slack Incoming Webhook notifications for Resolve.
+ * Slack Incoming Webhook notifications and interactive approve callbacks.
+ * RUN-51: approval cards use `/api/slack/webhook` + `SLACK_SIGNING_SECRET` — not Vercel Chat SDK.
  */
 
 import "server-only";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
 export type SlackIncidentPayload = {
@@ -57,9 +58,12 @@ export async function sendIncidentNotification(
 
   const actionLines = payload.actions
     ?.map((a, i) =>
-      `${i + 1}. ${a.title} ${a.auto_deploy ? "[Auto-deploys]" : `[Risk: ${a.risk_level}]`}`
+      `${i + 1}. ${a.title} ${a.auto_deploy ? "[Auto-deploys]" : `[Risk: ${a.risk_level}]`}`,
     )
     .join("\n") ?? "Investigating…";
+
+  const showApproveButton =
+    payload.status === "fix_proposed" && (payload.actions?.length ?? 0) > 0;
 
   const blocks = [
     {
@@ -90,23 +94,35 @@ export async function sendIncidentNotification(
           },
         }]
       : []),
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Proposed Actions:*\n${actionLines}`,
-      },
-    },
+    ...(showApproveButton
+      ? [{
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*Proposed Actions:*\n${actionLines}`,
+          },
+        }]
+      : payload.status === "monitoring"
+        ? [{
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: "*Recovery:*\nIncident approved — monitoring recovery in Resolve.",
+            },
+          }]
+        : []),
     {
       type: "actions",
       elements: [
-        {
-          type: "button",
-          text: { type: "plain_text", text: "Approve Low-Risk Actions" },
-          style: "primary",
-          action_id: "approve_low_risk",
-          value: payload.incident_id,
-        },
+        ...(showApproveButton
+          ? [{
+              type: "button",
+              text: { type: "plain_text", text: "Approve Low-Risk Actions" },
+              style: "primary",
+              action_id: "approve_low_risk",
+              value: payload.incident_id,
+            }]
+          : []),
         {
           type: "button",
           text: { type: "plain_text", text: "Review in App" },
@@ -132,6 +148,37 @@ export async function sendIncidentNotification(
   }
 }
 
+export type NewIncidentAlert = {
+  incident_id: string;
+  title: string;
+  severity: string;
+  impact_amount: number | null;
+  impact_label: string | null;
+};
+
+/**
+ * Fire a Slack alert for a newly detected incident (severity, exposure, Approve
+ * button). Called from detection when a breach/forecast opens an incident.
+ * Never throws — a Slack failure must not abort detection.
+ */
+export async function notifyNewIncident(alert: NewIncidentAlert): Promise<void> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  try {
+    await sendIncidentNotification({
+      title: alert.title,
+      severity: alert.severity,
+      status: "detected",
+      impact_amount: alert.impact_amount,
+      impact_label: alert.impact_label,
+      incident_id: alert.incident_id,
+      app_url: appUrl,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[Slack] new-incident alert failed: ${message}`);
+  }
+}
+
 /** Slack interactive webhook: URL-encoded form with a JSON `payload` field. */
 export const slackInteractionPayloadSchema = z.object({
   actions: z
@@ -154,4 +201,56 @@ export function parseSlackInteractionPayload(raw: string): SlackInteractionPaylo
   } catch {
     return null;
   }
+}
+
+/**
+ * Slack request signing.
+ * Slack signs each request as `v0=HMAC_SHA256(signingSecret, "v0:{timestamp}:{rawBody}")`,
+ * sent in the `X-Slack-Signature` header alongside `X-Slack-Request-Timestamp`.
+ * See https://api.slack.com/authentication/verifying-requests-from-slack
+ */
+const SLACK_SIGNATURE_VERSION = "v0";
+const MAX_TIMESTAMP_SKEW_SECONDS = 60 * 5;
+
+export type SlackSignatureHeaders = {
+  signature: string | null;
+  timestamp: string | null;
+};
+
+/**
+ * Verify an inbound Slack request signature. Returns false (reject) when the
+ * signing secret is unset, headers are missing/malformed, the timestamp is
+ * stale (replay), or the HMAC does not match. Comparison is constant-time.
+ */
+export function verifySlackRequest(
+  rawBody: string,
+  { signature, timestamp }: SlackSignatureHeaders,
+  signingSecret: string | undefined = process.env.SLACK_SIGNING_SECRET,
+): boolean {
+  if (!signingSecret || !signature || !timestamp) {
+    return false;
+  }
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) {
+    return false;
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestampSeconds) > MAX_TIMESTAMP_SKEW_SECONDS) {
+    return false;
+  }
+
+  const basestring = `${SLACK_SIGNATURE_VERSION}:${timestamp}:${rawBody}`;
+  const expected = `${SLACK_SIGNATURE_VERSION}=${createHmac("sha256", signingSecret)
+    .update(basestring)
+    .digest("hex")}`;
+
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(signature);
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, providedBuffer);
 }

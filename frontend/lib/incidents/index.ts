@@ -1,9 +1,14 @@
+export * from "./api";
 export {
   approveIncidentActions,
   listLowRiskProposedActionIds,
 } from "./approve";
-export { getIncident, getIncidentDetail, listIncidents } from "./queries";
-export type { IncidentDetail } from "./queries";
+export type { AgentFinding } from "./agent-finding";
+export type { Incident, IncidentRef } from "./incident";
+export type { IncidentAction } from "./incident-action";
+export type { IncidentDetail } from "./incident-detail";
+export type { TimelineEvent } from "./timeline-event";
+export { getIncident, getIncidentDetail, listIncidents, patchIncident } from "./queries";
 export {
   INCIDENT_STATUSES,
   isIncidentStatus,
@@ -11,5 +16,9 @@ export {
   type IncidentStatus,
   type KanbanStatus,
 } from "./status";
-export { approveIncidentBodySchema, type ApproveIncidentBody } from "./schemas";
-export type { AgentFinding, Incident, IncidentAction, TimelineEvent } from "./types";
+export {
+  approveIncidentBodySchema,
+  type ApproveIncidentBody,
+  updateIncidentBodySchema,
+  type UpdateIncidentBody,
+} from "./schemas";

@@ -1,23 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { assertCronAuthorized } from "@/lib/cron-auth";
 import { detectBreaches } from "@/lib/detection/detect";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // POST /api/detect — run deterministic KPI breach detection over the catalogue
 // and open incidents for newly-breached products. Safe to call repeatedly: it
 // dedups against products that already have an open incident.
-//
-// Intended to be hit by a scheduler (e.g. a Vercel cron) or triggered manually.
-// If CRON_SECRET is set, callers must present it.
 export async function POST(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization") ?? req.headers.get("x-cron-secret");
-    if (auth !== `Bearer ${secret}` && auth !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
-  const supabase = createServiceClient();
+  const supabase = createAdminClient();
   try {
     const result = await detectBreaches(supabase);
     return NextResponse.json({
@@ -28,7 +22,7 @@ export async function POST(req: NextRequest) {
       incidents: result.created,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/detect", err);
+    return apiErrorResponse(err);
   }
 }

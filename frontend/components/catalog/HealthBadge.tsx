@@ -1,15 +1,16 @@
+import { Badge } from "@/components/ui/badge";
 import type { HealthLevel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
 const styles: Record<HealthLevel, string> = {
-  healthy: "bg-sev-low/20 text-green-400 border-sev-low/30",
-  warning: "bg-sev-medium/20 text-yellow-400 border-sev-medium/30",
-  critical: "bg-sev-critical/20 text-red-400 border-sev-critical/30",
+  healthy: "bg-sev-resolvedBg text-sev-resolved border-sev-resolvedBd",
+  warning: "bg-sev-monitorBg text-sev-monitor border-sev-monitorBd",
+  critical: "bg-sev-criticalBg text-sev-critical border-sev-criticalBd",
 };
 
 const dots: Record<HealthLevel, string> = {
-  healthy: "bg-sev-low",
-  warning: "bg-sev-medium",
+  healthy: "bg-sev-resolved",
+  warning: "bg-sev-monitor",
   critical: "bg-sev-critical",
 };
 
@@ -19,7 +20,7 @@ const labels: Record<HealthLevel, string> = {
   critical: "Critical",
 };
 
-export default function HealthBadge({
+export function HealthBadge({
   level,
   className,
 }: {
@@ -27,15 +28,12 @@ export default function HealthBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium",
-        styles[level],
-        className
-      )}
+    <Badge
+      variant="outline"
+      className={cn("gap-1.5 rounded-full font-medium", styles[level], className)}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", dots[level])} />
+      <span className={cn("size-1.5 rounded-full", dots[level])} />
       {labels[level]}
-    </span>
+    </Badge>
   );
 }

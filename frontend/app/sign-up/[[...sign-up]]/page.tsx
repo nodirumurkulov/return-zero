@@ -1,17 +1,25 @@
-import { SignUp } from "@clerk/nextjs";
+import Link from "next/link";
+import { signUp } from "@/app/auth/actions";
+import AuthForm from "@/components/auth/AuthForm";
+import DemoLoginButton from "@/components/auth/DemoLoginButton";
+import OAuthButtons from "@/components/auth/OAuthButtons";
+import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 import { BrandLogo } from "@/components/layout/BrandLogo";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { isDemoLoginConfigured } from "@/lib/auth/demo";
 
 export default function SignUpPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#0A0A0A] px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-12">
       <BrandLogo variant="auth" />
-      <SignUp
-        appearance={clerkAppearance}
-        signInUrl="/sign-in"
-        forceRedirectUrl="/catalog"
-        fallbackRedirectUrl="/catalog"
-      />
+      <AuthForm title="Create account" action={signUp} />
+      <OAuthButtons />
+      <ShopifyLoginButton />
+      <DemoLoginButton configured={isDemoLoginConfigured()} />
+      <p className="text-sm text-muted-foreground">
+        <Link href="/sign-in" className="text-primary hover:underline">
+          Already have an account? Sign in
+        </Link>
+      </p>
     </div>
   );
 }

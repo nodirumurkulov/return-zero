@@ -8,11 +8,11 @@ Ecommerce incident response for the **Pretty Fly** demo brand: detect KPI breach
 
 | | |
 |---|---|
-| **Live demo** | [return-zero-57ht-nodir-s-projects1.vercel.app](https://return-zero-57ht-nodir-s-projects1.vercel.app) — sign in with Clerk, then open **Catalog** or **Incidents** |
+| **Live demo** | [return-zero-57ht-nodir-s-projects1.vercel.app](https://return-zero-57ht-nodir-s-projects1.vercel.app) — sign in with Supabase Auth, then open **Catalog** or **Incidents** |
 | **Repo** | [github.com/nodirumurkulov/return-zero](https://github.com/nodirumurkulov/return-zero) |
 | **Project board** | [Linear — Run-zero](https://linear.app/run-zero/team/RUN/all) |
 
-**Stack:** Next.js 16 · TypeScript · Supabase · Clerk · Vercel · Bun (`frontend/`)
+**Stack:** Next.js 16 · TypeScript · Supabase (Auth + Postgres) · Vercel · Bun (`frontend/`)
 
 ---
 
@@ -115,15 +115,7 @@ Recovery uses a **projected** KPI path after deploy (demo-friendly on static fix
 
 ---
 
-## Judge demo (5 minutes)
-
-Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** or run locally (below).
-
-1. **Sign in** at `/sign-in` (Clerk) — you land on **Catalog**.
-2. Open **Court Trainer** (`/catalog/prod_court_trainer`) — note elevated return rate vs thresholds.
-3. Go to **Incidents** — open **Court Trainer Return Spike** (pre-seeded, often `awaiting_approval`).
-4. Review **agent cards**, **root cause**, and **proposed actions**.
-5. **Approve** low-risk actions → incident moves to `deploying` / `monitoring`.
+**Judge demo:** [hackathon/judge-demo.md](hackathon/judge-demo.md) (5-minute walkthrough).
 
 ---
 
@@ -132,10 +124,10 @@ Use the **[live demo](https://return-zero-57ht-nodir-s-projects1.vercel.app)** o
 | Piece | Location |
 |-------|----------|
 | Web app and API | [`frontend/`](frontend/) |
-| Database migrations | [`supabase/`](supabase/) |
-| Seed and validation scripts | [`scripts/`](scripts/) |
+| Database migrations | [`frontend/supabase/`](frontend/supabase/) |
+| Seed and validation scripts | [`frontend/scripts/`](frontend/scripts/) |
 | Deployment and analytics docs | [`docs/`](docs/) |
-| Hackathon CSV data | [`pretty_fly_data_pack/`](pretty_fly_data_pack/) |
+| Hackathon materials | [`hackathon/`](hackathon/) (data pack, demo script, PDF) |
 
 Humans read **`README.md`** in each folder; coding agents read the matching **`AGENTS.md`**.
 
@@ -144,9 +136,8 @@ Humans read **`README.md`** in each folder; coding agents read the matching **`A
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (frontend install, lint, build)
-- [Node.js](https://nodejs.org) 20+ (scripts only)
 - Supabase project with migrations applied
-- Clerk application (publishable + secret keys)
+- Supabase Auth enabled (email/password for local demo)
 - LLM API key (OpenAI or Anthropic)
 
 ## Environment variables
@@ -155,10 +146,8 @@ Copy [`.env.example`](.env.example) to `frontend/.env.local` and fill in values.
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXT_PUBLIC_CLERK_*` | Clerk auth URLs and publishable key |
-| `CLERK_SECRET_KEY` | Server-side Clerk (never `NEXT_PUBLIC_`) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key (browser + RLS server client) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server routes and scripts only |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | Investigation agents |
 | `LLM_PROVIDER` | `openai` or `anthropic` |
@@ -182,18 +171,17 @@ Open **http://localhost:3000** → sign in → **Catalog** / **Incidents**.
 Apply SQL in [`supabase/migrations/`](./supabase/migrations/) in filename order, then:
 
 ```bash
-cd scripts && npm install
-node --env-file=../frontend/.env.local seed.mjs
-# or: npm run seed
+cd frontend && bun install
+bun run seed
 ```
 
-Validators need a seeded project: `npm run validate` (see [`scripts/README.md`](scripts/README.md)).
+Validators need a seeded project: `bun run validate` (see [`frontend/scripts/README.md`](frontend/scripts/README.md)).
 
 ### Before you open a PR
 
 ```bash
 cd frontend && bun run check && bun run build
-cd frontend && bun run verify:secrets
+cd frontend/supabase && supabase start && cd .. && bun run db:reset && bun run db:lint
 ```
 
 ---
@@ -220,7 +208,7 @@ Deploy on Vercel with **Root Directory** set to `frontend`. See [`docs/DEPLOYMEN
 | Symptom | Likely cause | What to do |
 |---------|--------------|------------|
 | Empty catalog or incidents | DB not seeded | Run `scripts` seed against your Supabase project |
-| Auth redirect loops | Clerk URL mismatch | Match sign-in/up URLs in Clerk dashboard and `.env.local` |
+| Auth redirect loops | Supabase redirect URL mismatch | Add `http://localhost:3000/**` and your Vercel URL in Supabase Auth → URL configuration |
 | Investigation fails | Missing LLM key or provider | Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |
 | Cron routes 401 | `CRON_SECRET` set | Send `Authorization: Bearer $CRON_SECRET` or clear for local dev |
 
@@ -236,7 +224,7 @@ Built by the **[Run-zero](https://linear.app/run-zero)** team (Wayflyer × Fin H
 | **Naseem** | Frontend — product catalog, KPI editor, app shell, Slack cards, Vercel deploy |
 | **Botir Khaltaev** | ML & AI — KPI detection, severity scoring, five-agent investigation, recovery monitoring |
 | **Mohamed El Amine Atoui** | Data — Pretty Fly pipeline, SQL metrics layer, analytics for catalog & agents |
-| **nodir** | Security & platform — Clerk auth, Supabase RLS, API hardening, env & deploy config |
+| **nodir** | Security & platform — Supabase Auth, RLS, API hardening, env & deploy config |
 
 ---
 
@@ -255,6 +243,7 @@ Pretty Fly (and real merchants) live on **unit economics**: returns erode margin
 
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — Vercel, env, cron
 - [`docs/analytics-and-forecasting.md`](docs/analytics-and-forecasting.md) — metrics and forecast behavior
+- [`hackathon/README.md`](hackathon/README.md) — Pretty Fly data pack and demo materials
 - [`frontend/README.md`](frontend/README.md) — frontend onboarding
 
 ---

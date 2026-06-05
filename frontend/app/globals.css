@@ -4,33 +4,51 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 239 84% 67%;
+    /* Hugo light design system (from the Resolve prototype) */
+    --background: 0 0% 100%;
+    --foreground: 240 6% 10%; /* zinc-900 */
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 239 84% 59%; /* indigo-600 #4f46e5 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 239 84% 67%;
+    --secondary: 240 5% 96%; /* zinc-100 */
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%; /* zinc-500 */
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 72% 51%; /* red-600 #dc2626 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 90%; /* zinc-200 */
+    --input: 240 6% 90%;
+    --ring: 239 84% 67%; /* indigo-500 */
     --radius: 0.5rem;
 
-    /* Resolve design tokens (src/system.jsx) */
-    --sev-critical: 0 84% 60%;
-    --sev-high: 25 95% 53%;
-    --sev-medium: 45 93% 47%;
-    --sev-low: 142 71% 45%;
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --sidebar: 240 5% 98%; /* zinc-50 */
+    --sidebar-foreground: 240 6% 10%;
+    --sidebar-primary: 239 84% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 100%; /* active nav item = white */
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 239 84% 67%;
+
+    /* Primary accents */
+    --primary-hover: 244 75% 53%; /* indigo-700 #4338ca */
+    --primary-subtle: 226 100% 97%; /* indigo-50 #eef2ff */
+    --primary-ring: 239 84% 67%;
+
+    /* Severity base colours (design hexes) */
+    --sev-critical: 0 72% 51%; /* #dc2626 */
+    --sev-high: 21 90% 48%; /* #ea580c */
+    --sev-medium: 32 81% 36%; /* amber/monitor #b45309 */
+    --sev-low: 142 72% 29%; /* green/resolved #15803d */
+    --sev-idle: 240 4% 40%; /* gray/idle #52525b */
+
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.16), 0 2px 6px -2px rgb(0 0 0 / 0.1);
   }
 
   * {
@@ -45,5 +63,11 @@
 @layer utilities {
   .shadow-card {
     box-shadow: var(--shadow-card);
+  }
+  .shadow-pop {
+    box-shadow: var(--shadow-pop);
+  }
+  .tabnum {
+    font-variant-numeric: tabular-nums;
   }
 }

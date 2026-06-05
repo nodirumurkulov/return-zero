@@ -1,10 +1,46 @@
-# app/api/
+# AGENTS.md — app/api
 
-Route handlers (App Router). Prefer thin routes: auth, parse body, delegate to `lib/<domain>/`.
+Route handlers (`app/api/*/route.ts`). **Parent:** [../../../AGENTS.md](../../../AGENTS.md) · **Humans:** [README.md](README.md)
+
+## Pattern
+
+Thin routes: optional cron auth → parse body → delegate to `lib/<domain>/`.
+
+```typescript
+const raw = await req.json().catch(() => ({}));
+const parsed = someBodySchema.safeParse(raw);
+if (!parsed.success) {
+  return NextResponse.json(
+    { error: parsed.error.issues.map((i) => i.message).join("; ") },
+    { status: 400 },
+  );
+}
+```
+
+## Endpoints
+
+| Route | Domain module |
+|-------|----------------|
+| `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
+| `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
+| `POST /api/learn` | `learn/schemas.ts` |
+| `POST /api/onboarding/upload` | `onboarding/import` + `onboarding/api-schemas.ts` (multipart; admin after auth) |
+| `POST /api/replay` | `assertCronAuthorized` or session user |
+| `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
+| `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
+| `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
+
+Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
+
+## Best practices (API routes)
+
+- **Thin handlers only** — orchestration belongs in `lib/<domain>/`; routes do not accumulate business logic.
+- **Zod at the boundary** — `safeParse` inline; no wrapper parsers, no `as Type`, no backward-compatible dual shapes.
+- **Delete obsolete endpoints** when flows move (e.g. client fetch replaced by RSC) instead of leaving deprecated routes.
 
 ## Rules
 
-- Parse JSON with domain `schemas.ts` and inline `safeParse` in the route — **no async IIFEs**, no ad-hoc casts.
-- Slack interactions: `parseSlackInteractionPayload` from `@/lib/slack`.
-- Incident approve/deploy: `approveIncidentActions` from `@/lib/incidents`.
-- Use `createServiceClient()` from `@/lib/supabase/server` for service-role access.
+- User routes: `await createClient()` + `getUser()`; cron/Slack: `createAdminClient()` from `@/lib/supabase/admin`.
+- No async IIFEs, no ad-hoc `as` casts for request bodies.
+- Do not add generic `read-json` helpers — Zod schemas live in the owning domain.
+- Follow root [Best practices mandate](../../../AGENTS.md#best-practices-mandate).

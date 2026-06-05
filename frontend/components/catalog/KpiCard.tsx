@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SectionLabel from "@/components/ui/section-label";
+import { SectionLabel } from "@/components/ui/section-label";
 import Sparkline from "@/components/ui/sparkline";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +20,9 @@ export default function KpiCard({
 }: KpiCardProps) {
   const accentClass =
     accent === "danger"
-      ? "text-red-400"
+      ? "text-sev-critical"
       : accent === "success"
-        ? "text-green-400"
+        ? "text-sev-resolved"
         : "text-foreground";
 
   return (

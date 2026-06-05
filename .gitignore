@@ -2,8 +2,6 @@
 frontend/.next/
 frontend/out/
 frontend/node_modules/
-scripts/node_modules/
-
 # Env files — never commit secrets
 .env
 .env.local
@@ -25,3 +23,15 @@ npm-debug.log*
 
 # Misc
 .vercel
+scripts/node_modules/
+supabase/.temp/
+
+# Playwright
+frontend/e2e/.auth/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+
+# raw dataset + design assets — never commit
+data/
+*.zip

@@ -29,7 +29,12 @@ function evalValue(def: MetricDefinition, facts: ProductSourceFacts): number | n
   return numerator / denominator;
 }
 
-function statusFor(value: number | null, threshold: number, direction: Direction): MetricStatus {
+/** Pure KPI status from value vs threshold (exported for unit tests). */
+export function metricStatusFor(
+  value: number | null,
+  threshold: number,
+  direction: Direction,
+): MetricStatus {
   if (value === null) return "healthy";
   const breached = direction === "above" ? value > threshold : value < threshold;
   if (breached) return "critical";
@@ -43,6 +48,7 @@ function statusFor(value: number | null, threshold: number, direction: Direction
 export interface ComputeOpts {
   productId?: string; // restrict to one product
   windowDays?: number; // override each definition's own window
+  asOf?: string; // anchor the rolling window to this date (replay cursor); default = latest order
 }
 
 export interface EngineRun {
@@ -86,7 +92,7 @@ export async function computeMetricsDetailed(
     : new Set(defs.map((d) => d.window_days));
   const factsByWindow = new Map<number, Map<string, ProductSourceFacts>>();
   for (const w of Array.from(windows)) {
-    factsByWindow.set(w, await getSourceFacts(supabase, w));
+    factsByWindow.set(w, await getSourceFacts(supabase, w, opts.asOf));
   }
 
   const metrics: Record<string, MetricValue[]> = {};
@@ -105,7 +111,7 @@ export async function computeMetricsDetailed(
         value,
         threshold,
         direction,
-        status: statusFor(value, threshold, direction),
+        status: metricStatusFor(value, threshold, direction),
         severity: def.severity,
       });
     }

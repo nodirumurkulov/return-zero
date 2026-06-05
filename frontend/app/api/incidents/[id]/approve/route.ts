@@ -1,4 +1,6 @@
+import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { captureRecoveryBaseline } from "@/lib/detection/recover";
 import {
   approveIncidentActions,
@@ -7,7 +9,7 @@ import {
 } from "@/lib/incidents";
 import { approveIncidentBodySchema } from "@/lib/incidents/schemas";
 import { sendIncidentNotification } from "@/lib/slack";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +24,15 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     );
   }
 
-  const supabase = createServiceClient();
-  const body = parsed.data;
-  const approvedBy = body.approved_by ?? "operator";
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  const body = parsed.data;
   const lowRiskIds = body.approve_all_low_risk
     ? await listLowRiskProposedActionIds(supabase, params.id)
     : [];
@@ -37,10 +44,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
 
   try {
-    await approveIncidentActions(supabase, params.id, actionIds, approvedBy);
+    await approveIncidentActions(supabase, params.id, actionIds, user.id);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    logApiError("api/incidents/[id]/approve", err);
+    return apiErrorResponse(err);
   }
 
   const incident = await getIncident(supabase, params.id);
@@ -67,6 +74,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       );
     }
   }
+
+  revalidatePath("/incidents");
+  revalidatePath(`/incidents/${params.id}`);
 
   return NextResponse.json({ success: true, approved: actionIds.length });
 }

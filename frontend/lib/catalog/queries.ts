@@ -1,60 +1,118 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { computeMetricsDetailed } from "@/lib/metrics/engine";
+import { getProductSeries } from "@/lib/metrics/series";
+import type { MetricValue, ProductSourceFacts } from "@/lib/metrics/types";
+import type { Database } from "@/lib/supabase/database.types";
+
 import type { KpiThreshold, ProductMetric, ProductMonthlyMetric } from "./types";
 
-export async function listCatalogWithThresholds(supabase: SupabaseClient): Promise<{
-  products: ProductMetric[];
-  thresholdsByProduct: Record<string, KpiThreshold[]>;
-}> {
-  const [{ data: products, error: productsError }, { data: thresholds, error: thresholdsError }] =
-    await Promise.all([
-      supabase.from("product_metrics_view").select("*").order("title"),
-      supabase.from("product_kpi_thresholds").select("*"),
-    ]);
+type ProductRow = Pick<
+  Database["public"]["Tables"]["products"]["Row"],
+  "product_id" | "title" | "product_type" | "gender_segment"
+>;
 
-  if (productsError) throw new Error(productsError.message);
-  if (thresholdsError) throw new Error(thresholdsError.message);
+// Catalog data is assembled from the config-driven metrics engine (the single
+// source of truth used by detection/forecasting/recovery), not the retired
+// product_metrics_view. Threshold rows are synthesised from each metric's
+// effective threshold when no per-product override exists in the DB.
 
-  const thresholdsByProduct = (thresholds ?? []).reduce<Record<string, KpiThreshold[]>>(
-    (acc, row) => {
-      const threshold = row as KpiThreshold;
-      const list = acc[threshold.product_id] ?? [];
-      list.push(threshold);
-      acc[threshold.product_id] = list;
-      return acc;
-    },
-    {},
-  );
+function valueOf(metrics: MetricValue[], key: string): number | null {
+  return metrics.find((m) => m.metric_key === key)?.value ?? null;
+}
 
+function synthThresholds(productId: string, metrics: MetricValue[]): KpiThreshold[] {
+  return metrics.map((m) => ({
+    id: `${productId}:${m.metric_key}`,
+    product_id: productId,
+    metric_key: m.metric_key,
+    threshold: m.threshold,
+    direction: m.direction,
+    active: true,
+    created_at: "",
+  }));
+}
+
+function toProductMetric(
+  row: ProductRow,
+  metrics: MetricValue[],
+  facts: ProductSourceFacts | undefined
+): ProductMetric {
   return {
-    products: (products ?? []) as ProductMetric[],
-    thresholdsByProduct,
+    product_id: row.product_id,
+    title: row.title,
+    product_type: row.product_type,
+    gender_segment: row.gender_segment,
+    revenue_gbp: facts?.sales_revenue ?? 0,
+    order_count: Math.round(facts?.sales_units ?? 0),
+    return_rate: valueOf(metrics, "return_rate"),
+    refund_rate: valueOf(metrics, "refund_rate"),
+    support_tickets: Math.round(facts?.support_count ?? 0),
+    ad_roas: valueOf(metrics, "ad_roas"),
   };
 }
 
+async function buildCatalog(supabase: SupabaseClient<Database>): Promise<{
+  metrics: Record<string, MetricValue[]>;
+  facts: Map<string, ProductSourceFacts>;
+  productRows: ProductRow[];
+}> {
+  const [{ metrics, factsByWindow }, { data: productRows, error }] = await Promise.all([
+    computeMetricsDetailed(supabase),
+    supabase.from("products").select("product_id, title, product_type, gender_segment"),
+  ]);
+  if (error) throw new Error(error.message);
+  const facts =
+    factsByWindow.get(30) ??
+    Array.from(factsByWindow.values())[0] ??
+    new Map<string, ProductSourceFacts>();
+  return { metrics, facts, productRows: productRows ?? [] };
+}
+
+export async function listCatalogWithThresholds(supabase: SupabaseClient<Database>): Promise<{
+  products: ProductMetric[];
+  thresholdsByProduct: Record<string, KpiThreshold[]>;
+}> {
+  const { metrics, facts, productRows } = await buildCatalog(supabase);
+
+  const products: ProductMetric[] = [];
+  const thresholdsByProduct: Record<string, KpiThreshold[]> = {};
+  for (const row of productRows) {
+    const id = row.product_id;
+    const mv = metrics[id] ?? [];
+    products.push(toProductMetric(row, mv, facts.get(id)));
+    thresholdsByProduct[id] = synthThresholds(id, mv);
+  }
+  products.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
+  return { products, thresholdsByProduct };
+}
+
 export async function getProductCatalogDetail(
-  supabase: SupabaseClient,
-  productId: string,
+  supabase: SupabaseClient<Database>,
+  productId: string
 ): Promise<{
   product: ProductMetric;
   monthly: ProductMonthlyMetric[];
   thresholds: KpiThreshold[];
 } | null> {
-  const [{ data: product, error }, { data: monthly }, { data: thresholds }] = await Promise.all([
-    supabase.from("product_metrics_view").select("*").eq("product_id", productId).maybeSingle(),
-    supabase
-      .from("product_metrics_monthly_view")
-      .select("*")
-      .eq("product_id", productId)
-      .order("month_start"),
-    supabase.from("product_kpi_thresholds").select("*").eq("product_id", productId),
+  const [{ metrics, facts, productRows }, series] = await Promise.all([
+    buildCatalog(supabase),
+    getProductSeries(supabase, productId, 12),
   ]);
 
-  if (error || !product) return null;
+  const row = productRows.find((p) => p.product_id === productId);
+  if (!row) return null;
 
+  const mv = metrics[productId] ?? [];
   return {
-    product: product as ProductMetric,
-    monthly: (monthly ?? []) as ProductMonthlyMetric[],
-    thresholds: (thresholds ?? []) as KpiThreshold[],
+    product: toProductMetric(row, mv, facts.get(productId)),
+    monthly: series.map((p) => ({
+      product_id: p.product_id,
+      month_start: p.month,
+      revenue_gbp: p.revenue,
+      order_count: Math.round(p.units),
+      return_rate: p.units > 0 ? p.refund_count / p.units : 0,
+    })),
+    thresholds: synthThresholds(productId, mv),
   };
 }

@@ -1,12 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getIncidentDetail } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { getIncidentDetail, patchIncident, updateIncidentBodySchema } from "@/lib/incidents";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const detail = await getIncidentDetail(supabase, params.id);
 
   if (!detail) {
@@ -18,19 +26,28 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const supabase = createServiceClient();
-  const body = (await req.json()) as Record<string, unknown>;
-
-  const { data, error } = await supabase
-    .from("incidents")
-    .update(body)
-    .eq("id", params.id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.json(data);
+  const raw = await req.json().catch(() => null);
+  const parsed = updateIncidentBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((i) => i.message).join("; ") || "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const data = await patchIncident(supabase, params.id, parsed.data);
+    return NextResponse.json(data);
+  } catch (err) {
+    logApiError("api/incidents/[id] PATCH", err);
+    return apiErrorResponse(err);
+  }
 }
