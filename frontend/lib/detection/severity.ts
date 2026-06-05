@@ -1,7 +1,22 @@
 import { linearTrend } from "../forecast/methods";
 import type { Direction, MonthlyPoint } from "../metrics/types";
+import type { Confidence } from "./anomaly";
 
 export type Severity = "critical" | "high" | "medium" | "low";
+
+/**
+ * Severity nudge from the SPC z-score against the product's own baseline. A
+ * large, trustworthy deviation bumps severity; a thin baseline (or none) never
+ * does — additive, so detection without a baseline scores exactly as before.
+ */
+export function zSeverityBoost(z: number | null | undefined, confidence: Confidence): number {
+  if (z === null || z === undefined || !Number.isFinite(z)) return 0;
+  const abs = Math.abs(z);
+  const trustworthy = confidence === "moderate" || confidence === "high";
+  if (abs >= 3 && trustworthy) return 1;
+  if (abs >= 2) return 0.5;
+  return 0;
+}
 
 const RANK: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
@@ -25,6 +40,7 @@ export function scoreSeverity(input: {
   magnitude: number; // >=1, how far past threshold
   impactAmount: number; // £ exposure
   worsening?: boolean; // forecast trend heading further from target
+  zBoost?: number; // SPC nudge from zSeverityBoost (0 when no baseline)
 }): Severity {
   const magnitudePoints =
     input.magnitude >= 3 ? 3 : input.magnitude >= 2 ? 2 : input.magnitude >= 1.5 ? 1 : 0;
@@ -40,7 +56,8 @@ export function scoreSeverity(input: {
     (severityRank(input.baseSeverity) - 2) * 0.5 +
     magnitudePoints +
     impactPoints +
-    (input.worsening ? 1 : 0);
+    (input.worsening ? 1 : 0) +
+    (input.zBoost ?? 0);
 
   if (score >= 4.5) return "critical";
   if (score >= 2.5) return "high";

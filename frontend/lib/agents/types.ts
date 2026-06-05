@@ -24,4 +24,36 @@ export type InvestigationResult = {
   actions: InvestigationAction[];
 };
 
+export type Confidence = "high" | "moderate" | "low" | "none";
+
+/** One dimension of the Quant Analyst's diagnosis. */
+export type QuantFinding = {
+  agent_name: string;
+  agent_icon: string;
+  summary: string;
+  z_score?: number | null;
+  sigma?: number | null;
+  ci?: { lower: number; upper: number } | null;
+  confidence?: Confidence | null;
+  quantity?: number | null;
+  detail: Record<string, unknown>;
+};
+
+export type QuantDiagnosis = {
+  findings: QuantFinding[];
+};
+
+/** A costed, goal-aligned recommendation from the Operator. */
+export type OperatorAction = InvestigationAction & {
+  goal_rationale?: string | null;
+  estimated_impact_gbp?: number | null;
+  confidence?: Confidence | null;
+};
+
+export type OperatorOutput = {
+  root_cause: string;
+  root_cause_confidence: number;
+  actions: OperatorAction[];
+};
+
 export type AgentSupabase = SupabaseClient<Database>;

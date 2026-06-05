@@ -1,9 +1,86 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeMetricsDetailed } from "../metrics/engine";
+import { baselineStats, kpiRatioSeries } from "../metrics/kpi-series";
 import { getMonthlySeries } from "../metrics/series";
-import type { ProductSourceFacts } from "../metrics/types";
+import type { MonthlyPoint, ProductSourceFacts } from "../metrics/types";
 import { notifyNewIncident } from "../slack";
-import { breachMagnitude, metricTrendWorsening, scoreSeverity, severityRank } from "./severity";
+import {
+  confidenceFromN,
+  confidenceInterval,
+  zScore,
+  type Confidence,
+} from "./anomaly";
+import {
+  breachMagnitude,
+  metricTrendWorsening,
+  scoreSeverity,
+  severityRank,
+  zSeverityBoost,
+} from "./severity";
+
+type BaselineRow = { metric_key: string; mean: number; stddev: number; sample_n: number };
+
+/** SPC profile of a breached KPI against the product's baseline. */
+interface QuantProfile {
+  metric_key: string;
+  value: number;
+  baseline_source: "learned" | "series" | "none";
+  mean: number | null;
+  sigma: number | null;
+  sample_n: number | null;
+  z_score: number | null;
+  ci: { lower: number; upper: number } | null;
+  confidence: Confidence;
+}
+
+/**
+ * Build the SPC profile for a breached KPI. Prefer the stored learned baseline;
+ * if none exists yet (e.g. before the learn step has run on a fresh upload),
+ * fall back to on-the-fly stats from the product's monthly series. No baseline
+ * available at all → null z, "none" confidence, zero severity boost (additive).
+ */
+function quantProfile(
+  metricKey: string,
+  value: number,
+  stored: BaselineRow | undefined,
+  series: MonthlyPoint[],
+): QuantProfile {
+  const fallback = stored
+    ? null
+    : (() => {
+        const s = baselineStats(kpiRatioSeries(series, metricKey));
+        return s.n > 0 ? s : null;
+      })();
+  const stats = stored
+    ? { mean: stored.mean, stddev: stored.stddev, n: stored.sample_n }
+    : fallback;
+  const source: QuantProfile["baseline_source"] = stored ? "learned" : fallback ? "series" : "none";
+
+  if (!stats) {
+    return {
+      metric_key: metricKey,
+      value,
+      baseline_source: "none",
+      mean: null,
+      sigma: null,
+      sample_n: null,
+      z_score: null,
+      ci: null,
+      confidence: "none",
+    };
+  }
+  return {
+    metric_key: metricKey,
+    value,
+    baseline_source: source,
+    mean: stats.mean,
+    sigma: stats.stddev,
+    sample_n: stats.n,
+    z_score: zScore(value, stats.mean, stats.stddev),
+    ci: confidenceInterval(stats.mean, stats.stddev, stats.n),
+    confidence: confidenceFromN(stats.n),
+  };
+}
 
 // Deterministic KPI breach detection. Runs the config-driven metrics engine over
 // the catalogue and opens an incident per product with one or more critical
@@ -81,6 +158,36 @@ export async function detectBreaches(
     months: 24,
   });
 
+  // Per-product/KPI learned baselines for the SPC z-score. product_baselines is
+  // keyed by metric_definition_id, so resolve it back to metric_key. Missing
+  // rows → no z, no severity boost, "none" confidence (handled in quantProfile).
+  const { data: mdRows } = await supabase
+    .from("metric_definitions")
+    .select("id, metric_key")
+    .eq("organization_id", opts.organizationId);
+  const keyByDefId = new Map((mdRows ?? []).map((d) => [String(d.id), String(d.metric_key)]));
+  const { data: baselineRows } = await supabase
+    .from("product_baselines")
+    .select("product_id, metric_definition_id, mean, stddev, sample_n")
+    .eq("organization_id", opts.organizationId);
+  const baselineByKey = new Map<string, BaselineRow>(
+    (baselineRows ?? []).flatMap((r) => {
+      const metricKey = keyByDefId.get(String(r.metric_definition_id));
+      if (!metricKey) return [];
+      return [
+        [
+          `${r.product_id}:${metricKey}`,
+          {
+            metric_key: metricKey,
+            mean: Number(r.mean),
+            stddev: Number(r.stddev),
+            sample_n: Number(r.sample_n),
+          },
+        ] as const,
+      ];
+    }),
+  );
+
   const created: CreatedIncident[] = [];
   const skipped: DetectionResult["skipped"] = [];
   const productIds = Object.keys(metrics);
@@ -107,11 +214,18 @@ export async function detectBreaches(
     const fullSeries = seriesByProduct.get(productId) ?? [];
     // As of the replay cursor, the trend should only "see" months up to the cursor.
     const series = opts.asOf ? fullSeries.filter((p) => p.month <= opts.asOf!) : fullSeries;
+    const profile = quantProfile(
+      primary.m.metric_key,
+      value,
+      baselineByKey.get(`${productId}:${primary.m.metric_key}`),
+      series,
+    );
     const severity = scoreSeverity({
       baseSeverity: primary.def.severity,
       magnitude: breachMagnitude(value, primary.m.threshold, primary.m.direction),
       impactAmount: primary.impact,
       worsening: metricTrendWorsening(primary.m.metric_key, series, primary.m.direction),
+      zBoost: zSeverityBoost(profile.z_score, profile.confidence),
     });
 
     const productTitle = titleById.get(productId) ?? productId;
@@ -150,6 +264,7 @@ export async function detectBreaches(
             threshold: r.m.threshold,
             direction: r.m.direction,
           })),
+          quant: profile,
         },
       },
       {

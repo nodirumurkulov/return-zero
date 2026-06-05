@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, CircleCheckBig } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
@@ -15,6 +16,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { useTriggerInvestigation } from "@/lib/agents/hooks";
 import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
 
 function IncidentDetailSkeleton() {
@@ -47,6 +49,22 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
   const { data: detail, isError, error, isPending } = useQuery(
     getIncidentDetailClientQueryOptions(incidentRef),
   );
+
+  // Auto-investigate when a freshly detected incident is opened. Guarded to fire
+  // at most once per mount; the manual button stays as a fallback. (Costs one LLM
+  // run on first view of a `detected` incident.)
+  const { mutate: triggerInvestigation, isPending: investigatePending } =
+    useTriggerInvestigation(incidentRef);
+  const autoFiredRef = useRef(false);
+  const detectedStatus = detail?.incident.status;
+  const affectedProduct = detail?.incident.product_id ?? null;
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    if (detectedStatus === "detected" && affectedProduct && !investigatePending) {
+      autoFiredRef.current = true;
+      triggerInvestigation({ product: { id: affectedProduct } });
+    }
+  }, [detectedStatus, affectedProduct, investigatePending, triggerInvestigation]);
 
   if (isPending && !detail) {
     return <IncidentDetailSkeleton />;
