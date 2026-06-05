@@ -9,7 +9,7 @@ type ProductCatalogCardProps = {
 };
 
 function formatPct(value: number | null) {
-  if (value == null) return "—";
+  if (value == null) return "N/A";
   return `${(value * 100).toFixed(1)}%`;
 }
 
