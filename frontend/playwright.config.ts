@@ -26,7 +26,9 @@ export default defineConfig({
   workers: isCI ? 1 : undefined,
   timeout: 60_000,
   expect: { timeout: 15_000 },
-  reporter: isCI ? [["github"], ["blob"]] : [["list"]],
+  reporter: isCI
+    ? [["github"], ["html", { outputFolder: "playwright-report", open: "never" }], ["blob"]]
+    : [["list"]],
   globalSetup: "./e2e/global-setup.ts",
   outputDir: "test-results",
   use: {

@@ -141,7 +141,18 @@ jobs:
       - name: Supabase
         working-directory: frontend/supabase
         run: |
-          supabase start --exclude studio,imgproxy,inbucket,edge-runtime
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
           eval "$(supabase status -o env)"
           echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"
@@ -199,7 +210,18 @@ jobs:
       - name: Supabase
         working-directory: frontend/supabase
         run: |
-          supabase start --exclude studio,imgproxy,inbucket,edge-runtime
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if supabase start --exclude studio,imgproxy,mailpit,edge-runtime; then
+              break
+            fi
+            echo "supabase start attempt ${attempt} failed"
+            supabase stop --no-backup 2>/dev/null || true
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
           eval "$(supabase status -o env)"
           echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> "$GITHUB_ENV"

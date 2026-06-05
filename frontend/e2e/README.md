@@ -42,7 +42,7 @@ GitHub Actions pipeline:
 2. **`integration-db`** (after build): Supabase start → `seed` → `bun run db:test:rls` → `bun run validate`
 3. **`e2e`** (needs `integration-db`): production server + Playwright (`CI=true`, **1 worker** for fixture stability)
 
-Supabase starts with trimmed services (`--exclude studio,imgproxy,inbucket,edge-runtime`); migrations apply on first start — **no `db reset`**.
+Supabase starts with trimmed services (`--exclude studio,imgproxy,mailpit,edge-runtime`); migrations apply on first start — **no `db reset`**.
 
 ### Specs
 
