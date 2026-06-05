@@ -15,6 +15,10 @@ export class AppShellPage {
     return this.page.getByRole("button", { name: "Sign out" });
   }
 
+  sidebarToggleTrigger() {
+    return this.page.locator('[data-sidebar="trigger"]');
+  }
+
   async goToCatalog() {
     await this.catalogLink().click();
     await this.page.waitForURL("**/catalog");

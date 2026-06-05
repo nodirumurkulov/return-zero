@@ -13,9 +13,11 @@ test.describe("Navigation", () => {
   });
 
   test("desktop sidebar collapse trigger is visible", async ({ page }) => {
+    const shell = new AppShellPage(page);
+
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/catalog");
-    await expect(page.getByRole("button", { name: "Toggle Sidebar" })).toBeVisible();
+    await expect(shell.sidebarToggleTrigger()).toBeVisible();
   });
 
   test("sidebar navigates between catalog and incidents", async ({ page }) => {
