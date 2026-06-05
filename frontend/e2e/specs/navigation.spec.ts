@@ -12,6 +12,12 @@ test.describe("Navigation", () => {
     await expect(page).toHaveURL(/\/catalog$/);
   });
 
+  test("desktop sidebar collapse trigger is visible", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/catalog");
+    await expect(page.getByRole("button", { name: "Toggle Sidebar" })).toBeVisible();
+  });
+
   test("sidebar navigates between catalog and incidents", async ({ page }) => {
     const shell = new AppShellPage(page);
     const catalog = new CatalogPage(page);

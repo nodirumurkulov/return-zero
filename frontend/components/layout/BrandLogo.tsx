@@ -45,7 +45,13 @@ export function BrandLogo({
         className="shrink-0 rounded-lg shadow-card"
         priority
       />
-      <div className={cn("min-w-0", variant === "auth" && "text-center")}>
+      <div
+        className={cn(
+          "min-w-0",
+          variant === "auth" && "text-center",
+          variant === "sidebar" && "group-data-[collapsible=icon]:hidden",
+        )}
+      >
         <Title className={titleClass}>{title}</Title>
         <p className={subtitleClass}>{subtitle}</p>
       </div>

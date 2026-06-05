@@ -20,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,10 +76,14 @@ export default function AppShell({
         Skip to main content
       </a>
       <SidebarProvider>
-        <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
-          <SidebarHeader className="border-b border-sidebar-border p-4">
-            <BrandLogo />
+        <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+          <SidebarHeader className="border-b border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
+            <div className="flex items-center gap-2">
+              <BrandLogo />
+              <SidebarTrigger className="ml-auto hidden group-data-[collapsible=icon]:hidden md:inline-flex" />
+            </div>
           </SidebarHeader>
+          <SidebarRail />
 
           <SidebarContent>
             <SidebarGroup>
@@ -104,7 +109,7 @@ export default function AppShell({
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border p-4">
-            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card">
+            <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-card group-data-[collapsible=icon]:hidden">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex size-2">
                   <span className="absolute inline-flex size-full motion-safe:animate-ping rounded-full bg-sev-resolved/50" />
@@ -122,7 +127,7 @@ export default function AppShell({
                   {initial}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">
                   {displayName}
                 </p>
