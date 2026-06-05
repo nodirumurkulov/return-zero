@@ -16,7 +16,7 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
     setState("running");
     setMessage(null);
     try {
-      const res = await fetch("/api/replay", {
+      const res = await fetch("/api/stores/analytics/replay", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ advance_days: days }),

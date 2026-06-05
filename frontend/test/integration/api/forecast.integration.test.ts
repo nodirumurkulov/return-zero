@@ -28,9 +28,9 @@ vi.mock("@/lib/organizations", () => ({
   requireOrganizationId: vi.fn(async () => "org-1"),
 }));
 
-import { POST } from "@/app/api/forecast/route";
+import { POST } from "@/app/api/stores/incidents/forecast-risk/route";
 
-describe("POST /api/forecast", () => {
+describe("POST /api/stores/incidents/forecast-risk", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
@@ -43,14 +43,14 @@ describe("POST /api/forecast", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/forecast", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/incidents/forecast-risk", { method: "POST" }));
     expect(res.status).toBe(401);
     expect(detectForecastRisksMock).not.toHaveBeenCalled();
   });
 
   it("runs forecast when cron auth is valid", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/forecast", {
+      new NextRequest("http://localhost/api/stores/incidents/forecast-risk", {
         method: "POST",
         headers: { authorization: "Bearer cron-test-secret" },
       }),

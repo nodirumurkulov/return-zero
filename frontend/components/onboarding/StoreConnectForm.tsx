@@ -39,14 +39,11 @@ export default function StoreConnectForm({ mockStoreReady = false }: StoreConnec
       return;
     }
 
-    connect.mutate(
-      { platform: "mock_csv" },
-      {
-        onSuccess: () => {
-          runLearnAndRedirect();
-        },
+    connect.mutate("mock_csv", {
+      onSuccess: () => {
+        runLearnAndRedirect();
       },
-    );
+    });
   }
 
   const actionLabel = pending

@@ -1,2 +1,6 @@
-export { postConnectStore, type PostConnectStoreInput, type PostConnectStoreResult } from "./post-connect";
-export { postLearn } from "./post-learn";
+export {
+  postConnectMockStore,
+  postConnectShopifyStore,
+  type PostConnectStoreResult,
+  type StorePlatform,
+} from "./post-connect";

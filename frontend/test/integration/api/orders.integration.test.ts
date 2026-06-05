@@ -23,7 +23,7 @@ vi.mock("@/lib/organizations", () => ({
   tryRequireOrganizationId: vi.fn(),
 }));
 
-import { GET } from "@/app/api/orders/route";
+import { GET } from "@/app/api/stores/analytics/replay/orders/route";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,7 +32,7 @@ const dataEndDateMock = replayStoreMock.dataEndDate;
 const createClientMock = vi.mocked(createClient);
 const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 
-describe("GET /api/orders", () => {
+describe("GET /api/stores/analytics/replay/orders", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -42,7 +42,7 @@ describe("GET /api/orders", () => {
       auth: { getUser: () => Promise.resolve({ data: { user: null } }) },
     } as never);
 
-    const res = await GET(new NextRequest("http://localhost/api/orders?after=2024-01-01T00:00:00Z"));
+    const res = await GET(new NextRequest("http://localhost/api/stores/analytics/replay/orders?after=2024-01-01T00:00:00Z"));
     expect(res.status).toBe(401);
   });
 
@@ -66,7 +66,7 @@ describe("GET /api/orders", () => {
     listIncomingOrdersMock.mockResolvedValue([{ id: "order-1" }] as never);
     dataEndDateMock.mockResolvedValue("2024-12-31");
 
-    const res = await GET(new NextRequest("http://localhost/api/orders?after=2024-01-01T00:00:00Z&limit=10"));
+    const res = await GET(new NextRequest("http://localhost/api/stores/analytics/replay/orders?after=2024-01-01T00:00:00Z&limit=10"));
     expect(res.status).toBe(200);
     const json = (await res.json()) as { orders: unknown[]; cursor: string; data_end: string };
     expect(json.orders).toHaveLength(1);

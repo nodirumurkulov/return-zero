@@ -94,7 +94,9 @@ export function OrdersFeed({
     if (fetchingRef.current || atEndRef.current) return [];
     fetchingRef.current = true;
     try {
-      const res = await fetch(`/api/orders?after=${encodeURIComponent(playheadRef.current)}&limit=${PAGE}`);
+      const res = await fetch(
+        `/api/stores/analytics/replay/orders?after=${encodeURIComponent(playheadRef.current)}&limit=${PAGE}`,
+      );
       if (!res.ok) return [];
       const body = (await res.json()) as { orders: OrderFeedItem[] };
       const fresh = body.orders.filter((o) => !seenRef.current.has(o.order_id));
@@ -112,7 +114,7 @@ export function OrdersFeed({
       lockRef.current = true;
       setBusy(true);
       try {
-        const res = await fetch("/api/replay", {
+        const res = await fetch("/api/stores/analytics/replay", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ advance_days: advanceDays }),
@@ -151,7 +153,7 @@ export function OrdersFeed({
 
   // Rewind the replay clock to the start and reload the buffer.
   const align = useCallback(async () => {
-    await fetch("/api/replay", {
+    await fetch("/api/stores/analytics/replay", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reset: true }),

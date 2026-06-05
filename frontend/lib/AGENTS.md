@@ -12,8 +12,8 @@ Use the service role only when RLS cannot perform the write. Document new except
 
 | Route / module | Why admin |
 |----------------|-----------|
-| `POST /api/onboarding/connect` | Load Pretty Fly demo pack into contract tables after user auth |
-| `POST /api/replay` | Cron replay cursor; also accepts session user when not cron |
+| `POST /api/stores/connect/mock` | Load Pretty Fly demo pack into contract tables after user auth |
+| `POST /api/stores/analytics/replay` | Cron replay cursor; also accepts session user when not cron |
 | `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |

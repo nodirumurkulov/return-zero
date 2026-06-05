@@ -12,7 +12,7 @@ test.describe("Onboarding connect", () => {
   });
 
   test("redirects to report after mocked connect and learn", async ({ page }) => {
-    await page.route("**/api/onboarding/connect", async (route) => {
+    await page.route("**/api/stores/connect/mock", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",

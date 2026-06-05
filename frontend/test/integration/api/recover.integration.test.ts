@@ -22,9 +22,9 @@ vi.mock("@/lib/organizations", () => ({
   requireOrganizationId: vi.fn(async () => "org-1"),
 }));
 
-import { POST } from "@/app/api/recover/route";
+import { POST } from "@/app/api/stores/incidents/recover/route";
 
-describe("POST /api/recover", () => {
+describe("POST /api/stores/incidents/recover", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
@@ -38,7 +38,7 @@ describe("POST /api/recover", () => {
 
   it("rejects invalid advance_days body", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/recover", {
+      new NextRequest("http://localhost/api/stores/incidents/recover", {
         method: "POST",
         headers: {
           authorization: "Bearer cron-test-secret",
@@ -53,7 +53,7 @@ describe("POST /api/recover", () => {
 
   it("delegates to runRecovery with parsed body", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/recover", {
+      new NextRequest("http://localhost/api/stores/incidents/recover", {
         method: "POST",
         headers: {
           authorization: "Bearer cron-test-secret",

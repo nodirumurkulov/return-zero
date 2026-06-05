@@ -13,7 +13,11 @@ export class ShopifyStore implements Store {
   readonly connector = new ShopifyStoreConnector();
   readonly connections = new StoreConnections();
 
-  connect(): Promise<{ results: LoadResult[]; success: boolean }> {
+  connect(
+    _supabase: SupabaseClient<Database>,
+    _organizationId: string,
+    _source?: unknown,
+  ): Promise<{ results: LoadResult[]; success: boolean }> {
     return Promise.reject(new Error("Shopify is not available yet"));
   }
 
