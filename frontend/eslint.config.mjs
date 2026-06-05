@@ -123,7 +123,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["lib/slack.ts", "app/error.tsx", "lib/api-errors.ts"],
+    files: ["lib/slack.ts", "lib/hugo/index.ts", "app/error.tsx", "lib/api-errors.ts"],
     rules: { "no-console": "off" },
   },
 );

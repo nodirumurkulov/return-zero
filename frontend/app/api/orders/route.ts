@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { dataEndDate } from "@/lib/detection/replay";
+import { streamEndDate } from "@/lib/detection/replay";
 import { listIncomingOrders } from "@/lib/orders/queries";
 import { ordersQuerySchema } from "@/lib/orders/schemas";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   try {
     const [orders, dataEnd, cursorRow] = await Promise.all([
       listIncomingOrders(supabase, parsed.data),
-      dataEndDate(supabase),
+      streamEndDate(supabase),
       supabase.from("replay_state").select("cursor").eq("id", true).maybeSingle(),
     ]);
     return NextResponse.json({

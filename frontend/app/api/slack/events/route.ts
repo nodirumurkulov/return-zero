@@ -1,11 +1,6 @@
 import { after, type NextRequest, NextResponse } from "next/server";
-import {
-  generateHugoReply,
-  parseSlackEventEnvelope,
-  postSlackMessage,
-  stripSlackMentions,
-  verifySlackRequest,
-} from "@/lib/slack";
+import { handleHugoMention } from "@/lib/hugo";
+import { parseSlackEventEnvelope, stripSlackMentions, verifySlackRequest } from "@/lib/slack";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +8,9 @@ export const dynamic = "force-dynamic";
  * POST /api/slack/events
  * Slack Events API endpoint for the @hugo bot.
  * Handles the URL-verification handshake and `app_mention` events: it acks
- * immediately (within Slack's 3s window) and generates + posts the LLM reply
- * in the background via `after()`.
+ * immediately (within Slack's 3s window) and delegates the reply (chat, data
+ * Q&A, or investigate/approve actions) to `@/lib/hugo` in the background via
+ * `after()`.
  */
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -55,10 +51,7 @@ export async function POST(req: NextRequest) {
     const threadTs = event.thread_ts ?? event.ts;
     const prompt = stripSlackMentions(event.text);
 
-    after(async () => {
-      const reply = await generateHugoReply(prompt);
-      await postSlackMessage({ channel, text: reply, threadTs });
-    });
+    after(() => handleHugoMention({ channel, threadTs, prompt, userName: event.user }));
   }
 
   return new NextResponse(null, { status: 200 });

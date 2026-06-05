@@ -25,7 +25,7 @@ Supabase credentials are exported to the job environment (`$GITHUB_ENV`), not wr
 ## Notes
 
 - Root directory for Vercel is `frontend/` (see [`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md)).
-- Scripts validators are not run in CI (they need a live seeded database).
+- RLS tests (`db:test:rls`) and seed validators (`validate`) are not run in CI — run locally against a seeded Supabase project.
 - Superseded workflow runs are cancelled via `concurrency` to save runner minutes.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
