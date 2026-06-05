@@ -1,12 +1,11 @@
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import AppShell from "@/components/layout/AppShell";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { listSearchTargets } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Hugo",
@@ -40,7 +39,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <QueryProvider>
           {shellUser ? (
             <AppShell user={shellUser} searchTargets={searchTargets}>
