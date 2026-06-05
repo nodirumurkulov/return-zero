@@ -303,6 +303,9 @@ export function OrdersFeed({
             {SPEEDS.map((s) => (
               <button
                 key={s.value}
+                type="button"
+                aria-label={`Replay speed ${s.label}`}
+                aria-pressed={speed === s.value}
                 onClick={() => setSpeed(s.value)}
                 className={`px-2.5 py-1 text-xs ${
                   speed === s.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
