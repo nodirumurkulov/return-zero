@@ -6,6 +6,7 @@ import OAuthButtons from "@/components/auth/OAuthButtons";
 import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { isDemoLoginConfigured } from "@/lib/auth/demo";
+import { authNextPathSchema } from "@/lib/auth/schemas";
 
 export default async function SignInPage({
   searchParams,
@@ -19,10 +20,8 @@ export default async function SignInPage({
       : params.error === "demo"
         ? "Demo login failed. Copy DEMO_USER_* from .env.example into frontend/.env.local and run bun run seed."
         : null;
-  const nextPath =
-    typeof params.next === "string" && params.next.startsWith("/") && !params.next.startsWith("//")
-      ? params.next
-      : null;
+  const nextParsed = authNextPathSchema.safeParse(params.next);
+  const nextPath = nextParsed.success ? nextParsed.data : null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-12">
