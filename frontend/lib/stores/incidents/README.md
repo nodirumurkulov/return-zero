@@ -9,7 +9,7 @@ Types, store, detection, recovery, and client hooks for the incident lifecycle.
 | `types.ts` | `Incident`, `IncidentAction`, `AgentFinding`, `TimelineEvent`, `IncidentDetail` |
 | `status.ts` | `INCIDENT_STATUSES`, `KANBAN_COLUMNS`, `isIncidentStatus` |
 | `schemas.ts` | Zod bodies for approve, patch, and recover APIs |
-| `store.ts` | **`Incidents`** — list, detail, patch, approve, detect, recover |
+| `index.ts` | **`Incidents`** — list, detail, patch, approve, detect, recover |
 | `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation |
 | `api/`, `hooks/` | TanStack Query keys and client mutations |
 

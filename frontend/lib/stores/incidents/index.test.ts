@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import { Incidents } from "./store";
+import { Incidents } from "./index";
 
 type QueryResult = { data: unknown; error: { message: string } | null };
 

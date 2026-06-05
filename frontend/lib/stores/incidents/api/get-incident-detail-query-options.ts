@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UseQueryOptions } from "@tanstack/react-query";
-import { createIncidents } from "../store";
+import { createIncidents } from "..";
 import type { IncidentDetail, IncidentRef } from "../types";
 import { incidentKeys } from "./incident-query-keys";
 

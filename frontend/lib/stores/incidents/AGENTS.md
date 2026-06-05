@@ -9,7 +9,7 @@ Incident lifecycle, detection, and recovery. **Parent:** [../../AGENTS.md](../..
 | `types.ts` | DB row types + `IncidentDetail`, `IncidentRef` |
 | `status.ts` | Kanban columns and status/severity constants |
 | `schemas.ts` | Zod request bodies for API routes |
-| `store.ts` | **`Incidents`** — sole public API for domain operations |
+| `index.ts` | **`Incidents`** + `createIncidents` — sole public API |
 | `detect.ts`, `forecast-risk.ts`, `recover.ts`, `severity.ts` | Internal implementation (not re-exported) |
 | `api/`, `hooks/` | Client TanStack wrappers |
 
