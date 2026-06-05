@@ -11,7 +11,7 @@
     --card-foreground: 240 6% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 6% 10%;
-    --primary: 239 84% 59%; /* indigo-600 #4f46e5 */
+    --primary: 192 55% 40%; /* cyan-teal accent */
     --primary-foreground: 0 0% 100%;
     --secondary: 240 5% 96%; /* zinc-100 */
     --secondary-foreground: 240 6% 10%;
@@ -23,22 +23,22 @@
     --destructive-foreground: 0 0% 100%;
     --border: 240 6% 90%; /* zinc-200 */
     --input: 240 6% 90%;
-    --ring: 239 84% 67%; /* indigo-500 */
+    --ring: 192 50% 48%;
     --radius: 0.5rem;
 
     --sidebar: 240 5% 98%; /* zinc-50 */
     --sidebar-foreground: 240 6% 10%;
-    --sidebar-primary: 239 84% 59%;
+    --sidebar-primary: 192 55% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 100%; /* active nav item = white */
     --sidebar-accent-foreground: 240 6% 10%;
     --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 192 50% 48%;
 
     /* Primary accents */
-    --primary-hover: 244 75% 53%; /* indigo-700 #4338ca */
-    --primary-subtle: 226 100% 97%; /* indigo-50 #eef2ff */
-    --primary-ring: 239 84% 67%;
+    --primary-hover: 192 55% 34%;
+    --primary-subtle: 192 45% 96%;
+    --primary-ring: 192 50% 48%;
 
     /* Severity base colours (design hexes) */
     --sev-critical: 0 72% 51%; /* #dc2626 */
