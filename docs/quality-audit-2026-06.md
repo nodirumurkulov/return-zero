@@ -83,7 +83,7 @@
 
 - **Evidence:** `app/auth/callback/route.ts:13`
 - **Skill/rule:** `server-auth-actions`
-- **Fix:** `safeRedirectPathFromQuery()` in `lib/auth/redirect.ts`
+- **Fix:** `authNextPathSchema` in `lib/auth/schemas.ts` (shared with sign-in actions)
 - **Effort:** S
 
 #### Incidents page request waterfall

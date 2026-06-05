@@ -12,5 +12,3 @@ export function requireSupabaseEnv(): {
   }
   return { url, serviceRoleKey };
 }
-
-export { safeRedirectPath } from "../lib/auth/redirect";

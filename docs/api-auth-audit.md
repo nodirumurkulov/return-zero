@@ -56,7 +56,7 @@ Audit of every `/api/*` route handler in `frontend/app/api/`: auth enforcement, 
 - [x] `createAdminClient()` only for documented exceptions (see `lib/AGENTS.md`)
 - [x] Cron admin mode requires explicit cron credentials when secret is set
 - [x] PATCH bodies use Zod strict schemas (no `organization_id` reassignment)
-- [x] OAuth callback uses `safeRedirectPathFromQuery` (no open redirects)
+- [x] OAuth callback uses `authNextPathSchema` (no open redirects)
 - [x] Slack approve/Hugo paths scoped to org (`resolveOrganizationIdForSlackTeam`, `organizations.slack_team_id`, `SLACK_ORGANIZATION_ID`)
 
 ## Slack
