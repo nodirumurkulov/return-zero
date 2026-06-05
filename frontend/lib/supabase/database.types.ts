@@ -57,38 +57,6 @@ export type Database = {
           },
         ]
       }
-      business_reports: {
-        Row: {
-          created_at: string
-          id: string
-          narrative: string | null
-          organization_id: string
-          summary: Json
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          narrative?: string | null
-          organization_id: string
-          summary: Json
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          narrative?: string | null
-          organization_id?: string
-          summary?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "business_reports_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       business_profile: {
         Row: {
           hero_product_ids: string[]
@@ -119,6 +87,38 @@ export type Database = {
             foreignKeyName: "business_profile_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_reports: {
+        Row: {
+          created_at: string
+          id: string
+          narrative: string | null
+          organization_id: string
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          organization_id: string
+          summary: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          organization_id?: string
+          summary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -909,24 +909,24 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          slug: string
           slack_team_id: string | null
+          slug: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
-          slug: string
           slack_team_id?: string | null
+          slug: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
-          slug?: string
           slack_team_id?: string | null
+          slug?: string
           updated_at?: string
         }
         Relationships: []
@@ -1480,11 +1480,7 @@ export type Database = {
     }
     Functions: {
       product_daily_outflow: {
-        Args: {
-          p_asof?: string
-          p_days?: number
-          p_organization_id: string
-        }
+        Args: { p_asof?: string; p_days?: number; p_organization_id: string }
         Returns: {
           current_balance: number
           daily_outflow: number
@@ -1492,10 +1488,7 @@ export type Database = {
         }[]
       }
       product_monthly_series: {
-        Args: {
-          p_months?: number
-          p_organization_id: string
-        }
+        Args: { p_months?: number; p_organization_id: string }
         Returns: {
           ad_revenue: number
           ad_spend: number
@@ -1525,20 +1518,12 @@ export type Database = {
         }[]
       }
       reset_organization_data: {
-        Args: {
-          p_organization_id: string
-        }
+        Args: { p_organization_id: string }
         Returns: undefined
       }
       seed_organization_defaults: {
-        Args: {
-          p_organization_id: string
-        }
+        Args: { p_organization_id: string }
         Returns: undefined
-      }
-      user_organization_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
       }
     }
     Enums: {
