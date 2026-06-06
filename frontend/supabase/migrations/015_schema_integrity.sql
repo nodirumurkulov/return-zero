@@ -153,21 +153,23 @@ begin
   end loop;
 end $$;
 
-alter table public.suppliers drop constraint if exists suppliers_org_id_id_unique;
-alter table public.suppliers
-  add constraint suppliers_org_id_id_unique unique (organization_id, id);
+-- 010 may already add these; email_events FK depends on email_campaigns pair — never drop/recreate.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'suppliers_org_id_id_unique'
+  ) then
+    alter table public.suppliers
+      add constraint suppliers_org_id_id_unique unique (organization_id, id);
+  end if;
 
-alter table public.email_events drop constraint if exists email_events_campaign_org_fkey;
-
-alter table public.email_campaigns drop constraint if exists email_campaigns_org_id_id_unique;
-alter table public.email_campaigns
-  add constraint email_campaigns_org_id_id_unique unique (organization_id, id);
-
-alter table public.email_events
-  add constraint email_events_campaign_org_fkey
-  foreign key (organization_id, campaign_id)
-  references public.email_campaigns (organization_id, id)
-  on delete cascade;
+  if not exists (
+    select 1 from pg_constraint where conname = 'email_campaigns_org_id_id_unique'
+  ) then
+    alter table public.email_campaigns
+      add constraint email_campaigns_org_id_id_unique unique (organization_id, id);
+  end if;
+end $$;
 
 alter table public.product_collections drop constraint if exists product_collections_product_id_fkey;
 alter table public.product_collections drop constraint if exists product_collections_collection_id_fkey;

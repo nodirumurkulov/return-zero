@@ -1,5 +1,5 @@
 -- =============================================================
--- 020_analytics_store_scope.sql
+-- 021_analytics_store_scope.sql
 -- Analytics RPCs filter by store_id (p_store_id) instead of organization_id.
 -- =============================================================
 
