@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
+import DetectionReasonCard from "@/components/incidents/DetectionReasonCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
 import TriggerInvestigationButton from "@/components/incidents/TriggerInvestigationButton";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useTriggerInvestigation } from "@/lib/agents/hooks";
 import { getIncidentDetailClientQueryOptions } from "@/lib/incidents/api";
+import { getDetectionReason } from "@/lib/incidents/format-detection-reason";
 
 function IncidentDetailSkeleton() {
   return (
@@ -82,6 +84,12 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
   }
 
   const { incident, findings, actions, timeline } = detail;
+  const detectionReason = getDetectionReason(timeline, incident);
+  const showDetectionOnly =
+    incident.status === "detected" ||
+    (incident.status === "investigating" && findings.length === 0 && actions.length === 0);
+  const showInvestigationSections =
+    findings.length > 0 || actions.length > 0 || !!incident.root_cause;
   const recoveryPct = incident.recovery_pct != null ? Math.round(incident.recovery_pct * 100) : null;
   const showRecovery =
     incident.monitoring_kpi != null &&
@@ -112,7 +120,7 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
             <TriggerInvestigationButton incidentId={incident.id} productId={incident.product_id} />
           ) : null}
         </div>
-        {incident.affected_kpi_keys.length > 0 ? (
+        {!showDetectionOnly && incident.affected_kpi_keys.length > 0 ? (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {incident.affected_kpi_keys.map((kpi) => (
               <span key={kpi} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
@@ -129,48 +137,60 @@ export default function IncidentDetailView({ incidentId }: { incidentId: string 
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             {/* Main column */}
             <div className="space-y-5">
-              {incident.root_cause ? (
-                <Card className="gap-0 p-5">
-                  <div className="flex items-center gap-1.5">
-                    <CircleCheckBig className="size-4 text-sev-resolved" />
-                    <SectionLabel>
-                      Root cause
-                      {incident.root_cause_confidence != null
-                        ? ` · ${incident.root_cause_confidence}% confidence`
-                        : ""}
-                    </SectionLabel>
-                  </div>
-                  <p className="mt-2 text-[15px] font-semibold leading-snug text-foreground [text-wrap:pretty]">
-                    {incident.root_cause}
-                  </p>
-                  {incident.root_cause_confidence != null ? (
-                    <div className="mt-3">
-                      <ConfidenceBar value={incident.root_cause_confidence} />
-                    </div>
-                  ) : null}
-                </Card>
+              {showDetectionOnly && detectionReason ? (
+                <DetectionReasonCard
+                  reason={detectionReason}
+                  investigating={incident.status === "investigating"}
+                />
               ) : null}
 
-              <section>
-                <SectionLabel className="mb-3">Agent findings</SectionLabel>
-                {findings.length > 0 ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {findings.map((f) => (
-                      <AgentFindingCard key={f.id} finding={f} />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="No findings yet"
-                    description="Trigger investigation to populate agent findings for this incident."
-                  />
-                )}
-              </section>
+              {showInvestigationSections ? (
+                <>
+                  {incident.root_cause ? (
+                    <Card className="gap-0 p-5">
+                      <div className="flex items-center gap-1.5">
+                        <CircleCheckBig className="size-4 text-sev-resolved" />
+                        <SectionLabel>
+                          Root cause
+                          {incident.root_cause_confidence != null
+                            ? ` · ${incident.root_cause_confidence}% confidence`
+                            : ""}
+                        </SectionLabel>
+                      </div>
+                      <p className="mt-2 text-[15px] font-semibold leading-snug text-foreground [text-wrap:pretty]">
+                        {incident.root_cause}
+                      </p>
+                      {incident.root_cause_confidence != null ? (
+                        <div className="mt-3">
+                          <ConfidenceBar value={incident.root_cause_confidence} />
+                        </div>
+                      ) : null}
+                    </Card>
+                  ) : null}
 
-              <section>
-                <SectionLabel className="mb-3">Recommended actions</SectionLabel>
-                <ActionList actions={actions} incidentId={incident.id} />
-              </section>
+                  {detectionReason && !showDetectionOnly ? (
+                    <DetectionReasonCard reason={detectionReason} />
+                  ) : null}
+
+                  {findings.length > 0 ? (
+                    <section>
+                      <SectionLabel className="mb-3">Agent findings</SectionLabel>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {findings.map((f) => (
+                          <AgentFindingCard key={f.id} finding={f} />
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {actions.length > 0 ? (
+                    <section>
+                      <SectionLabel className="mb-3">Recommended actions</SectionLabel>
+                      <ActionList actions={actions} incidentId={incident.id} />
+                    </section>
+                  ) : null}
+                </>
+              ) : null}
             </div>
 
             {/* Rail */}

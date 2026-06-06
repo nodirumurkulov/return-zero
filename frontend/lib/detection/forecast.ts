@@ -187,7 +187,7 @@ export async function detectForecastRisks(
       {
         incident_id: inc.id,
         event_type: "anomaly_detected",
-        description: `Predictive: ${risks.map((r) => r.message).join("; ")}`,
+        description: primary.message,
         metadata: { forecast: true, risks },
       },
       {

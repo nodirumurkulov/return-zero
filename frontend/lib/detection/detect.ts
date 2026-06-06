@@ -252,14 +252,18 @@ export async function detectBreaches(
       continue;
     }
 
+    const anomalyDescription = `${primary.m.display_name} ${fmtValue(primary.m.unit, value)} exceeded threshold ${target}`;
+
     await supabase.from("incident_timeline").insert([
       {
         incident_id: inc.id,
         event_type: "anomaly_detected",
-        description: `${affected_kpi_keys.length} KPI breach(es): ${affected_kpi_keys.join(", ")}`,
+        description: anomalyDescription,
         metadata: {
           breaches: ranked.map((r) => ({
             metric: r.m.metric_key,
+            display_name: r.m.display_name,
+            unit: r.m.unit,
             value: r.m.value,
             threshold: r.m.threshold,
             direction: r.m.direction,
