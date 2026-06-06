@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
-import type { DetectionReason } from "@/lib/incidents/format-detection-reason";
+import type { DetectionReason } from "@/lib/stores/incidents/format-detection-reason";
 
 export default function DetectionReasonCard({
   reason,

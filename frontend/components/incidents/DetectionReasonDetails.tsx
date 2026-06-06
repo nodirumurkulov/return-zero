@@ -1,4 +1,4 @@
-import type { DetectionReason } from "@/lib/incidents/format-detection-reason";
+import type { DetectionReason } from "@/lib/stores/incidents/format-detection-reason";
 
 /** Compact breach lines + stat chips for timeline entries. */
 export default function DetectionReasonDetails({ reason }: { reason: DetectionReason }) {

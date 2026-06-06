@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import DetectionReasonCard from "@/components/incidents/DetectionReasonCard";
-import type { DetectionReason } from "@/lib/incidents/format-detection-reason";
+import type { DetectionReason } from "@/lib/stores/incidents/format-detection-reason";
 import { render, screen } from "@/test/test-utils";
 
 const breachReason: DetectionReason = {
