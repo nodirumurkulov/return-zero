@@ -1,0 +1,61 @@
+import { apiClient } from "@/lib/api/client";
+import {
+  approveIncidentBodySchema,
+  approveIncidentResponseSchema,
+  patchIncidentStatusBodySchema,
+  type Incident,
+  type IncidentRef,
+} from "@/lib/stores";
+
+export type ApproveIncidentActionsApproval =
+  | { readonly kind: "all_low_risk" }
+  | { readonly kind: "action_ids"; readonly actionIds: readonly string[] };
+
+export type ApproveIncidentActionsInput = {
+  readonly incident: IncidentRef;
+  readonly approval: ApproveIncidentActionsApproval;
+};
+
+export type ApproveIncidentActionsResult = {
+  readonly approval: { readonly approvedCount: number };
+};
+
+export type PatchIncidentStatusInput = {
+  readonly incident: IncidentRef;
+  readonly status: { readonly value: string };
+};
+
+type ApproveIncidentBody =
+  | { approve_all_low_risk: true }
+  | { action_ids: string[] };
+
+function toApproveBody(approval: ApproveIncidentActionsApproval): ApproveIncidentBody {
+  if (approval.kind === "all_low_risk") {
+    return { approve_all_low_risk: true };
+  }
+  return { action_ids: [...approval.actionIds] };
+}
+
+export async function patchIncidentStatus(input: PatchIncidentStatusInput): Promise<Incident> {
+  const body = patchIncidentStatusBodySchema.parse({
+    status: input.status.value,
+    resolved_at: input.status.value === "resolved" ? new Date().toISOString() : null,
+  });
+  const data = await apiClient(`/api/stores/incidents/${input.incident.id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  return data as Incident;
+}
+
+export async function approveIncidentActions(
+  input: ApproveIncidentActionsInput,
+): Promise<ApproveIncidentActionsResult> {
+  const body = approveIncidentBodySchema.parse(toApproveBody(input.approval));
+  const data = await apiClient(`/api/stores/incidents/${input.incident.id}/approve`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    output: approveIncidentResponseSchema,
+  });
+  return { approval: { approvedCount: data.approved } };
+}

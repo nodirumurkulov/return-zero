@@ -4,7 +4,7 @@ Route handlers (`app/api/*/route.ts`). **Parent:** [../../../AGENTS.md](../../..
 
 ## Pattern
 
-Thin routes: optional cron auth → parse body → delegate to `lib/<domain>/`.
+Thin routes: optional cron auth → parse body → delegate to `lib/stores/`.
 
 ```typescript
 const raw = await req.json().catch(() => ({}));
@@ -21,15 +21,18 @@ if (!parsed.success) {
 
 | Route | Domain module |
 |-------|----------------|
-| `POST /api/detect`, `/api/forecast`, `/api/recover` | `detection` (+ `schemas.ts` for recover) |
-| `POST /api/investigate` | `agents/persist-investigation` + `agents/schemas.ts` |
-| `POST /api/learn` | `learn/schemas.ts` |
-| `POST /api/onboarding/upload` | `onboarding/import` + `onboarding/api-schemas.ts` (multipart; admin after auth) |
-| `POST /api/replay` | `assertCronAuthorized` or session user |
-| `POST /api/incidents/[id]/approve` | `incidents/approve` + `incidents/schemas.ts` |
-| `GET/PATCH /api/incidents/[id]` | `incidents/queries` |
+| `GET /api/digest` | `hugo/digest` — daily digest to Slack (cron-only) |
+| `POST /api/stores/import/[platform]` | `getStore().import.run` |
+| `GET /api/stores/import/status` | `getStore().import.status` |
+| `POST /api/stores/orders/advance` | `getStore().orders.advance` |
+| `GET /api/stores/orders/feed` | `getStore().orders.list` |
+| `PATCH /api/stores/catalog/[productId]/threshold` | `getStore().catalog.update` |
+| `POST /api/stores/incidents/detect` | `getStore().incidents.detect` + `hugo/investigate-incident` |
+| `POST /api/investigate` | `hugo/investigate-incident` |
+| `POST /api/stores/incidents/[id]/approve` | `getStore().incidents.approveAndNotify` |
+| `PATCH /api/stores/incidents/[id]` | `getStore().incidents.update` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
-| `POST /api/slack/events` | `slack` transport + `hugo.handleHugoMention` (@hugo bot, async reply via `after()`) |
+| `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |
 
 Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
 

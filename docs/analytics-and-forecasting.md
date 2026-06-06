@@ -24,16 +24,16 @@ here — just "what the data says."
 ```ts
 const { data } = await supabase.rpc("product_source_facts", { p_window_days: 30 });
 // NB: PostgREST caps RPC results at 1000 rows. product_monthly_series is ~1488 rows —
-// page it: .rpc(...).range(from, from + 999) in a loop (see lib/metrics/series.ts).
+// page it: .rpc(...).range(from, from + 999) in a loop (see lib/stores/analytics/metrics/series.ts).
 ```
 
-## 2. The metrics engine (config-driven KPIs) — `frontend/lib/metrics`
+## 2. The metrics engine (config-driven KPIs) — `frontend/lib/stores/analytics/metrics`
 
 A KPI = `operation(numerator_source.field [, denominator_source.field])` defined as a
 row in `metric_definitions`. Add/tune a KPI by editing data, not code.
 
 ```ts
-import { computeMetrics, computeProductMetrics } from "@/lib/metrics/engine";
+import { computeMetrics, computeProductMetrics } from "@/lib/stores/analytics/metrics/engine";
 
 // All products → { [product_id]: MetricValue[] } (status: healthy|warning|critical)
 const all = await computeMetrics(supabase);
@@ -46,13 +46,13 @@ const metrics = await computeProductMetrics(supabase, productId);
 Per-product threshold overrides live in `product_kpi_thresholds`; the global default
 is on the definition.
 
-## 3. Forecasting — `frontend/lib/forecast`
+## 3. Forecasting — `frontend/lib/stores/analytics/forecast`
 
 Deterministic, explainable predictors over the monthly series + burn rate.
 
 ```ts
-import { getProductSeries } from "@/lib/metrics/series";
-import { forecastForProduct } from "@/lib/forecast/product";
+import { getProductSeries } from "@/lib/stores/analytics/metrics/series";
+import { forecastForProduct } from "@/lib/stores/analytics/forecast/product";
 
 const series = await getProductSeries(supabase, productId, 24);
 const fc = forecastForProduct(series, currentUnits, dailyOutflow, leadDays, bufferDays);
@@ -63,9 +63,9 @@ const fc = forecastForProduct(series, currentUnits, dailyOutflow, leadDays, buff
 
 | Endpoint | Does |
 |---|---|
-| `POST /api/detect` | reactive: breach detection → opens incidents (severity via `lib/detection/severity.ts`) |
-| `POST /api/forecast` | predictive: forecast rules → forward-looking incidents |
-| `POST /api/recover` | advances projected recovery for monitoring incidents → auto-resolve (`{ advance_days }`) |
+| `POST /api/stores/incidents/detect` | reactive: breach detection → opens incidents (severity via `lib/stores/incidents/severity.ts`) |
+| `POST /api/stores/incidents/forecast-risk` | predictive: forecast rules → forward-looking incidents |
+| `POST /api/stores/incidents/recover` | advances projected recovery for monitoring incidents → auto-resolve (`{ advance_days }`) |
 | `POST /api/investigate` | LLM agents narrate an existing incident (5 agents → root cause + actions) |
 
 ## 5. UI reads (server components)
@@ -79,7 +79,7 @@ const series  = await getProductSeries(supabase, id, 24);   // sparklines
 > **Known divergence to converge:** some UI pages currently read SQL views
 > (`product_metrics_view`, `product_metrics_monthly_view`) created in parallel work,
 > while the engine/agents use `computeMetrics` + the functions above. They agree
-> numerically; the canonical pattern going forward is the engine (`lib/metrics`),
+> numerically; the canonical pattern going forward is the engine (`lib/stores/analytics/metrics`),
 > so the views should be retired or made thin wrappers over `product_source_facts`.
 
 ## 6. Data validation

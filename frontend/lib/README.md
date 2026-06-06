@@ -6,11 +6,8 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 
 | Module | Import | Responsibility |
 |--------|--------|----------------|
-| [`incidents/`](incidents/) | `@/lib/incidents` | Incidents, actions, findings, timeline |
-| [`catalog/`](catalog/) | `@/lib/catalog` | Product metrics, thresholds, health |
-| [`metrics/`](metrics/) | `@/lib/metrics/*` | KPI definitions, engine, series |
-| [`detection/`](detection/) | `@/lib/detection/*` | Breach detect, severity, recovery |
-| [`forecast/`](forecast/) | `@/lib/forecast` | Deterministic forecasts |
+| [`stores/`](stores/) | `@/lib/stores`, `@/lib/stores/server` | Unified facade: catalog, orders, import, search, incidents |
+| [`stores/import/`](stores/import/) | internal | Platform import loaders |
 | [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |
 | [`supabase/`](supabase/) | `@/lib/supabase/server` | Service-role Supabase client |
@@ -18,11 +15,12 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 ## Usage
 
 ```typescript
-import { getIncidentDetail, type Incident } from "@/lib/incidents";
-import { createServiceClient } from "@/lib/supabase/server";
+import { getStore } from "@/lib/stores/server";
+import { createClient } from "@/lib/supabase/server";
 
-const supabase = createServiceClient();
-const detail = await getIncidentDetail(supabase, incidentId);
+const supabase = await createClient();
+const store = getStore(supabase);
+const detail = await store.incidents.getDetail({ id: incidentId, organizationId });
 ```
 
 API routes validate JSON with Zod in each domain's `schemas.ts` (inline `safeParse` in the route).
@@ -30,8 +28,8 @@ API routes validate JSON with Zod in each domain's `schemas.ts` (inline `safePar
 ## Notes
 
 - Prefer redesign over backward-compat shims; one type per table in `types.ts`.
-- `detection` may import `metrics` / `forecast`; avoid coupling `catalog` ↔ `incidents`.
+- Client components import types from `@/lib/stores`; server code uses `@/lib/stores/server` for `getStore`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+**Last reviewed:** 2026-06-05

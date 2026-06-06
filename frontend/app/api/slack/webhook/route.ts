@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { captureRecoveryBaseline } from "@/lib/detection/recover";
-import { approveIncidentActions, getIncident, listLowRiskProposedActionIds } from "@/lib/incidents";
+import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
-import { parseSlackInteractionPayload, sendIncidentNotification, verifySlackRequest } from "@/lib/slack";
+import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -52,43 +52,52 @@ export async function POST(req: NextRequest) {
   const incidentId = action.value;
   const slackUser = payload.user?.name ?? "slack-user";
 
-  if (action.action_id === "approve_low_risk") {
-    const incident = await getIncident(supabase, incidentId, organizationId);
+  if (action.action_id === "cancel_hugo_action") {
+    return NextResponse.json({ text: "Canceled. No changes were made." });
+  }
+
+  if (action.action_id === "confirm_hugo_resolve" || action.action_id === "confirm_hugo_reject") {
+    const store = getStore(supabase);
+    const incident = await store.incidents.get({ id: incidentId, organizationId });
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
-    const actionIds = await listLowRiskProposedActionIds(supabase, incidentId, organizationId);
+    const result =
+      action.action_id === "confirm_hugo_resolve"
+        ? await runHugoResolve(supabase, incident, { slack_user: slackUser })
+        : await runHugoRejectProposedActions(supabase, incident, { slack_user: slackUser });
+
+    return NextResponse.json({ text: result });
+  }
+
+  if (action.action_id === "approve_low_risk") {
+    const store = getStore(supabase);
+    const incident = await store.incidents.get({ id: incidentId, organizationId });
+    if (!incident) {
+      return NextResponse.json({ error: "Incident not found" }, { status: 404 });
+    }
+
+    const actionIds = await store.incidents.listActionIds({
+      incidentId,
+      organizationId,
+      filter: { status: "proposed", riskLevel: "low" },
+    });
     if (actionIds.length > 0) {
       try {
-        await approveIncidentActions(supabase, incidentId, actionIds, null, { slack_user: slackUser });
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        await store.incidents.approveAndNotify({
+          incidentId,
+          actionIds,
+          approvedByUserId: null,
+          organizationId,
+          appUrl,
+          extraMetadata: { slack_user: slackUser },
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         return NextResponse.json({ error: message }, { status: 500 });
       }
-
-      if (incident.product_id) {
-        await captureRecoveryBaseline(
-          supabase,
-          incident.organization_id,
-          incidentId,
-          incident.product_id,
-          incident.affected_kpi_keys,
-        );
-      }
-
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      await sendIncidentNotification({
-        title: incident.title,
-        severity: incident.severity,
-        status: "monitoring",
-        impact_amount: incident.impact_amount,
-        impact_label: incident.impact_label,
-        root_cause: incident.root_cause,
-        root_cause_confidence: incident.root_cause_confidence,
-        incident_id: incidentId,
-        app_url: appUrl,
-      });
     }
   }
 

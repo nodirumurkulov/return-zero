@@ -16,7 +16,7 @@ React UI grouped by product area. Components receive data via **props** from ser
 Import domain **types** from `@/lib/<domain>`, not from sibling components:
 
 ```typescript
-import type { Incident } from "@/lib/incidents";
+import type { Incident } from "@/lib/stores/incidents";
 import IncidentCard from "@/components/incidents/IncidentCard";
 ```
 

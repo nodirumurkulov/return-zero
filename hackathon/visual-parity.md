@@ -1,4 +1,4 @@
-# Visual parity checklist (src/ prototype → Resolve frontend)
+# Visual parity checklist (src/ prototype → Hugo frontend)
 
 Side-by-side review against the internal `src/` prototype. Sign off when each row matches.
 

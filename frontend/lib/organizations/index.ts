@@ -1,8 +1,8 @@
 export type { Organization } from "./organization";
 export type { OrganizationMember } from "./organization-member";
+export { createOrganizationWithOwner } from "./create";
 export {
   OrganizationError,
-  createOrganizationWithOwner,
   getCurrentOrganizationId,
   listAllOrganizationIds,
   listOrganizationsForUser,
@@ -10,4 +10,9 @@ export {
   tryRequireOrganizationId,
   type OrganizationIdResult,
 } from "./queries";
-export { resolveOrganizationIdForSlackTeam } from "./slack";
+export {
+  getOrganizationSlackChannel,
+  resolveOrganizationIdForSlackTeam,
+  resolveOrganizationSlackDeliveryChannel,
+  resolveSlackDeliveryChannel,
+} from "./slack";

@@ -14,13 +14,13 @@ UI for the product catalog: grid, KPI cards, health badges, and inline threshold
 
 ## Usage
 
-Rendered from server pages that call `listCatalogWithThresholds` / `getProductCatalogDetail` in `@/lib/catalog`.
+Rendered from server pages that call `listCatalogWithThresholds` / `getProductCatalogDetail` in `@/lib/stores/analytics/catalog`.
 
-Types: `ProductMetric`, `KpiThreshold`, `HealthLevel` from `@/lib/catalog`.
+Types: `ProductMetric`, `KpiThreshold`, `HealthLevel` from `@/lib/stores/analytics/catalog`.
 
 ## Notes
 
-- Threshold saves go through `updateThreshold` in `app/actions.ts`.
+- Threshold saves go through `PATCH /api/catalog/[productId]/threshold` via `@/hooks/stores/analytics/catalog`.
 
 **Agents:** [AGENTS.md](AGENTS.md)  
 **Parent:** [../README.md](../README.md)  

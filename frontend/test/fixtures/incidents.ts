@@ -4,7 +4,7 @@ import type {
   IncidentAction,
   IncidentDetail,
   TimelineEvent,
-} from "@/lib/incidents";
+} from "@/lib/stores";
 
 const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
 

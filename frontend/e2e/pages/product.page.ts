@@ -19,10 +19,15 @@ export class ProductPage {
     return this.page.getByText("Saved", { exact: true });
   }
 
-  async saveFirstThreshold(newValue: string) {
-    const input = this.thresholdInputs().first();
+  async saveReturnRateThreshold(newValue: string) {
+    const form = this.page.locator("form").filter({ hasText: "Return rate" });
+    const input = form.locator('input[name="threshold"]');
     await input.fill(newValue);
-    await this.saveButtons().first().click();
+    await form.getByRole("button", { name: "Save" }).click();
     await this.savedMessage().waitFor({ state: "visible" });
+  }
+
+  returnRateThresholdInput() {
+    return this.page.locator("form").filter({ hasText: "Return rate" }).locator('input[name="threshold"]');
   }
 }

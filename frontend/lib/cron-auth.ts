@@ -1,10 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 export const CRON_API_PATHS = [
-  "/api/detect",
-  "/api/forecast",
-  "/api/recover",
-  "/api/replay",
+  "/api/digest",
+  "/api/stores/incidents/detect",
+  "/api/stores/orders/advance",
 ] as const;
 
 export function getCronSecret(): string | undefined {

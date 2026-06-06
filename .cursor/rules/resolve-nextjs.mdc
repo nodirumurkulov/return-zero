@@ -4,7 +4,7 @@ globs: frontend/app/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# Next.js App Router (Resolve)
+# Next.js App Router (Hugo)
 
 See [frontend/app/AGENTS.md](../../frontend/app/AGENTS.md).
 

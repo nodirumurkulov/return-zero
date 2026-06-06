@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyDescription } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
-import type { IncidentAction } from "@/lib/incidents";
-import { useApproveActions } from "@/lib/incidents/hooks";
+import { useApproveActions } from "@/hooks/stores/incidents";
+import type { IncidentAction } from "@/lib/stores";
 import { cn } from "@/lib/utils";
 
 const impactColour: Record<string, string> = {

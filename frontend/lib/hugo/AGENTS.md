@@ -13,6 +13,7 @@ answer, or an investigate/approve action. **Parent:** [../AGENTS.md](../AGENTS.m
 | `context.ts` | Incident resolution + model-friendly incident/KPI/inventory context strings |
 | `actions.ts` | `runHugoInvestigation`, `runHugoApproval` (reuse `agents` / `incidents`) |
 | `reply.ts` | `generateChatReply`, `generateDataReply` (free-form LLM text) |
+| `digest.ts` | `summarizeIncidents`, `buildDigestBlocks` — pure digest formatting for daily Slack cron |
 
 ## Flow
 
@@ -27,7 +28,7 @@ calls `handleHugoMention` in `after()`. The handler:
 For `data_query`, the context is assembled on demand from the prompt: open
 incidents always, the matched incident's detail when referenced, KPI/catalog
 health when `wantsCatalog`, and per-product stock levels (units on hand, daily
-outflow, days-to-stockout via `forecastStockout`) when `wantsInventory`.
+outflow, days-to-stockout from burn rate) when `wantsInventory`.
 
 ## Rules
 
@@ -37,3 +38,11 @@ outflow, days-to-stockout via `forecastStockout`) when `wantsInventory`.
 - `approve` only runs on an explicit approval intent; it approves low-risk
   proposed actions, mirroring the in-app and button flows.
 - `handleHugoMention` never throws — failures are reported back in-thread.
+
+## Proactive (cron)
+
+`GET /api/digest` (Vercel cron, daily 08:00 UTC) — iterates all orgs, calls
+`summarizeIncidents` + `buildDigestBlocks`, posts via `postOrgSlackBlocks` to the org's
+`slack_channel_id` (or `SLACK_DEFAULT_CHANNEL`, then webhook fallback).
+`GET /api/detect` (Vercel cron, every 6h) — runs breach detection; new
+incidents auto-alert to Slack via `notifyNewIncident` in the detect path.

@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 export class IncidentsPage {
   constructor(readonly page: Page) {}
@@ -23,7 +23,16 @@ export class IncidentsPage {
   }
 
   async changeStatus(title: string, statusLabel: string) {
+    const patchResponse = this.page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" &&
+        /\/api\/stores\/incidents\//.test(response.url()),
+    );
     await this.statusTriggerFor(title).click();
-    await this.page.getByRole("menuitem").filter({ hasText: statusLabel }).click();
+    const item = this.page.getByRole("menuitem").filter({ hasText: statusLabel });
+    await item.waitFor({ state: "visible" });
+    await item.click();
+    const response = await patchResponse;
+    expect(response.ok()).toBe(true);
   }
 }

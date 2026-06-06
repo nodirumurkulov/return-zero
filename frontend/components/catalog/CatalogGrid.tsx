@@ -8,15 +8,10 @@ import { HealthBadge } from "@/components/catalog/HealthBadge";
 import ProductCatalogCard from "@/components/catalog/ProductCatalogCard";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  computeProductHealth,
-  type HealthLevel,
-  type KpiThreshold,
-  type ProductMetric,
-} from "@/lib/catalog";
+import type { CatalogProduct } from "@/lib/stores";
 import { cn } from "@/lib/utils";
 
-function ProductRow({ product, health }: { product: ProductMetric; health: HealthLevel }) {
+function ProductRow({ product }: { product: CatalogProduct }) {
   return (
     <Link
       href={`/catalog/${product.product_id}`}
@@ -35,19 +30,13 @@ function ProductRow({ product, health }: { product: ProductMetric; health: Healt
           <span className="capitalize">{product.product_type}</span>
         </div>
       </div>
-      <HealthBadge level={health} />
+      <HealthBadge level={product.health} />
       <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
     </Link>
   );
 }
 
-export default function CatalogGrid({
-  products,
-  thresholdsByProduct,
-}: {
-  products: ProductMetric[];
-  thresholdsByProduct: Record<string, KpiThreshold[]>;
-}) {
+export default function CatalogGrid({ products }: { products: CatalogProduct[] }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("list");
 
@@ -61,9 +50,6 @@ export default function CatalogGrid({
         p.product_type?.toLowerCase().includes(q),
     );
   }, [products, query]);
-
-  const healthOf = (p: ProductMetric) =>
-    computeProductHealth(p, thresholdsByProduct[p.product_id] ?? []);
 
   const toggleCls = (active: boolean) =>
     `flex size-7 items-center justify-center rounded-md transition-colors ${
@@ -109,14 +95,14 @@ export default function CatalogGrid({
                 index === 0 && "md:col-span-2 lg:col-span-1 lg:row-span-2",
               )}
             >
-              <ProductCatalogCard product={product} health={healthOf(product)} />
+              <ProductCatalogCard product={product} health={product.health} />
             </div>
           ))}
         </div>
       ) : (
         <Card className="gap-0 divide-y divide-border p-0">
           {filtered.map((product) => (
-            <ProductRow key={product.product_id} product={product} health={healthOf(product)} />
+            <ProductRow key={product.product_id} product={product} />
           ))}
         </Card>
       )}
