@@ -30,10 +30,11 @@ describe("parseSlackInteractionPayload", () => {
   it("parses valid Slack interaction JSON", () => {
     const raw = JSON.stringify({
       actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
-      user: { name: "demo" },
+      user: { id: "U123", name: "demo" },
     });
     const parsed = parseSlackInteractionPayload(raw);
     expect(parsed?.actions?.[0]?.action_id).toBe("approve_low_risk");
+    expect(parsed?.user?.id).toBe("U123");
     expect(parsed?.user?.name).toBe("demo");
   });
 

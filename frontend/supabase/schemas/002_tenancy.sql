@@ -15,6 +15,7 @@ create table public.organizations (
 create table public.organization_members (
   organization_id uuid not null references public.organizations(id) on delete cascade,
   user_id         uuid not null references auth.users(id) on delete cascade,
+  slack_user_id   text,
   role            public.organization_role not null default 'member',
   created_at      timestamptz not null default now(),
   primary key (organization_id, user_id)
@@ -22,6 +23,10 @@ create table public.organization_members (
 
 create index idx_organization_members_user_id
   on public.organization_members (user_id);
+
+create unique index organization_members_org_slack_user_unique
+  on public.organization_members (organization_id, slack_user_id)
+  where slack_user_id is not null;
 
 -- Returns org ids the current user belongs to (RLS helper in private schema).
 create schema if not exists private;

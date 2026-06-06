@@ -109,6 +109,7 @@ describe("POST /api/slack/events", () => {
       threadTs: "1710000000.000000",
       prompt: "investigate the second one",
       userName: "U123",
+      userId: "U123",
       teamId: "T123",
     });
   });

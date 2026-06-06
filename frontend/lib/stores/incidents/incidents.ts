@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { postRecoveryMilestone, recoveryMilestoneFor } from "@/lib/hugo/recovery-alert";
 import { notifyNewIncident, sendIncidentNotification } from "@/lib/slack";
 import { computeMetrics } from "@/lib/stores/metrics/engine";
 import type { Database } from "@/lib/supabase/database.types";
@@ -9,6 +10,7 @@ import { TERMINAL_INCIDENT_STATUSES } from "./types";
 import type {
   ApproveActionsInput,
   ApproveIncidentAndNotifyOpts,
+  AdvanceRecoveryOpts,
   CreatedIncident,
   DetectOpts,
   DetectionResult,
@@ -18,6 +20,7 @@ import type {
   IncidentsListOpts,
   IncidentsUpdateOpts,
   ListIncidentActionIdsOpts,
+  RecoveryAdvanceResult,
 } from "./types";
 
 export class Incidents {
@@ -253,6 +256,64 @@ export class Incidents {
         }),
       ),
     );
+  }
+
+  async advanceRecoveryAndNotify(opts: AdvanceRecoveryOpts): Promise<RecoveryAdvanceResult> {
+    const { scope, days, appUrl } = opts;
+    const { data: incidents, error } = await this.supabase
+      .from("incidents")
+      .select("*")
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
+      .eq("status", "monitoring");
+
+    if (error) throw new IncidentsError(`monitoring incidents read failed: ${error.message}`);
+
+    const recoveryStep = Math.min(Math.max(days, 1), 30) * 5;
+    const milestones = (incidents ?? [])
+      .map((incident) => {
+        const previousPct = Number(incident.recovery_pct ?? 0);
+        const currentPct = Math.min(100, previousPct + recoveryStep);
+        return {
+          incident,
+          previousPct,
+          currentPct,
+          milestone: recoveryMilestoneFor(incident, previousPct, currentPct),
+        };
+      })
+      .filter((row) => row.currentPct > row.previousPct);
+
+    await Promise.all(
+      milestones.map(async ({ incident, currentPct }) => {
+        const resolved = currentPct >= 100;
+        const { error: updateError } = await this.supabase
+          .from("incidents")
+          .update({
+            recovery_pct: currentPct,
+            ...(resolved
+              ? { status: "resolved", resolved_at: new Date().toISOString() }
+              : {}),
+          })
+          .eq("id", incident.id)
+          .eq("organization_id", scope.organizationId)
+          .eq("store_id", scope.storeId);
+
+        if (updateError) {
+          throw new IncidentsError(`incident recovery update failed: ${updateError.message}`);
+        }
+      }),
+    );
+
+    const crossed = milestones.flatMap((row) => (row.milestone ? [row.milestone] : []));
+    await Promise.all(crossed.map((milestone) => postRecoveryMilestone(this.supabase, milestone, appUrl)));
+
+    return {
+      advanced: milestones.length,
+      milestones: crossed.map((milestone) => ({
+        incidentId: milestone.incident.id,
+        milestone: milestone.milestone,
+      })),
+    };
   }
 
   async listActionIds(opts: ListIncidentActionIdsOpts): Promise<string[]> {

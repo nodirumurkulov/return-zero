@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
         threadTs,
         prompt,
         userName: event.user,
+        userId: event.user,
         teamId: envelope.team_id ?? event.team,
       }),
     );

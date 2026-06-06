@@ -1,11 +1,12 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
+import { authorizeSlackAction, type SlackAction } from "@/lib/slack-auth/authorize";
 import type { Incident } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveOrganizationIdForSlackTeam , getTenancy } from "@/lib/tenancy/server";
+import { getTenancy, resolveOrganizationIdForSlackTeam } from "@/lib/tenancy/server";
 import type { StoreScope } from "@/lib/tenancy/types";
 import {
   runHugoApproval,
@@ -33,6 +34,7 @@ export type HugoMention = {
   channel: string;
   threadTs?: string;
   userName?: string;
+  userId?: string;
   teamId?: string;
 };
 
@@ -93,6 +95,25 @@ function confirmationBlocks(action: "resolve" | "reject", incident: Incident): o
       ],
     },
   ];
+}
+
+async function authorizeOrReply(
+  supabase: SupabaseClient<Database>,
+  mention: HugoMention,
+  organizationId: string,
+  action: SlackAction,
+  post: (text: string) => Promise<void>,
+): Promise<boolean> {
+  const authorization = await authorizeSlackAction(supabase, {
+    organizationId,
+    slackUserId: mention.userId,
+    action,
+  });
+
+  if (authorization.allowed) return true;
+
+  await post(authorization.reason);
+  return false;
 }
 
 async function answerDataQuery(
@@ -167,6 +188,10 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
+      if (!(await authorizeOrReply(supabase, mention, organizationId, verb, post))) {
+        return;
+      }
+
       const threadReference = threadTranscript
         ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
         : null;
@@ -196,6 +221,10 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
     if (["resolve", "reopen", "snooze", "reject"].includes(intent.intent)) {
       const verb = intent.intent;
+      if (!(await authorizeOrReply(supabase, mention, organizationId, verb, post))) {
+        return;
+      }
+
       const threadReference = threadTranscript
         ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
         : null;

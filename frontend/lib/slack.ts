@@ -191,7 +191,7 @@ export const slackInteractionPayloadSchema = z.object({
       }),
     )
     .optional(),
-  user: z.object({ name: z.string() }).optional(),
+  user: z.object({ id: z.string(), name: z.string().optional() }).optional(),
 });
 
 export type SlackInteractionPayload = z.infer<typeof slackInteractionPayloadSchema>;
