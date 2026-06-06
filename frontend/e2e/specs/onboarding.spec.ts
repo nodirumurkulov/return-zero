@@ -2,27 +2,34 @@ import { expect, test } from "@playwright/test";
 
 import { OnboardingPage } from "../pages/onboarding.page";
 
-test.describe("Onboarding analyze", () => {
-  test("shows analyze UI for provisioned store", async ({ page }) => {
+test.describe("Onboarding connect", () => {
+  test("shows connect page for signed-in user", async ({ page }) => {
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
 
     await expect(onboarding.heading()).toBeVisible();
-    await expect(onboarding.runAnalysisButton()).toBeVisible();
+    await expect(onboarding.connectButton().or(onboarding.continueButton())).toBeVisible();
   });
 
-  test("redirects to report after mocked learn", async ({ page }) => {
-    await page.route("**/api/stores/learn", async (route) => {
+  test("navigates to catalog from onboarding", async ({ page }) => {
+    await page.route("**/api/stores/import/mock_csv", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ success: true }),
+        body: JSON.stringify({ success: true, results: [] }),
       });
     });
 
     const onboarding = new OnboardingPage(page);
     await onboarding.goto();
-    await onboarding.runAnalysisButton().click();
-    await expect(page).toHaveURL(/\/onboarding\/report$/, { timeout: 15_000 });
+
+    const connect = onboarding.connectButton();
+    if (await connect.isVisible()) {
+      await connect.click();
+    } else {
+      await onboarding.continueButton().click();
+    }
+
+    await expect(page).toHaveURL(/\/catalog$/, { timeout: 15_000 });
   });
 });

@@ -13,8 +13,6 @@ Use the service role only when RLS cannot perform the write. Document new except
 | Route / module | Why admin |
 |----------------|-----------|
 | `POST /api/stores/import/[platform]` | Load platform data into contract tables after user auth |
-| `POST /api/stores/analytics/replay` | Cron replay cursor; also accepts session user when not cron |
-| `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
 | Cron schedulers (`detect`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
@@ -37,7 +35,6 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `stores/import/` | internal | Platform import loaders |
 | `stores/catalog/` | via `@/lib/stores` | Metrics, thresholds, health |
 | `stores/orders/` | via `@/lib/stores` | Replay cursor, orders feed |
-| `stores/learn/` | via `@/lib/stores` | Post-import baselines + business report |
 | `stores/search/` | via `@/lib/stores` | Global search targets |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
@@ -47,7 +44,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 
 - **User routes / server actions:** `const organizationId = await requireOrganizationId(await createClient())`, then pass `organizationId` into domain functions and scoped queries.
 - **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `replay`).
-- **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (service role for member insert).
+- **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (org + owner membership only; store connect on `/onboarding`).
 - See [organizations/AGENTS.md](organizations/AGENTS.md) for module layout.
 
 ## Best practices (domain layer)

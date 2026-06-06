@@ -25,7 +25,6 @@ lib/api/
 ├── errors.ts          # ApiError, assertApiData
 ├── incidents/client.ts
 ├── investigate/client.ts
-├── learn/client.ts
 └── stores/
     ├── connect/client.ts
     ├── connection/client.ts

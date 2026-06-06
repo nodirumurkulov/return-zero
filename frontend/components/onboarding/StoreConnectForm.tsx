@@ -6,68 +6,51 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/hooks/stores/import";
-import { useRunLearn } from "@/hooks/stores/learn";
-import { cn } from "@/lib/utils";
 
 type StoreConnectFormProps = {
-  /** Demo data was provisioned at signup — skip the connect API on mock selection. */
-  mockStoreReady?: boolean;
+  storeReady?: boolean;
 };
 
-export default function StoreConnectForm({ mockStoreReady = false }: StoreConnectFormProps) {
+export default function StoreConnectForm({ storeReady = false }: StoreConnectFormProps) {
   const router = useRouter();
   const importStore = useImportStore("mock_csv");
-  const learn = useRunLearn();
 
-  const pending = importStore.isPending || learn.isPending;
-  const error =
-    importStore.error instanceof Error
-      ? importStore.error.message
-      : learn.error instanceof Error
-        ? learn.error.message
-        : null;
+  const pending = importStore.isPending;
+  const error = importStore.error instanceof Error ? importStore.error.message : null;
 
-  function runLearnAndRedirect() {
-    learn.mutate(undefined, {
-      onSuccess: () => {
-        router.push("/onboarding/report");
-      },
-    });
+  function goToCatalog() {
+    router.push("/catalog");
   }
 
-  function retryConnectAndLearn() {
+  function connectStore() {
     importStore.mutate(undefined, {
       onSuccess: () => {
-        runLearnAndRedirect();
+        goToCatalog();
       },
     });
   }
 
-  const actionLabel = pending
-    ? importStore.isPending
-      ? "Reconnecting demo store…"
-      : "Analyzing your store…"
-    : mockStoreReady
-      ? "Run analysis"
-      : "Load demo store and analyze";
+  const actionLabel = pending ? "Connecting demo store…" : "Connect demo store";
 
-  if (mockStoreReady) {
+  if (storeReady) {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-4 py-3">
           <Sparkles className="size-4 text-primary" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-foreground">Pretty Fly demo store</p>
-            <p className="text-xs text-muted-foreground">Connected at signup with catalog, orders, and support data.</p>
+            <p className="text-xs text-muted-foreground">
+              Connected with catalog, orders, and support data.
+            </p>
           </div>
           <Badge variant="secondary" className="gap-1">
             <Check className="size-3" aria-hidden />
-            Ready
+            Connected
           </Badge>
         </div>
 
-        <Button onClick={() => runLearnAndRedirect()} disabled={pending} className="w-fit">
-          {actionLabel}
+        <Button onClick={() => goToCatalog()} disabled={pending} className="w-fit">
+          Continue to catalog
         </Button>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -78,15 +61,14 @@ export default function StoreConnectForm({ mockStoreReady = false }: StoreConnec
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Your demo store did not finish loading. Retry provisioning, then Hugo will learn what&apos;s
-        normal and watch for problems.
+        Load the Pretty Fly demo dataset to explore Resolve with realistic ecommerce data.
       </p>
 
-      <Button onClick={() => retryConnectAndLearn()} disabled={pending} className="w-fit">
+      <Button onClick={() => connectStore()} disabled={pending} className="w-fit">
         {actionLabel}
       </Button>
 
-      {error && <p className={cn("text-sm text-destructive")}>{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

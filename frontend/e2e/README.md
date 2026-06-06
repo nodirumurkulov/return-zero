@@ -52,7 +52,7 @@ Supabase starts with trimmed services (`--exclude studio,imgproxy,mailpit,edge-r
 | `auth`, `catalog`, `incidents` | Core flows, threshold save persistence |
 | `incident-detail` | Approve low-risk → monitoring; deterministic fixtures via `e2e/fixtures/db-resets.ts` |
 | `orders` | Orders feed start control |
-| `onboarding` | Provisioned store; mocked learn → report |
+| `onboarding` | Connect demo store; mocked import → catalog |
 | `replay` | ReplayControl advance |
 
 ### Fixtures

@@ -41,10 +41,14 @@ export async function POST(
   const supabase = createAdminClient();
 
   try {
-    const { results, success } = await getStore(supabase).import.run({
+    const store = getStore(supabase);
+    const { results, success } = await store.import.run({
       organizationId: org.organizationId,
       platform: platformParsed.data,
     });
+    if (success) {
+      await store.orders.reset({ organizationId: org.organizationId });
+    }
     const body = success
       ? importSuccessResponseSchema.parse({ success: true, results })
       : importPartialResponseSchema.parse({ success: false, results });

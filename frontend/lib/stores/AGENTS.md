@@ -29,7 +29,6 @@ const store = getStore(supabase);
 await store.catalog.list({ organizationId });
 await store.orders.advance({ organizationId, days: 7 });
 await store.incidents.list({ organizationId });
-await store.learn.run({ organizationId });
 await store.search.list({ organizationId });
 await store.import.run({ organizationId, platform: "mock_csv" });
 ```
@@ -41,7 +40,6 @@ await store.import.run({ organizationId, platform: "mock_csv" });
 | `catalog/` | `Catalog` — metrics, thresholds, health |
 | `orders/` | `Orders` — replay cursor, feed, advance + detect |
 | `incidents/` | `Incidents` — KPI breach detect, CRUD, approve |
-| `learn/` | `Learn` — baselines, business report, profile seed |
 | `search/` | `Search` — global search targets |
 | `import/` | `Import` — platform loaders |
 | `metrics/` | Internal KPI engine (used by catalog + incidents) |

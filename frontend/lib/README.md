@@ -6,7 +6,7 @@ Server-side and shared domain logic. Code is split by **domain** — each folder
 
 | Module | Import | Responsibility |
 |--------|--------|----------------|
-| [`stores/`](stores/) | `@/lib/stores`, `@/lib/stores/server` | Unified facade: catalog, orders, import, learn, search, incidents |
+| [`stores/`](stores/) | `@/lib/stores`, `@/lib/stores/server` | Unified facade: catalog, orders, import, search, incidents |
 | [`stores/import/`](stores/import/) | internal | Platform import loaders |
 | [`agents/`](agents/) | `@/lib/agents` | Parallel LLM investigation |
 | [`slack.ts`](slack.ts) | `@/lib/slack` | Outbound + inbound Slack payloads |

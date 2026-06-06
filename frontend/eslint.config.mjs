@@ -97,7 +97,6 @@ export default tseslint.config(
                 "@/lib/stores/catalog/**",
                 "@/lib/stores/incidents/**",
                 "@/lib/stores/orders/**",
-                "@/lib/stores/learn/**",
                 "@/lib/stores/search/**",
                 "@/lib/stores/metrics/**",
                 "@/lib/stores/import/**",

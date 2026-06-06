@@ -9,14 +9,14 @@ export class OnboardingPage {
   }
 
   heading() {
-    return this.page.getByRole("heading", { name: "Analyze your store" });
+    return this.page.getByRole("heading", { name: "Connect your store" });
   }
 
-  runAnalysisButton() {
-    return this.page.getByRole("button", { name: /Run analysis/i });
+  connectButton() {
+    return this.page.getByRole("button", { name: /Connect demo store/i });
   }
 
-  recoveryButton() {
-    return this.page.getByRole("button", { name: /Load demo store and analyze/i });
+  continueButton() {
+    return this.page.getByRole("button", { name: /Continue to catalog/i });
   }
 }

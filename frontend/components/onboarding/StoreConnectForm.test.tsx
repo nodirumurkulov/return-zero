@@ -6,16 +6,15 @@ import { renderWithProviders } from "@/test/test-utils";
 import StoreConnectForm from "./StoreConnectForm";
 
 describe("StoreConnectForm", () => {
-  it("shows recovery path when demo store is not ready", () => {
+  it("shows connect action when store is not connected", () => {
     renderWithProviders(<StoreConnectForm />);
-    expect(screen.getByRole("button", { name: /Load demo store and analyze/i })).toBeInTheDocument();
-    expect(screen.getByText(/did not finish loading/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Connect demo store/i })).toBeInTheDocument();
+    expect(screen.getByText(/Load the Pretty Fly demo dataset/i)).toBeInTheDocument();
   });
 
-  it("shows ready state and run analysis when mock store is pre-provisioned", () => {
-    renderWithProviders(<StoreConnectForm mockStoreReady />);
-    expect(screen.getByText("Ready")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Run analysis/i })).toBeInTheDocument();
-    expect(screen.getByText(/Connected at signup/i)).toBeInTheDocument();
+  it("shows connected state and continue action when store is ready", () => {
+    renderWithProviders(<StoreConnectForm storeReady />);
+    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Continue to catalog/i })).toBeInTheDocument();
   });
 });

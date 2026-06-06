@@ -27,7 +27,6 @@ if (!parsed.success) {
 | `POST /api/stores/orders/advance` | `getStore().orders.advance` |
 | `GET /api/stores/orders/feed` | `getStore().orders.list` |
 | `PATCH /api/stores/catalog/[productId]/threshold` | `getStore().catalog.update` |
-| `POST /api/stores/learn` | `getStore().learn.run` |
 | `POST /api/stores/incidents/detect` | `getStore().incidents.detect` + `hugo/investigate-incident` |
 | `POST /api/investigate` | `hugo/investigate-incident` |
 | `POST /api/stores/incidents/[id]/approve` | `getStore().incidents.approveAndNotify` |

@@ -71,17 +71,6 @@ export {
   type UpdateIncidentBody,
 } from "./incidents/types";
 
-export {
-  learnBodySchema,
-  learnResponseSchema,
-  parseReportSummary,
-  type LearnBody,
-  type LearnResult,
-  type LearnRunOpts,
-  type LearnRunResult,
-  type ReportSummary,
-} from "./learn";
-
 export type { SearchListOpts, SearchTarget } from "./search";
 
 export type { StoreConnection, StorePlatform } from "./import";

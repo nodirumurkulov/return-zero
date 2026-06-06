@@ -27,7 +27,6 @@ hooks/
 └── stores/                    # mirrors lib/stores
     ├── incidents/
     ├── import/
-    ├── learn/
     ├── catalog/
     └── orders/
 ```

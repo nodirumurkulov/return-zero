@@ -26,22 +26,19 @@ export default async function OnboardingPage() {
   ]);
 
   const productCount = count ?? 0;
-  const mockStoreReady =
-    connection?.platform === "mock_csv" &&
-    connection.status === "connected" &&
-    productCount > 0;
+  const storeReady =
+    connection?.platform === "mock_csv" && connection.status === "connected" && productCount > 0;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analyze your store</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Connect your store</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Your demo store is ready. Run analysis to learn what&apos;s normal and surface patterns
-          worth watching.
+          Link a store to start monitoring products and incidents.
         </p>
       </div>
 
-      <StoreConnectForm mockStoreReady={mockStoreReady} />
+      <StoreConnectForm storeReady={storeReady} />
     </div>
   );
 }

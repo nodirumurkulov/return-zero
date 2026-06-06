@@ -1,8 +1,7 @@
 // Shared, pure KPI-baseline helpers — the single source of truth for turning a
 // product's monthly series into a per-KPI ratio series and its (mean, σ, n)
-// baseline. Used both by the learn step (which persists baselines) and the Quant
-// Analyst's anomaly tool (which falls back to on-the-fly stats when no baseline
-// row exists yet). Pure: no DB, no `server-only`, trivially testable.
+// baseline. Used by the Quant Analyst anomaly tool for on-the-fly stats when no
+// persisted baseline row exists. Pure: no DB, no `server-only`, trivially testable.
 
 import type { MetricKey } from "../catalog/types";
 import type { MonthlyPoint } from "./monthly-point";

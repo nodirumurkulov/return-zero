@@ -12,7 +12,6 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/stores/incidents/detect` | KPI breach detection (cron-capable); triggers Hugo investigate |
 | `POST` | `/api/stores/orders/advance` | Advance replay clock + detect breaches (cron or signed-in user) |
 | `GET` | `/api/stores/orders/feed` | Orders feed for replay UI |
-| `POST` | `/api/learn` | Learn baselines + business report after upload |
 | `POST` | `/api/stores/import/[platform]` | Import store data (`mock_csv`, `shopify`) |
 | `GET` | `/api/stores/import/status` | Current import/connection status |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
