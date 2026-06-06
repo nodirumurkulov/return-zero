@@ -16,7 +16,7 @@ export class AppShellPage {
   }
 
   desktopSidebarTrigger() {
-    return this.page.locator('[data-slot="sidebar-header"] [data-slot="sidebar-trigger"]');
+    return this.page.locator('[data-slot="sidebar-inset"] header [data-slot="sidebar-trigger"]');
   }
 
   async goToCatalog() {

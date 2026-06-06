@@ -26,10 +26,8 @@ export function HugoMark({
 const BRAND = {
   sidebar: {
     title: "Hugo",
-    subtitle: "Commerce IR",
     imageSize: 28,
     titleClass: "text-[15px] font-semibold leading-tight tracking-tight",
-    subtitleClass: "text-[11px] text-muted-foreground",
     titleTag: "p" as const,
   },
   auth: {
@@ -47,18 +45,27 @@ export function BrandLogo({
 }: {
   variant?: keyof typeof BRAND;
 }) {
-  const { title, subtitle, imageSize, titleClass, subtitleClass, titleTag } =
-    BRAND[variant];
-  const Title = titleTag;
+  const brand = BRAND[variant];
+  const Title = brand.titleTag;
 
   const content = (
     <div
       className={cn(
         "flex items-center",
-        variant === "sidebar" ? "gap-2.5" : "flex-col gap-4 text-center",
+        variant === "sidebar"
+          ? "gap-2.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center"
+          : "flex-col gap-4 text-center",
       )}
     >
-      <HugoMark size={imageSize} priority />
+      <HugoMark
+        size={brand.imageSize}
+        priority
+        className={
+          variant === "sidebar"
+            ? "group-data-[collapsible=icon]:size-7 group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7"
+            : undefined
+        }
+      />
       <div
         className={cn(
           "min-w-0",
@@ -66,8 +73,10 @@ export function BrandLogo({
           variant === "sidebar" && "group-data-[collapsible=icon]:hidden",
         )}
       >
-        <Title className={titleClass}>{title}</Title>
-        <p className={subtitleClass}>{subtitle}</p>
+        <Title className={brand.titleClass}>{brand.title}</Title>
+        {variant === "auth" ? (
+          <p className={BRAND.auth.subtitleClass}>{BRAND.auth.subtitle}</p>
+        ) : null}
       </div>
     </div>
   );
@@ -76,7 +85,7 @@ export function BrandLogo({
     return (
       <Link
         href="/catalog"
-        className="block rounded-md outline-hidden transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="block rounded-md outline-hidden transition-colors group-data-[collapsible=icon]:mx-auto focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         {content}
       </Link>
