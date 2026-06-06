@@ -1844,6 +1844,33 @@ export type Database = {
           },
         ]
       }
+      waitlist_signups: {
+        Row: {
+          confirmation_token: string
+          confirmed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          welcome_sent_at: string | null
+        }
+        Insert: {
+          confirmation_token?: string
+          confirmed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          welcome_sent_at?: string | null
+        }
+        Update: {
+          confirmation_token?: string
+          confirmed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          welcome_sent_at?: string | null
+        }
+        Relationships: []
+      }
       variants: {
         Row: {
           barcode: string | null

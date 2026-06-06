@@ -6,11 +6,13 @@ Next.js App Router: pages, layouts, and server actions. All data fetching for pa
 
 | Route | Type | Purpose |
 |-------|------|---------|
-| `/` | redirect | → `/catalog` |
+| `/` | marketing RSC | Public landing (auth users → `/catalog`) |
+| `/features`, `/pricing`, `/blog` | marketing RSC | Product marketing pages |
 | `/catalog`, `/catalog/[productId]` | RSC | Product KPIs and thresholds |
 | `/incidents`, `/incidents/[incidentId]` | RSC + client islands | Incident kanban and detail |
 | `/dashboard` | redirect | → `/catalog` |
-| `/sign-in`, `/sign-up` | Supabase Auth | Authentication |
+| `/sign-in` | Supabase Auth | Sign in + demo login |
+| `/sign-up` | public | Waitlist gate (sign-up closed) |
 
 Server actions live in [`actions.ts`](actions.ts) (e.g. threshold and status updates).
 

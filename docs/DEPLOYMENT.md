@@ -74,6 +74,15 @@ Uses [Vercel AI SDK](https://sdk.vercel.ai/) (`ToolLoopAgent` + `@ai-sdk/openai`
 | `NEXT_PUBLIC_APP_URL` | client | ✅ | Deployment URL (Slack deep-links) |
 | `CRON_SECRET` | server | **✅ in Production** | Bearer for `/api/detect`, `/api/forecast`, `/api/recover`; required when `NODE_ENV=production` |
 
+### Waitlist email (Resend)
+
+| Variable | Scope | Required | Notes |
+|----------|-------|----------|-------|
+| `RESEND_API_KEY` | server | optional | Sends waitlist confirmation + welcome emails; signups still persist without it |
+| `RESEND_FROM_EMAIL` | server | optional | Verified sender, e.g. `Hugo <onboarding@yourdomain.com>` |
+
+Verify your domain in [Resend](https://resend.com) before production. Confirmation links use `NEXT_PUBLIC_APP_URL`.
+
 ---
 
 ## 3. Scheduler / cron (Vercel Cron)
