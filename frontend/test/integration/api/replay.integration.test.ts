@@ -78,6 +78,38 @@ describe("POST /api/stores/orders/advance", () => {
     );
     expect(res.status).toBe(200);
     expect(advanceMock).toHaveBeenCalledWith({ organizationId: "org-1", days: 3 });
-    expect(notifyNewMock).toHaveBeenCalled();
+    expect(notifyNewMock).not.toHaveBeenCalled();
+  });
+
+  it("notifies Slack when advance creates incidents", async () => {
+    const created = [
+      {
+        incident_id: "inc-1",
+        product_id: "prod-1",
+        title: "Test breach",
+        severity: "high",
+        affected_kpi_keys: ["margin"],
+        impact_amount: 0,
+        impact_label: null,
+      },
+    ];
+    advanceMock.mockResolvedValue({
+      ...advanceResult,
+      breaches: { scanned: 1, created, skipped: [] },
+    });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/stores/orders/advance", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer cron-test-secret",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ advance_days: 7 }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(notifyNewMock).toHaveBeenCalledWith("org-1", created);
   });
 });
