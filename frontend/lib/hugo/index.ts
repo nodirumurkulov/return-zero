@@ -1,11 +1,12 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
+import { authorizeSlackAction, type SlackAction } from "@/lib/slack-auth/authorize";
 import type { Incident } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveOrganizationIdForSlackTeam , getTenancy } from "@/lib/tenancy/server";
+import { getTenancy, resolveOrganizationIdForSlackTeam } from "@/lib/tenancy/server";
 import type { StoreScope } from "@/lib/tenancy/types";
 import {
   runHugoApproval,
@@ -15,6 +16,7 @@ import {
 } from "./actions";
 import {
   buildCatalogContext,
+  buildDeepProductContext,
   buildIncidentDetailContext,
   buildInventoryContext,
   buildOpenIncidentsContext,
@@ -23,6 +25,7 @@ import {
   resolveIncident,
   resolveThreadIncidentReference,
   wantsCatalog,
+  wantsDeepProductContext,
   wantsInventory,
 } from "./context";
 import { classifyHugoIntent } from "./intent";
@@ -33,6 +36,7 @@ export type HugoMention = {
   channel: string;
   threadTs?: string;
   userName?: string;
+  userId?: string;
   teamId?: string;
 };
 
@@ -95,6 +99,25 @@ function confirmationBlocks(action: "resolve" | "reject", incident: Incident): o
   ];
 }
 
+async function authorizeOrReply(
+  supabase: SupabaseClient<Database>,
+  mention: HugoMention,
+  organizationId: string,
+  action: SlackAction,
+  post: (text: string) => Promise<void>,
+): Promise<boolean> {
+  const authorization = await authorizeSlackAction(supabase, {
+    organizationId,
+    slackUserId: mention.userId,
+    action,
+  });
+
+  if (authorization.allowed) return true;
+
+  await post(authorization.reason);
+  return false;
+}
+
 async function answerDataQuery(
   supabase: SupabaseClient<Database>,
   mention: HugoMention,
@@ -105,16 +128,15 @@ async function answerDataQuery(
   const parts = [await buildOpenIncidentsContext(supabase, scope)];
 
   const ref = (incidentReference ?? "").trim();
-  if (ref) {
-    const { match } = await resolveIncident(supabase, ref, scope);
-    if (match) {
-      const detail = await getStore(supabase).incidents.getDetail({
-        id: match.id,
-        scope,
-      });
-      if (detail) {
-        parts.push(buildIncidentDetailContext(detail));
-      }
+  const resolvedIncident = ref ? (await resolveIncident(supabase, ref, scope)).match : null;
+
+  if (resolvedIncident) {
+    const detail = await getStore(supabase).incidents.getDetail({
+      id: resolvedIncident.id,
+      scope,
+    });
+    if (detail) {
+      parts.push(buildIncidentDetailContext(detail));
     }
   }
 
@@ -124,6 +146,11 @@ async function answerDataQuery(
 
   if (wantsInventory(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
     parts.push(await buildInventoryContext(supabase, scope));
+  }
+
+  if (wantsDeepProductContext(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
+    const deepContext = await buildDeepProductContext(supabase, scope, resolvedIncident?.id);
+    if (deepContext) parts.push(deepContext);
   }
 
   return generateDataReply(mention.prompt, parts.join("\n\n"), threadTranscript);
@@ -163,10 +190,14 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
     const threadTranscript = threadRead?.ok ? buildThreadTranscript(threadRead.messages) : undefined;
 
-    const intent = await classifyHugoIntent(mention.prompt);
+    const intent = await classifyHugoIntent(mention.prompt, threadTranscript);
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
+      if (!(await authorizeOrReply(supabase, mention, organizationId, verb, post))) {
+        return;
+      }
+
       const threadReference = threadTranscript
         ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
         : null;
@@ -196,6 +227,10 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
     if (["resolve", "reopen", "snooze", "reject"].includes(intent.intent)) {
       const verb = intent.intent;
+      if (!(await authorizeOrReply(supabase, mention, organizationId, verb, post))) {
+        return;
+      }
+
       const threadReference = threadTranscript
         ? resolveThreadIncidentReference(mention.prompt, threadTranscript)
         : null;

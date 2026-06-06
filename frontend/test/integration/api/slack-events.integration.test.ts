@@ -109,6 +109,46 @@ describe("POST /api/slack/events", () => {
       threadTs: "1710000000.000000",
       prompt: "investigate the second one",
       userName: "U123",
+      userId: "U123",
+      teamId: "T123",
+    });
+  });
+
+  it("passes direct messages to Hugo without requiring an app mention", async () => {
+    const { body, timestamp, signature, secret } = signedJsonBody({
+      type: "event_callback",
+      team_id: "T123",
+      event: {
+        type: "message",
+        subtype: "message.im",
+        user: "U123",
+        channel: "D123",
+        text: "show open incidents",
+        ts: "1710000000.000100",
+        channel_type: "im",
+      },
+    });
+    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/slack/events", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-slack-signature": signature,
+          "x-slack-request-timestamp": timestamp,
+        },
+        body,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(handleHugoMentionMock).toHaveBeenCalledWith({
+      channel: "D123",
+      threadTs: "1710000000.000100",
+      prompt: "show open incidents",
+      userName: "U123",
+      userId: "U123",
       teamId: "T123",
     });
   });

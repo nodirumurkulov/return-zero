@@ -132,6 +132,17 @@ export type IncidentsUpdateOpts = {
   patch: UpdateIncidentBody;
 };
 
+export type AdvanceRecoveryOpts = {
+  scope: StoreScope;
+  days: number;
+  appUrl: string;
+};
+
+export type RecoveryAdvanceResult = {
+  advanced: number;
+  milestones: Array<{ incidentId: string; milestone: 50 | 100 }>;
+};
+
 export type ListIncidentActionIdsOpts = {
   incidentId: string;
   scope: StoreScope;

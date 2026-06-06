@@ -2,6 +2,7 @@ import "server-only";
 
 import { generateText, Output } from "ai";
 import { getModel } from "@/lib/ai/model";
+import { matchDeterministicIntent } from "./intent-fallback";
 import { hugoIntentSchema, type HugoIntent } from "./schemas";
 
 const CLASSIFIER_PROMPT =
@@ -22,22 +23,35 @@ const CLASSIFIER_PROMPT =
   "duration_days is null unless intent is snooze.";
 
 /** Classify a Slack mention into a Hugo intent. */
-export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
+export async function classifyHugoIntent(
+  prompt: string,
+  threadTranscript?: string,
+): Promise<HugoIntent> {
   const clean = prompt.trim();
   if (!clean) return { intent: "chat", incident_reference: null, duration_days: null };
 
-  const { output } = await generateText({
-    model: getModel(),
-    output: Output.object({ schema: hugoIntentSchema }),
-    messages: [
-      { role: "system", content: CLASSIFIER_PROMPT },
-      { role: "user", content: clean },
-    ],
-  });
+  const deterministic = matchDeterministicIntent(clean);
+  if (deterministic && deterministic.intent !== "data_query") {
+    return deterministic;
+  }
+  const userContent = threadTranscript
+    ? `Slack thread so far:\n${threadTranscript}\n\nLatest message: ${clean}`
+    : clean;
 
-  if (!output) {
-    throw new Error("Hugo intent classifier: missing structured output");
+  try {
+    const { output } = await generateText({
+      model: getModel(),
+      output: Output.object({ schema: hugoIntentSchema }),
+      messages: [
+        { role: "system", content: CLASSIFIER_PROMPT },
+        { role: "user", content: userContent },
+      ],
+    });
+
+    if (output) return output;
+  } catch {
+    // Fall through to deterministic fallback below.
   }
 
-  return output;
+  return deterministic ?? { intent: "chat", incident_reference: null, duration_days: null };
 }

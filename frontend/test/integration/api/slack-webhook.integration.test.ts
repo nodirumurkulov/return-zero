@@ -29,6 +29,12 @@ vi.mock("@/lib/slack", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/slack-auth/authorize", () => ({
+  authorizeSlackAction: vi.fn(() =>
+    Promise.resolve({ allowed: true, userId: "user-1", role: "owner" }),
+  ),
+}));
+
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
@@ -44,12 +50,14 @@ vi.mock("@/lib/tenancy/server", () => ({
 
 import { POST } from "@/app/api/slack/webhook/route";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
+import { authorizeSlackAction } from "@/lib/slack-auth/authorize";
 import { createIncidentFixture } from "@/test/fixtures/incidents";
 
 const getMock = incidentStoreMock.get;
 const approveMock = incidentStoreMock.approveAndNotify;
 const resolveMock = vi.mocked(runHugoResolve);
 const rejectMock = vi.mocked(runHugoRejectProposedActions);
+const authorizeMock = vi.mocked(authorizeSlackAction);
 
 function signedBody(payload: object, secret = "slack-signing-secret") {
   const rawPayload = JSON.stringify(payload);
@@ -63,6 +71,7 @@ function signedBody(payload: object, secret = "slack-signing-secret") {
 
 describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
+    authorizeMock.mockResolvedValue({ allowed: true, userId: "user-1", role: "owner" });
     approveMock.mockResolvedValue(undefined);
     getMock.mockResolvedValue(
       createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
@@ -95,7 +104,7 @@ describe("POST /api/slack/webhook", () => {
     vi.stubEnv("SLACK_SIGNING_SECRET", "slack-signing-secret");
     const { body, timestamp, signature } = signedBody({
       team: { id: "T123" },
-      user: { name: "tester" },
+      user: { id: "U123", name: "tester" },
       actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
     });
 
@@ -111,14 +120,50 @@ describe("POST /api/slack/webhook", () => {
       }),
     );
     expect(res.status).toBe(200);
+    expect(authorizeMock).toHaveBeenCalledWith({}, {
+      organizationId: "org-1",
+      slackUserId: "U123",
+      action: "approve",
+    });
     expect(approveMock).toHaveBeenCalled();
+  });
+
+  it("rejects unauthorized Slack approve callbacks before mutating incidents", async () => {
+    authorizeMock.mockResolvedValueOnce({
+      allowed: false,
+      reason: "Link your Slack account in Resolve before running actions from Slack.",
+    });
+    vi.stubEnv("SLACK_SIGNING_SECRET", "slack-signing-secret");
+    const { body, timestamp, signature } = signedBody({
+      team: { id: "T123" },
+      user: { id: "U999", name: "tester" },
+      actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
+    });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/slack/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          "x-slack-signature": signature,
+          "x-slack-request-timestamp": timestamp,
+        },
+        body,
+      }),
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({
+      text: "Link your Slack account in Resolve before running actions from Slack.",
+    });
+    expect(approveMock).not.toHaveBeenCalled();
   });
 
   it("resolves incidents after Slack confirmation", async () => {
     const { body, timestamp, signature, secret } = signedBody({
       team: { id: "T123" },
       actions: [{ action_id: "confirm_hugo_resolve", value: "inc-1" }],
-      user: { name: "slack-user" },
+      user: { id: "U123", name: "slack-user" },
     });
     vi.stubEnv("SLACK_SIGNING_SECRET", secret);
 
@@ -145,7 +190,7 @@ describe("POST /api/slack/webhook", () => {
     const { body, timestamp, signature, secret } = signedBody({
       team: { id: "T123" },
       actions: [{ action_id: "confirm_hugo_reject", value: "inc-1" }],
-      user: { name: "slack-user" },
+      user: { id: "U123", name: "slack-user" },
     });
     vi.stubEnv("SLACK_SIGNING_SECRET", secret);
 

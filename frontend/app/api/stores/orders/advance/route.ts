@@ -81,6 +81,20 @@ export async function POST(req: NextRequest) {
     }
 
     const createdIncidents = results.flatMap((r) => r.breaches.created);
+    const recoveryResults = await Promise.all(
+      scopes.map((scope) =>
+        store.incidents.advanceRecoveryAndNotify({
+          scope,
+          days: parsed.data.advance_days ?? 7,
+          appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+        }),
+      ),
+    );
+    const recovered = recoveryResults.reduce((sum, row) => sum + row.advanced, 0);
+    const recoveryMilestones = recoveryResults.reduce(
+      (sum, row) => sum + row.milestones.length,
+      0,
+    );
 
     await Promise.all(
       scopes.flatMap((scope, index) => {
@@ -98,6 +112,8 @@ export async function POST(req: NextRequest) {
       previous_cursor: result.previous_cursor,
       at_end: result.at_end,
       created: createdIncidents.length,
+      recovered,
+      recovery_milestones: recoveryMilestones,
       breaches: result.breaches,
     });
   } catch (err) {

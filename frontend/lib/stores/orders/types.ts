@@ -62,6 +62,8 @@ export const advanceResponseSchema = z.union([
     previous_cursor: z.string().nullable(),
     at_end: z.boolean(),
     created: z.number(),
+    recovered: z.number().optional(),
+    recovery_milestones: z.number().optional(),
     breaches: detectionResultSchema.optional(),
   }),
   z.object({ error: z.string() }),

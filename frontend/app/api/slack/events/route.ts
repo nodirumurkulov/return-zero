@@ -39,9 +39,11 @@ export async function POST(req: NextRequest) {
   }
 
   const event = envelope.event;
-  // Only respond to real user @mentions; ignore bot/system messages (no loops).
+  // Only respond to real user messages; ignore bot/system messages (no loops).
   if (
-    event?.type === "app_mention" &&
+    event &&
+    (event.type === "app_mention" ||
+      (event.type === "message" && event.channel_type === "im")) &&
     event.channel &&
     event.text &&
     !event.bot_id &&
@@ -49,7 +51,8 @@ export async function POST(req: NextRequest) {
   ) {
     const channel = event.channel;
     const threadTs = event.thread_ts ?? event.ts;
-    const prompt = stripSlackMentions(event.text);
+    const prompt =
+      event.type === "app_mention" ? stripSlackMentions(event.text) : event.text.trim();
 
     after(() =>
       handleHugoMention({
@@ -57,6 +60,7 @@ export async function POST(req: NextRequest) {
         threadTs,
         prompt,
         userName: event.user,
+        userId: event.user,
         teamId: envelope.team_id ?? event.team,
       }),
     );

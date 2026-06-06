@@ -85,7 +85,7 @@ export function createQuantTools(supabase: AgentSupabase, scope: StoreScope) {
       inputSchema: z.object({ productId: z.string() }),
       execute: async ({ productId }) => {
         const [ctx, profile] = await Promise.all([
-          fetchMarketingContext(supabase, organizationId, productId),
+          fetchMarketingContext(supabase, scope, productId),
           loadBusinessProfile(supabase, organizationId),
         ]);
         const minRoas = profile.minRoas;

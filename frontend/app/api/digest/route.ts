@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { buildDigestBlocks, summarizeIncidents } from "@/lib/hugo/digest";
+import { postAwaitingApprovalEscalation } from "@/lib/hugo/escalate";
 import { postOrgSlackBlocks } from "@/lib/slack";
 import type { Incident } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
@@ -48,6 +49,7 @@ export async function GET(req: NextRequest) {
     const scopes = await scopesForRequest(supabase, cronMode);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const digests: Array<{ organizationId: string; openCount: number }> = [];
+    const escalations: Array<{ organizationId: string; count: number }> = [];
 
     const incidentsByOrg = new Map<string, Incident[]>();
 
@@ -76,9 +78,19 @@ export async function GET(req: NextRequest) {
 
       await postOrgSlackBlocks(supabase, organizationId, blocks, fallbackText);
       digests.push({ organizationId, openCount: summary.openCount });
+      if (cronMode) {
+        escalations.push(
+          await postAwaitingApprovalEscalation(supabase, {
+            organizationId,
+            orgName,
+            incidents,
+            appUrl,
+          }),
+        );
+      }
     }
 
-    return NextResponse.json({ success: true, digests });
+    return NextResponse.json({ success: true, digests, escalations });
   } catch (err) {
     logApiError("api/digest", err);
     return apiErrorResponse(err);
