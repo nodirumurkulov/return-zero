@@ -1246,6 +1246,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          active_store_id: string | null
           created_at: string
           id: string
           name: string
@@ -1255,6 +1256,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_store_id?: string | null
           created_at?: string
           id?: string
           name: string
@@ -1264,6 +1266,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_store_id?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -1272,7 +1275,15 @@ export type Database = {
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_active_store_id_fkey"
+            columns: ["active_store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       po_line_items: {
         Row: {
@@ -1687,12 +1698,15 @@ export type Database = {
           connected_at: string | null
           created_at: string
           external_shop_id: string | null
+          id: string
+          label: string | null
           last_synced_at: string | null
           metadata: Json
           organization_id: string
           platform: Database["public"]["Enums"]["store_platform"]
           replay_cursor: string | null
           status: Database["public"]["Enums"]["store_connection_status"]
+          sync_error: string | null
           sync_mode: Database["public"]["Enums"]["store_sync_mode"]
           updated_at: string
         }
@@ -1700,12 +1714,15 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           external_shop_id?: string | null
+          id?: string
+          label?: string | null
           last_synced_at?: string | null
           metadata?: Json
           organization_id: string
           platform?: Database["public"]["Enums"]["store_platform"]
           replay_cursor?: string | null
           status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_error?: string | null
           sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
           updated_at?: string
         }
@@ -1713,12 +1730,15 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           external_shop_id?: string | null
+          id?: string
+          label?: string | null
           last_synced_at?: string | null
           metadata?: Json
           organization_id?: string
           platform?: Database["public"]["Enums"]["store_platform"]
           replay_cursor?: string | null
           status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_error?: string | null
           sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
           updated_at?: string
         }
@@ -2037,8 +2057,8 @@ export type Database = {
           support_count: number
         }[]
       }
-      reset_organization_data: {
-        Args: { p_organization_id: string }
+      reset_store_data: {
+        Args: { p_store_id: string }
         Returns: undefined
       }
       seed_organization_defaults: {

@@ -17,6 +17,26 @@ export type RunStoreSyncOpts = {
   replace?: boolean;
 };
 
+export async function resetActiveStoreData(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("organizations")
+    .select("active_store_id")
+    .eq("id", organizationId)
+    .single();
+  if (error) throw new ConnectionError(`organizations read failed: ${error.message}`);
+  if (!data.active_store_id) {
+    throw new ConnectionError(`no active store for organization ${organizationId}`);
+  }
+
+  const { error: resetError } = await supabase.rpc("reset_store_data", {
+    p_store_id: data.active_store_id,
+  });
+  if (resetError) throw new ConnectionError(`reset_store_data: ${resetError.message}`);
+}
+
 async function markStoreConnected(
   supabase: SupabaseClient<Database>,
   organizationId: string,
@@ -57,10 +77,7 @@ async function runMockCsvSync(
   const replace = opts.replace ?? false;
 
   if (replace) {
-    const { error } = await supabase.rpc("reset_organization_data", {
-      p_organization_id: opts.organizationId,
-    });
-    if (error) throw new ConnectionError(`reset_organization_data: ${error.message}`);
+    await resetActiveStoreData(supabase, opts.organizationId);
   }
 
   const { results: catalogResults, maps } = await loader.loadCatalogPhase(

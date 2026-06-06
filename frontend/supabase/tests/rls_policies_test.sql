@@ -189,13 +189,13 @@ do $$ begin
   end;
 end $$;
 
-\echo '== authenticated: reset_organization_data denied =='
+\echo '== authenticated: reset_store_data denied =='
 do $$ begin
   begin
-    perform public.reset_organization_data('aaaaaaaa-1111-1111-1111-111111111111');
-    raise exception 'FAIL: authenticated called reset_organization_data';
+    perform public.reset_store_data('aaaaaaaa-1111-1111-1111-111111111111');
+    raise exception 'FAIL: authenticated called reset_store_data';
   exception when insufficient_privilege then
-    raise notice 'PASS: reset_organization_data denied for authenticated';
+    raise notice 'PASS: reset_store_data denied for authenticated';
   end;
 end $$;
 reset role;

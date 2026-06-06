@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
+import { resetActiveStoreData } from "../connection/sync";
 import { ImportError } from "./errors";
 import { MockImportLoader } from "./mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "./mock/pack";
@@ -105,10 +106,12 @@ export class Import {
     const replace = opts.replace ?? false;
 
     if (replace) {
-      const { error } = await this.supabase.rpc("reset_organization_data", {
-        p_organization_id: opts.organizationId,
-      });
-      if (error) throw new ImportError(`reset_organization_data: ${error.message}`);
+      try {
+        await resetActiveStoreData(this.supabase, opts.organizationId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "reset_store_data failed";
+        throw new ImportError(message);
+      }
     }
 
     const { results: catalogResults, maps } = await this.mockLoader.loadCatalogPhase(
