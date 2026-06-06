@@ -538,9 +538,10 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
       </div>
     </a>
     <nav class="nav-links">
-      
+
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
+      <a href="#waitlist">Join waitlist</a>
     </nav>
     <div class="nav-cta">
       <a class="nav-signin" href="#waitlist">Sign in</a>

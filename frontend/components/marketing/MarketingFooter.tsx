@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { HugoMark } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,13 @@ async function subscribe(email: string): Promise<boolean> {
 }
 
 export function MarketingFooter() {
+  const pathname = usePathname();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  // The landing page ("/") ships its own self-contained footer, so the shared
+  // marketing footer steps aside there to avoid a doubled footer.
+  if (pathname === "/") return null;
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

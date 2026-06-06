@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
+export default async function MarketingHomePage() {
   const supabase = await createClient();
   const {
     data: { user },

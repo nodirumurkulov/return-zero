@@ -2,6 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { HugoMark } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -16,7 +17,12 @@ const LINKS = [
 ] as const;
 
 export function MarketingNav() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // The landing page ("/") ships its own self-contained nav, so the shared
+  // marketing nav steps aside there to avoid a doubled header.
+  if (pathname === "/") return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
