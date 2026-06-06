@@ -12,7 +12,7 @@ import {
   E2E_USER_PASSWORD,
 } from "../constants";
 
-export async function ensureE2eUser(supabase: SupabaseClient): Promise<string> {
+export async function ensureE2eUser(supabase: SupabaseClient<Database>): Promise<string> {
   const { data: createdUser, error: createError } = await supabase.auth.admin.createUser({
     email: E2E_USER_EMAIL,
     password: E2E_USER_PASSWORD,
@@ -50,7 +50,10 @@ export async function ensureE2eUser(supabase: SupabaseClient): Promise<string> {
   return e2eUserId;
 }
 
-export async function seedE2eDetectedIncident(supabase: SupabaseClient, organizationId: string) {
+export async function seedE2eDetectedIncident(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+) {
   const { data: heroProduct, error: productError } = await supabase
     .from("products")
     .select("id")

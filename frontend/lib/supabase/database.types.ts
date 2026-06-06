@@ -806,6 +806,7 @@ export type Database = {
           root_cause_confidence: number | null
           severity: Database["public"]["Enums"]["incident_severity"]
           status: Database["public"]["Enums"]["incident_status"]
+          store_id: string
           target_value: number | null
           title: string
           updated_at: string
@@ -829,6 +830,7 @@ export type Database = {
           root_cause_confidence?: number | null
           severity?: Database["public"]["Enums"]["incident_severity"]
           status?: Database["public"]["Enums"]["incident_status"]
+          store_id: string
           target_value?: number | null
           title: string
           updated_at?: string
@@ -852,6 +854,7 @@ export type Database = {
           root_cause_confidence?: number | null
           severity?: Database["public"]["Enums"]["incident_severity"]
           status?: Database["public"]["Enums"]["incident_status"]
+          store_id?: string
           target_value?: number | null
           title?: string
           updated_at?: string
@@ -870,6 +873,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "incidents_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
           },
         ]
       }
