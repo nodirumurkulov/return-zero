@@ -281,6 +281,7 @@ export const slackEventEnvelopeSchema = z.object({
       bot_id: z.string().optional(),
       subtype: z.string().optional(),
       team: z.string().optional(),
+      channel_type: z.string().optional(),
     })
     .optional(),
 });
