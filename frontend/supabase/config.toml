@@ -83,6 +83,8 @@ schema_paths = [
   "./schemas/019_waitlist.sql",
   "./schemas/020_investigation_steps.sql",
   "./schemas/021_analytics_store_scope.sql",
+  "./schemas/022_store_connection_secrets.sql",
+  "./schemas/023_waitlist_pricing.sql",
 ]
 
 [db.seed]
