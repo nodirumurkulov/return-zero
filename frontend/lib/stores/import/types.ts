@@ -1,6 +1,6 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database, Enums, Tables } from "@/lib/supabase/db";
 

@@ -3,26 +3,47 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { detectMock } = vi.hoisted(() => ({ detectMock: vi.fn() }));
+const { detectMock, notifyNewMock } = vi.hoisted(() => ({
+  detectMock: vi.fn(),
+  notifyNewMock: vi.fn(),
+}));
+
+const adminSupabase = {
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ data: [{ id: "prod-1" }], error: null })),
+    })),
+  })),
+};
 
 vi.mock("@/lib/stores/server", () => ({
-  getStore: vi.fn(() => ({ incidents: { detect: detectMock } })),
-  notifyNewIncidents: vi.fn(),
-}));
-
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({})),
-}));
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+  getStore: vi.fn(() => ({
+    incidents: {
+      detect: detectMock,
+      notifyNew: notifyNewMock,
+    },
   })),
 }));
 
+vi.mock("@/lib/hugo/investigate-incident", () => ({
+  investigateCreatedIncidents: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => adminSupabase),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
+}));
+
 vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 import { POST } from "@/app/api/stores/incidents/detect/route";
@@ -77,5 +98,6 @@ describe("POST /api/stores/incidents/detect", () => {
     expect(json.success).toBe(true);
     expect(json.created).toBe(1);
     expect(detectMock).toHaveBeenCalled();
+    expect(notifyNewMock).toHaveBeenCalled();
   });
 });

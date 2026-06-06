@@ -10,10 +10,9 @@ import { createClient } from "@supabase/supabase-js";
 import { seedDemoKanbanData } from "../e2e/fixtures/demo-data";
 import { ensureE2eUser, seedE2eDetectedIncident } from "../e2e/fixtures/e2e-user";
 import { resolveDemoCredentials } from "../lib/auth/demo";
-import {
-  fetchProductExternalIdMap,
-  provisionMockCsvStore,
-} from "../lib/stores/import/provision";
+import { MockImportLoader } from "../lib/stores/import/mock";
+import { prettyFlyPack } from "../lib/stores/import/mock/pack";
+import type { Database } from "../lib/supabase/database.types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,7 +25,7 @@ const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
 const fullBootstrap = process.argv.includes("--full");
 const e2eBootstrap = process.argv.includes("--e2e");
 
-const supabase = createClient(url, key);
+const supabase = createClient<Database>(url, key);
 
 async function ensureDemoOrganization(): Promise<string> {
   console.log("  demo organization…");
@@ -97,13 +96,29 @@ async function ensureDemoUserMembership(organizationId: string) {
 
 async function ensureFullDemoStore(organizationId: string) {
   console.log("  loading Pretty Fly demo store…");
-  const { success } = await provisionMockCsvStore(supabase, { organizationId });
-  if (!success) {
+  const loader = new MockImportLoader();
+  const results = await loader.load(supabase, organizationId, prettyFlyPack.read(), {
+    replace: true,
+  });
+  if (!results.every((result) => !result.error)) {
     throw new Error("Demo store load failed");
+  }
+
+  const { error: connectionError } = await supabase
+    .from("store_connections")
+    .update({
+      platform: "mock_csv",
+      status: "connected",
+      connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("organization_id", organizationId);
+  if (connectionError) {
+    throw new Error(`store_connections update failed: ${connectionError.message}`);
   }
   console.log("  ✓ demo store connected");
 
-  const productIdByExternalId = await fetchProductExternalIdMap(supabase, organizationId);
+  const productIdByExternalId = await loader.fetchExternalIdMap(supabase, "products", organizationId);
   await seedDemoKanbanData(supabase, organizationId, productIdByExternalId);
   console.log("  ✓ demo KPI thresholds + kanban incidents");
 }
@@ -144,4 +159,4 @@ async function main() {
   }
 }
 
-main();
+void main();

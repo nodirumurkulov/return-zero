@@ -131,7 +131,7 @@ export default tseslint.config(
   },
   {
     files: ["e2e/**/*.ts"],
-    rules: { "react-hooks/rules-of-hooks": "off" },
+    rules: { "react-hooks/rules-of-hooks": "off", "no-empty-pattern": "off" },
   },
   {
     files: ["lib/slack.ts", "lib/hugo/index.ts", "app/error.tsx", "lib/api-errors.ts"],

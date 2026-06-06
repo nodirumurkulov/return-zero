@@ -7,8 +7,8 @@ import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { detectBodySchema, mergeDetectionResults } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
-import type { Database } from "@/lib/supabase/database.types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

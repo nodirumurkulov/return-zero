@@ -118,7 +118,12 @@ export default function IncidentCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             {INCIDENT_STATUSES.map((status) => (
-              <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
+              <DropdownMenuItem
+                key={status}
+                onSelect={() => {
+                  changeStatus(status);
+                }}
+              >
                 <StatusBadge status={status} />
               </DropdownMenuItem>
             ))}

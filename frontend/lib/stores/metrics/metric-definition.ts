@@ -1,5 +1,5 @@
-import type { KpiDirection, KpiHealthStatus, KpiSeverity, MetricKey } from "../catalog/types";
 import type { Database } from "@/lib/supabase/database.types";
+import type { KpiDirection, KpiHealthStatus, KpiSeverity, MetricKey } from "../catalog/types";
 
 export type { KpiDirection, KpiHealthStatus, KpiSeverity, MetricKey };
 

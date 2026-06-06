@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { METRIC_KEYS, type MetricKey } from "../catalog/types";
 import type {
   ComputeOpts,
   KpiDirection,
@@ -8,7 +9,6 @@ import type {
   MetricValue,
   ThresholdOverride,
 } from "./metric-definition";
-import { METRIC_KEYS, type MetricKey } from "../catalog/types";
 import { getSourceFacts, type ProductSourceFacts } from "./source-facts";
 
 export type { ComputeOpts };

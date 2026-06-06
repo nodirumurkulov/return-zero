@@ -73,7 +73,7 @@ export {
 
 export type { SearchListOpts, SearchTarget } from "./search";
 
-export type { StoreConnection, StorePlatform } from "./import";
+export type { StoreConnection, StorePlatform } from "./import/types";
 export {
   importPartialResponseSchema,
   importResponseSchema,
@@ -81,4 +81,4 @@ export {
   importSuccessResponseSchema,
   storePlatformSchema,
   type ImportResponse,
-} from "./import";
+} from "./import/types";

@@ -4,17 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { approveIncidentAndNotifyMock, incidentStoreMock } = vi.hoisted(() => ({
-  approveIncidentAndNotifyMock: vi.fn(),
+const { incidentStoreMock } = vi.hoisted(() => ({
   incidentStoreMock: {
     get: vi.fn(),
+    listActionIds: vi.fn(() => Promise.resolve(["a1"])),
+    approveAndNotify: vi.fn(),
   },
 }));
 
 vi.mock("@/lib/stores/server", () => ({
-  approveIncidentAndNotify: approveIncidentAndNotifyMock,
   getStore: vi.fn(() => ({ incidents: incidentStoreMock })),
-  listIncidentActionIds: vi.fn(async () => ["a1"]),
 }));
 
 vi.mock("@/lib/hugo/actions", () => ({
@@ -23,9 +22,9 @@ vi.mock("@/lib/hugo/actions", () => ({
 }));
 
 vi.mock("@/lib/slack", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/slack")>();
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     sendIncidentNotification: vi.fn(),
   };
 });
@@ -35,15 +34,15 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  resolveOrganizationIdForSlackTeam: vi.fn(async () => "org-1"),
+  resolveOrganizationIdForSlackTeam: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 import { POST } from "@/app/api/slack/webhook/route";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { createIncidentFixture } from "@/test/fixtures/incidents";
 
-const approveMock = approveIncidentAndNotifyMock;
 const getMock = incidentStoreMock.get;
+const approveMock = incidentStoreMock.approveAndNotify;
 const resolveMock = vi.mocked(runHugoResolve);
 const rejectMock = vi.mocked(runHugoRejectProposedActions);
 
@@ -59,7 +58,7 @@ function signedBody(payload: object, secret = "slack-signing-secret") {
 
 describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
-    approveMock.mockResolvedValue({ approved: 1 });
+    approveMock.mockResolvedValue(undefined);
     getMock.mockResolvedValue(
       createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
     );

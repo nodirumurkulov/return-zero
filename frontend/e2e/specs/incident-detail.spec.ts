@@ -29,9 +29,16 @@ test.describe("Incident detail", () => {
     await detail.goto(MAIN_INCIDENT_ID);
 
     await expect(detail.approveAllLowRiskButton()).toBeVisible();
+    const approveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/approve"),
+    );
     await detail.approveAllLowRiskButton().click();
-    await expect(detail.successAlert()).toBeVisible();
-    await expect(page.getByText("Monitoring", { exact: true })).toBeVisible({ timeout: 15_000 });
+    const response = await approveResponse;
+    expect(response.ok()).toBe(true);
+    await expect(page.getByRole("status")).toContainText("approved and deployed");
+    await page.reload();
+    await expect(page.getByText("Monitoring", { exact: true })).toBeVisible();
     await expect(page.getByText("Pause cold-traffic Meta campaign")).toBeVisible();
     await expect(page.getByText("deployed", { exact: false }).first()).toBeVisible();
   });
@@ -42,8 +49,14 @@ test.describe("Incident detail", () => {
 
     const approve = detail.approveActionButton("Enable fit assistant widget");
     await expect(approve).toBeVisible();
+    const approveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/approve"),
+    );
     await approve.click();
-    await expect(detail.successAlert()).toBeVisible();
+    const response = await approveResponse;
+    expect(response.ok()).toBe(true);
+    await expect(page.getByText("deployed", { exact: false }).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("triggers investigation with stubbed API", async ({ page }) => {

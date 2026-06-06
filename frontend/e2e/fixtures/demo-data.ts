@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database, TablesInsert } from "@/lib/supabase/database.types";
 
 import { COURT_TRAINER_PRODUCT_EXTERNAL_ID } from "../constants";
 
@@ -10,7 +10,7 @@ const BATCH_SIZE = 500;
 async function upsert(
   supabase: SupabaseClient<Database>,
   table: "product_kpi_thresholds",
-  rows: Record<string, unknown>[],
+  rows: TablesInsert<"product_kpi_thresholds">[],
   conflictColumn = "id",
 ) {
   if (rows.length === 0) return;

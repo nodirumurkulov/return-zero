@@ -145,7 +145,7 @@ export class Incidents {
       };
     }
 
-    const primary = breached[0]!;
+    const primary = breached[0];
     const affected_kpi_keys = breached.map((m) => m.metric_key);
 
     const { data: product, error: prodErr } = await this.supabase

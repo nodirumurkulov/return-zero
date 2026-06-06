@@ -39,7 +39,7 @@ No separate `scripts/` package at repo root; `createClient()` from `@supabase/su
 
 ## Notes
 
-- Validators need store data loaded (`seed --full`, signup provisioning, or `/onboarding` learn flow); CI does not run these.
+- Validators need store data loaded (`seed --full` or onboarding connect); CI does not run these.
 - Store import for scripts uses `provisionMockCsvStore` from `lib/stores/import/provision.ts` (script-safe, no `server-only`).
 
 **Agents:** [../AGENTS.md](../AGENTS.md)  

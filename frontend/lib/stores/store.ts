@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
 import { Catalog } from "./catalog";
-import { Import } from "./import";
+import { Import } from "./import/import";
 import { Incidents } from "./incidents";
 import { Orders } from "./orders";
 import { Search } from "./search";

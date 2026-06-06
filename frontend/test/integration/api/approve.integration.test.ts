@@ -7,14 +7,18 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-const { approveIncidentAndNotifyMock, listIncidentActionIdsMock } = vi.hoisted(() => ({
-  approveIncidentAndNotifyMock: vi.fn(),
-  listIncidentActionIdsMock: vi.fn(),
+const { approveAndNotifyMock, listActionIdsMock } = vi.hoisted(() => ({
+  approveAndNotifyMock: vi.fn(),
+  listActionIdsMock: vi.fn(),
 }));
 
 vi.mock("@/lib/stores/server", () => ({
-  approveIncidentAndNotify: approveIncidentAndNotifyMock,
-  listIncidentActionIds: listIncidentActionIdsMock,
+  getStore: vi.fn(() => ({
+    incidents: {
+      listActionIds: listActionIdsMock,
+      approveAndNotify: approveAndNotifyMock,
+    },
+  })),
 }));
 
 vi.mock("@/lib/slack", () => ({
@@ -33,8 +37,6 @@ import { POST } from "@/app/api/stores/incidents/[id]/approve/route";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
 
-const approveMock = approveIncidentAndNotifyMock;
-const listActionIdsMock = listIncidentActionIdsMock;
 const createClientMock = vi.mocked(createClient);
 const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
 
@@ -80,16 +82,15 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
   });
 
   it("approves low-risk actions for authenticated user", async () => {
-    const supabase = {
+    createClientMock.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
-    };
-    createClientMock.mockResolvedValue(supabase as never);
+    } as never);
     tryRequireOrganizationIdMock.mockResolvedValue({
       ok: true,
       organizationId: "00000000-0000-0000-0000-000000000100",
     });
     listActionIdsMock.mockResolvedValue(["low-1"]);
-    approveMock.mockResolvedValue({ approved: 1 });
+    approveAndNotifyMock.mockResolvedValue(undefined);
 
     const res = await POST(
       new NextRequest("http://localhost/api/stores/incidents/inc-1/approve", {
@@ -100,17 +101,22 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
       { params: Promise.resolve({ id: "inc-1" }) },
     );
     expect(res.status).toBe(200);
-    expect(listActionIdsMock).toHaveBeenCalledWith(supabase, {
+    expect(listActionIdsMock).toHaveBeenCalledWith({
       incidentId: "inc-1",
       organizationId: "00000000-0000-0000-0000-000000000100",
       filter: { status: "proposed", riskLevel: "low" },
     });
-    expect(approveMock).toHaveBeenCalledWith(supabase, {
-      incidentId: "inc-1",
-      actionIds: ["low-1"],
-      approvedByUserId: "user-1",
-      organizationId: "00000000-0000-0000-0000-000000000100",
-      appUrl: expect.any(String),
-    });
+    expect(approveAndNotifyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        incidentId: "inc-1",
+        actionIds: ["low-1"],
+        approvedByUserId: "user-1",
+        organizationId: "00000000-0000-0000-0000-000000000100",
+      }),
+    );
+    const approveArgs = approveAndNotifyMock.mock.calls[0]?.[0] as
+      | { appUrl?: string }
+      | undefined;
+    expect(typeof approveArgs?.appUrl).toBe("string");
   });
 });

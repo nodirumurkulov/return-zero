@@ -18,10 +18,12 @@ vi.mock("@/lib/supabase/admin", () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(async () => ({
+          single: vi.fn(() =>
+          Promise.resolve({
             data: { name: "Pretty Fly" },
             error: null,
-          })),
+          }),
+        ),
         })),
       })),
     })),
@@ -29,14 +31,16 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
-  })),
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 vi.mock("@/lib/slack", () => ({
@@ -73,7 +77,7 @@ describe("GET /api/digest", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as { success: boolean; digests: unknown[] };
     expect(body.success).toBe(true);
     expect(body.digests).toHaveLength(1);
     expect(postWebhookBlocksMock).toHaveBeenCalledTimes(1);
@@ -112,7 +116,7 @@ describe("GET /api/digest", () => {
     });
 
     const res = await GET(req);
-    const body = await res.json();
+    const body = (await res.json()) as { digests: { openCount: number }[] };
     expect(body.digests[0].openCount).toBe(1);
   });
 });

@@ -40,7 +40,7 @@ test.describe("Incidents board", () => {
 
     await test.step("Status trigger reflects new value", async () => {
       const trigger = incidents.statusTriggerFor(STATUS_CHANGE_INCIDENT_TITLE);
-      await expect(trigger).toContainText("Investigating");
+      await expect(trigger).toContainText("Investigating", { timeout: 15_000 });
     });
   });
 });

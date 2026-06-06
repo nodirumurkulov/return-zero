@@ -43,7 +43,7 @@ export async function patchIncidentStatus(input: PatchIncidentStatusInput): Prom
   });
   const data = await apiClient(`/api/stores/incidents/${input.incident.id}`, {
     method: "PATCH",
-    body,
+    body: JSON.stringify(body),
   });
   return data as Incident;
 }
@@ -54,7 +54,7 @@ export async function approveIncidentActions(
   const body = approveIncidentBodySchema.parse(toApproveBody(input.approval));
   const data = await apiClient(`/api/stores/incidents/${input.incident.id}/approve`, {
     method: "POST",
-    body,
+    body: JSON.stringify(body),
     output: approveIncidentResponseSchema,
   });
   return { approval: { approvedCount: data.approved } };

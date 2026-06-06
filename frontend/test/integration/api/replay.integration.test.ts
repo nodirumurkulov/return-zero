@@ -3,13 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { ordersStoreMock } = vi.hoisted(() => ({
+const { ordersStoreMock, notifyNewMock } = vi.hoisted(() => ({
   ordersStoreMock: { advance: vi.fn(), reset: vi.fn() },
+  notifyNewMock: vi.fn(),
 }));
 
 vi.mock("@/lib/stores/server", () => ({
-  getStore: vi.fn(() => ({ orders: ordersStoreMock })),
-  notifyNewIncidents: vi.fn(),
+  getStore: vi.fn(() => ({
+    orders: ordersStoreMock,
+    incidents: { notifyNew: notifyNewMock },
+  })),
+}));
+
+vi.mock("@/lib/hugo/investigate-incident", () => ({
+  investigateCreatedIncidents: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -17,17 +24,20 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
-  })),
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 import { POST } from "@/app/api/stores/orders/advance/route";
+
 const advanceMock = ordersStoreMock.advance;
 
 const advanceResult = {
@@ -68,5 +78,6 @@ describe("POST /api/stores/orders/advance", () => {
     );
     expect(res.status).toBe(200);
     expect(advanceMock).toHaveBeenCalledWith({ organizationId: "org-1", days: 3 });
+    expect(notifyNewMock).toHaveBeenCalled();
   });
 });
