@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
 import InvestigationLivePanel from "@/components/incidents/InvestigationLivePanel";
+import type { InvestigationStepsResponse } from "@/lib/agents/schemas";
 import { render, screen } from "@/test/test-utils";
 
-const useInvestigationStepsMock = vi.fn();
+const { useInvestigationStepsMock } = vi.hoisted(() => ({
+  useInvestigationStepsMock: vi.fn<
+    (args: { incidentId: string; active: boolean }) => InvestigationStepsResponse | null
+  >(),
+}));
 
 vi.mock("@/hooks/agents", () => ({
-  useInvestigationSteps: (args: unknown) => useInvestigationStepsMock(args),
+  useInvestigationSteps: (args: { incidentId: string; active: boolean }) =>
+    useInvestigationStepsMock(args),
 }));
 
 describe("InvestigationLivePanel", () => {

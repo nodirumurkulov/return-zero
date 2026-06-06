@@ -58,32 +58,36 @@ export async function persistInvestigation(
     description: "Quant Analyst dispatched, then Operator",
   });
 
-  let result: InvestigationResult;
-  try {
-    result = await runInvestigation(
-      supabase,
-      organizationId,
-      incidentId,
-      resolvedProductId,
-      affectedKpiKeys,
-      steps,
-    );
-    await steps.startStep({
-      stepKey: "run:complete",
-      agentName: "Hugo",
-      label: "Investigation complete",
-    });
-    await steps.finishStep("run:complete");
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Investigation failed";
-    await steps.startStep({
-      stepKey: "run:error",
-      agentName: "Hugo",
-      label: "Investigation failed",
-    });
-    await steps.failStep("run:error", message);
-    throw err;
+  async function runInvestigationWithSteps(): Promise<InvestigationResult> {
+    try {
+      const investigation = await runInvestigation(
+        supabase,
+        organizationId,
+        incidentId,
+        resolvedProductId,
+        affectedKpiKeys,
+        steps,
+      );
+      await steps.startStep({
+        stepKey: "run:complete",
+        agentName: "Hugo",
+        label: "Investigation complete",
+      });
+      await steps.finishStep("run:complete");
+      return investigation;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Investigation failed";
+      await steps.startStep({
+        stepKey: "run:error",
+        agentName: "Hugo",
+        label: "Investigation failed",
+      });
+      await steps.failStep("run:error", message);
+      throw err;
+    }
   }
+
+  const result = await runInvestigationWithSteps();
 
   await supabase.from("agent_findings").insert(
     result.findings.map((f) => ({

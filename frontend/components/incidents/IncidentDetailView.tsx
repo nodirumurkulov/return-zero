@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
 import { ChevronRight, CircleCheckBig } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import DetectionReasonCard from "@/components/incidents/DetectionReasonCard";

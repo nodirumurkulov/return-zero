@@ -14,27 +14,29 @@ export function useInvestigationSteps(args: {
 }) {
   const [snapshot, setSnapshot] = useState<InvestigationStepsResponse | null>(null);
   const onSettledRef = useRef(args.onSettled);
-  onSettledRef.current = args.onSettled;
+
+  useEffect(() => {
+    onSettledRef.current = args.onSettled;
+  }, [args.onSettled]);
 
   useEffect(() => {
     if (!args.active) {
       return;
     }
 
-    let cancelled = false;
-    let settled = false;
+    const flags = { cancelled: false, settled: false };
 
     const poll = async () => {
       const data = await fetchInvestigationSteps(args.incidentId).catch(() => null);
-      if (cancelled || !data) return;
+      if (flags.cancelled || !data) return;
 
       setSnapshot(data);
 
       if (
-        !settled &&
+        !flags.settled &&
         (data.run_status === "complete" || data.run_status === "error")
       ) {
-        settled = true;
+        flags.settled = true;
         onSettledRef.current?.();
       }
     };
@@ -45,7 +47,7 @@ export function useInvestigationSteps(args: {
     }, POLL_MS);
 
     return () => {
-      cancelled = true;
+      flags.cancelled = true;
       clearInterval(timer);
     };
   }, [args.active, args.incidentId]);

@@ -75,7 +75,7 @@ export function createInvestigationStepEmitter(
       { onConflict: "run_id,step_key" },
     );
     if (error) {
-      console.error(`[investigation-steps] upsert ${stepKey}: ${error.message}`);
+      return;
     }
   };
 
@@ -97,7 +97,7 @@ export function createInvestigationStepEmitter(
         .eq("run_id", args.runId)
         .eq("step_key", stepKey);
       if (error) {
-        console.error(`[investigation-steps] finish ${stepKey}: ${error.message}`);
+        return;
       }
     },
     failStep: async (stepKey, message) => {
@@ -112,7 +112,7 @@ export function createInvestigationStepEmitter(
         .eq("run_id", args.runId)
         .eq("step_key", stepKey);
       if (error) {
-        console.error(`[investigation-steps] fail ${stepKey}: ${error.message}`);
+        return;
       }
     },
   };

@@ -1,7 +1,7 @@
 import "server-only";
+import type { InvestigationStepEmitter } from "./investigation-steps";
 import { runOperator } from "./operator";
 import { runQuantAnalyst } from "./quant-analyst";
-import type { InvestigationStepEmitter } from "./investigation-steps";
 import type {
   AgentSupabase,
   InvestigationAction,
