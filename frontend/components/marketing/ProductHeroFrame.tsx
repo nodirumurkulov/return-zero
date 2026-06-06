@@ -24,7 +24,7 @@ export function ProductHeroFrame() {
 
       <div className="space-y-3 p-4">
         {MARKETING_HERO_INCIDENTS.map((incident) => (
-          <IncidentCard key={incident.id} incident={incident} />
+          <IncidentCard key={incident.id} incident={incident} interactive={false} />
         ))}
         <CatalogHealthPanel product={MARKETING_COURT_TRAINER} health="critical" />
       </div>

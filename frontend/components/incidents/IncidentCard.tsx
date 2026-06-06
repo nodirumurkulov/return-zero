@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import type { Incident } from "@/lib/stores";
 
+import { IncidentCardStatusMenu } from "./IncidentCardStatusMenu";
+
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -15,7 +17,13 @@ function gbp(n: number) {
   return `£${Math.round(n).toLocaleString("en-GB")}`;
 }
 
-export default function IncidentCard({ incident }: { incident: Incident }) {
+export default function IncidentCard({
+  incident,
+  interactive = true,
+}: {
+  incident: Incident;
+  interactive?: boolean;
+}) {
   return (
     <Card
       data-testid="incident-card"
@@ -30,6 +38,11 @@ export default function IncidentCard({ incident }: { incident: Incident }) {
           {incident.impact_amount ? ` · ${gbp(incident.impact_amount)}` : ""}
         </p>
       </Link>
+      {interactive ? (
+        <div className="mt-2">
+          <IncidentCardStatusMenu incident={incident} />
+        </div>
+      ) : null}
     </Card>
   );
 }
