@@ -2,7 +2,6 @@ import Link from "next/link";
 import { signIn } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
 import ComingSoonLoginButton from "@/components/auth/ComingSoonLoginButton";
-import DemoLoginButton from "@/components/auth/DemoLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 import { MicrosoftIcon } from "@/components/auth/provider-icons";
 import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
@@ -17,11 +16,7 @@ export default async function SignInPage({
 }) {
   const params = await searchParams;
   const authError =
-    params.error === "auth"
-      ? "Could not complete sign-in. Try again."
-      : params.error === "demo"
-        ? "Demo sign-in is temporarily unavailable. Please use another sign-in method."
-        : null;
+    params.error === "auth" ? "Could not complete sign-in. Try again." : null;
   const nextParsed = authNextPathSchema.safeParse(params.next);
   const nextPath = nextParsed.success ? nextParsed.data : null;
 
@@ -37,7 +32,6 @@ export default async function SignInPage({
         <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
         <ShopifyLoginButton />
       </div>
-      <DemoLoginButton />
       <p className="text-sm text-muted-foreground">
         New here?{" "}
         <Link href="/sign-up" className="text-primary hover:underline">

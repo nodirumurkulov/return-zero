@@ -1,56 +1,38 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAdvanceReplay } from "@/hooks/stores/orders";
 
-// Survives router.refresh() remount so replay feedback stays visible in the UI and E2E.
-const replayMessageCache = { pending: null as string | null };
-
-// BYOD Phase 3 — step the replay clock forward; new incidents stream onto the
-// board as the cursor crosses each product's learned threshold.
 export function ReplayControl({ initialCursor }: { initialCursor: string | null }) {
   const router = useRouter();
+  const advanceReplay = useAdvanceReplay();
   const [cursor, setCursor] = useState(initialCursor);
-  const [state, setState] = useState<"idle" | "running" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(() => replayMessageCache.pending);
-
-  useEffect(() => {
-    replayMessageCache.pending = null;
-  }, []);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
 
   const advance = async (days: number) => {
-    setState("running");
     setMessage(null);
+    setIsError(false);
     try {
-      const res = await fetch("/api/replay", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ advance_days: days }),
-      });
-      const body = (await res.json()) as {
-        success?: boolean;
-        error?: string;
-        cursor?: string;
-        created?: number;
-        at_end?: boolean;
-      };
-      if (!res.ok || !body.success) throw new Error(body.error ?? "Replay failed");
-      setCursor(body.cursor ?? cursor);
-      const statusMessage = body.created
-        ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.at_end ? " · reached end of data" : ""}`
-        : body.at_end
-          ? "No new incidents · reached end of data"
-          : "No new incidents this step";
-      replayMessageCache.pending = statusMessage;
-      setMessage(statusMessage);
-      setState("idle");
+      const body = await advanceReplay.mutateAsync({ advance_days: days });
+      setCursor(body.cursor?.slice(0, 10) ?? cursor);
+      setMessage(
+        body.created
+          ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.at_end ? " · reached end of data" : ""}`
+          : body.at_end
+            ? "No new incidents · reached end of data"
+            : "No new incidents this step",
+      );
       router.refresh();
     } catch (err) {
-      setState("error");
+      setIsError(true);
       setMessage(err instanceof Error ? err.message : "Replay failed");
     }
   };
+
+  const state = advanceReplay.isPending ? "running" : isError ? "error" : "idle";
 
   return (
     <div className="flex flex-col items-start gap-1 md:items-end">

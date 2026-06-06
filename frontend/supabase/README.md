@@ -1,6 +1,6 @@
 # Supabase
 
-PostgreSQL schema, views, RPCs, and RLS policies for Resolve.
+PostgreSQL schema, views, RPCs, and RLS policies for Hugo.
 
 ## Prerequisites
 
@@ -86,7 +86,9 @@ Demo data: [`../scripts/README.md`](../scripts/README.md) (`bun run seed` — no
 
 ## Caveats (from Supabase docs)
 
-Diff tools may miss: DML (`insert`/`update`), some `alter policy` statements, publications, storage buckets. Use imperative migrations for those edge cases. See [known caveats](https://supabase.com/docs/guides/local-development/declarative-database-schemas#known-caveats).
+- Service role bypasses RLS — used only via `createAdminClient()` (cron, seed, Slack webhook).
+- Changing RPC signatures requires updating `frontend/lib/stores/analytics/metrics` and `frontend/scripts/validate-metrics.ts`.
+- Diff tools may miss: DML (`insert`/`update`), some `alter policy` statements, publications, storage buckets. Use imperative migrations for those edge cases. See [known caveats](https://supabase.com/docs/guides/local-development/declarative-database-schemas#known-caveats).
 
 ### Before opening a migration PR
 

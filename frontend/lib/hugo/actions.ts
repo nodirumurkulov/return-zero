@@ -1,15 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { persistInvestigation } from "@/lib/agents";
-import { captureRecoveryBaseline } from "@/lib/detection/recover";
-import {
-  approveIncidentActions,
-  getIncident,
-  type Incident,
-  listLowRiskProposedActionIds,
-} from "@/lib/incidents";
-import { sendIncidentNotification } from "@/lib/slack";
+import type { Incident } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import type { Database, Json } from "@/lib/supabase/database.types";
+
+import { investigateIncident } from "./investigate-incident";
 
 function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -24,7 +19,7 @@ function incidentLink(id: string): string {
  * Requires an affected product (the investigation is product-scoped).
  */
 export async function runHugoInvestigation(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   incident: Incident,
 ): Promise<string> {
   if (!incident.product_id) {
@@ -32,7 +27,7 @@ export async function runHugoInvestigation(
   }
 
   try {
-    const { result, findings_count, actions_count } = await persistInvestigation(
+    const { result, findings_count, actions_count } = await investigateIncident(
       supabase,
       incident.id,
       incident.product_id,
@@ -61,48 +56,30 @@ export async function runHugoInvestigation(
  * match the behaviour of the in-app and button-based approval flows.
  */
 export async function runHugoApproval(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   incident: Incident,
   approvedBy: string,
 ): Promise<string> {
-  const actionIds = await listLowRiskProposedActionIds(supabase, incident.id);
+  const actionIds = await getStore(supabase).incidents.listActionIds({
+    incidentId: incident.id,
+    organizationId: incident.organization_id,
+    filter: { status: "proposed", riskLevel: "low" },
+  });
   if (actionIds.length === 0) {
     return `There are no low-risk actions awaiting approval on "${incident.title}". You may need to investigate it first, or approve higher-risk actions in the app: ${incidentLink(incident.id)}`;
   }
 
   try {
-    await approveIncidentActions(supabase, incident.id, actionIds, approvedBy);
+    await getStore(supabase).incidents.approveAndNotify({
+      incidentId: incident.id,
+      actionIds,
+      approvedByUserId: approvedBy,
+      organizationId: incident.organization_id,
+      appUrl: appUrl(),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
     return `Approval for "${incident.title}" failed: ${message}`;
-  }
-
-  const updated = await getIncident(supabase, incident.id);
-  if (updated) {
-    if (updated.product_id) {
-      await captureRecoveryBaseline(
-        supabase,
-        updated.organization_id,
-        updated.id,
-        updated.product_id,
-        updated.affected_kpi_keys,
-      );
-    }
-    await sendIncidentNotification(
-      {
-        organization_id: updated.organization_id,
-        title: updated.title,
-        severity: updated.severity,
-        status: "monitoring",
-        impact_amount: updated.impact_amount,
-        impact_label: updated.impact_label,
-        root_cause: updated.root_cause,
-        root_cause_confidence: updated.root_cause_confidence,
-        incident_id: updated.id,
-        app_url: appUrl(),
-      },
-      supabase,
-    );
   }
 
   return [
@@ -142,7 +119,7 @@ export async function runHugoResolve(
     .eq("id", incident.id)
     .eq("organization_id", incident.organization_id);
 
-  if (error) return `Resolve failed for "${incident.title}": ${error.message}`;
+  if (error) return `Failed to mark incident resolved for "${incident.title}": ${error.message}`;
 
   await supabase.from("incident_timeline").insert({
     incident_id: incident.id,

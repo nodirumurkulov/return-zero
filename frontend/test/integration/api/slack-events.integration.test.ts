@@ -1,11 +1,12 @@
 import { createHmac } from "node:crypto";
+import type * as NextServer from "next/server";
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 vi.mock("next/server", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("next/server")>();
+  const actual = await importOriginal<typeof NextServer>();
   return {
     ...actual,
     after: vi.fn((fn: () => void) => fn()),

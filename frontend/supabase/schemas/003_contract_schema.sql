@@ -7,11 +7,14 @@
 create table public.collections (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   title            text,
   created_at       timestamptz not null default now(),
   unique (organization_id, external_id)
 );
+
+create index idx_collections_store_id on public.collections (store_id);
 
 create index idx_collections_organization_id on public.collections (organization_id);
 
@@ -19,6 +22,7 @@ create index idx_collections_organization_id on public.collections (organization
 create table public.products (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   collection_id    uuid references public.collections(id) on delete set null,
   title            text,
@@ -33,6 +37,8 @@ create table public.products (
   unique (organization_id, external_id)
 );
 
+create index idx_products_store_id on public.products (store_id);
+
 create index idx_products_organization_id on public.products (organization_id);
 create index idx_products_organization_external on public.products (organization_id, external_id);
 
@@ -40,6 +46,7 @@ create index idx_products_organization_external on public.products (organization
 create table public.variants (
   id                 uuid primary key default gen_random_uuid(),
   organization_id    uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id        text not null,
   product_id         uuid not null references public.products(id) on delete cascade,
   sku                text,
@@ -55,6 +62,8 @@ create table public.variants (
   unique (organization_id, external_id)
 );
 
+create index idx_variants_store_id on public.variants (store_id);
+
 create index idx_variants_organization_id on public.variants (organization_id);
 create index idx_variants_product_id on public.variants (product_id);
 
@@ -62,6 +71,7 @@ create index idx_variants_product_id on public.variants (product_id);
 create table public.customers (
   id                      uuid primary key default gen_random_uuid(),
   organization_id         uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id             text not null,
   email                   text,
   first_name              text,
@@ -77,12 +87,15 @@ create table public.customers (
   unique (organization_id, external_id)
 );
 
+create index idx_customers_store_id on public.customers (store_id);
+
 create index idx_customers_organization_id on public.customers (organization_id);
 
 -- ---- orders --------------------------------------------------
 create table public.orders (
   id                 uuid primary key default gen_random_uuid(),
   organization_id    uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id        text not null,
   order_number       text,
   customer_id        uuid references public.customers(id) on delete set null,
@@ -105,6 +118,8 @@ create table public.orders (
   unique (organization_id, external_id)
 );
 
+create index idx_orders_store_id on public.orders (store_id);
+
 create index idx_orders_organization_id on public.orders (organization_id);
 create index idx_orders_organization_created on public.orders (organization_id, created_at);
 create index idx_orders_utm_campaign on public.orders (organization_id, utm_campaign);
@@ -113,6 +128,7 @@ create index idx_orders_utm_campaign on public.orders (organization_id, utm_camp
 create table public.line_items (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   order_id         uuid not null references public.orders(id) on delete cascade,
   variant_id       uuid references public.variants(id) on delete set null,
@@ -124,6 +140,8 @@ create table public.line_items (
   unique (organization_id, external_id)
 );
 
+create index idx_line_items_store_id on public.line_items (store_id);
+
 create index idx_line_items_organization_id on public.line_items (organization_id);
 create index idx_line_items_order_id on public.line_items (order_id);
 create index idx_line_items_product_id on public.line_items (product_id);
@@ -132,6 +150,7 @@ create index idx_line_items_product_id on public.line_items (product_id);
 create table public.refunds (
   id                 uuid primary key default gen_random_uuid(),
   organization_id    uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id        text not null,
   order_id           uuid not null references public.orders(id) on delete cascade,
   created_at         timestamptz not null default now(),
@@ -141,6 +160,8 @@ create table public.refunds (
   unique (organization_id, external_id)
 );
 
+create index idx_refunds_store_id on public.refunds (store_id);
+
 create index idx_refunds_organization_id on public.refunds (organization_id);
 create index idx_refunds_order_id on public.refunds (order_id);
 create index idx_refunds_organization_created on public.refunds (organization_id, created_at);
@@ -149,6 +170,7 @@ create index idx_refunds_organization_created on public.refunds (organization_id
 create table public.meta_ads_daily (
   id                   uuid primary key default gen_random_uuid(),
   organization_id      uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   date                 date not null,
   campaign_name        text not null,
   campaign_objective   text,
@@ -163,12 +185,15 @@ create table public.meta_ads_daily (
   unique (organization_id, date, campaign_name, ad_name, placement)
 );
 
+create index idx_meta_ads_daily_store_id on public.meta_ads_daily (store_id);
+
 create index idx_meta_ads_organization_date on public.meta_ads_daily (organization_id, date);
 
 -- ---- google_ads_daily ----------------------------------------
 create table public.google_ads_daily (
   id                   uuid primary key default gen_random_uuid(),
   organization_id      uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   date                 date not null,
   campaign_name        text not null,
   campaign_type        text,
@@ -181,12 +206,15 @@ create table public.google_ads_daily (
   unique (organization_id, date, campaign_name, ad_group)
 );
 
+create index idx_google_ads_daily_store_id on public.google_ads_daily (store_id);
+
 create index idx_google_ads_organization_date on public.google_ads_daily (organization_id, date);
 
 -- ---- inventory_movements -------------------------------------
 create table public.inventory_movements (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   variant_id       uuid not null references public.variants(id) on delete cascade,
   date             date not null,
@@ -197,6 +225,8 @@ create table public.inventory_movements (
   unique (organization_id, external_id)
 );
 
+create index idx_inventory_movements_store_id on public.inventory_movements (store_id);
+
 create index idx_inventory_movements_variant_date
   on public.inventory_movements (organization_id, variant_id, date);
 
@@ -204,6 +234,7 @@ create index idx_inventory_movements_variant_date
 create table public.support_tickets (
   id                      uuid primary key default gen_random_uuid(),
   organization_id         uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id             text not null,
   customer_id             uuid references public.customers(id) on delete set null,
   created_at              timestamptz not null default now(),
@@ -222,6 +253,8 @@ create table public.support_tickets (
   unique (organization_id, external_id)
 );
 
+create index idx_support_tickets_store_id on public.support_tickets (store_id);
+
 create index idx_support_tickets_organization_id on public.support_tickets (organization_id);
 create index idx_support_tickets_organization_created on public.support_tickets (organization_id, created_at);
 create index idx_support_tickets_related_product on public.support_tickets (organization_id, related_product_id);
@@ -230,6 +263,7 @@ create index idx_support_tickets_related_product on public.support_tickets (orga
 create table public.purchase_orders (
   id                      uuid primary key default gen_random_uuid(),
   organization_id         uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id             text not null,
   supplier_id             text,
   created_at              timestamptz not null default now(),
@@ -243,12 +277,15 @@ create table public.purchase_orders (
   unique (organization_id, external_id)
 );
 
+create index idx_purchase_orders_store_id on public.purchase_orders (store_id);
+
 create index idx_purchase_orders_organization_id on public.purchase_orders (organization_id);
 
 -- ---- po_line_items ------------------------------------------
 create table public.po_line_items (
   id                       uuid primary key default gen_random_uuid(),
   organization_id          uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id              text not null,
   po_id                    uuid not null references public.purchase_orders(id) on delete cascade,
   variant_id               uuid not null references public.variants(id) on delete cascade,
@@ -258,5 +295,7 @@ create table public.po_line_items (
   landed_cost_per_unit_gbp numeric(14, 2) check (landed_cost_per_unit_gbp is null or landed_cost_per_unit_gbp >= 0),
   unique (organization_id, external_id)
 );
+
+create index idx_po_line_items_store_id on public.po_line_items (store_id);
 
 create index idx_po_line_items_organization_id on public.po_line_items (organization_id);

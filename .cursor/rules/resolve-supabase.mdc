@@ -4,7 +4,7 @@ globs: frontend/lib/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# Supabase (Resolve)
+# Supabase (Hugo)
 
 See [frontend/lib/AGENTS.md](../../frontend/lib/AGENTS.md) and [frontend/supabase/](../../frontend/supabase/).
 

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import type { Incident } from "@/lib/incidents";
+import type { Incident } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   runHugoRejectProposedActions,

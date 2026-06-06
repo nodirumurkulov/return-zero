@@ -1,4 +1,4 @@
-import type { Incident } from "@/lib/incidents/incident";
+import type { Incident } from "@/lib/stores";
 
 const RESOLVED_STATUSES = new Set(["resolved", "canceled"]);
 

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { KpiThreshold } from "@/lib/catalog";
+import type { KpiThreshold } from "@/lib/stores";
 import AgentMonitor from "./AgentMonitor";
 
 const thresholds: KpiThreshold[] = [

@@ -1,8 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getIncidentDetail, type Incident } from "@/lib/incidents";
 import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
+import type { Incident } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -62,7 +63,7 @@ function isHistoryScopeError(error: string): boolean {
 }
 
 function confirmationBlocks(action: "resolve" | "reject", incident: Incident): object[] {
-  const label = action === "resolve" ? "Resolve incident" : "Reject proposed fixes";
+  const label = action === "resolve" ? "Mark resolved" : "Reject proposed fixes";
   const actionId = action === "resolve" ? "confirm_hugo_resolve" : "confirm_hugo_reject";
   return [
     {
@@ -106,8 +107,13 @@ async function answerDataQuery(
   if (ref) {
     const { match } = await resolveIncident(supabase, ref, organizationId);
     if (match) {
-      const detail = await getIncidentDetail(supabase, match.id, organizationId);
-      if (detail) parts.push(buildIncidentDetailContext(detail));
+      const detail = await getStore(supabase).incidents.getDetail({
+        id: match.id,
+        organizationId,
+      });
+      if (detail) {
+        parts.push(buildIncidentDetailContext(detail));
+      }
     }
   }
 

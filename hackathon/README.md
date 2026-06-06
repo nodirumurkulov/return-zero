@@ -12,7 +12,7 @@ Everything for the **Wayflyer × Fin Hackathon** (3–5 June 2026) and the **Pre
 | [deploy-checklist.md](deploy-checklist.md) | Vercel deploy + post-deploy smoke checks |
 | [visual-parity.md](visual-parity.md) | UI parity checklist vs internal prototype |
 
-## Load data into Resolve
+## Load data into Hugo
 
 After Supabase migrations:
 

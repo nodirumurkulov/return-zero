@@ -7,17 +7,23 @@ const { listIncidentsMock, postOrgSlackBlocksMock } = vi.hoisted(() => ({
   listIncidentsMock: vi.fn(),
   postOrgSlackBlocksMock: vi.fn(),
 }));
-vi.mock("@/lib/incidents", () => ({ listIncidents: listIncidentsMock }));
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({
+    incidents: { list: listIncidentsMock },
+  })),
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(async () => ({
-            data: { name: "Pretty Fly" },
+          single: vi.fn(() =>
+          Promise.resolve({
+            data: { name: "Hugo mock store" },
             error: null,
-          })),
+          }),
+        ),
         })),
       })),
     })),
@@ -25,14 +31,16 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
-  })),
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 vi.mock("@/lib/slack", () => ({
@@ -69,7 +77,7 @@ describe("GET /api/digest", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as { success: boolean; digests: unknown[] };
     expect(body.success).toBe(true);
     expect(body.digests).toHaveLength(1);
     expect(postOrgSlackBlocksMock).toHaveBeenCalledTimes(1);
@@ -114,7 +122,7 @@ describe("GET /api/digest", () => {
     });
 
     const res = await GET(req);
-    const body = await res.json();
+    const body = (await res.json()) as { digests: { openCount: number }[] };
     expect(body.digests[0].openCount).toBe(1);
   });
 });

@@ -37,11 +37,16 @@ test.describe("Catalog", () => {
     await catalog.goto();
     await catalog.openProduct(COURT_TRAINER_TITLE);
 
-    const firstThreshold = product.thresholdInputs().first();
-    const current = await firstThreshold.inputValue();
-    const next = current === "0.5" ? "0.51" : "0.5";
-    await product.saveFirstThreshold(next);
+    const input = product.returnRateThresholdInput();
+    const original = await input.inputValue();
+    const parsed = Number(original);
+    const next = String(Math.round((parsed + 0.01) * 100) / 100);
+    await product.saveReturnRateThreshold(next);
     await expect(product.savedMessage()).toBeVisible();
-    await expect(firstThreshold).toHaveValue(next);
+    await page.reload();
+    await expect(input).toHaveValue(next);
+    await product.saveReturnRateThreshold(original);
+    await page.reload();
+    await expect(input).toHaveValue(original);
   });
 });

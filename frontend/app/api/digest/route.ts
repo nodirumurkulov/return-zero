@@ -2,9 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { buildDigestBlocks, summarizeIncidents } from "@/lib/hugo/digest";
-import { listIncidents } from "@/lib/incidents";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { postOrgSlackBlocks } from "@/lib/slack";
+import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,11 +22,12 @@ export async function GET(req: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user)
+    if (!user) {
       return (
         cronDenied ??
         NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       );
+    }
   }
 
   try {
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
         .eq("id", organizationId)
         .single();
 
-      const incidents = await listIncidents(supabase, organizationId);
+      const incidents = await getStore(supabase).incidents.list({ organizationId });
       const summary = summarizeIncidents(incidents);
       const orgName = org?.name ?? "Organization";
       const blocks = buildDigestBlocks(orgName, summary, appUrl);

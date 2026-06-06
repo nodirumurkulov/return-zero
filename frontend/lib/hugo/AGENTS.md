@@ -28,7 +28,7 @@ calls `handleHugoMention` in `after()`. The handler:
 For `data_query`, the context is assembled on demand from the prompt: open
 incidents always, the matched incident's detail when referenced, KPI/catalog
 health when `wantsCatalog`, and per-product stock levels (units on hand, daily
-outflow, days-to-stockout via `forecastStockout`) when `wantsInventory`.
+outflow, days-to-stockout from burn rate) when `wantsInventory`.
 
 ## Rules
 

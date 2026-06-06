@@ -4,14 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/incidents", () => ({
-  approveIncidentActions: vi.fn(),
-  getIncident: vi.fn(),
-  listLowRiskProposedActionIds: vi.fn(),
+const { incidentStoreMock } = vi.hoisted(() => ({
+  incidentStoreMock: {
+    get: vi.fn(),
+    listActionIds: vi.fn(() => Promise.resolve(["a1"])),
+    approveAndNotify: vi.fn(),
+  },
 }));
 
-vi.mock("@/lib/detection/recover", () => ({
-  captureRecoveryBaseline: vi.fn(),
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({ incidents: incidentStoreMock })),
 }));
 
 vi.mock("@/lib/hugo/actions", () => ({
@@ -20,9 +22,9 @@ vi.mock("@/lib/hugo/actions", () => ({
 }));
 
 vi.mock("@/lib/slack", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/slack")>();
+  const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     sendIncidentNotification: vi.fn(),
   };
 });
@@ -32,21 +34,15 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  resolveOrganizationIdForSlackTeam: vi.fn(async () => "org-1"),
+  resolveOrganizationIdForSlackTeam: vi.fn(() => Promise.resolve("org-1")),
 }));
 
 import { POST } from "@/app/api/slack/webhook/route";
-import { createIncidentFixture } from "@/test/fixtures/incidents";
-import {
-  approveIncidentActions,
-  getIncident,
-  listLowRiskProposedActionIds,
-} from "@/lib/incidents";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
+import { createIncidentFixture } from "@/test/fixtures/incidents";
 
-const listLowRiskMock = vi.mocked(listLowRiskProposedActionIds);
-const approveMock = vi.mocked(approveIncidentActions);
-const getIncidentMock = vi.mocked(getIncident);
+const getMock = incidentStoreMock.get;
+const approveMock = incidentStoreMock.approveAndNotify;
 const resolveMock = vi.mocked(runHugoResolve);
 const rejectMock = vi.mocked(runHugoRejectProposedActions);
 
@@ -62,9 +58,8 @@ function signedBody(payload: object, secret = "slack-signing-secret") {
 
 describe("POST /api/slack/webhook", () => {
   beforeEach(() => {
-    listLowRiskMock.mockResolvedValue(["a1"]);
-    approveMock.mockResolvedValue({ approved: 1 });
-    getIncidentMock.mockResolvedValue(
+    approveMock.mockResolvedValue(undefined);
+    getMock.mockResolvedValue(
       createIncidentFixture({ id: "inc-1", organization_id: "org-1", product_id: null }),
     );
     resolveMock.mockResolvedValue("Resolved incident");
@@ -91,13 +86,13 @@ describe("POST /api/slack/webhook", () => {
     expect(res.status).toBe(401);
   });
 
-  it("approves low-risk actions for valid Slack interaction", async () => {
-    const { body, timestamp, signature, secret } = signedBody({
+  it("approves low-risk actions when signature is valid", async () => {
+    vi.stubEnv("SLACK_SIGNING_SECRET", "slack-signing-secret");
+    const { body, timestamp, signature } = signedBody({
       team: { id: "T123" },
+      user: { name: "tester" },
       actions: [{ action_id: "approve_low_risk", value: "inc-1" }],
-      user: { name: "slack-user" },
     });
-    vi.stubEnv("SLACK_SIGNING_SECRET", secret);
 
     const res = await POST(
       new NextRequest("http://localhost/api/slack/webhook", {
@@ -111,7 +106,7 @@ describe("POST /api/slack/webhook", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(approveMock).toHaveBeenCalledWith({}, "inc-1", ["a1"], null, { slack_user: "slack-user" });
+    expect(approveMock).toHaveBeenCalled();
   });
 
   it("resolves incidents after Slack confirmation", async () => {

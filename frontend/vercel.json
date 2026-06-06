@@ -9,7 +9,7 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/detect",
+      "path": "/api/stores/incidents/detect",
       "schedule": "0 */6 * * *"
     }
   ]

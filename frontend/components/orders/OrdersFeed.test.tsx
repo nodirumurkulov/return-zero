@@ -1,7 +1,17 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import type { OrderFeedItem } from "@/lib/orders/types";
+import { describe, expect, it, vi } from "vitest";
+import type { OrderFeedItem } from "@/lib/stores";
+import { renderWithProviders, screen } from "@/test/test-utils";
 import { OrdersFeed } from "./OrdersFeed";
+
+const mutateAsync = vi.fn();
+
+vi.mock("@/hooks/stores/orders", () => ({
+  useAdvanceReplay: () => ({
+    mutateAsync,
+    isPending: false,
+  }),
+  useReplayOrders: () => vi.fn(),
+}));
 
 const initialOrders: OrderFeedItem[] = [
   {
@@ -18,7 +28,7 @@ const initialOrders: OrderFeedItem[] = [
 
 describe("OrdersFeed", () => {
   it("renders idle state with start control", () => {
-    render(
+    renderWithProviders(
       <OrdersFeed startDate="2024-01-01" dataEnd="2024-12-31" initialOrders={initialOrders} />,
     );
     expect(screen.getByRole("heading", { name: "Orders" })).toBeInTheDocument();

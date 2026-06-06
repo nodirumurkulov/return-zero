@@ -7,6 +7,18 @@ export const investigateBodySchema = z.object({
 
 export type InvestigateBody = z.infer<typeof investigateBodySchema>;
 
+export const investigateResponseSchema = z
+  .object({
+    success: z.literal(true),
+    root_cause: z.string(),
+    root_cause_confidence: z.number(),
+    findings_count: z.number(),
+    actions_count: z.number(),
+  })
+  .strict();
+
+export type InvestigateResponse = z.infer<typeof investigateResponseSchema>;
+
 // ── Quant Analyst → Operator pipeline ──────────────────────────────────────
 // All numeric stat fields are nullable + optional: gpt-5.5 JSON-mode is happier
 // emitting null than omitting, and a finding may legitimately have no z/σ (no

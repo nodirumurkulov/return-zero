@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in **return-zero** (Resolve). Humans: see [README.md](README.md).
+Instructions for AI coding agents working in **return-zero** (Hugo). Humans: see [README.md](README.md).
 
 ## Project overview
 
-Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
+Hugo is an ecommerce incident-response app backed by the Hugo mock store demo dataset: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
 
 | Area | Path | Stack |
 |------|------|-------|
@@ -12,7 +12,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 | Database | `frontend/supabase/` | Postgres migrations, RLS |
 | Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
-| Hackathon | `hackathon/` | Pretty Fly CSVs, demo guides (not app code) |
+| Hackathon | `hackathon/` | Mock store CSVs, demo guides (not app code) |
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
 
@@ -81,7 +81,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 - Prefer pure functions, `reduce`, and early returns over mutable index loops.
 - **No backward compatibility** (see [Best practices mandate](#best-practices-mandate)): delete deprecated surfaces and fix all imports in the same PR.
 - **Domain modules** under `frontend/lib/<domain>/`: types match Supabase columns, queries, mutations, Zod `schemas.ts`.
-- Import from `@/lib/incidents`, `@/lib/catalog`, etc. Never re-export domain types from `components/`.
+- Import from `@/lib/stores/incidents`, `@/lib/stores/analytics/catalog`, etc. Never re-export domain types from `components/`.
 - **API JSON:** Zod in `lib/<domain>/schemas.ts`; routes use `schema.safeParse(await req.json().catch(...))` inline.
 - **No trivial utility wrappers.** Do not add single-function files or exported helpers whose only job is a few lines of validation, coercion, or renaming that belongs at the call site. Validate at boundaries with Zod (`safeParse` inline in server actions, route handlers, API routes). Narrow types at parse time (e.g. `z.string().startsWith("/").refine(...)`) instead of widening to `FormDataEntryValue`, `unknown`, or `string` and “fixing” in a helper. Put shared schemas in `lib/<domain>/schemas.ts` only when **two or more** modules need the same shape; delete wrapper files and update all imports in the same change.
 

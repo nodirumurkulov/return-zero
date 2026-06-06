@@ -4,7 +4,7 @@ globs: frontend/components/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# React UI (Resolve)
+# React UI (Hugo)
 
 See [frontend/components/AGENTS.md](../../frontend/components/AGENTS.md).
 
