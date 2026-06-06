@@ -66,7 +66,7 @@ declare
   t text;
   app_rw_tables text[] := array[
     'product_kpi_thresholds', 'incidents', 'agent_findings',
-    'incident_actions', 'incident_timeline'
+    'incident_actions', 'incident_timeline', 'investigation_steps'
   ];
 begin
   foreach t in array app_rw_tables loop

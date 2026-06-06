@@ -7,13 +7,16 @@ import { useTriggerInvestigation } from "@/hooks/agents";
 export default function TriggerInvestigationButton({
   incidentId,
   productId,
+  onStarted,
 }: {
   incidentId: string;
   productId: string;
+  onStarted?: () => void;
 }) {
   const investigate = useTriggerInvestigation({ id: incidentId });
 
   function runInvestigation() {
+    onStarted?.();
     investigate.mutate({ product: { id: productId } });
   }
 

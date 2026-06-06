@@ -56,7 +56,8 @@ declare
     'email_campaigns', 'email_events', 'support_messages', 'bank_transactions',
     'metric_definitions', 'product_kpi_thresholds', 'product_baselines',
     'forecast_rules', 'business_settings', 'business_reports', 'store_connections',
-    'incidents', 'agent_findings', 'incident_actions', 'incident_timeline'
+    'incidents', 'agent_findings', 'incident_actions', 'incident_timeline',
+    'investigation_steps'
   ];
 begin
   foreach t in array tenant_tables loop

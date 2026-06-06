@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Incident has no product" }, { status: 400 });
     }
 
-    const { result, findings_count, actions_count } = await investigateIncident(
+    const { result, findings_count, actions_count, run_id } = await investigateIncident(
       supabase,
       incident_id,
       resolvedProductId,
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
       root_cause_confidence: result.root_cause_confidence,
       findings_count,
       actions_count,
+      run_id,
     });
   } catch (err) {
     logApiError("api/investigate", err);

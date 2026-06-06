@@ -7,6 +7,26 @@ export const investigateBodySchema = z.object({
 
 export type InvestigateBody = z.infer<typeof investigateBodySchema>;
 
+export const investigationStepsResponseSchema = z
+  .object({
+    run_id: z.uuid().nullable(),
+    run_status: z.enum(["idle", "running", "complete", "error"]),
+    steps: z.array(
+      z.object({
+        id: z.uuid(),
+        step_key: z.string(),
+        agent_name: z.string(),
+        label: z.string(),
+        status: z.enum(["running", "done", "error"]),
+        created_at: z.string(),
+        updated_at: z.string(),
+      }),
+    ),
+  })
+  .strict();
+
+export type InvestigationStepsResponse = z.infer<typeof investigationStepsResponseSchema>;
+
 export const investigateResponseSchema = z
   .object({
     success: z.literal(true),
@@ -14,6 +34,7 @@ export const investigateResponseSchema = z
     root_cause_confidence: z.number(),
     findings_count: z.number(),
     actions_count: z.number(),
+    run_id: z.uuid(),
   })
   .strict();
 

@@ -104,6 +104,7 @@ describe("POST /api/investigate", () => {
       },
       findings_count: 2,
       actions_count: 1,
+      run_id: "550e8400-e29b-41d4-a716-446655440099",
     });
 
     const res = await POST(

@@ -2,6 +2,7 @@ import "server-only";
 
 import { Output, stepCountIs, ToolLoopAgent } from "ai";
 import { getModel } from "@/lib/ai/model";
+import { agentStepHandlers, type InvestigationStepEmitter } from "./investigation-steps";
 import { operatorOutputSchema } from "./schemas";
 import { createBusinessContextTools } from "./tools/business-context";
 import type { AgentSupabase, OperatorOutput, QuantDiagnosis } from "./types";
@@ -36,7 +37,10 @@ export async function runOperator(
   organizationId: string,
   productId: string,
   diagnosis: QuantDiagnosis,
+  steps?: InvestigationStepEmitter,
 ): Promise<OperatorOutput> {
+  const stepHooks = steps ? agentStepHandlers(steps, "Operator", "operator") : {};
+
   const agent = new ToolLoopAgent({
     model: getModel(),
     instructions: OPERATOR_INSTRUCTIONS,
@@ -50,6 +54,7 @@ export async function runOperator(
 
   const { output } = await agent.generate({
     prompt: `Product ${productId}. Call getBusinessProfile, then turn this quant diagnosis into a goal-aligned root cause and costed actions:\n\n${JSON.stringify(diagnosis, null, 2)}`,
+    ...stepHooks,
   });
 
   if (!output) {

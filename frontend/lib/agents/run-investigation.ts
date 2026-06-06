@@ -1,6 +1,7 @@
 import "server-only";
 import { runOperator } from "./operator";
 import { runQuantAnalyst } from "./quant-analyst";
+import type { InvestigationStepEmitter } from "./investigation-steps";
 import type {
   AgentSupabase,
   InvestigationAction,
@@ -56,10 +57,44 @@ export async function runInvestigation(
   _incidentId: string,
   productId: string,
   _affectedKpiKeys: string[],
+  steps?: InvestigationStepEmitter,
 ): Promise<InvestigationResult> {
-  // The Operator depends on the Quant's diagnosis, so this is sequential.
-  const diagnosis = await runQuantAnalyst(supabase, organizationId, productId);
-  const operator = await runOperator(supabase, organizationId, productId, diagnosis);
+  if (steps) {
+    await steps.startStep({
+      stepKey: "quant:dispatched",
+      agentName: "Quant Analyst",
+      label: "Quant Analyst dispatched",
+    });
+    await steps.finishStep("quant:dispatched");
+  }
+
+  const diagnosis = await runQuantAnalyst(supabase, organizationId, productId, steps);
+
+  if (steps) {
+    await steps.startStep({
+      stepKey: "quant:complete",
+      agentName: "Quant Analyst",
+      label: "Quant diagnosis complete",
+    });
+    await steps.finishStep("quant:complete");
+    await steps.startStep({
+      stepKey: "operator:dispatched",
+      agentName: "Operator",
+      label: "Operator dispatched",
+    });
+    await steps.finishStep("operator:dispatched");
+  }
+
+  const operator = await runOperator(supabase, organizationId, productId, diagnosis, steps);
+
+  if (steps) {
+    await steps.startStep({
+      stepKey: "operator:complete",
+      agentName: "Operator",
+      label: "Proposed actions ready",
+    });
+    await steps.finishStep("operator:complete");
+  }
 
   return {
     findings: diagnosis.findings.map(toFinding),
