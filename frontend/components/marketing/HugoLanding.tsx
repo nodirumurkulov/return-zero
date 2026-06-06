@@ -167,6 +167,15 @@ const LANDING_CSS = `@import url('https://fonts.googleapis.com/css2?family=Brico
   .hero-actions { margin-top: 30px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .hero-note { margin-top: 16px; font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
   .hero-note .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sev-green); box-shadow: 0 0 0 3px #dcfce7; }
+  .hero-note a { color: var(--brand-700); font-weight: 600; }
+
+  /* hero waitlist capture — email box up top so first-time users can join without scrolling */
+  .hero-form { margin-top: 28px; display: flex; gap: 10px; max-width: 460px; }
+  .hero-form input { flex: 1; min-width: 0; font-family: inherit; font-size: 15px; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); outline: none; box-shadow: var(--shadow-sm); transition: border-color .15s ease, box-shadow .15s ease; }
+  .hero-form input::placeholder { color: var(--muted); }
+  .hero-form input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-100); }
+  .hero-form .btn { white-space: nowrap; }
+  .hero-success { margin-top: 14px; font-size: 14.5px; font-weight: 600; color: var(--sev-green); display: none; }
 
   /* lighter-blue clickable pillar cards */
   .pillars { margin-top: 38px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 560px; }
@@ -522,7 +531,8 @@ const LANDING_CSS = `@import url('https://fonts.googleapis.com/css2?family=Brico
     .damage-grid, .feat-grid, .price-grid, .steps { grid-template-columns: 1fr; }
     .sec { padding: 70px 0; }
     .cta-card { padding: 44px 24px; }
-    .waitlist-form { flex-direction: column; }
+    .waitlist-form, .hero-form { flex-direction: column; }
+    .hero-form { max-width: 100%; }
     .float-badge { left: 8px; }
     .nav-signin { display: none; }
   }`;
@@ -541,7 +551,6 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
 
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
-      <a href="#waitlist">Join waitlist</a>
     </nav>
     <div class="nav-cta">
       <a class="nav-signin" href="#waitlist">Sign in</a>
@@ -556,11 +565,13 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
     <div class="hero-left">
       <span class="hero-tag"><span class="pip">CRITICAL</span> Return rate +9.2pts on Court Trainer</span>
       <h1 class="hero-title">Every KPI breach is an <span class="grad">incident.</span><br />Hugo runs the response.</h1>
-      <div class="hero-actions">
-        <a class="btn btn-primary btn-lg" href="#waitlist">Join the waitlist <svg class="arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-        <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
-      </div>
-    
+      <form class="hero-form js-waitlist" id="wl-form-hero" novalidate>
+        <input type="email" class="wl-email" placeholder="you@yourbrand.com" required aria-label="Work email" />
+        <button class="btn btn-primary btn-lg" type="submit">Join waitlist <svg class="arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </form>
+      <div class="hero-success js-waitlist-success">✓ You're on the list — we'll be in touch shortly.</div>
+      <div class="hero-note"><span class="dot"></span>Free during private beta · No card required · <a href="#how">See how it works</a></div>
+
     </div>
 
     <!-- product mock: incidents + catalog health -->
@@ -789,12 +800,12 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
       <div class="cta-card">
         <h2>Stop the bleed before the quarter closes.</h2>
         <p>Join the private beta and get early-access pricing locked for life.</p>
-        <form class="waitlist-form" id="wl-form">
+        <form class="waitlist-form js-waitlist" id="wl-form" novalidate>
           <input type="email" id="wl-email" placeholder="you@yourbrand.com" required aria-label="Work email" />
           <button class="btn btn-lg" type="submit">Join waitlist</button>
         </form>
         <div class="cta-note">Free during private beta · No card required · One read-only connection</div>
-        <div id="wl-success">✓ You're on the list — we'll be in touch shortly.</div>
+        <div id="wl-success" class="js-waitlist-success">✓ You're on the list — we'll be in touch shortly.</div>
       </div>
     </div>
   </div>
@@ -843,21 +854,26 @@ export function HugoLanding() {
       io.observe(el);
     });
 
-    const form = document.getElementById("wl-form") as HTMLFormElement | null;
+    // Both the hero email box and the bottom CTA share this handler.
+    const waitlistForms = Array.from(
+      document.querySelectorAll<HTMLFormElement>("form.js-waitlist"),
+    );
     const onSubmit = (event: Event) => {
       event.preventDefault();
-      const input = document.getElementById("wl-email") as HTMLInputElement | null;
+      const form = event.currentTarget as HTMLFormElement;
+      const input = form.querySelector<HTMLInputElement>('input[type="email"]');
       if (!input || !input.value.trim()) return;
-      if (form) form.style.display = "none";
-      const success = document.getElementById("wl-success");
+      form.style.display = "none";
+      const success =
+        form.parentElement?.querySelector<HTMLElement>(".js-waitlist-success");
       if (success) success.style.display = "block";
     };
-    form?.addEventListener("submit", onSubmit);
+    waitlistForms.forEach((form) => form.addEventListener("submit", onSubmit));
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       io.disconnect();
-      form?.removeEventListener("submit", onSubmit);
+      waitlistForms.forEach((form) => form.removeEventListener("submit", onSubmit));
     };
   }, []);
 
