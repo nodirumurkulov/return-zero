@@ -75,7 +75,7 @@ export function BrandLogo({
       >
         <Title className={brand.titleClass}>{brand.title}</Title>
         {variant === "auth" ? (
-          <p className={brand.subtitleClass}>{brand.subtitle}</p>
+          <p className={BRAND.auth.subtitleClass}>{BRAND.auth.subtitle}</p>
         ) : null}
       </div>
     </div>
