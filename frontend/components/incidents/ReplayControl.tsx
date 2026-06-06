@@ -65,7 +65,12 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
         </Button>
       </div>
       {message && (
-        <p className={`text-xs ${state === "error" ? "text-destructive" : "text-muted-foreground"}`}>{message}</p>
+        <p
+          data-testid="replay-status"
+          className={`text-xs ${state === "error" ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          {message}
+        </p>
       )}
     </div>
   );
