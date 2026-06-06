@@ -1,34 +1,37 @@
 import StoreConnectForm from "@/components/onboarding/StoreConnectForm";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
-  const org = await tryRequireOrganizationId(supabase);
+  const scopeResult = await tryGetStoreScope(supabase);
 
-  if (!org.ok) {
+  if (!scopeResult.ok) {
     return (
       <div className="mx-auto max-w-4xl space-y-6 p-6">
-        <p className="text-sm text-muted-foreground">{org.error}</p>
+        <p className="text-sm text-muted-foreground">{scopeResult.error}</p>
       </div>
     );
   }
+
+  const scope = scopeResult.scope;
 
   const [{ count }, connection] = await Promise.all([
     supabase
       .from("products")
       .select("*", { count: "exact", head: true })
-      .eq("organization_id", org.organizationId),
-    getStore(supabase).import.status({ organizationId: org.organizationId }),
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId),
+    getStore(supabase).import.status({ scope }),
   ]);
 
   const productCount = count ?? 0;
   const storeReady =
     connection?.platform === "mock_csv" &&
-    (connection.status === "connected" || connection.status === "importing") &&
+    (connection.status === "connected" || connection.status === "syncing") &&
     productCount > 0;
 
   return (

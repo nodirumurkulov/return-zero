@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { StoreScope } from "@/lib/tenancy/types";
+
 import type {
   connectStoreBodySchema,
   storeConnectionPhaseSchema,
@@ -24,10 +26,10 @@ export type ConnectResult = {
 };
 
 export type ConnectionSnapshotOpts = {
-  organizationId: string;
+  scope: StoreScope;
 };
 
 export type ConnectionConnectOpts = {
-  organizationId: string;
+  scope: StoreScope;
   platform: StorePlatform;
 };

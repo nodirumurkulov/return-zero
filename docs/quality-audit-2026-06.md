@@ -62,7 +62,7 @@
 
 - **Evidence:** `app/api/onboarding/profile/route.ts`, `lib/settings/*`
 - **Skill/rule:** Supabase security checklist (BOLA/IDOR)
-- **Fix:** RLS `createClient()` + `requireOrganizationId`; migration `011_business_profile.sql`; typed org-scoped queries
+- **Fix:** RLS `createClient()` + `tryGetStoreScope`; migration `011_business_profile.sql`; typed store-scoped queries
 - **Effort:** L
 
 #### H-3: PATCH incidents allowed `organization_id` mass-assignment
@@ -75,7 +75,7 @@
 
 - **Evidence:** `app/api/slack/webhook/route.ts`, `app/api/slack/events/route.ts`, `lib/hugo/index.ts`
 - **Fix:** Migration `012_slack_team_mapping.sql` (`organizations.slack_team_id`); `resolveOrganizationIdForSlackTeam()` (`SLACK_ORGANIZATION_ID` env or DB lookup); org-scoped Hugo incident/catalog queries; webhook approve path requires linked workspace
-- **Test:** `slack-webhook.integration.test.ts`, `slack-events.integration.test.ts`, `lib/organizations/slack.test.ts`
+- **Test:** `slack-webhook.integration.test.ts`, `slack-events.integration.test.ts`, `lib/tenancy/slack.test.ts`
 
 ### Next.js / App Router — HIGH (fixed)
 

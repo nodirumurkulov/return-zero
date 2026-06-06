@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { ordersQuerySchema } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,17 +25,18 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const org = await tryRequireOrganizationId(supabase);
-  if (!org.ok) {
-    logApiError("api/stores/orders/feed", new Error(org.error));
-    return apiErrorResponse(new Error(org.error), 403);
+  const scopeResult = await tryGetStoreScope(supabase);
+  if (!scopeResult.ok) {
+    logApiError("api/stores/orders/feed", new Error(scopeResult.error));
+    return apiErrorResponse(new Error(scopeResult.error), 403);
   }
 
   try {
+    const scope = scopeResult.scope;
     const store = getStore(supabase);
     const [orders, bounds] = await Promise.all([
-      store.orders.list({ organizationId: org.organizationId, ...parsed.data }),
-      store.orders.bounds({ organizationId: org.organizationId }),
+      store.orders.list({ scope, ...parsed.data }),
+      store.orders.bounds({ scope }),
     ]);
     return NextResponse.json({
       orders,

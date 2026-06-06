@@ -6,7 +6,7 @@ import { ShopifyIcon } from "@/components/auth/provider-icons";
 import { HugoMark } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/hooks/stores/import";
-import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/tenancy";
 
 import StorePlatformCard from "./StorePlatformCard";
 

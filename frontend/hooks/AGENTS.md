@@ -29,6 +29,12 @@ hooks/
     ├── import/
     ├── catalog/
     └── orders/
+└── tenancy/                   # mirrors lib/tenancy
+    ├── keys.ts
+    ├── use-organization.ts
+    ├── use-active-store.ts
+    ├── use-stores.ts
+    └── use-switch-store.ts
 ```
 
 ## Conventions

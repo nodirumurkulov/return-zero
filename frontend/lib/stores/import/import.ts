@@ -3,8 +3,9 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
-import { resetActiveStoreData, resolveActiveStoreId } from "../connection/reset-store-data";
+import { resetStoreData } from "../connection/reset-store-data";
 import { ImportError } from "./errors";
 import { MockImportLoader } from "./mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "./mock/pack";
@@ -29,36 +30,37 @@ export class Import {
     const { data, error } = await this.supabase
       .from("store_connections")
       .select("*")
-      .eq("organization_id", opts.organizationId)
+      .eq("id", opts.scope.storeId)
       .maybeSingle();
     if (error) throw new ImportError(`store_connections read failed: ${error.message}`);
     return data;
   }
 
-  async productCount(organizationId: string): Promise<number> {
+  async productCount(scope: StoreScope): Promise<number> {
     const { count, error } = await this.supabase
       .from("products")
       .select("*", { count: "exact", head: true })
-      .eq("organization_id", organizationId);
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId);
     if (error) throw new ImportError(`products count failed: ${error.message}`);
     return count ?? 0;
   }
 
   async tryStartImport(opts: ImportRunOpts): Promise<ImportStartResult> {
-    const connection = await this.status({ organizationId: opts.organizationId });
+    const connection = await this.status({ scope: opts.scope });
 
-    if (connection?.status === "importing") {
-      return { action: "already_importing" };
+    if (connection?.status === "syncing") {
+      return { action: "already_syncing" };
     }
 
     if (connection?.status === "connected" && connection.platform === opts.platform) {
-      const count = await this.productCount(opts.organizationId);
+      const count = await this.productCount(opts.scope);
       if (count > 0) {
         return { action: "skipped" };
       }
     }
 
-    await this.markStoreImporting(opts.organizationId, opts.platform);
+    await this.markStoreSyncing(opts.scope, opts.platform);
     return { action: "started" };
   }
 
@@ -68,13 +70,13 @@ export class Import {
         return await this.runMockBackgroundImport(opts);
       }
 
-      const results = await this.shopifyLoader.load(this.supabase, opts.organizationId, opts.source, {
+      const results = await this.shopifyLoader.load(this.supabase, opts.scope, opts.source, {
         replace: opts.replace ?? true,
       });
-      await this.markStoreConnected(opts.organizationId, opts.platform);
+      await this.markStoreConnected(opts.scope, opts.platform);
       return { results, success: results.every((result) => !result.error) };
     } catch (err) {
-      await this.markStoreError(opts.organizationId);
+      await this.markStoreError(opts.scope);
       throw err;
     }
   }
@@ -83,33 +85,31 @@ export class Import {
   async run(opts: ImportRunOpts): Promise<ImportRunResult> {
     if (opts.platform === "mock_csv") {
       const source = (opts.source as MockStoreFiles | undefined) ?? readHugoMockStorePack();
-      const results = await this.mockLoader.load(this.supabase, opts.organizationId, source, {
+      const results = await this.mockLoader.load(this.supabase, opts.scope, source, {
         replace: opts.replace ?? false,
       });
-      await this.markStoreConnected(opts.organizationId, "mock_csv");
+      await this.markStoreConnected(opts.scope, "mock_csv");
       return { results, success: results.every((result) => !result.error) };
     }
 
-    const results = await this.shopifyLoader.load(this.supabase, opts.organizationId, opts.source, {
+    const results = await this.shopifyLoader.load(this.supabase, opts.scope, opts.source, {
       replace: opts.replace ?? true,
     });
-    await this.markStoreConnected(opts.organizationId, opts.platform);
+    await this.markStoreConnected(opts.scope, opts.platform);
     return { results, success: results.every((result) => !result.error) };
   }
 
   externalIdMap(opts: ImportExternalIdMapOpts): Promise<Map<string, string>> {
-    return this.mockLoader.fetchExternalIdMap(this.supabase, opts.table, opts.organizationId);
+    return this.mockLoader.fetchExternalIdMap(this.supabase, opts.table, opts.scope);
   }
 
   private async runMockBackgroundImport(opts: ImportRunOpts): Promise<ImportRunResult> {
     const source = (opts.source as MockStoreFiles | undefined) ?? readHugoMockStorePack();
     const replace = opts.replace ?? false;
 
-    const storeId = await resolveActiveStoreId(this.supabase, opts.organizationId);
-
     if (replace) {
       try {
-        await resetActiveStoreData(this.supabase, opts.organizationId);
+        await resetStoreData(this.supabase, opts.scope);
       } catch (err) {
         const message = err instanceof Error ? err.message : "reset_store_data failed";
         throw new ImportError(message);
@@ -118,22 +118,20 @@ export class Import {
 
     const { results: catalogResults, maps } = await this.mockLoader.loadCatalogPhase(
       this.supabase,
-      opts.organizationId,
-      storeId,
+      opts.scope,
       source,
     );
     const catalogSuccess = catalogResults.every((result) => !result.error);
     if (!catalogSuccess) {
-      await this.markStoreError(opts.organizationId);
+      await this.markStoreError(opts.scope);
       return { results: catalogResults, success: false };
     }
 
-    await this.markStoreConnected(opts.organizationId, "mock_csv");
+    await this.markStoreConnected(opts.scope, "mock_csv");
 
     const commerceResults = await this.mockLoader.loadCommercePhase(
       this.supabase,
-      opts.organizationId,
-      storeId,
+      opts.scope,
       source,
       maps,
     );
@@ -143,19 +141,19 @@ export class Import {
     return { results, success };
   }
 
-  private async markStoreImporting(organizationId: string, platform: StorePlatform): Promise<void> {
+  private async markStoreSyncing(scope: StoreScope, platform: StorePlatform): Promise<void> {
     const { error } = await this.supabase
       .from("store_connections")
       .update({
         platform,
-        status: "importing",
+        status: "syncing",
         updated_at: new Date().toISOString(),
       })
-      .eq("organization_id", organizationId);
+      .eq("id", scope.storeId);
     if (error) throw new ImportError(`store_connections update failed: ${error.message}`);
   }
 
-  private async markStoreConnected(organizationId: string, platform: StorePlatform): Promise<void> {
+  private async markStoreConnected(scope: StoreScope, platform: StorePlatform): Promise<void> {
     const { error } = await this.supabase
       .from("store_connections")
       .update({
@@ -164,18 +162,18 @@ export class Import {
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("organization_id", organizationId);
+      .eq("id", scope.storeId);
     if (error) throw new ImportError(`store_connections update failed: ${error.message}`);
   }
 
-  private async markStoreError(organizationId: string): Promise<void> {
+  private async markStoreError(scope: StoreScope): Promise<void> {
     const { error } = await this.supabase
       .from("store_connections")
       .update({
         status: "error",
         updated_at: new Date().toISOString(),
       })
-      .eq("organization_id", organizationId);
+      .eq("id", scope.storeId);
     if (error) throw new ImportError(`store_connections update failed: ${error.message}`);
   }
 }

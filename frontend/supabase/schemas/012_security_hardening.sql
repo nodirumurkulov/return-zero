@@ -3,10 +3,7 @@
 -- RPC least-privilege, support_tickets composite FKs, force RLS.
 -- =============================================================
 
--- ---- RPC grants: destructive fn service-role only ----------------
-revoke all on function public.reset_store_data(uuid) from public;
-revoke all on function public.reset_store_data(uuid) from anon, authenticated;
-grant execute on function public.reset_store_data(uuid) to service_role;
+-- reset_store_data grants: see 017_multi_store.sql (replaces reset_organization_data).
 
 revoke all on function public.product_source_facts(uuid, integer, date) from public;
 revoke all on function public.product_source_facts(uuid, integer, date) from anon;

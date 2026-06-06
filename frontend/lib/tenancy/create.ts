@@ -1,9 +1,11 @@
+import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
+import { TenancyError } from "./errors";
 import type { Organization } from "./organization";
-import { OrganizationError } from "./queries";
 
 export async function createOrganizationWithOwner(
   supabase: SupabaseClient<Database>,
@@ -16,7 +18,7 @@ export async function createOrganizationWithOwner(
     .single();
 
   if (orgErr || !org) {
-    throw new OrganizationError(orgErr?.message ?? "Failed to create organization");
+    throw new TenancyError(orgErr?.message ?? "Failed to create organization");
   }
 
   const { error: memberErr } = await supabase.from("organization_members").insert({
@@ -26,7 +28,7 @@ export async function createOrganizationWithOwner(
   });
 
   if (memberErr) {
-    throw new OrganizationError(memberErr.message);
+    throw new TenancyError(memberErr.message);
   }
 
   return org;

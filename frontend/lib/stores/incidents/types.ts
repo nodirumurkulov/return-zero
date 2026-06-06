@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { Constants, type Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 export const INCIDENT_STATUSES = Constants.public.Enums.incident_status;
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
@@ -116,24 +117,24 @@ export type ApproveActionsInput = {
 };
 
 export type IncidentsListOpts = {
-  organizationId: string;
+  scope: StoreScope;
   productId?: string;
 };
 
 export type IncidentsGetOpts = {
   id: string;
-  organizationId: string;
+  scope: StoreScope;
 };
 
 export type IncidentsUpdateOpts = {
   id: string;
-  organizationId: string;
+  scope: StoreScope;
   patch: UpdateIncidentBody;
 };
 
 export type ListIncidentActionIdsOpts = {
   incidentId: string;
-  organizationId: string;
+  scope: StoreScope;
   filter?: {
     status?: IncidentAction["status"];
     riskLevel?: NonNullable<IncidentAction["risk_level"]>;
@@ -141,7 +142,7 @@ export type ListIncidentActionIdsOpts = {
 };
 
 export type ApproveIncidentAndNotifyOpts = ApproveActionsInput & {
-  organizationId: string;
+  scope: StoreScope;
   appUrl: string;
 };
 
@@ -173,7 +174,7 @@ export function mergeDetectionResults(results: readonly DetectionResult[]): Dete
 }
 
 export type DetectOpts = {
-  organizationId: string;
+  scope: StoreScope;
   productId: string;
   asOf?: string;
 };

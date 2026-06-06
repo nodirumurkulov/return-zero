@@ -10,10 +10,11 @@ import { createClient } from "@supabase/supabase-js";
 import { seedDemoKanbanData } from "../e2e/fixtures/demo-data";
 import { ensureE2eUser, seedE2eDetectedIncident } from "../e2e/fixtures/e2e-user";
 import { resolveDemoCredentials } from "../lib/auth/demo";
-import { HUGO_MOCK_STORE_NAME, HUGO_MOCK_STORE_SLUG } from "../lib/organizations/mock-store";
 import { MockImportLoader } from "../lib/stores/import/mock";
 import { readHugoMockStorePack } from "../lib/stores/import/mock/pack";
 import type { Database } from "../lib/supabase/database.types";
+import { HUGO_MOCK_STORE_NAME, HUGO_MOCK_STORE_SLUG } from "../lib/tenancy";
+import type { StoreScope } from "../lib/tenancy/types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -97,10 +98,25 @@ async function ensureDemoUserMembership(organizationId: string) {
   console.log(`  ✓ demo user (${credentials.email})`);
 }
 
-async function ensureFullDemoStore(organizationId: string) {
+async function resolveDemoStoreScope(organizationId: string): Promise<StoreScope> {
+  const { data: store, error } = await supabase
+    .from("store_connections")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error || !store?.id) {
+    throw new Error(`store_connections read failed: ${error?.message ?? "no store"}`);
+  }
+  return { organizationId, storeId: store.id };
+}
+
+async function ensureFullDemoStore(organizationId: string): Promise<StoreScope> {
   console.log(`  loading ${HUGO_MOCK_STORE_NAME}…`);
+  const scope = await resolveDemoStoreScope(organizationId);
   const loader = new MockImportLoader();
-  const results = await loader.load(supabase, organizationId, readHugoMockStorePack(), {
+  const results = await loader.load(supabase, scope, readHugoMockStorePack(), {
     replace: true,
   });
   if (!results.every((result) => !result.error)) {
@@ -115,22 +131,24 @@ async function ensureFullDemoStore(organizationId: string) {
       connected_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .eq("id", scope.storeId);
   if (connectionError) {
     throw new Error(`store_connections update failed: ${connectionError.message}`);
   }
   console.log("  ✓ demo store connected");
 
-  const productIdByExternalId = await loader.fetchExternalIdMap(supabase, "products", organizationId);
-  await seedDemoKanbanData(supabase, organizationId, productIdByExternalId);
+  const productIdByExternalId = await loader.fetchExternalIdMap(supabase, "products", scope);
+  await seedDemoKanbanData(supabase, organizationId, scope.storeId, productIdByExternalId);
   console.log("  ✓ demo KPI thresholds + kanban incidents");
+  return scope;
 }
 
-async function ensureE2eFixtures(organizationId: string) {
+async function ensureE2eFixtures(organizationId: string, storeId: string) {
   console.log("  e2e user…");
   await ensureE2eUser(supabase);
   console.log("  ✓ e2e user");
-  await seedE2eDetectedIncident(supabase, organizationId);
+  await seedE2eDetectedIncident(supabase, organizationId, storeId);
   console.log("  ✓ e2e detected incident");
 }
 
@@ -142,14 +160,12 @@ async function main() {
     await ensureDemoUserMembership(organizationId);
 
     if (fullBootstrap) {
-      await ensureFullDemoStore(organizationId);
-    }
-
-    if (e2eBootstrap) {
-      if (!fullBootstrap) {
-        throw new Error("--e2e requires --full (store + demo incidents must exist first)");
+      const scope = await ensureFullDemoStore(organizationId);
+      if (e2eBootstrap) {
+        await ensureE2eFixtures(organizationId, scope.storeId);
       }
-      await ensureE2eFixtures(organizationId);
+    } else if (e2eBootstrap) {
+      throw new Error("--e2e requires --full (store + demo incidents must exist first)");
     }
 
     if (!fullBootstrap) {

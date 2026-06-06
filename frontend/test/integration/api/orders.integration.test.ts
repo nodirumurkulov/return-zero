@@ -15,18 +15,18 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  tryRequireOrganizationId: vi.fn(),
+vi.mock("@/lib/tenancy/server", () => ({
+  tryGetStoreScope: vi.fn(),
 }));
 
 import { GET } from "@/app/api/stores/orders/feed/route";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 const listMock = ordersStoreMock.list;
 const boundsMock = ordersStoreMock.bounds;
 const createClientMock = vi.mocked(createClient);
-const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
+const tryGetStoreScopeMock = vi.mocked(tryGetStoreScope);
 
 describe("GET /api/stores/orders/feed", () => {
   afterEach(() => {
@@ -47,9 +47,9 @@ describe("GET /api/stores/orders/feed", () => {
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
     };
     createClientMock.mockResolvedValue(supabase as never);
-    tryRequireOrganizationIdMock.mockResolvedValue({
+    tryGetStoreScopeMock.mockResolvedValue({
       ok: true,
-      organizationId: "org-1",
+      scope: { organizationId: "org-1", storeId: "store-1" },
     });
     listMock.mockResolvedValue([{ order_id: "order-1" }] as never);
     boundsMock.mockResolvedValue({

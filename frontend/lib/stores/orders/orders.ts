@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import type { Incidents } from "../incidents";
 import { mergeDetectionResults } from "../incidents/types";
@@ -37,9 +38,9 @@ export class Orders {
     dataEnd: string | null;
   }> {
     const [cursor, dataEnd, streamStart] = await Promise.all([
-      this.#readReplayCursor(opts.organizationId),
-      this.#dataEndDate(opts.organizationId),
-      this.#streamStartDate(opts.organizationId),
+      this.#readReplayCursor(opts.scope),
+      this.#dataEndDate(opts.scope),
+      this.#streamStartDate(opts.scope),
     ]);
     return {
       cursor,
@@ -49,6 +50,7 @@ export class Orders {
   }
 
   async list(opts: OrdersListOpts): Promise<OrderFeedItem[]> {
+    const { scope } = opts;
     const limit = Math.min(Math.max(opts.limit ?? 60, 1), 200);
 
     const { data: orderRows, error } = await this.supabase
@@ -56,7 +58,8 @@ export class Orders {
       .select(
         "id, order_number, created_at, total_price, financial_status, utm_campaign, customer_id",
       )
-      .eq("organization_id", opts.organizationId)
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
       .gt("created_at", opts.after)
       .order("created_at", { ascending: true })
       .limit(limit);
@@ -73,13 +76,15 @@ export class Orders {
     const itemsPromise = this.supabase
       .from("line_items")
       .select("order_id, title, quantity, price")
-      .eq("organization_id", opts.organizationId)
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
       .in("order_id", orderIds);
     const customersPromise = customerIds.length
       ? this.supabase
           .from("customers")
           .select("id, default_country")
-          .eq("organization_id", opts.organizationId)
+          .eq("organization_id", scope.organizationId)
+          .eq("store_id", scope.storeId)
           .in("id", customerIds)
       : null;
 
@@ -113,11 +118,12 @@ export class Orders {
   }
 
   async advance(opts: OrdersAdvanceOpts): Promise<OrdersAdvanceResult> {
+    const { scope } = opts;
     const days = opts.days ?? DEFAULT_ADVANCE_DAYS;
 
-    const end = await this.#dataEndDate(opts.organizationId);
+    const end = await this.#dataEndDate(scope);
     const start = this.#streamStartFromEnd(end);
-    const previous = (await this.#readReplayCursor(opts.organizationId)) ?? start;
+    const previous = (await this.#readReplayCursor(scope)) ?? start;
 
     const { cursor, at_end } = this.#advanceReplayCursor({
       previous,
@@ -125,19 +131,20 @@ export class Orders {
       end,
     });
 
-    await this.#writeReplayCursor(opts.organizationId, cursor);
+    await this.#writeReplayCursor(scope, cursor);
 
     const { data: products, error: prodErr } = await this.supabase
       .from("products")
       .select("id")
-      .eq("organization_id", opts.organizationId);
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId);
     if (prodErr) throw new OrdersError(`load products failed: ${prodErr.message}`);
 
     const breaches = mergeDetectionResults(
       await Promise.all(
         (products ?? []).map((p) =>
           this.incidents.detect({
-            organizationId: opts.organizationId,
+            scope,
             productId: p.id,
             asOf: cursor,
           }),
@@ -154,9 +161,8 @@ export class Orders {
   }
 
   async reset(opts: OrdersResetOpts): Promise<{ cursor: string }> {
-    const cursor =
-      (await this.#streamStartDate(opts.organizationId)) ?? Orders.REPLAY_START;
-    await this.#writeReplayCursor(opts.organizationId, cursor);
+    const cursor = (await this.#streamStartDate(opts.scope)) ?? Orders.REPLAY_START;
+    await this.#writeReplayCursor(opts.scope, cursor);
     return { cursor };
   }
 
@@ -164,38 +170,39 @@ export class Orders {
     return value.slice(0, 10);
   }
 
-  async #readReplayCursor(organizationId: string): Promise<string | null> {
+  async #readReplayCursor(scope: StoreScope): Promise<string | null> {
     const { data } = await this.supabase
       .from("store_connections")
       .select("replay_cursor")
-      .eq("organization_id", organizationId)
+      .eq("id", scope.storeId)
       .maybeSingle();
     return data?.replay_cursor ? this.#asDate(String(data.replay_cursor)) : null;
   }
 
-  async #writeReplayCursor(organizationId: string, cursor: string): Promise<void> {
+  async #writeReplayCursor(scope: StoreScope, cursor: string): Promise<void> {
     const { error } = await this.supabase
       .from("store_connections")
       .update({ replay_cursor: cursor, updated_at: new Date().toISOString() })
-      .eq("organization_id", organizationId);
+      .eq("id", scope.storeId);
     if (error) {
       throw new OrdersError(`store_connections replay_cursor update failed: ${error.message}`);
     }
   }
 
-  async #dataEndDate(organizationId: string): Promise<string | null> {
+  async #dataEndDate(scope: StoreScope): Promise<string | null> {
     const { data } = await this.supabase
       .from("orders")
       .select("created_at")
-      .eq("organization_id", organizationId)
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     return data?.created_at ? this.#asDate(String(data.created_at)) : null;
   }
 
-  async #streamStartDate(organizationId: string): Promise<string | null> {
-    const end = await this.#dataEndDate(organizationId);
+  async #streamStartDate(scope: StoreScope): Promise<string | null> {
+    const end = await this.#dataEndDate(scope);
     return end ? this.#minusMonths(end, Orders.STREAM_WINDOW_MONTHS) : null;
   }
 

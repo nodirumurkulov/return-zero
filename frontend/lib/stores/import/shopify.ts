@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import type { ImportLoadOpts, ImportLoader, ImportTableResult } from "./types";
 
@@ -9,7 +10,7 @@ export class ShopifyImportLoader implements ImportLoader {
 
   load(
     _supabase: SupabaseClient<Database>,
-    _organizationId: string,
+    _scope: StoreScope,
     _source: unknown,
     _opts?: ImportLoadOpts,
   ): Promise<ImportTableResult[]> {

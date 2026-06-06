@@ -4,38 +4,49 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
-import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { detectBodySchema, mergeDetectionResults } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
+import { getStoreScope, listAllStoreScopes } from "@/lib/tenancy/server";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 export const dynamic = "force-dynamic";
 
-async function detectOrganization(
+async function detectStore(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
   productId: string | undefined,
   asOf: string | undefined,
 ) {
   const store = getStore(supabase);
   if (productId) {
-    return store.incidents.detect({ organizationId, productId, asOf });
+    return store.incidents.detect({ scope, productId, asOf });
   }
 
   const { data: products, error } = await supabase
     .from("products")
     .select("id")
-    .eq("organization_id", organizationId);
+    .eq("organization_id", scope.organizationId)
+    .eq("store_id", scope.storeId);
   if (error) throw new Error(`load products failed: ${error.message}`);
 
   const results = await Promise.all(
-    (products ?? []).map((p) =>
-      store.incidents.detect({ organizationId, productId: p.id, asOf }),
-    ),
+    (products ?? []).map((p) => store.incidents.detect({ scope, productId: p.id, asOf })),
   );
   return mergeDetectionResults(results);
+}
+
+async function scopesForRequest(
+  supabase: SupabaseClient<Database>,
+  cronMode: boolean,
+): Promise<StoreScope[]> {
+  if (!cronMode) {
+    return [await getStoreScope()];
+  }
+
+  return listAllStoreScopes(supabase);
 }
 
 export async function POST(req: NextRequest) {
@@ -64,22 +75,20 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const organizationIds = cronMode
-      ? await listAllOrganizationIds(supabase)
-      : [await requireOrganizationId(supabase)];
+    const scopes = await scopesForRequest(supabase, cronMode);
 
     const { product_id: productId, as_of: asOf } = parsed.data;
     const results = await Promise.all(
-      organizationIds.map((organizationId) =>
-        detectOrganization(supabase, organizationId, productId, asOf),
-      ),
+      scopes.map((scope) => detectStore(supabase, scope, productId, asOf)),
     );
     const created = results.flatMap((r) => r.created);
     const store = getStore(supabase);
     await Promise.all(
-      organizationIds.flatMap((organizationId, index) => {
+      scopes.flatMap((scope, index) => {
         const orgCreated = results[index]?.created ?? [];
-        return orgCreated.length > 0 ? [store.incidents.notifyNew(organizationId, orgCreated)] : [];
+        return orgCreated.length > 0
+          ? [store.incidents.notifyNew(scope.organizationId, orgCreated)]
+          : [];
       }),
     );
     void investigateCreatedIncidents(supabase, created);

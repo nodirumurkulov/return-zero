@@ -60,9 +60,10 @@ export async function runHugoApproval(
   incident: Incident,
   approvedBy: string,
 ): Promise<string> {
+  const scope = { organizationId: incident.organization_id, storeId: incident.store_id };
   const actionIds = await getStore(supabase).incidents.listActionIds({
     incidentId: incident.id,
-    organizationId: incident.organization_id,
+    scope,
     filter: { status: "proposed", riskLevel: "low" },
   });
   if (actionIds.length === 0) {
@@ -74,7 +75,7 @@ export async function runHugoApproval(
       incidentId: incident.id,
       actionIds,
       approvedByUserId: approvedBy,
-      organizationId: incident.organization_id,
+      scope,
       appUrl: appUrl(),
     });
   } catch (err) {

@@ -1,6 +1,7 @@
 -- =============================================================
 -- 015_schema_integrity.sql
 -- Composite FK fixes and reset_organization_data completeness.
+-- Superseded by reset_store_data in 017_multi_store.sql for store-scoped resets.
 -- =============================================================
 
 -- Repair prod drift: 004 tables missing despite migration history.

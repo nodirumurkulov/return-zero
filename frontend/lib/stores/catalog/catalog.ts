@@ -7,6 +7,7 @@ import type { MetricValue } from "@/lib/stores/metrics/metric-definition";
 import { getProductSeries } from "@/lib/stores/metrics/series";
 import type { ProductSourceFacts } from "@/lib/stores/metrics/source-facts";
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import { CatalogError } from "./errors";
 import {
@@ -37,9 +38,9 @@ export class Catalog {
   }> {
     const include = opts.include ?? ["thresholds"];
     const [{ metrics, facts, productRows }, thresholdsByProduct] = await Promise.all([
-      this.#buildCatalog(opts.organizationId),
+      this.#buildCatalog(opts.scope),
       include.includes("thresholds")
-        ? this.#loadThresholdsByProduct(opts.organizationId)
+        ? this.#loadThresholdsByProduct(opts.scope)
         : Promise.resolve({} as Record<string, KpiThreshold[]>),
     ]);
 
@@ -59,19 +60,18 @@ export class Catalog {
     monthly: ProductMonthlyMetric[];
     thresholds: KpiThreshold[];
   } | null> {
+    const { scope, productId } = opts;
     const [{ metrics, factsByWindow }, productRes, series, thresholds] = await Promise.all([
-      computeMetricsDetailed(this.supabase, {
-        organizationId: opts.organizationId,
-        productId: opts.productId,
-      }),
+      computeMetricsDetailed(this.supabase, { scope, productId }),
       this.supabase
         .from("products")
         .select("id, external_id, title, product_type, gender_segment")
-        .eq("organization_id", opts.organizationId)
-        .eq("id", opts.productId)
+        .eq("organization_id", scope.organizationId)
+        .eq("store_id", scope.storeId)
+        .eq("id", productId)
         .maybeSingle(),
-      getProductSeries(this.supabase, opts.organizationId, opts.productId, 12),
-      this.#loadThresholdsForProduct(opts.organizationId, opts.productId),
+      getProductSeries(this.supabase, scope, productId, 12),
+      this.#loadThresholdsForProduct(scope, productId),
     ]);
 
     const row = productRes.data;
@@ -81,7 +81,7 @@ export class Catalog {
       factsByWindow.get(30) ??
       Array.from(factsByWindow.values())[0] ??
       new Map<string, ProductSourceFacts>();
-    const product = this.#toProductMetric(row, metrics[opts.productId] ?? [], facts.get(opts.productId));
+    const product = this.#toProductMetric(row, metrics[productId] ?? [], facts.get(productId));
 
     return {
       product: { ...product, health: this.#productHealth(product, thresholds) },
@@ -101,11 +101,12 @@ export class Catalog {
   }
 
   async update(opts: CatalogUpdateOpts): Promise<void> {
+    const { scope, productId, metricKey, threshold } = opts;
     const { data: metricDef, error: defErr } = await this.supabase
       .from("metric_definitions")
       .select("id")
-      .eq("organization_id", opts.organizationId)
-      .eq("metric_key", opts.metricKey)
+      .eq("organization_id", scope.organizationId)
+      .eq("metric_key", metricKey)
       .maybeSingle();
 
     if (defErr ?? !metricDef) {
@@ -114,10 +115,10 @@ export class Catalog {
 
     const { error } = await this.supabase.from("product_kpi_thresholds").upsert(
       {
-        organization_id: opts.organizationId,
-        product_id: opts.productId,
+        organization_id: scope.organizationId,
+        product_id: productId,
         metric_definition_id: metricDef.id,
-        threshold: opts.threshold,
+        threshold,
         active: true,
       },
       { onConflict: "organization_id,product_id,metric_definition_id" },
@@ -126,17 +127,18 @@ export class Catalog {
     if (error) throw new CatalogError(error.message);
   }
 
-  async #buildCatalog(organizationId: string): Promise<{
+  async #buildCatalog(scope: StoreScope): Promise<{
     metrics: Record<string, MetricValue[]>;
     facts: Map<string, ProductSourceFacts>;
     productRows: ProductRow[];
   }> {
     const [{ metrics, factsByWindow }, { data: productRows, error }] = await Promise.all([
-      computeMetricsDetailed(this.supabase, { organizationId }),
+      computeMetricsDetailed(this.supabase, { scope }),
       this.supabase
         .from("products")
         .select("id, external_id, title, product_type, gender_segment")
-        .eq("organization_id", organizationId),
+        .eq("organization_id", scope.organizationId)
+        .eq("store_id", scope.storeId),
     ]);
     if (error) throw new CatalogError(error.message);
     const facts =
@@ -179,16 +181,13 @@ export class Catalog {
     return metricKeySchema.parse(raw);
   }
 
-  async #loadThresholdsForProduct(
-    organizationId: string,
-    productId: string,
-  ): Promise<KpiThreshold[]> {
+  async #loadThresholdsForProduct(scope: StoreScope, productId: string): Promise<KpiThreshold[]> {
     const { data, error } = await this.supabase
       .from("product_kpi_thresholds")
       .select(
         "id, product_id, metric_definition_id, threshold, direction, active, created_at, metric_definitions!inner(metric_key)",
       )
-      .eq("organization_id", organizationId)
+      .eq("organization_id", scope.organizationId)
       .eq("product_id", productId)
       .eq("active", true);
 
@@ -206,15 +205,13 @@ export class Catalog {
     }));
   }
 
-  async #loadThresholdsByProduct(
-    organizationId: string,
-  ): Promise<Record<string, KpiThreshold[]>> {
+  async #loadThresholdsByProduct(scope: StoreScope): Promise<Record<string, KpiThreshold[]>> {
     const { data, error } = await this.supabase
       .from("product_kpi_thresholds")
       .select(
         "id, product_id, metric_definition_id, threshold, direction, active, created_at, metric_definitions!inner(metric_key)",
       )
-      .eq("organization_id", organizationId)
+      .eq("organization_id", scope.organizationId)
       .eq("active", true);
 
     if (error) throw new CatalogError(`load product_kpi_thresholds: ${error.message}`);

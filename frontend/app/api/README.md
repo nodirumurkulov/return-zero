@@ -13,7 +13,8 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/stores/orders/advance` | Advance replay clock + detect breaches (cron or signed-in user) |
 | `GET` | `/api/stores/orders/feed` | Orders feed for replay UI |
 | `POST` | `/api/stores/import/[platform]` | Start async store import (`202` + background job for `mock_csv`) |
-| `GET` | `/api/stores/import/status` | Connection status + product count (poll while importing) |
+| `PATCH` | `/api/stores/active` | Switch active store for the signed-in org |
+| `GET` | `/api/stores/import/status` | Connection status + product count (poll while syncing) |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 | `POST` | `/api/slack/events` | Slack Events API — `@hugo` mentions → LLM reply (URL verify + signing secret) |
 

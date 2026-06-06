@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronsUpDown, Plus } from "lucide-react";
-import Image from "next/image";
 
 import {
   DropdownMenu,
@@ -17,11 +16,17 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { DemoShop } from "@/lib/organizations/demo-shops";
+import { useActiveStore, useStores, useSwitchStore } from "@/hooks/tenancy";
+import type { StoreSummary } from "@/lib/tenancy";
 import { cn } from "@/lib/utils";
 
-function shopInitials(name: string): string {
-  return name
+function storeDisplayName(store: StoreSummary): string {
+  if (store.label) return store.label;
+  return store.platform === "mock_csv" ? "Mock store" : "Shopify store";
+}
+
+function storeInitials(store: StoreSummary): string {
+  return storeDisplayName(store)
     .split(/\s+/)
     .map((word) => word.charAt(0))
     .join("")
@@ -29,34 +34,15 @@ function shopInitials(name: string): string {
     .toUpperCase();
 }
 
-function ShopAvatar({
-  shop,
+function StoreAvatar({
+  store,
   className,
   textClassName,
 }: {
-  shop: DemoShop;
+  store: StoreSummary;
   className?: string;
   textClassName?: string;
 }) {
-  if (shop.logoSrc) {
-    return (
-      <div
-        className={cn(
-          "relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-sidebar-primary",
-          className,
-        )}
-      >
-        <Image
-          src={shop.logoSrc}
-          alt=""
-          fill
-          className="object-cover"
-          sizes="28px"
-        />
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn(
@@ -64,27 +50,19 @@ function ShopAvatar({
         className,
       )}
     >
-      <span className={cn("font-semibold", textClassName)}>
-        {shopInitials(shop.name)}
-      </span>
+      <span className={cn("font-semibold", textClassName)}>{storeInitials(store)}</span>
     </div>
   );
 }
 
-export function ShopSwitcher({
-  shops,
-  activeShopId,
-  switchingEnabled = false,
-}: {
-  shops: DemoShop[];
-  activeShopId?: string;
-  switchingEnabled?: boolean;
-}) {
+export function ShopSwitcher() {
   const { isMobile } = useSidebar();
-  const activeShop =
-    shops.find((shop) => shop.id === activeShopId) ?? shops[0];
+  const stores = useStores();
+  const activeStore = useActiveStore();
+  const { mutate: switchStore, isPending } = useSwitchStore();
+  const switchingEnabled = stores.length > 1;
 
-  if (!activeShop) {
+  if (!activeStore) {
     return null;
   }
 
@@ -96,12 +74,13 @@ export function ShopSwitcher({
             <SidebarMenuButton
               size="lg"
               className="h-auto min-h-10 py-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              disabled={isPending}
             >
-              <ShopAvatar shop={activeShop} className="size-7" textClassName="text-[11px]" />
+              <StoreAvatar store={activeStore} className="size-7" textClassName="text-[11px]" />
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeShop.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {activeShop.plan}
+                <span className="truncate font-medium">{storeDisplayName(activeStore)}</span>
+                <span className="truncate text-xs text-muted-foreground capitalize">
+                  {activeStore.platform.replace("_", " ")}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 shrink-0 opacity-50" />
@@ -116,20 +95,25 @@ export function ShopSwitcher({
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Stores
             </DropdownMenuLabel>
-            {shops.map((shop) => {
-              const isActive = shop.id === activeShop.id;
+            {stores.map((store) => {
+              const isActive = store.id === activeStore.id;
               return (
                 <DropdownMenuItem
-                  key={shop.id}
-                  disabled={!switchingEnabled || isActive}
+                  key={store.id}
+                  disabled={!switchingEnabled || isActive || isPending}
                   className="gap-2 p-2"
+                  onClick={() => {
+                    if (!isActive) {
+                      switchStore(store.id);
+                    }
+                  }}
                 >
-                  <ShopAvatar
-                    shop={shop}
+                  <StoreAvatar
+                    store={store}
                     className="size-6 rounded-md border border-border bg-background"
                     textClassName="text-[10px]"
                   />
-                  <span className="flex-1">{shop.name}</span>
+                  <span className="flex-1">{storeDisplayName(store)}</span>
                   {isActive ? (
                     <span className="text-xs text-muted-foreground">Active</span>
                   ) : null}

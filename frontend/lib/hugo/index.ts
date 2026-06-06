@@ -1,11 +1,12 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { fetchSlackThreadMessages, postSlackMessage } from "@/lib/slack";
 import type { Incident } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolveOrganizationIdForSlackTeam , getTenancy } from "@/lib/tenancy/server";
+import type { StoreScope } from "@/lib/tenancy/types";
 import {
   runHugoApproval,
   runHugoInvestigation,
@@ -97,19 +98,19 @@ function confirmationBlocks(action: "resolve" | "reject", incident: Incident): o
 async function answerDataQuery(
   supabase: SupabaseClient<Database>,
   mention: HugoMention,
-  organizationId: string,
+  scope: StoreScope,
   incidentReference: string | null | undefined,
   threadTranscript?: string,
 ): Promise<string> {
-  const parts = [await buildOpenIncidentsContext(supabase, organizationId)];
+  const parts = [await buildOpenIncidentsContext(supabase, scope)];
 
   const ref = (incidentReference ?? "").trim();
   if (ref) {
-    const { match } = await resolveIncident(supabase, ref, organizationId);
+    const { match } = await resolveIncident(supabase, ref, scope);
     if (match) {
       const detail = await getStore(supabase).incidents.getDetail({
         id: match.id,
-        organizationId,
+        scope,
       });
       if (detail) {
         parts.push(buildIncidentDetailContext(detail));
@@ -118,11 +119,11 @@ async function answerDataQuery(
   }
 
   if (wantsCatalog(mention.prompt)) {
-    parts.push(await buildCatalogContext(supabase, organizationId));
+    parts.push(await buildCatalogContext(supabase, scope));
   }
 
   if (wantsInventory(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
-    parts.push(await buildInventoryContext(supabase, organizationId));
+    parts.push(await buildInventoryContext(supabase, scope));
   }
 
   return generateDataReply(mention.prompt, parts.join("\n\n"), threadTranscript);
@@ -147,6 +148,8 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       return;
     }
 
+    const scope = await getTenancy(supabase).getStoreScope({ organizationId });
+
     const threadRead = mention.threadTs
       ? await fetchSlackThreadMessages({ channel: mention.channel, threadTs: mention.threadTs })
       : null;
@@ -170,7 +173,7 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       const { match, candidates } = await resolveIncident(
         supabase,
         threadReference ?? intent.incident_reference,
-        organizationId,
+        scope,
       );
       if (!match) {
         await post(disambiguation(verb, candidates));
@@ -199,7 +202,7 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
       const { match, candidates } = await resolveIncident(
         supabase,
         threadReference ?? intent.incident_reference,
-        organizationId,
+        scope,
       );
       if (!match) {
         await post(disambiguation(verb, candidates));
@@ -233,7 +236,7 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
         await answerDataQuery(
           supabase,
           mention,
-          organizationId,
+          scope,
           threadReference ?? intent.incident_reference,
           threadTranscript,
         ),

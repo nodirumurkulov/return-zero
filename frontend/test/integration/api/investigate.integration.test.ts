@@ -24,18 +24,18 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  tryRequireOrganizationId: vi.fn(),
+vi.mock("@/lib/tenancy/server", () => ({
+  tryGetStoreScope: vi.fn(),
 }));
 
 import { POST } from "@/app/api/investigate/route";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 const investigateMock = investigateIncidentMock;
 const getIncidentMock = incidentsStoreMock.get;
 const createClientMock = vi.mocked(createClient);
-const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
+const tryGetStoreScopeMock = vi.mocked(tryGetStoreScope);
 
 const INCIDENT_ID = "550e8400-e29b-41d4-a716-446655440001";
 const PRODUCT_ID = "550e8400-e29b-41d4-a716-446655440002";
@@ -86,9 +86,9 @@ describe("POST /api/investigate", () => {
       }),
     };
     createClientMock.mockResolvedValue(supabase as never);
-    tryRequireOrganizationIdMock.mockResolvedValue({
+    tryGetStoreScopeMock.mockResolvedValue({
       ok: true,
-      organizationId: "org-1",
+      scope: { organizationId: "org-1", storeId: "store-1" },
     });
     getIncidentMock.mockResolvedValue({
       id: INCIDENT_ID,

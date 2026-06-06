@@ -2,27 +2,27 @@ import IncidentKanban from "@/components/incidents/IncidentKanban";
 import { ReplayControl } from "@/components/incidents/ReplayControl";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionLabel } from "@/components/ui/section-label";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function IncidentsPage() {
   const supabase = await createClient();
 
-  const orgResult = await tryRequireOrganizationId(supabase);
-  if (!orgResult.ok) {
+  const scopeResult = await tryGetStoreScope(supabase);
+  if (!scopeResult.ok) {
     return (
       <div className="p-6">
-        <EmptyState title="No organization" description={orgResult.error} />
+        <EmptyState title="No organization" description={scopeResult.error} />
       </div>
     );
   }
-  const { organizationId } = orgResult;
+  const scope = scopeResult.scope;
 
   const [result, replayRes] = await Promise.all([
-    getStore(supabase).incidents.list({ organizationId }).then(
+    getStore(supabase).incidents.list({ scope }).then(
       (rows) => ({ ok: true as const, rows }),
       (err: unknown) => ({
         ok: false as const,
@@ -32,7 +32,7 @@ export default async function IncidentsPage() {
     supabase
       .from("store_connections")
       .select("replay_cursor")
-      .eq("organization_id", organizationId)
+      .eq("id", scope.storeId)
       .maybeSingle(),
   ]);
 

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import { apiClient } from "@/lib/api/client";
 import {
-  importImportingResponseSchema,
   importSkippedResponseSchema,
+  importSyncingResponseSchema,
   type StorePlatform,
 } from "@/lib/stores";
 
@@ -22,7 +22,7 @@ const importStatusResponseSchema = z.object({
 });
 
 export type PostImportStoreResult = {
-  readonly importing?: true;
+  readonly syncing?: true;
   readonly skipped?: true;
 };
 
@@ -49,7 +49,7 @@ async function pollImportReady(): Promise<void> {
     if (connection?.status === "connected" && productCount > 0) {
       return;
     }
-    if (connection?.status === "importing" && productCount > 0) {
+    if (connection?.status === "syncing" && productCount > 0) {
       return;
     }
 
@@ -64,12 +64,12 @@ export async function postImportStore(platform: StorePlatform): Promise<PostImpo
   const json: unknown = await res.json().catch(() => null);
 
   if (res.status === 202) {
-    const importing = importImportingResponseSchema.safeParse(json);
-    if (!importing.success) {
+    const syncing = importSyncingResponseSchema.safeParse(json);
+    if (!syncing.success) {
       throw new Error("Import failed");
     }
     await pollImportReady();
-    return { importing: true };
+    return { syncing: true };
   }
 
   if (res.status === 200) {

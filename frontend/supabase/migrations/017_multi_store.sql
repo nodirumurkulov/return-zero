@@ -224,6 +224,15 @@ begin
   );
   delete from public.incidents where store_id = p_store_id;
 
+  delete from public.product_kpi_thresholds
+  where product_id in (select id from public.products where store_id = p_store_id);
+
+  delete from public.product_baselines
+  where product_id in (select id from public.products where store_id = p_store_id);
+
+  delete from public.product_cost_overrides
+  where product_id in (select id from public.products where store_id = p_store_id);
+
   delete from public.support_messages where store_id = p_store_id;
   delete from public.email_events where store_id = p_store_id;
   delete from public.product_collections where store_id = p_store_id;

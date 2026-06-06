@@ -1,7 +1,8 @@
 import AppShell from "@/components/layout/AppShell";
-import { getCurrentOrganizationId } from "@/lib/organizations";
+import { TenancyProvider } from "@/components/providers/TenancyProvider";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAppTenancy } from "@/lib/tenancy/server";
 
 function displayNameFromMetadata(metadata: unknown): string | null {
   if (typeof metadata !== "object" || metadata === null) return null;
@@ -31,14 +32,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     name: displayNameFromMetadata(user.user_metadata),
   };
 
-  const organizationId = await getCurrentOrganizationId(supabase);
-  const searchTargets = organizationId
-    ? await getStore(supabase).search.list({ organizationId }).catch(() => [])
+  const tenancy = await getAppTenancy().catch(() => null);
+  const searchTargets = tenancy
+    ? await getStore(supabase).search.list({ scope: tenancy.scope }).catch(() => [])
     : [];
 
-  return (
-    <AppShell user={shellUser} searchTargets={searchTargets}>
+  const shell = (
+    <AppShell user={shellUser} searchTargets={searchTargets} showStoreSwitcher={tenancy != null}>
       {children}
     </AppShell>
   );
+
+  if (!tenancy) {
+    return shell;
+  }
+
+  return <TenancyProvider value={tenancy}>{shell}</TenancyProvider>;
 }

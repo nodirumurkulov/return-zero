@@ -37,7 +37,7 @@ describe("Incidents", () => {
       const store = new Incidents(supabase);
       const ids = await store.listActionIds({
         incidentId: "inc-1",
-        organizationId: "org-1",
+        scope: { organizationId: "org-1", storeId: "store-1" },
         filter: { status: "proposed", riskLevel: "low" },
       });
       expect(ids).toEqual(["low-1", "low-2"]);

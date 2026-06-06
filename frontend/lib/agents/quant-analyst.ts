@@ -2,6 +2,7 @@ import "server-only";
 
 import { Output, stepCountIs, ToolLoopAgent } from "ai";
 import { getModel } from "@/lib/ai/model";
+import type { StoreScope } from "@/lib/tenancy/types";
 import { agentStepHandlers, type InvestigationStepEmitter } from "./investigation-steps";
 import { quantDiagnosisSchema } from "./schemas";
 import { createQuantTools } from "./tools/quant-tools";
@@ -35,7 +36,7 @@ You DIAGNOSE only — do NOT propose actions. The Operator will decide what to d
 
 export async function runQuantAnalyst(
   supabase: AgentSupabase,
-  organizationId: string,
+  scope: StoreScope,
   productId: string,
   steps?: InvestigationStepEmitter,
 ): Promise<QuantDiagnosis> {
@@ -44,7 +45,7 @@ export async function runQuantAnalyst(
   const agent = new ToolLoopAgent({
     model: getModel(),
     instructions: QUANT_INSTRUCTIONS,
-    tools: createQuantTools(supabase, organizationId),
+    tools: createQuantTools(supabase, scope),
     output: Output.object({ schema: quantDiagnosisSchema }),
     stopWhen: stepCountIs(10),
     providerOptions: { openai: { strictJsonSchema: false } },

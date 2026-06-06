@@ -26,7 +26,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DEMO_SHOPS } from "@/lib/organizations/demo-shops";
 import type { SearchTarget } from "@/lib/stores";
 
 const NAV = [
@@ -61,10 +60,12 @@ export default function AppShell({
   children,
   user,
   searchTargets,
+  showStoreSwitcher = false,
 }: {
   children: React.ReactNode;
   user: ShellUser;
   searchTargets: SearchTarget[];
+  showStoreSwitcher?: boolean;
 }) {
   const pathname = usePathname();
   const displayName = user.name ?? user.email ?? "Account";
@@ -84,9 +85,11 @@ export default function AppShell({
             <div className="flex items-center gap-2 overflow-hidden px-4 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
               <BrandLogo />
             </div>
-            <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
-              <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
-            </div>
+            {showStoreSwitcher ? (
+              <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
+                <ShopSwitcher />
+              </div>
+            ) : null}
           </SidebarHeader>
           <SidebarRail />
 

@@ -2,10 +2,10 @@ import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { updateThresholdBodySchema } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +19,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ product
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const org = await tryRequireOrganizationId(supabase);
-  if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+  const scopeResult = await tryGetStoreScope(supabase);
+  if (!scopeResult.ok) {
+    return NextResponse.json({ error: scopeResult.error }, { status: 403 });
   }
-  const { organizationId } = org;
+  const scope = scopeResult.scope;
 
   const raw: unknown = await req.json().catch(() => null);
   const parsed = updateThresholdBodySchema.safeParse(raw);
@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ product
 
   try {
     await getStore(supabase).catalog.update({
-      organizationId,
+      scope,
       productId,
       metricKey,
       threshold,

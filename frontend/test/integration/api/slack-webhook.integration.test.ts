@@ -33,8 +33,13 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({})),
 }));
 
-vi.mock("@/lib/organizations", () => ({
+vi.mock("@/lib/tenancy/server", () => ({
   resolveOrganizationIdForSlackTeam: vi.fn(() => Promise.resolve("org-1")),
+  getTenancy: vi.fn(() => ({
+    getStoreScope: vi.fn(() =>
+      Promise.resolve({ organizationId: "org-1", storeId: "store-1" }),
+    ),
+  })),
 }));
 
 import { POST } from "@/app/api/slack/webhook/route";
