@@ -1,8 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+
+// Survives router.refresh() remount so replay feedback stays visible in the UI and E2E.
+const replayMessageCache = { pending: null as string | null };
 
 // BYOD Phase 3 — step the replay clock forward; new incidents stream onto the
 // board as the cursor crosses each product's learned threshold.
@@ -10,7 +13,11 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
   const router = useRouter();
   const [cursor, setCursor] = useState(initialCursor);
   const [state, setState] = useState<"idle" | "running" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(() => replayMessageCache.pending);
+
+  useEffect(() => {
+    replayMessageCache.pending = null;
+  }, []);
 
   const advance = async (days: number) => {
     setState("running");
@@ -30,15 +37,15 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
       };
       if (!res.ok || !body.success) throw new Error(body.error ?? "Replay failed");
       setCursor(body.cursor ?? cursor);
-      setMessage(
-        body.created
-          ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.at_end ? " · reached end of data" : ""}`
-          : body.at_end
-            ? "No new incidents · reached end of data"
-            : "No new incidents this step",
-      );
-      router.refresh();
+      const statusMessage = body.created
+        ? `+${body.created} new incident${body.created === 1 ? "" : "s"}${body.at_end ? " · reached end of data" : ""}`
+        : body.at_end
+          ? "No new incidents · reached end of data"
+          : "No new incidents this step";
+      replayMessageCache.pending = statusMessage;
+      setMessage(statusMessage);
       setState("idle");
+      router.refresh();
     } catch (err) {
       setState("error");
       setMessage(err instanceof Error ? err.message : "Replay failed");
@@ -58,7 +65,12 @@ export function ReplayControl({ initialCursor }: { initialCursor: string | null 
         </Button>
       </div>
       {message && (
-        <p className={`text-xs ${state === "error" ? "text-destructive" : "text-muted-foreground"}`}>{message}</p>
+        <p
+          data-testid="replay-status"
+          className={`text-xs ${state === "error" ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          {message}
+        </p>
       )}
     </div>
   );

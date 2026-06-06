@@ -26,7 +26,7 @@ test.describe("Catalog", () => {
     const catalog = new CatalogPage(page);
     await catalog.goto();
     await catalog.openProduct(COURT_TRAINER_TITLE);
-    await expect(page).toHaveURL(/\/catalog\/prod_/);
+    await expect(page).toHaveURL(/\/catalog\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { name: COURT_TRAINER_TITLE })).toBeVisible();
   });
 
