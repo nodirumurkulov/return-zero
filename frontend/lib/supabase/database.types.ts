@@ -729,6 +729,63 @@ export type Database = {
           },
         ]
       }
+      investigation_steps: {
+        Row: {
+          agent_name: string
+          created_at: string
+          id: string
+          incident_id: string
+          label: string
+          metadata: Json | null
+          organization_id: string
+          run_id: string
+          status: Database["public"]["Enums"]["investigation_step_status"]
+          step_key: string
+          updated_at: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          label: string
+          metadata?: Json | null
+          organization_id: string
+          run_id: string
+          status?: Database["public"]["Enums"]["investigation_step_status"]
+          step_key: string
+          updated_at?: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          label?: string
+          metadata?: Json | null
+          organization_id?: string
+          run_id?: string
+          status?: Database["public"]["Enums"]["investigation_step_status"]
+          step_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investigation_steps_incident_org_fkey"
+            columns: ["organization_id", "incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "investigation_steps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           affected_kpi_keys: string[]
@@ -2003,6 +2060,7 @@ export type Database = {
         | "deployed"
         | "monitoring"
       incident_severity: "critical" | "high" | "medium" | "low"
+      investigation_step_status: "running" | "done" | "error"
       incident_status:
         | "detected"
         | "investigating"
@@ -2181,6 +2239,7 @@ export const Constants = {
         "monitoring",
       ],
       incident_severity: ["critical", "high", "medium", "low"],
+      investigation_step_status: ["running", "done", "error"],
       incident_status: [
         "detected",
         "investigating",

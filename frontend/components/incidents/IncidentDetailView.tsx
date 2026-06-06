@@ -2,10 +2,13 @@
 
 import { ChevronRight, CircleCheckBig } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import ActionList from "@/components/incidents/ActionList";
 import AgentFindingCard from "@/components/incidents/AgentFindingCard";
 import DetectionReasonCard from "@/components/incidents/DetectionReasonCard";
 import IncidentTimeline from "@/components/incidents/IncidentTimeline";
+import InvestigationLivePanel from "@/components/incidents/InvestigationLivePanel";
 import TriggerInvestigationButton from "@/components/incidents/TriggerInvestigationButton";
 import { Card } from "@/components/ui/card";
 import { ConfidenceBar } from "@/components/ui/confidence-bar";
@@ -18,12 +21,22 @@ import { getDetectionReason } from "@/lib/stores/incidents/format-detection-reas
 
 export default function IncidentDetailView({ detail }: { detail: IncidentDetail }) {
   const { incident, findings, actions, timeline } = detail;
+  const router = useRouter();
+  const [investigationActive, setInvestigationActive] = useState(false);
   const detectionReason = getDetectionReason(timeline, incident);
   const showDetectionOnly =
     incident.status === "detected" ||
     (incident.status === "investigating" && findings.length === 0 && actions.length === 0);
   const showInvestigationSections =
     findings.length > 0 || actions.length > 0 || !!incident.root_cause;
+
+  const panelActive =
+    investigationActive || incident.status === "investigating";
+
+  const handleInvestigationSettled = useCallback(() => {
+    setInvestigationActive(false);
+    router.refresh();
+  }, [router]);
 
   return (
     <div className="flex h-full flex-col">
@@ -45,7 +58,13 @@ export default function IncidentDetailView({ detail }: { detail: IncidentDetail 
             <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
           </div>
           {incident.status === "detected" && incident.product_id ? (
-            <TriggerInvestigationButton incidentId={incident.id} productId={incident.product_id} />
+            <TriggerInvestigationButton
+              incidentId={incident.id}
+              productId={incident.product_id}
+              onStarted={() => {
+                setInvestigationActive(true);
+              }}
+            />
           ) : null}
         </div>
         {!showDetectionOnly && incident.affected_kpi_keys.length > 0 ? (
@@ -120,6 +139,11 @@ export default function IncidentDetailView({ detail }: { detail: IncidentDetail 
             </div>
 
             <div className="space-y-5">
+              <InvestigationLivePanel
+                incidentId={incident.id}
+                active={panelActive}
+                onSettled={handleInvestigationSettled}
+              />
               <Card className="gap-0 p-4">
                 <SectionLabel className="mb-3">Timeline</SectionLabel>
                 <IncidentTimeline events={timeline} />

@@ -2,6 +2,7 @@ import "server-only";
 
 import { Output, stepCountIs, ToolLoopAgent } from "ai";
 import { getModel } from "@/lib/ai/model";
+import { agentStepHandlers, type InvestigationStepEmitter } from "./investigation-steps";
 import { quantDiagnosisSchema } from "./schemas";
 import { createQuantTools } from "./tools/quant-tools";
 import type { AgentSupabase, QuantDiagnosis } from "./types";
@@ -36,7 +37,10 @@ export async function runQuantAnalyst(
   supabase: AgentSupabase,
   organizationId: string,
   productId: string,
+  steps?: InvestigationStepEmitter,
 ): Promise<QuantDiagnosis> {
+  const stepHooks = steps ? agentStepHandlers(steps, "Quant Analyst", "quant") : {};
+
   const agent = new ToolLoopAgent({
     model: getModel(),
     instructions: QUANT_INSTRUCTIONS,
@@ -48,6 +52,7 @@ export async function runQuantAnalyst(
 
   const { output } = await agent.generate({
     prompt: `Diagnose product ${productId}. Start with getAnomalyProfile, then call getRoasReallocation if marketing is relevant. Be explicit about confidence and small-sample caveats.`,
+    ...stepHooks,
   });
 
   if (!output) {

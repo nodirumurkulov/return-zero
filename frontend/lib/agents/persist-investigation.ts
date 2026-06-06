@@ -1,6 +1,10 @@
 import "server-only";
 import { sendIncidentNotification } from "@/lib/slack";
 import type { Json } from "@/lib/supabase/database.types";
+import {
+  createInvestigationRunId,
+  createInvestigationStepEmitter,
+} from "./investigation-steps";
 import { runInvestigation } from "./run-investigation";
 import type { AgentSupabase, InvestigationResult } from "./types";
 
@@ -8,6 +12,7 @@ export type PersistInvestigationResult = {
   result: InvestigationResult;
   findings_count: number;
   actions_count: number;
+  run_id: string;
 };
 
 export async function persistInvestigation(
@@ -27,11 +32,24 @@ export async function persistInvestigation(
   const organizationId = incident.organization_id;
   const resolvedProductId = incident.product_id ?? productId;
   const affectedKpiKeys = incident.affected_kpi_keys;
+  const runId = createInvestigationRunId();
+  const steps = createInvestigationStepEmitter(supabase, {
+    organizationId,
+    incidentId,
+    runId,
+  });
 
   await supabase
     .from("incidents")
     .update({ status: "investigating", investigation_started_at: new Date().toISOString() })
     .eq("id", incidentId);
+
+  await steps.startStep({
+    stepKey: "run:started",
+    agentName: "Hugo",
+    label: "Investigation started",
+  });
+  await steps.finishStep("run:started");
 
   await supabase.from("incident_timeline").insert({
     incident_id: incidentId,
@@ -40,13 +58,36 @@ export async function persistInvestigation(
     description: "Quant Analyst dispatched, then Operator",
   });
 
-  const result = await runInvestigation(
-    supabase,
-    organizationId,
-    incidentId,
-    resolvedProductId,
-    affectedKpiKeys,
-  );
+  async function runInvestigationWithSteps(): Promise<InvestigationResult> {
+    try {
+      const investigation = await runInvestigation(
+        supabase,
+        organizationId,
+        incidentId,
+        resolvedProductId,
+        affectedKpiKeys,
+        steps,
+      );
+      await steps.startStep({
+        stepKey: "run:complete",
+        agentName: "Hugo",
+        label: "Investigation complete",
+      });
+      await steps.finishStep("run:complete");
+      return investigation;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Investigation failed";
+      await steps.startStep({
+        stepKey: "run:error",
+        agentName: "Hugo",
+        label: "Investigation failed",
+      });
+      await steps.failStep("run:error", message);
+      throw err;
+    }
+  }
+
+  const result = await runInvestigationWithSteps();
 
   await supabase.from("agent_findings").insert(
     result.findings.map((f) => ({
@@ -156,5 +197,6 @@ export async function persistInvestigation(
     result,
     findings_count: result.findings.length,
     actions_count: result.actions.length,
+    run_id: runId,
   };
 }
