@@ -306,28 +306,32 @@ describe("buildDeepProductContext", () => {
           }),
         ),
       })),
-      from: vi.fn((table: string) => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => {
-              if (table === "support_tickets") {
-                return Promise.resolve({
-                  data: [
-                    {
-                      subject: "Sizing issue",
-                      status: "open",
-                      priority: "high",
-                      category: "returns",
-                    },
-                  ],
-                  error: null,
-                });
-              }
-              return Promise.resolve({ data: [], error: null });
-            }),
-          })),
-        })),
-      })),
+      from: vi.fn((table: string) => {
+        const builder = {
+          select: vi.fn(() => builder),
+          eq: vi.fn(() => builder),
+          single: vi.fn(() =>
+            Promise.resolve({ data: { default_threshold: 1.5 }, error: null }),
+          ),
+          limit: vi.fn(() => {
+            if (table === "support_tickets") {
+              return Promise.resolve({
+                data: [
+                  {
+                    subject: "Sizing issue",
+                    status: "open",
+                    priority: "high",
+                    category: "returns",
+                  },
+                ],
+                error: null,
+              });
+            }
+            return Promise.resolve({ data: [], error: null });
+          }),
+        };
+        return builder;
+      }),
     } as unknown as SupabaseClient<Database>;
 
     const context = await buildDeepProductContext(ctxSupabase, scope, "inc-1");

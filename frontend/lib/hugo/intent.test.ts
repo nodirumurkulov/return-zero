@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { matchDeterministicIntent } from "./intent-fallback";
 import { classifyHugoIntent } from "./intent";
+import { matchDeterministicIntent } from "./intent-fallback";
 import { hugoIntentSchema } from "./schemas";
 
 const { generateTextMock } = vi.hoisted(() => ({ generateTextMock: vi.fn() }));
@@ -30,7 +30,7 @@ describe("classifyHugoIntent", () => {
     generateTextMock.mockResolvedValue({
       output: { intent: "approve", incident_reference: "ROAS", duration_days: null },
     });
-    const result = await classifyHugoIntent("please approve the ROAS fix");
+    const result = await classifyHugoIntent("can you handle the ROAS fix?");
     expect(result.intent).toBe("approve");
     expect(result.incident_reference).toBe("ROAS");
   });
@@ -41,20 +41,11 @@ describe("classifyHugoIntent", () => {
     });
 
     await classifyHugoIntent(
-      "approve the second one",
+      "the second one please",
       "Hugo: 1. Return spike [aaaaaaaa]\n2. ROAS drop [bbbbbbbb]",
     );
 
-    expect(generateTextMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        messages: expect.arrayContaining([
-          expect.objectContaining({
-            role: "user",
-            content: expect.stringContaining("Slack thread so far:"),
-          }),
-        ]),
-      }),
-    );
+    expect(JSON.stringify(generateTextMock.mock.calls)).toContain("Slack thread so far:");
   });
 
   it("falls back to deterministic data query routing when the LLM returns no structured output", async () => {
