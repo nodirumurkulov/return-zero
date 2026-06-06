@@ -1,5 +1,6 @@
 export {
   createAgentFindingFixture,
+  createAnomalyDetectedEventFixture,
   createIncidentActionFixture,
   createIncidentDetailFixture,
   createIncidentFixture,

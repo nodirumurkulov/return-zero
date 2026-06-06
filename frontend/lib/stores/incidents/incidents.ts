@@ -24,11 +24,14 @@ export class Incidents {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
   async list(opts: IncidentsListOpts): Promise<Incident[]> {
-    const { data, error } = await this.supabase
+    const baseQuery = this.supabase
       .from("incidents")
       .select("*")
-      .eq("organization_id", opts.organizationId)
-      .order("created_at", { ascending: false });
+      .eq("organization_id", opts.organizationId);
+    const filteredQuery = opts.productId
+      ? baseQuery.eq("product_id", opts.productId)
+      : baseQuery;
+    const { data, error } = await filteredQuery.order("created_at", { ascending: false });
 
     if (error) throw new IncidentsError(`incidents list failed: ${error.message}`);
     return data ?? [];
@@ -157,8 +160,16 @@ export class Incidents {
     if (prodErr) throw new IncidentsError(`load product: ${prodErr.message}`);
 
     const productTitle = product?.title ?? productId;
-    const title = `${productTitle}: ${primary.display_name} breach`;
+    const fmtValue = (unit: string, value: number) => {
+      if (unit === "ratio" || unit === "percentage") return `${(value * 100).toFixed(1)}%`;
+      if (unit === "currency") return `£${Math.round(value).toLocaleString("en-GB")}`;
+      return `${Math.round(value)}`;
+    };
+    const target = `${primary.direction === "above" ? "≤" : "≥"}${fmtValue(primary.unit, primary.threshold)}`;
+    const value = primary.value ?? 0;
+    const title = `${productTitle}: ${primary.display_name} ${fmtValue(primary.unit, value)} (target ${target})`;
     const severity = primary.severity;
+    const description = `${primary.display_name} ${fmtValue(primary.unit, value)} exceeded threshold ${target}`;
 
     const { data: inc, error: insErr } = await this.supabase
       .from("incidents")
@@ -186,10 +197,12 @@ export class Incidents {
       incident_id: inc.id,
       organization_id: organizationId,
       event_type: "incident_created",
-      description: `KPI threshold breach: ${affected_kpi_keys.join(", ")}`,
+      description,
       metadata: {
         breaches: breached.map((m) => ({
           metric: m.metric_key,
+          display_name: m.display_name,
+          unit: m.unit,
           value: m.value,
           threshold: m.threshold,
           direction: m.direction,

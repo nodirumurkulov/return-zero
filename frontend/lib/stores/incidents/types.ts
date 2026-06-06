@@ -117,6 +117,7 @@ export type ApproveActionsInput = {
 
 export type IncidentsListOpts = {
   organizationId: string;
+  productId?: string;
 };
 
 export type IncidentsGetOpts = {

@@ -33,9 +33,9 @@ export default async function SignInPage({
         <ShopifyLoginButton />
       </div>
       <p className="text-sm text-muted-foreground">
-        New here?{" "}
-        <Link href="/sign-up" className="text-primary hover:underline">
-          Create an account
+        Want early access?{" "}
+        <Link href="/#waitlist" className="text-primary hover:underline">
+          Join the waitlist
         </Link>
       </p>
     </div>
