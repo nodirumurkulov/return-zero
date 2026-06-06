@@ -9,7 +9,7 @@ describe("IncidentCard", () => {
       title: "Refund spike",
       impact_amount: 5000,
     });
-    render(<IncidentCard incident={incident} />);
+    render(<IncidentCard incident={incident} interactive={false} />);
     expect(screen.getByRole("link", { name: /Refund spike/ })).toHaveAttribute(
       "href",
       `/incidents/${incident.id}`,
@@ -22,7 +22,7 @@ describe("IncidentCard", () => {
       title: "Minor drift",
       impact_amount: null,
     });
-    render(<IncidentCard incident={incident} />);
+    render(<IncidentCard incident={incident} interactive={false} />);
     expect(screen.getByRole("link", { name: /Minor drift/ })).toBeInTheDocument();
     expect(screen.queryByText(/£/)).not.toBeInTheDocument();
   });

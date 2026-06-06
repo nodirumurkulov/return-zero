@@ -3,7 +3,7 @@ import { IncidentsPage } from "../pages/incidents.page";
 
 test.describe("Replay control", () => {
   test("advances replay clock from incidents board", async ({ page }) => {
-    await page.route("**/api/replay", async (route) => {
+    await page.route("**/api/stores/orders/advance", async (route) => {
       if (route.request().method() !== "POST") {
         await route.continue();
         return;
@@ -14,6 +14,7 @@ test.describe("Replay control", () => {
         body: JSON.stringify({
           success: true,
           cursor: "2024-02-01",
+          previous_cursor: "2024-01-25",
           created: 0,
           at_end: false,
         }),

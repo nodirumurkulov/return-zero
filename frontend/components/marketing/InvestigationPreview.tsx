@@ -23,14 +23,14 @@ export function MarketingKanbanPreview() {
       </div>
       <div className="space-y-3 p-4">
         {column.map((incident) => (
-          <IncidentCard key={incident.id} incident={incident} />
+          <IncidentCard key={incident.id} incident={incident} interactive={false} />
         ))}
         {other.slice(0, 1).map((incident) => (
           <div key={incident.id} className="opacity-80">
             <div className="mb-2 flex items-center gap-2">
               <StatusBadge status={incident.status} />
             </div>
-            <IncidentCard incident={incident} />
+            <IncidentCard incident={incident} interactive={false} />
           </div>
         ))}
       </div>
