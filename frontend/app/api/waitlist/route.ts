@@ -4,7 +4,7 @@ import { insertWaitlistSignup } from "@/lib/waitlist/mutations";
 import { waitlistBodySchema } from "@/lib/waitlist/schemas";
 
 export async function POST(req: Request) {
-  const raw = await req.json().catch(() => ({}));
+  const raw: unknown = await req.json().catch(() => ({}));
   const parsed = waitlistBodySchema.safeParse(raw);
 
   if (!parsed.success) {
