@@ -1,5 +1,5 @@
 -- =============================================================
--- 019_investigation_steps.sql
+-- 020_investigation_steps.sql
 -- Live investigation step feed for in-app agent progress UI.
 -- =============================================================
 
