@@ -17,7 +17,7 @@ function mockSupabase(result: QueryResult) {
   const builder: QueryBuilder = {
     select: () => builder,
     eq: () => builder,
-    maybeSingle: async () => result,
+    maybeSingle: () => Promise.resolve(result),
   };
 
   return {

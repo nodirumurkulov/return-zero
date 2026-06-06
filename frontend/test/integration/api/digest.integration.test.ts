@@ -216,7 +216,13 @@ describe("GET /api/digest", () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() =>
                 Promise.resolve({
-                  data: [{ incident_id: "inc-1", created_at: new Date().toISOString() }],
+                  data: [
+                    {
+                      incident_id: "inc-1",
+                      created_at: new Date().toISOString(),
+                      description: "Hugo escalated awaiting approval incident inc-1",
+                    },
+                  ],
                   error: null,
                 }),
               ),

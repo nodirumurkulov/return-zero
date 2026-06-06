@@ -1,8 +1,26 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-
 import type { Database } from "@/lib/supabase/database.types";
+
+type MemberRole = Database["public"]["Enums"]["organization_role"];
+type SlackAuthMember = {
+  user_id: string;
+  role: MemberRole;
+};
+
+type SlackAuthFilter = {
+  eq(column: string, value: string): SlackAuthFilter;
+  maybeSingle(): Promise<{
+    data: SlackAuthMember | null;
+    error: { message: string } | null;
+  }>;
+};
+
+export type SlackAuthClient = {
+  from(table: "organization_members"): {
+    select(columns: string): SlackAuthFilter;
+  };
+};
 
 export type SlackAction =
   | "chat"
@@ -18,18 +36,15 @@ export type SlackAuthorization =
   | {
       allowed: true;
       userId?: string;
-      role?: Database["public"]["Enums"]["organization_role"];
+      role?: MemberRole;
     }
   | { allowed: false; reason: string };
 
 const READ_ONLY_ACTIONS = new Set<SlackAction>(["chat", "data_query", "snooze"]);
-const MUTATING_ROLES = new Set<Database["public"]["Enums"]["organization_role"]>([
-  "owner",
-  "admin",
-]);
+const MUTATING_ROLES = new Set<MemberRole>(["owner", "admin"]);
 
 export async function authorizeSlackAction(
-  supabase: Pick<SupabaseClient<Database>, "from">,
+  supabase: SlackAuthClient,
   args: {
     organizationId: string;
     slackUserId: string | null | undefined;

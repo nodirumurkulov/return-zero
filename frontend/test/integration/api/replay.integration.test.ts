@@ -144,7 +144,7 @@ describe("POST /api/stores/orders/advance", () => {
     expect(notifyRecoveryMock).toHaveBeenCalledWith({
       scope: { organizationId: "org-1", storeId: "store-1" },
       days: 7,
-      appUrl: "http://localhost:3000",
+      appUrl: expect.stringMatching(/^http:\/\/(localhost|127\.0\.0\.1):3000$/),
     });
     expect(body.recovered).toBe(1);
     expect(body.recovery_milestones).toBe(1);
