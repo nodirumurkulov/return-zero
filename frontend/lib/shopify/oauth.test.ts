@@ -65,6 +65,7 @@ describe("OAuth state cookie", () => {
   const payload = {
     shop: "demo.myshopify.com",
     nonce: "nonce-123",
+    intent: "login" as const,
     returnTo: "/onboarding",
   };
 

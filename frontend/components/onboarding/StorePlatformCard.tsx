@@ -18,6 +18,7 @@ type StorePlatformCardProps = {
   connected?: boolean;
   actionLabel?: string;
   pending?: boolean;
+  extra?: React.ReactNode;
   onAction?: () => void;
 };
 
@@ -31,6 +32,7 @@ export default function StorePlatformCard({
   connected = false,
   actionLabel,
   pending = false,
+  extra,
   onAction,
 }: StorePlatformCardProps) {
   const [showNotice, setShowNotice] = useState(false);
@@ -90,6 +92,7 @@ export default function StorePlatformCard({
 
       {isInteractive && actionLabel ? (
         <div className="border-t border-border/60 bg-muted/20 p-5 pt-4">
+          {extra ? <div className="mb-3">{extra}</div> : null}
           <Button
             type="button"
             className="w-full"

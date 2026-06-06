@@ -1,14 +1,8 @@
-import { randomUUID } from "node:crypto";
-
 import { type NextRequest, NextResponse } from "next/server";
 
-import {
-  buildAuthorizeUrl,
-  createOAuthStateCookie,
-  normalizeShop,
-  shopifyAuthQuerySchema,
-  signOAuthState,
-} from "@/lib/shopify/server";
+import { getShopifyOAuth } from "@/lib/shopify/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,41 +11,33 @@ function shopifyCallbackUrl(request: NextRequest): string {
   return `${appUrl.replace(/\/$/, "")}/api/shopify/callback`;
 }
 
-export function GET(request: NextRequest) {
-  const apiSecret = process.env.SHOPIFY_API_SECRET;
-  if (!apiSecret || !process.env.SHOPIFY_API_KEY) {
+export async function GET(request: NextRequest) {
+  if (!process.env.SHOPIFY_API_SECRET || !process.env.SHOPIFY_API_KEY) {
     return NextResponse.json({ error: "Shopify is not configured" }, { status: 503 });
   }
 
   const query = Object.fromEntries(request.nextUrl.searchParams.entries());
-  const parsed = shopifyAuthQuerySchema.safeParse({
-    shop: query.shop,
-    returnTo: query.returnTo,
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const shopify = getShopifyOAuth(createAdminClient());
+  const result = shopify.beginOAuth({
+    query,
+    sessionUserId: user?.id,
+    callbackUrl: shopifyCallbackUrl(request),
   });
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues.map((issue) => issue.message).join("; ") },
-      { status: 400 },
-    );
+  if (result.action === "error") {
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
 
-  const { myshopifyDomain } = normalizeShop(parsed.data.shop);
-  const nonce = randomUUID();
-  const statePayload = {
-    shop: myshopifyDomain,
-    nonce,
-    returnTo: parsed.data.returnTo,
-  };
-  const state = signOAuthState(statePayload, apiSecret);
-  const cookie = createOAuthStateCookie(statePayload, apiSecret);
-  const authorizeUrl = buildAuthorizeUrl({
-    shop: myshopifyDomain,
-    state,
-    redirectUri: shopifyCallbackUrl(request),
-  });
+  if (result.action === "redirect") {
+    return NextResponse.redirect(new URL(result.url, request.url));
+  }
 
-  const response = NextResponse.redirect(authorizeUrl);
-  response.cookies.set(cookie.name, cookie.value, cookie.options);
+  const response = NextResponse.redirect(result.authorizeUrl);
+  response.cookies.set(result.cookie.name, result.cookie.value, result.cookie.options);
   return response;
 }

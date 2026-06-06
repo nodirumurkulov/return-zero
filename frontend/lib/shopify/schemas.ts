@@ -23,11 +23,14 @@ export const shopifyNormalizedShopSchema = z
   })
   .strict();
 
+export const shopifyOAuthIntentSchema = z.enum(["login", "connect"]);
+
 export const shopifyOAuthStatePayloadSchema = z
   .object({
     shop: z.string().min(1),
     nonce: z.string().min(1),
-    returnTo: z.string().startsWith("/").optional(),
+    intent: shopifyOAuthIntentSchema,
+    returnTo: authNextPathSchema.optional(),
   })
   .strict();
 
@@ -52,6 +55,7 @@ export const shopifyAccessTokenResponseSchema = z
 export const shopifyAuthQuerySchema = z
   .object({
     shop: shopifyShopInputSchema,
+    intent: shopifyOAuthIntentSchema,
     returnTo: authNextPathSchema.optional(),
   })
   .strict();

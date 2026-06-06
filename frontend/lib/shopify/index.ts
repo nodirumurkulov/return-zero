@@ -7,3 +7,10 @@ export {
 } from "./state";
 export type { OAuthStateCookie, OAuthStatePayload } from "./state";
 export * from "./schemas";
+export type {
+  BeginOAuthOpts,
+  BeginOAuthResult,
+  CompleteOAuthOpts,
+  CompleteOAuthResult,
+  ShopifyOAuthIntent,
+} from "./types";

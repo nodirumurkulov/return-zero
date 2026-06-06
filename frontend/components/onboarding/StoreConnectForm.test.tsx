@@ -7,14 +7,15 @@ import { renderWithProviders } from "@/test/test-utils";
 import StoreConnectForm from "./StoreConnectForm";
 
 describe("StoreConnectForm", () => {
-  it("shows platform grid with Shopify coming soon and mock connect action", () => {
+  it("shows platform grid with Shopify connect and mock connect actions", () => {
     renderWithProviders(<StoreConnectForm />);
 
     expect(screen.getByTestId("store-option-shopify")).toBeInTheDocument();
     expect(screen.getByTestId("store-option-mock_csv")).toBeInTheDocument();
     expect(screen.getByText("Shopify")).toBeInTheDocument();
     expect(screen.getByText(HUGO_MOCK_STORE_NAME)).toBeInTheDocument();
-    expect(screen.getByText("Coming soon")).toBeInTheDocument();
+    expect(screen.getByLabelText(/store handle/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Connect Shopify/i })).toBeInTheDocument();
     expect(screen.getByText(/Load the Hugo mock dataset/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Connect mock store/i })).toBeInTheDocument();
   });

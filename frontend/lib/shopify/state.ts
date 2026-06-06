@@ -1,14 +1,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+import type { z } from "zod";
+
 import { shopifyOAuthStatePayloadSchema } from "./schemas";
 
 export const SHOPIFY_OAUTH_STATE_COOKIE = "shopify_oauth_state";
 
-export type OAuthStatePayload = {
-  shop: string;
-  nonce: string;
-  returnTo?: string;
-};
+export type OAuthStatePayload = z.infer<typeof shopifyOAuthStatePayloadSchema>;
 
 export type OAuthStateCookie = {
   name: typeof SHOPIFY_OAUTH_STATE_COOKIE;

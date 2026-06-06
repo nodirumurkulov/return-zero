@@ -12,6 +12,7 @@ export {
   exchangeCodeForToken,
   verifyOAuthHmac,
 } from "./oauth";
+export { ShopifyOAuth, getShopifyOAuth } from "./oauth-flow";
 export { normalizeShop } from "./shop";
 export type { NormalizedShop } from "./shop";
 export { createShopifyAdminClient } from "./client";

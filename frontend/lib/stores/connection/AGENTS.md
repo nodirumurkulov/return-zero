@@ -35,4 +35,4 @@ await connection.connectShopify({
 
 ## OAuth callback flow
 
-`GET /api/shopify/callback` delegates to `connectShopify` after token exchange, then queues `store.import.runBackgroundImport({ platform: "shopify" })` via `after()`.
+`GET /api/shopify/callback` runs through [`lib/shopify/oauth-flow.ts`](../../shopify/oauth-flow.ts) (`ShopifyOAuth.completeOAuth`), which calls `connectShopify` then queues `store.import.runBackgroundImport({ platform: "shopify" })` via `after()`.
