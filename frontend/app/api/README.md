@@ -15,6 +15,8 @@ HTTP handlers in `app/api/*/route.ts`. Used by the UI (mutations), Slack webhook
 | `POST` | `/api/stores/import/[platform]` | Start async store import (`202` + background job for `mock_csv`) |
 | `PATCH` | `/api/stores/active` | Switch active store for the signed-in org |
 | `GET` | `/api/stores/import/status` | Connection status + product count (poll while syncing) |
+| `GET` | `/api/shopify/auth` | Start Shopify OAuth (`intent=login|connect`; connect requires session) |
+| `GET` | `/api/shopify/callback` | Shopify OAuth callback (session cookies on response; connects store + background sync) |
 | `POST` | `/api/slack/webhook` | Slack interactive approve callbacks (incoming webhook + signing secret; not Chat SDK) |
 | `POST` | `/api/slack/events` | Slack Events API — `@hugo` mentions → LLM reply (URL verify + signing secret) |
 

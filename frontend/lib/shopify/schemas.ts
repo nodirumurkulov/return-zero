@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { authNextPathSchema } from "@/lib/auth/schemas";
+
 const myshopifyHostSchema = z
   .string()
   .regex(
@@ -21,11 +23,14 @@ export const shopifyNormalizedShopSchema = z
   })
   .strict();
 
+export const shopifyOAuthIntentSchema = z.enum(["login", "connect"]);
+
 export const shopifyOAuthStatePayloadSchema = z
   .object({
     shop: z.string().min(1),
     nonce: z.string().min(1),
-    returnTo: z.string().startsWith("/").optional(),
+    intent: shopifyOAuthIntentSchema,
+    returnTo: authNextPathSchema.optional(),
   })
   .strict();
 
@@ -44,5 +49,13 @@ export const shopifyAccessTokenResponseSchema = z
   .object({
     access_token: z.string().min(1),
     scope: z.string(),
+  })
+  .strict();
+
+export const shopifyAuthQuerySchema = z
+  .object({
+    shop: shopifyShopInputSchema,
+    intent: shopifyOAuthIntentSchema,
+    returnTo: authNextPathSchema.optional(),
   })
   .strict();

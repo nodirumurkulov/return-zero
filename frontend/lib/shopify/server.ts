@@ -12,10 +12,13 @@ export {
   exchangeCodeForToken,
   verifyOAuthHmac,
 } from "./oauth";
+export { ShopifyOAuth, getShopifyOAuth } from "./oauth-flow";
 export { normalizeShop } from "./shop";
 export type { NormalizedShop } from "./shop";
 export { createShopifyAdminClient } from "./client";
 export type { ShopifyAdminClient } from "./client";
+export { fetchShopInfo } from "./shop-info";
+export type { ShopInfo } from "./shop-info";
 export {
   deleteStoreSecret,
   readStoreSecret,

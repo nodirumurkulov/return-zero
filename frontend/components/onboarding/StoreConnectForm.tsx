@@ -1,11 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { ShopifyIcon } from "@/components/auth/provider-icons";
 import { HugoMark } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useImportStore } from "@/hooks/stores/import";
+import { shopifyShopInputSchema } from "@/lib/shopify";
 import { HUGO_MOCK_STORE_NAME } from "@/lib/tenancy";
 
 import StorePlatformCard from "./StorePlatformCard";
@@ -17,6 +21,8 @@ type StoreConnectFormProps = {
 export default function StoreConnectForm({ storeReady = false }: StoreConnectFormProps) {
   const router = useRouter();
   const importStore = useImportStore("mock_csv");
+  const [shopifyShop, setShopifyShop] = useState("");
+  const [shopifyError, setShopifyError] = useState<string | null>(null);
 
   const pending = importStore.isPending;
   const error = importStore.error instanceof Error ? importStore.error.message : null;
@@ -33,6 +39,22 @@ export default function StoreConnectForm({ storeReady = false }: StoreConnectFor
     });
   }
 
+  function connectShopify() {
+    const parsed = shopifyShopInputSchema.safeParse(shopifyShop.trim());
+    if (!parsed.success) {
+      setShopifyError(parsed.error.issues[0]?.message ?? "Enter a valid Shopify store handle");
+      return;
+    }
+
+    setShopifyError(null);
+    const params = new URLSearchParams({
+      shop: parsed.data,
+      intent: "connect",
+      returnTo: "/onboarding",
+    });
+    window.location.assign(`/api/shopify/auth?${params.toString()}`);
+  }
+
   const actionLabel = pending ? "Connecting mock store…" : "Connect mock store";
 
   return (
@@ -43,8 +65,32 @@ export default function StoreConnectForm({ storeReady = false }: StoreConnectFor
           icon={<ShopifyIcon />}
           title="Shopify"
           description="Connect your live Shopify store for real-time catalog, orders, and support data."
-          disabled
-          comingSoon
+          actionLabel="Connect Shopify"
+          extra={
+            <div className="space-y-2 text-left">
+              <Label htmlFor="shopify-connect-shop" className="text-xs text-muted-foreground">
+                Store handle
+              </Label>
+              <Input
+                id="shopify-connect-shop"
+                name="shop"
+                placeholder="your-store"
+                autoComplete="off"
+                spellCheck={false}
+                value={shopifyShop}
+                onChange={(event) => {
+                  setShopifyShop(event.target.value);
+                  if (shopifyError) {
+                    setShopifyError(null);
+                  }
+                }}
+              />
+              {shopifyError ? (
+                <p className="text-xs text-destructive">{shopifyError}</p>
+              ) : null}
+            </div>
+          }
+          onAction={connectShopify}
         />
         <StorePlatformCard
           testId="store-option-mock_csv"
