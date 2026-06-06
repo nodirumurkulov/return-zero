@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveActiveStoreId } from "@/lib/stores/connection/reset-store-data";
+import type { Database } from "@/lib/supabase/database.types";
+
 import {
   COURT_TRAINER_PRODUCT_EXTERNAL_ID,
   DEMO_ORG_ID,
@@ -61,10 +64,13 @@ export async function seedE2eDetectedIncident(supabase: SupabaseClient, organiza
     throw new Error("E2E hero product not found — run seed with --full first");
   }
 
+  const storeId = await resolveActiveStoreId(supabase, organizationId);
+
   const { error: incidentError } = await supabase.from("incidents").upsert(
     {
       id: E2E_DETECTED_INCIDENT_ID,
       organization_id: organizationId,
+      store_id: storeId,
       title: E2E_DETECTED_INCIDENT_TITLE,
       status: "detected",
       severity: "medium",

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveActiveStoreId } from "@/lib/stores/connection/reset-store-data";
 import type { Database, TablesInsert } from "@/lib/supabase/database.types";
 
 import { COURT_TRAINER_PRODUCT_EXTERNAL_ID } from "../constants";
@@ -104,6 +105,7 @@ export async function seedDemoIncidents(
   organizationId: string,
   productIdByExternalId: Map<string, string>,
 ) {
+  const storeId = await resolveActiveStoreId(supabase, organizationId);
   const heroProductId = productIdByExternalId.get(HERO_PRODUCT_EXTERNAL_ID) ?? null;
   const now = new Date();
   const minus = (mins: number) => new Date(now.getTime() - mins * 60 * 1000).toISOString();
@@ -114,6 +116,7 @@ export async function seedDemoIncidents(
       {
         id: "00000000-0000-0000-0000-000000000001",
         organization_id: organizationId,
+        store_id: storeId,
         title: "Court Trainer Return Spike",
         status: "awaiting_approval",
         severity: "high",
@@ -333,6 +336,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000002",
       organization_id: organizationId,
+      store_id: storeId,
       title: "Wasted Ad Spend — Low-ROAS Campaigns",
       status: "monitoring",
       severity: "medium",
@@ -355,6 +359,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000003",
       organization_id: organizationId,
+      store_id: storeId,
       title: "Court Trainer UK11/UK12 Stockout",
       status: "fix_proposed",
       severity: "critical",
@@ -377,6 +382,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000004",
       organization_id: organizationId,
+      store_id: storeId,
       title: "M3 Customer Retention at 9.5%",
       status: "investigating",
       severity: "high",
