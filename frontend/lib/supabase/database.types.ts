@@ -1853,6 +1853,38 @@ export type Database = {
           },
         ]
       }
+      store_connection_secrets: {
+        Row: {
+          access_token: string
+          created_at: string
+          scopes: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          scopes: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          scopes?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_connection_secrets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_connections: {
         Row: {
           connected_at: string | null
@@ -2253,10 +2285,7 @@ export type Database = {
           support_count: number
         }[]
       }
-      reset_store_data: {
-        Args: { p_store_id: string }
-        Returns: undefined
-      }
+      reset_store_data: { Args: { p_store_id: string }; Returns: undefined }
       seed_organization_defaults: {
         Args: { p_organization_id: string }
         Returns: undefined
