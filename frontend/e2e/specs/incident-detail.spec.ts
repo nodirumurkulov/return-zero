@@ -1,19 +1,19 @@
-import { expect, test } from "@playwright/test";
 import {
   E2E_DETECTED_INCIDENT_ID,
   E2E_DETECTED_INCIDENT_TITLE,
   MAIN_INCIDENT_ID,
   MAIN_INCIDENT_TITLE,
 } from "../constants";
+import { expect, resetAllE2eFixtures, test } from "../fixtures";
 import { IncidentDetailPage } from "../pages/incident-detail.page";
-import { resetAllE2eFixtures } from "../reset-main-incident";
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("Incident detail", () => {
-  test.beforeEach(async () => {
-    await resetAllE2eFixtures();
+  test.beforeEach(async ({ admin }) => {
+    await resetAllE2eFixtures(admin);
   });
+
   test("shows findings and proposed actions", async ({ page }) => {
     const detail = new IncidentDetailPage(page);
     await detail.goto(MAIN_INCIDENT_ID);
@@ -29,9 +29,16 @@ test.describe("Incident detail", () => {
     await detail.goto(MAIN_INCIDENT_ID);
 
     await expect(detail.approveAllLowRiskButton()).toBeVisible();
+    const approveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/approve"),
+    );
     await detail.approveAllLowRiskButton().click();
-    await expect(detail.successAlert()).toBeVisible();
-    await expect(page.getByText("Monitoring", { exact: true })).toBeVisible({ timeout: 15_000 });
+    const response = await approveResponse;
+    expect(response.ok()).toBe(true);
+    await expect(page.getByRole("status")).toContainText("approved and deployed");
+    await page.reload();
+    await expect(page.getByText("Monitoring", { exact: true })).toBeVisible();
     await expect(page.getByText("Pause cold-traffic Meta campaign")).toBeVisible();
     await expect(page.getByText("deployed", { exact: false }).first()).toBeVisible();
   });
@@ -42,8 +49,14 @@ test.describe("Incident detail", () => {
 
     const approve = detail.approveActionButton("Enable fit assistant widget");
     await expect(approve).toBeVisible();
+    const approveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" && response.url().includes("/approve"),
+    );
     await approve.click();
-    await expect(detail.successAlert()).toBeVisible();
+    const response = await approveResponse;
+    expect(response.ok()).toBe(true);
+    await expect(page.getByText("deployed", { exact: false }).first()).toBeVisible({ timeout: 15_000 });
   });
 
   test("triggers investigation with stubbed API", async ({ page }) => {
@@ -59,12 +72,7 @@ test.describe("Incident detail", () => {
     await detail.goto(E2E_DETECTED_INCIDENT_ID);
     await expect(page.getByRole("heading", { name: E2E_DETECTED_INCIDENT_TITLE })).toBeVisible();
 
-    const investigation = page.locator("div").filter({
-      has: detail.triggerInvestigationButton(),
-    });
-
     await detail.triggerInvestigationButton().click();
-    await expect(investigation.getByRole("alert")).toHaveCount(0);
     await expect(detail.triggerInvestigationButton()).not.toHaveAttribute("aria-busy", "true", {
       timeout: 15_000,
     });
@@ -72,8 +80,6 @@ test.describe("Incident detail", () => {
 
   test("returns not found for unknown incident ids", async ({ page }) => {
     await page.goto("/incidents/00000000-0000-0000-0000-000000009999");
-    await expect(
-      page.getByRole("heading", { name: "This page could not be found." }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
   });
 });

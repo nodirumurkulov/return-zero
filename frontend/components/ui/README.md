@@ -1,6 +1,6 @@
 # UI primitives
 
-shadcn/ui components (`radix-nova` style) plus thin Resolve wrappers. No business rules, Supabase, or domain types.
+shadcn/ui components (`radix-nova` style) plus thin Hugo wrappers. No business rules, Supabase, or domain types.
 
 ## Adding components
 
@@ -16,7 +16,7 @@ Use `-o` to refresh an existing file. Config: [`components.json`](../components.
 
 **CLI primitives:** `Button`, `Card`, `Input`, `Badge`, `Label`, `Alert`, `Empty`, `Separator`, `Sidebar`, `Sheet`, `Tooltip`, `Skeleton`, `DropdownMenu`, `Avatar`, `Collapsible`.
 
-**Resolve wrappers:** `SeverityBadge`, `StatusBadge`, `ImpactTag`, `EmptyState`, `SectionLabel`, `Sparkline` (custom chart).
+**Hugo wrappers:** `SeverityBadge`, `StatusBadge`, `ImpactTag`, `EmptyState`, `SectionLabel`, `Sparkline` (custom chart).
 
 ## Usage
 

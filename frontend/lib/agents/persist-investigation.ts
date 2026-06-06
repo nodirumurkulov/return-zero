@@ -134,18 +134,22 @@ export async function persistInvestigation(
 
   if (incidentRow) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    await sendIncidentNotification({
-      title: incidentRow.title,
-      severity: incidentRow.severity,
-      status: "fix_proposed",
-      impact_amount: incidentRow.impact_amount,
-      impact_label: incidentRow.impact_label,
-      root_cause: result.root_cause,
-      root_cause_confidence: result.root_cause_confidence,
-      actions: result.actions,
-      incident_id: incidentId,
-      app_url: appUrl,
-    });
+    await sendIncidentNotification(
+      {
+        organization_id: organizationId,
+        title: incidentRow.title,
+        severity: incidentRow.severity,
+        status: "fix_proposed",
+        impact_amount: incidentRow.impact_amount,
+        impact_label: incidentRow.impact_label,
+        root_cause: result.root_cause,
+        root_cause_confidence: result.root_cause_confidence,
+        actions: result.actions,
+        incident_id: incidentId,
+        app_url: appUrl,
+      },
+      supabase,
+    );
   }
 
   return {

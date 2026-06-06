@@ -16,7 +16,6 @@
     "test:lib": "vitest run lib",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
     "db:sync": "supabase db reset && bun run db:types",
     "db:check-types": "bun run db:types && git diff --exit-code lib/supabase/database.types.ts",
@@ -39,6 +38,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.81",
     "@ai-sdk/openai": "^3.0.68",
+    "@better-fetch/fetch": "^1.1.21",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -69,6 +69,7 @@
   },
   "devDependencies": {
     "@ai-sdk/devtools": "^0.0.18",
+    "@eslint/compat": "^2.1.0",
     "@playwright/test": "^1.52.0",
     "@tanstack/react-query-devtools": "^5.101.0",
     "@testing-library/jest-dom": "^6.9.1",

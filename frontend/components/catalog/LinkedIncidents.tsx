@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { Incident } from "@/lib/incidents";
+import type { Incident } from "@/lib/stores";
 
 function formatImpact(amount: number | null) {
   if (amount == null) return null;

@@ -3,35 +3,56 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/detection/detect", () => ({
-  detectBreaches: vi.fn(),
+const { detectMock, notifyNewMock } = vi.hoisted(() => ({
+  detectMock: vi.fn(),
+  notifyNewMock: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({})),
-}));
+const adminSupabase = {
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ data: [{ id: "prod-1" }], error: null })),
+    })),
+  })),
+};
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({
+    incidents: {
+      detect: detectMock,
+      notifyNew: notifyNewMock,
+    },
   })),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+vi.mock("@/lib/hugo/investigate-incident", () => ({
+  investigateCreatedIncidents: vi.fn(),
 }));
 
-import { POST } from "@/app/api/detect/route";
-import { detectBreaches } from "@/lib/detection/detect";
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => adminSupabase),
+}));
 
-const detectBreachesMock = vi.mocked(detectBreaches);
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
+}));
 
-describe("POST /api/detect", () => {
+vi.mock("@/lib/organizations", () => ({
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
+}));
+
+import { POST } from "@/app/api/stores/incidents/detect/route";
+
+describe("POST /api/stores/incidents/detect", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    detectBreachesMock.mockResolvedValue({
+    detectMock.mockResolvedValue({
       scanned: 3,
       created: [
         {
@@ -53,21 +74,21 @@ describe("POST /api/detect", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/detect", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(detectBreachesMock).not.toHaveBeenCalled();
+    expect(detectMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 without session when CRON_SECRET is unset in development", async () => {
     vi.stubEnv("CRON_SECRET", "");
-    const res = await POST(new NextRequest("http://localhost/api/detect", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/incidents/detect", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(detectBreachesMock).not.toHaveBeenCalled();
+    expect(detectMock).not.toHaveBeenCalled();
   });
 
   it("runs detection when cron auth is valid", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/detect", {
+      new NextRequest("http://localhost/api/stores/incidents/detect", {
         method: "POST",
         headers: { authorization: "Bearer cron-test-secret" },
       }),
@@ -76,6 +97,7 @@ describe("POST /api/detect", () => {
     const json = (await res.json()) as { success: boolean; created: number };
     expect(json.success).toBe(true);
     expect(json.created).toBe(1);
-    expect(detectBreachesMock).toHaveBeenCalled();
+    expect(detectMock).toHaveBeenCalled();
+    expect(notifyNewMock).toHaveBeenCalled();
   });
 });

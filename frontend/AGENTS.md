@@ -25,7 +25,7 @@ bun run db:lint
 | `check` | ESLint (`--max-warnings 0`) + `tsc` + Vitest + API integration |
 | `build` | Production build |
 | `db:reset` / `db:sync` / `db:diff` / `db:lint` / `db:test:rls` / `db:check-types` | Supabase CLI (see [supabase/README.md](supabase/README.md)) |
-| `seed` | Load CSVs + demo incidents ([scripts/README.md](scripts/README.md)) |
+| `seed` | Demo org + auth user; store data via onboarding connect ([scripts/README.md](scripts/README.md)) |
 | `validate` | Row counts + metrics RPC checks |
 | `test` / `test:watch` | Vitest (components + `lib/**/*.test.ts`) |
 | `test:lib` | Vitest — `lib/**` only (fast iteration) |
@@ -56,7 +56,7 @@ Test pyramid (fast → slow):
 | Unit — `lib/` | `bun run test:lib` | Pure domain logic (detection, metrics, approve, slack, cron-auth) |
 | Unit — UI | `bun run test` | Co-located `components/**/*.test.tsx` + all Vitest includes |
 | API integration | `bun run test:integration` | Cron/auth + Zod on selected routes (mocked Supabase) |
-| DB integration | CI `integration-db` job | `db:reset`, schema diff, RLS, type freshness, `validate` |
+| DB integration | Local pre-PR (see [supabase/README.md](supabase/README.md)) | `db:reset`, schema diff, RLS, type freshness, `validate` |
 | E2E | `CI=true bun run e2e` | Playwright against seeded Supabase + production build |
 
 - `bun run check` — lint, typecheck, unit tests, and API integration.

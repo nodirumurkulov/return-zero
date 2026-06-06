@@ -2,6 +2,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+export function HugoMark({
+  size = 28,
+  className,
+  priority = false,
+}: {
+  size?: number;
+  className?: string;
+  priority?: boolean;
+}) {
+  return (
+    <Image
+      src="/catLogo.png"
+      alt="Hugo"
+      width={size}
+      height={size}
+      priority={priority}
+      className={cn("shrink-0 rounded-lg shadow-card", className)}
+    />
+  );
+}
+
 const BRAND = {
   sidebar: {
     title: "Hugo",
@@ -37,14 +58,7 @@ export function BrandLogo({
         variant === "sidebar" ? "gap-2.5" : "flex-col gap-4 text-center",
       )}
     >
-      <Image
-        src="/catLogo.png"
-        alt="Hugo"
-        width={imageSize}
-        height={imageSize}
-        className="shrink-0 rounded-lg shadow-card"
-        priority
-      />
+      <HugoMark size={imageSize} priority />
       <div
         className={cn(
           "min-w-0",

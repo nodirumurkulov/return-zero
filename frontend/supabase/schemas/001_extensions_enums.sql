@@ -20,6 +20,13 @@ create type public.forecast_rule_kind as enum (
   'stockout', 'refund_trend', 'roas_decay', 'revenue_drop'
 );
 
+-- Store connections
+create type public.store_platform as enum ('mock_csv', 'shopify');
+create type public.store_sync_mode as enum ('static', 'pull', 'push');
+create type public.store_connection_status as enum (
+  'pending', 'syncing', 'connected', 'error', 'disconnected'
+);
+
 -- Incidents
 create type public.incident_status as enum (
   'detected', 'investigating', 'fix_proposed', 'awaiting_approval',

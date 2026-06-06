@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SeverityBadge } from "@/components/ui/SeverityBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { INCIDENT_STATUSES, type Incident } from "@/lib/incidents";
-import { useUpdateIncidentStatus } from "@/lib/incidents/hooks";
+import { useUpdateIncidentStatus } from "@/hooks/stores/incidents";
+import { INCIDENT_STATUSES, type Incident } from "@/lib/stores";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -118,7 +118,12 @@ export default function IncidentCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             {INCIDENT_STATUSES.map((status) => (
-              <DropdownMenuItem key={status} onClick={() => changeStatus(status)}>
+              <DropdownMenuItem
+                key={status}
+                onSelect={() => {
+                  changeStatus(status);
+                }}
+              >
                 <StatusBadge status={status} />
               </DropdownMenuItem>
             ))}

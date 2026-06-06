@@ -5,6 +5,8 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
+import type { Database } from "../lib/supabase/database.types";
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) {
@@ -12,8 +14,11 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const supabase = createClient(url, key);
+const supabase = createClient<Database>(url, key);
 const failures: string[] = [];
+
+type ProductSourceFact = Database["public"]["Functions"]["product_source_facts"]["Returns"][number];
+type MonthlySeriesRow = Database["public"]["Functions"]["product_monthly_series"]["Returns"][number];
 
 const check = (name: string, cond: boolean, detail: string) => {
   if (cond) console.log(`  ok   ${name}`);
@@ -33,7 +38,7 @@ if (orgErr || !orgRow?.id) {
   console.error(orgErr?.message ?? "No organization found — seed the database first");
   process.exit(1);
 }
-const organizationId = orgRow.id as string;
+const organizationId = orgRow.id;
 
 const { data: courtTrainer, error: ctErr } = await supabase
   .from("products")
@@ -45,16 +50,11 @@ if (ctErr) {
   console.error(ctErr.message);
   process.exit(1);
 }
-const courtTrainerId = courtTrainer?.id as string | undefined;
+const courtTrainerId = courtTrainer?.id;
 
-async function fetchAllMonthlySeries(): Promise<
-  { product_id: string; units: number }[]
-> {
+async function fetchAllMonthlySeries(): Promise<MonthlySeriesRow[]> {
   const pageSize = 1000;
-  const loadPage = async (
-    from: number,
-    acc: { product_id: string; units: number }[],
-  ): Promise<{ product_id: string; units: number }[]> => {
+  const loadPage = async (from: number, acc: MonthlySeriesRow[]): Promise<MonthlySeriesRow[]> => {
     const { data, error } = await supabase
       .rpc("product_monthly_series", {
         p_organization_id: organizationId,
@@ -62,7 +62,7 @@ async function fetchAllMonthlySeries(): Promise<
       })
       .range(from, from + pageSize - 1);
     if (error) throw error;
-    const page = (data ?? []) as { product_id: string; units: number }[];
+    const page = data ?? [];
     const merged = acc.concat(page);
     if (page.length < pageSize) return merged;
     return loadPage(from + pageSize, merged);
@@ -79,30 +79,23 @@ if (fErr) {
   process.exit(1);
 }
 
-const factRows = facts ?? [];
+const factRows: ProductSourceFact[] = facts ?? [];
 check(
   "product_source_facts returns all products",
   factRows.length === 62,
   `got ${factRows.length}`,
 );
 
-const ct = courtTrainerId
-  ? factRows.find((r: { product_id: string }) => r.product_id === courtTrainerId)
-  : undefined;
+const ct = courtTrainerId ? factRows.find((r) => r.product_id === courtTrainerId) : undefined;
 check("Court Trainer present", !!ct, "prod_00005 missing");
 if (ct) {
-  const row = ct as {
-    product_id: string;
-    refunds_amount: number;
-    sales_revenue: number;
-  };
-  const refundRate = Number(row.refunds_amount) / Number(row.sales_revenue || 1);
+  const refundRate = Number(ct.refunds_amount) / Number(ct.sales_revenue || 1);
   check(
     "Court Trainer refund_rate in sane range (0.05–0.6)",
     refundRate > 0.05 && refundRate < 0.6,
     refundRate.toFixed(3),
   );
-  check("Court Trainer has sales", Number(row.sales_revenue) > 0, `${row.sales_revenue}`);
+  check("Court Trainer has sales", Number(ct.sales_revenue) > 0, `${ct.sales_revenue}`);
 }
 
 const series = await fetchAllMonthlySeries();

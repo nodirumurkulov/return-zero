@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
 import { loadBusinessProfile } from "./queries";
 
 function asThenable<T>(data: T) {
@@ -45,7 +46,7 @@ describe("loadBusinessProfile", () => {
     const supabase = createMockSupabase({
       profile: {
         platform: "woocommerce",
-        store_name: "Pretty Fly",
+        store_name: HUGO_MOCK_STORE_NAME,
         primary_goal: "margin",
         hero_product_ids: ["p1"],
       },
@@ -53,7 +54,7 @@ describe("loadBusinessProfile", () => {
     });
     const profile = await loadBusinessProfile(supabase, "org-1");
     expect(profile.platform).toBe("woocommerce");
-    expect(profile.storeName).toBe("Pretty Fly");
+    expect(profile.storeName).toBe(HUGO_MOCK_STORE_NAME);
     expect(profile.primaryGoal).toBe("margin");
     expect(profile.minRoas).toBe(4);
     expect(profile.heroProductIds).toEqual(["p1"]);

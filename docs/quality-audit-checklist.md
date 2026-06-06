@@ -1,6 +1,6 @@
 # Quality Audit Runbook
 
-Repeatable checklist for Resolve codebase audits (quarterly or pre-release).
+Repeatable checklist for Hugo codebase audits (quarterly or pre-release).
 
 ## 1. Automated gates
 

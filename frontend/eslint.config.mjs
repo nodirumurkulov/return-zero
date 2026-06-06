@@ -1,3 +1,4 @@
+import { includeIgnoreFile } from "@eslint/compat";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,22 +10,15 @@ import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
 
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
+const gitignorePath = fileURLToPath(new URL(".gitignore", import.meta.url));
 
 export default tseslint.config(
+  includeIgnoreFile(gitignorePath),
   {
     ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
       "eslint.config.mjs",
       "next.config.mjs",
       "postcss.config.mjs",
-      "scripts/**/*.ts",
-      "e2e/**",
-      "test/integration/**",
-      "playwright.config.ts",
       "lib/supabase/database.types.ts",
     ],
   },
@@ -46,10 +40,7 @@ export default tseslint.config(
       import: importPlugin,
     },
     rules: {
-      // --- Strict style (RUN-71) ---
       "functional/no-let": "error",
-      "functional/no-loop-statements": "off",
-      "functional/immutable-data": "off",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
@@ -91,44 +82,56 @@ export default tseslint.config(
             "Do not use an IIFE to initialize a variable. Use a named function at module scope.",
         },
       ],
-
-      // Turn on in RUN-73 after Zod + typed Supabase rows per domain.
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
     },
   },
   {
-    files: [
-      "lib/agents/**/*.ts",
-      "lib/cron-auth.ts",
-      "lib/api-errors.ts",
-      "lib/llm.ts",
-      "lib/catalog/health.ts",
-      "lib/forecast/methods.ts",
-      "lib/detection/schemas.ts",
-      "lib/detection/severity.ts",
-      "lib/learn/schemas.ts",
-      "lib/onboarding/api-schemas.ts",
-      "lib/settings/queries.ts",
-      "lib/settings/mutations.ts",
-      "lib/incidents/queries.ts",
-      "lib/incidents/approve.ts",
-      "lib/organizations/queries.ts",
-      "lib/organizations/slack.ts",
-      "lib/catalog/queries.ts",
-      "lib/metrics/engine.ts",
-    ],
-    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["lib/stores/**", "lib/agents/**", "lib/hugo/**"],
     rules: {
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/lib/stores/catalog/**",
+                "@/lib/stores/incidents/**",
+                "@/lib/stores/orders/**",
+                "@/lib/stores/search/**",
+                "@/lib/stores/metrics/**",
+                "@/lib/stores/import/**",
+              ],
+              message: "Import from @/lib/stores (types/schemas) or @/lib/stores/server (getStore).",
+            },
+          ],
+        },
+      ],
     },
+  },
+  {
+    files: ["components/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
+    ignores: ["**/*.server.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/lib/stores/server", "@/lib/stores/server/**"],
+              message: "Server-only. Use @/lib/stores for types and schemas in client code.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["scripts/**/*.ts", "e2e/fixtures/demo-data.ts"],
+    rules: { "no-console": "off" },
+  },
+  {
+    files: ["e2e/**/*.ts"],
+    rules: { "react-hooks/rules-of-hooks": "off", "no-empty-pattern": "off" },
   },
   {
     files: ["lib/slack.ts", "lib/hugo/index.ts", "app/error.tsx", "lib/api-errors.ts"],
