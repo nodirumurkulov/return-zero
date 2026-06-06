@@ -81,9 +81,8 @@ export default function AppShell({
       <SidebarProvider>
         <Sidebar collapsible="icon" className="border-r border-sidebar-border">
           <SidebarHeader className="gap-0 border-b border-sidebar-border p-0 group-data-[collapsible=icon]:p-2">
-            <div className="flex items-center gap-2 px-4 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
+            <div className="flex items-center gap-2 overflow-hidden px-4 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
               <BrandLogo />
-              <SidebarTrigger className="ml-auto hidden group-data-[collapsible=icon]:hidden md:inline-flex" />
             </div>
             <div className="border-t border-sidebar-border px-2 py-2 group-data-[collapsible=icon]:hidden">
               <ShopSwitcher shops={DEMO_SHOPS} switchingEnabled={false} />
@@ -114,9 +113,9 @@ export default function AppShell({
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-sidebar-border p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-9">
+          <SidebarFooter className="border-t border-sidebar-border p-4 group-data-[collapsible=icon]:p-2">
+            <div className="flex items-center gap-3 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2">
+              <Avatar className="size-9 group-data-[collapsible=icon]:size-8">
                 <AvatarFallback className="bg-primary-subtle text-sm font-medium text-primary">
                   {initial}
                 </AvatarFallback>
@@ -129,18 +128,20 @@ export default function AppShell({
                   <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                 ) : null}
               </div>
-              <SignOutButton />
+              <div className="flex shrink-0 items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+                <ThemeToggle />
+                <SignOutButton />
+              </div>
             </div>
           </SidebarFooter>
         </Sidebar>
 
         <SidebarInset id="main">
           <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
-            <SidebarTrigger className="md:hidden" />
-            <div className="relative max-w-md flex-1">
+            <SidebarTrigger />
+            <div className="relative min-w-0 flex-1">
               <GlobalSearch targets={searchTargets} />
             </div>
-            <ThemeToggle />
             <div className="md:hidden">
               <SignOutButton />
             </div>
