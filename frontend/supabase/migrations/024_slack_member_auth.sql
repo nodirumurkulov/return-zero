@@ -1,5 +1,5 @@
 -- =============================================================
--- 022_slack_member_auth.sql
+-- 024_slack_member_auth.sql
 -- Link Slack users to Resolve organization members for action authorization.
 -- =============================================================
 
