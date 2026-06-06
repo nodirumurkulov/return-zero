@@ -30,11 +30,13 @@ const supabase = createClient<Database>(url, key);
 
 async function ensureDemoOrganization(): Promise<string> {
   console.log("  demo organization…");
+  const slackChannelId = process.env.SLACK_DEFAULT_CHANNEL?.trim();
   const { error } = await supabase.from("organizations").upsert(
     {
       id: DEMO_ORG_ID,
       name: HUGO_MOCK_STORE_NAME,
       slug: HUGO_MOCK_STORE_SLUG,
+      ...(slackChannelId ? { slack_channel_id: slackChannelId } : {}),
     },
     { onConflict: "id" },
   );

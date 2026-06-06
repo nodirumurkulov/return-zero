@@ -1,0 +1,42 @@
+name: Configure Pretty Fly Slack channel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply migration and set slack_channel_id
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+
+          run_sql() {
+            local label="$1"
+            local query="$2"
+            echo "── ${label}"
+            response=$(curl -sS -w "\nHTTP_STATUS:%{http_code}" -X POST \
+              "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query" \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n --arg q "$query" '{query: $q}')")
+            body="${response%HTTP_STATUS:*}"
+            status="${response##*HTTP_STATUS:}"
+            echo "$body" | jq . 2>/dev/null || echo "$body"
+            if [[ "$status" != "201" && "$status" != "200" ]]; then
+              echo "SQL failed (${status})"
+              exit 1
+            fi
+          }
+
+          run_sql "Migration 014" \
+            "alter table public.organizations add column if not exists slack_channel_id text;"
+
+          run_sql "Set Pretty Fly channel" \
+            "update public.organizations set slack_channel_id = 'C0B99Q57048' where id = '00000000-0000-0000-0000-000000000100';"
+
+          run_sql "Verify" \
+            "select id, name, slug, slack_channel_id from public.organizations where slug = 'pretty-fly';"
