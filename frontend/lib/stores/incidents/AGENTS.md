@@ -38,5 +38,5 @@ await incidents.notifyNew(createdIncidents);
 
 ```typescript
 import type { Incident, IncidentDetail } from "@/lib/stores";
-import { patchIncidentStatus } from "@/lib/api/stores/incidents/client";
+import { approveIncidentActions } from "@/lib/api/stores/incidents/client";
 ```

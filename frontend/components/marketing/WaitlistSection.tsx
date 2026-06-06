@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SectionLabel } from "@/components/ui/section-label";
+
 type FormStatus = "idle" | "loading" | "sent" | "error";
 
 export function WaitlistSection({ initialBanner }: { initialBanner?: string | null }) {
@@ -37,77 +39,70 @@ export function WaitlistSection({ initialBanner }: { initialBanner?: string | nu
   };
 
   return (
-    <section id="waitlist" className="scroll-mt-24 py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card/60 p-8 shadow-pop">
-          <h2 className="text-balance text-center text-3xl font-semibold tracking-tight">
+    <section id="waitlist" className="scroll-mt-20 py-16">
+      <div className="mx-auto max-w-md px-4 sm:px-6">
+        <div className="space-y-1 text-center">
+          <SectionLabel>Early access</SectionLabel>
+          <h2 className="text-balance text-2xl font-semibold tracking-tight">
             Join the waitlist
           </h2>
-          <p className="mt-3 text-center text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Get early access to Hugo — commerce incident response before your quarter closes.
           </p>
+        </div>
 
-          {banner ? (
-            <p
-              className="mt-4 rounded-lg border border-primary/30 bg-primary-subtle px-3 py-2 text-center text-sm text-foreground"
-              role="status"
-            >
-              {banner}
+        {banner ? (
+          <p
+            className="mt-4 rounded-lg border border-primary/30 bg-primary-subtle px-3 py-2 text-center text-sm"
+            role="status"
+          >
+            {banner}
+          </p>
+        ) : null}
+
+        <div ref={liveRef} aria-live="polite" className="mt-6">
+          {status === "sent" ? (
+            <p className="rounded-lg border border-sev-resolvedBd bg-sev-resolvedBg px-4 py-3 text-center text-sm text-sev-resolved">
+              Check your inbox to confirm your spot…
             </p>
-          ) : null}
-
-          <div ref={liveRef} aria-live="polite" className="mt-6">
-            {status === "sent" ? (
-              <p className="rounded-lg border border-sev-resolvedBd bg-sev-resolvedBg px-4 py-3 text-center text-sm text-sev-resolved">
-                Check your inbox to confirm your spot…
-              </p>
-            ) : (
-              <form onSubmit={(event) => { void submit(event); }} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="waitlist-email">Work email</Label>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      id="waitlist-email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      spellCheck={false}
-                      placeholder="you@store.com…"
-                      value={email}
-                      required
-                      disabled={status === "loading"}
-                      aria-invalid={error ? true : undefined}
-                      className="h-11 flex-1"
-                      onChange={(event) => {
-                        setEmail(event.target.value);
-                      }}
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      disabled={status === "loading"}
-                      className="h-11 shrink-0"
-                    >
-                      {status === "loading" ? "Joining…" : "Join Waitlist"}
-                    </Button>
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  name="website"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  className="hidden"
-                  aria-hidden
+          ) : (
+            <form onSubmit={(event) => { void submit(event); }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="waitlist-email">Work email</Label>
+                <Input
+                  id="waitlist-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  spellCheck={false}
+                  placeholder="you@store.com"
+                  value={email}
+                  required
+                  disabled={status === "loading"}
+                  aria-invalid={error ? true : undefined}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                  }}
                 />
-                {error ? (
-                  <p className="text-sm text-destructive" role="alert">
-                    {error}
-                  </p>
-                ) : null}
-              </form>
-            )}
-          </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={status === "loading"}>
+                {status === "loading" ? "Joining…" : "Join waitlist"}
+              </Button>
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+                aria-hidden
+              />
+              {error ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </form>
+          )}
         </div>
       </div>
     </section>

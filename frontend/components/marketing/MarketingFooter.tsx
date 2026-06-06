@@ -1,16 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { HugoMark } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const LINKS = [
+const EXPLORE = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
-  { href: "/sign-in", label: "Sign In" },
+  { href: "/sign-in", label: "Sign in" },
+] as const;
+
+const PRODUCT = [
+  { href: "/catalog", label: "Catalog" },
+  { href: "/incidents", label: "Incidents" },
 ] as const;
 
 async function subscribe(email: string): Promise<boolean> {
@@ -37,29 +42,43 @@ export function MarketingFooter() {
   };
 
   return (
-    <footer className="border-t border-border bg-muted/30">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Image src="/catLogo.png" alt="" width={36} height={36} className="rounded-lg" />
-            <span className="font-semibold" translate="no">
-              Hugo
-            </span>
+    <footer className="border-t border-border">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="lg:col-span-2">
+          <div className="flex items-center gap-2.5">
+            <HugoMark size={28} />
+            <div>
+              <p className="text-sm font-semibold" translate="no">
+                Hugo
+              </p>
+              <p className="text-xs text-muted-foreground">Commerce IR</p>
+            </div>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Commerce incident response — detect, investigate, fix, and recover in one place.
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+            Detect, investigate, approve, and recover — in the same UI your team runs the store from.
           </p>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Explore</h3>
-          <ul className="mt-4 space-y-2">
-            {LINKS.map((link) => (
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Explore
+          </h3>
+          <ul className="mt-3 space-y-2">
+            {EXPLORE.map((link) => (
               <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
+                <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <h3 className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Product demo
+          </h3>
+          <ul className="mt-3 space-y-2">
+            {PRODUCT.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
                   {link.label}
                 </Link>
               </li>
@@ -68,15 +87,17 @@ export function MarketingFooter() {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Stay updated</h3>
-          <form className="relative mt-4" onSubmit={(event) => { void onSubmit(event); }}>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Waitlist
+          </h3>
+          <form className="mt-3" onSubmit={(event) => { void onSubmit(event); }}>
             <div className="flex gap-2">
               <Input
                 type="email"
                 name="email"
                 autoComplete="email"
                 spellCheck={false}
-                placeholder="you@store.com…"
+                placeholder="you@store.com"
                 value={email}
                 required
                 aria-label="Email for waitlist"
@@ -86,25 +107,25 @@ export function MarketingFooter() {
                   setEmail(event.target.value);
                 }}
               />
-              <Button type="submit" disabled={status === "loading" || status === "done"}>
-                {status === "loading" ? "…" : "Subscribe"}
+              <Button type="submit" size="sm" disabled={status === "loading" || status === "done"}>
+                {status === "loading" ? "…" : "Join"}
               </Button>
             </div>
             {status === "done" ? (
-              <p className="mt-2 text-sm text-sev-resolved" role="status">
+              <p className="mt-2 text-xs text-sev-resolved" role="status">
                 Check your inbox to confirm…
               </p>
             ) : null}
             {status === "error" ? (
-              <p className="mt-2 text-sm text-destructive" role="alert">
+              <p className="mt-2 text-xs text-destructive" role="alert">
                 Could not subscribe. Try again.
               </p>
             ) : null}
           </form>
         </div>
       </div>
-      <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-6">
-        © {new Date().getFullYear()} <span translate="no">Hugo</span>. Commerce incident response.
+      <div className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground sm:px-6">
+        © {new Date().getFullYear()} <span translate="no">Hugo</span>
       </div>
     </footer>
   );

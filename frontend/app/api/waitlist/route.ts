@@ -18,11 +18,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const result = await insertWaitlistSignup(parsed.data.email).catch(() => null);
+  const insertResult = await insertWaitlistSignup(parsed.data.email).then(
+    (result) => ({ ok: true as const, result }),
+    (error: unknown) => ({ ok: false as const, message: error instanceof Error ? error.message : "unknown error" }),
+  );
 
-  if (!result) {
-    return NextResponse.json({ error: "Could not join waitlist. Try again." }, { status: 500 });
+  if (!insertResult.ok) {
+    const hint =
+      process.env.NODE_ENV === "development"
+        ? insertResult.message
+        : "Could not join waitlist. Try again.";
+    return NextResponse.json({ error: hint }, { status: 500 });
   }
+
+  const result = insertResult.result;
 
   if (result.status === "exists_confirmed") {
     return NextResponse.json({ ok: true, message: "already_confirmed" });

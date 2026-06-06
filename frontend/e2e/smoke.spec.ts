@@ -29,9 +29,9 @@ test.describe("public routes", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Built for commerce");
 
     await page.goto("/pricing");
-    await expect(page.getByRole("heading", { level: 1, name: "Pricing" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Early access" })).toBeVisible();
 
     await page.goto("/blog");
-    await expect(page.getByRole("heading", { level: 1, name: "Blog" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Updates" })).toBeVisible();
   });
 });
