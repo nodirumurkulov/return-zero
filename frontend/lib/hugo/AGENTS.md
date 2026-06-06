@@ -42,6 +42,7 @@ outflow, days-to-stockout from burn rate) when `wantsInventory`.
 ## Proactive (cron)
 
 `GET /api/digest` (Vercel cron, daily 08:00 UTC) — iterates all orgs, calls
-`summarizeIncidents` + `buildDigestBlocks`, posts via `postWebhookBlocks`.
+`summarizeIncidents` + `buildDigestBlocks`, posts via `postOrgSlackBlocks` to the org's
+`slack_channel_id` (or `SLACK_DEFAULT_CHANNEL`, then webhook fallback).
 `GET /api/detect` (Vercel cron, every 6h) — runs breach detection; new
 incidents auto-alert to Slack via `notifyNewIncident` in the detect path.

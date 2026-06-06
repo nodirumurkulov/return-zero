@@ -215,10 +215,11 @@ export class Incidents {
   }
 
   /** Slack fan-out when breach detection creates new incidents. */
-  async notifyNew(incidents: readonly CreatedIncident[]): Promise<void> {
+  async notifyNew(organizationId: string, incidents: readonly CreatedIncident[]): Promise<void> {
     await Promise.all(
       incidents.map((inc) =>
-        notifyNewIncident({
+        notifyNewIncident(this.supabase, {
+          organization_id: organizationId,
           incident_id: inc.incident_id,
           title: inc.title,
           severity: inc.severity,
@@ -343,17 +344,21 @@ export class Incidents {
       organizationId: opts.organizationId,
     });
     if (incident) {
-      await sendIncidentNotification({
-        title: incident.title,
-        severity: incident.severity,
-        status: "monitoring",
-        impact_amount: incident.impact_amount,
-        impact_label: incident.impact_label,
-        root_cause: incident.root_cause,
-        root_cause_confidence: incident.root_cause_confidence,
-        incident_id: opts.incidentId,
-        app_url: opts.appUrl,
-      });
+      await sendIncidentNotification(
+        {
+          organization_id: opts.organizationId,
+          title: incident.title,
+          severity: incident.severity,
+          status: "monitoring",
+          impact_amount: incident.impact_amount,
+          impact_label: incident.impact_label,
+          root_cause: incident.root_cause,
+          root_cause_confidence: incident.root_cause_confidence,
+          incident_id: opts.incidentId,
+          app_url: opts.appUrl,
+        },
+        this.supabase,
+      );
     }
     return result;
   }

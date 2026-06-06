@@ -3,7 +3,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
-import type { Enums } from "@/lib/supabase/db";
 
 import { ConnectionError } from "./errors";
 import type {
@@ -15,9 +14,6 @@ import type {
   StoreConnectionStatus,
   StorePlatform,
 } from "./types";
-
-type DbConnectionStatus = Enums<"store_connection_status">;
-type DbStorePlatform = Enums<"store_platform">;
 
 function derivePhase(status: StoreConnectionStatus, catalogReady: boolean): StoreConnectionPhase {
   if (status === "pending" || status === "disconnected" || status === "error") {
@@ -51,9 +47,9 @@ export class StoreConnectionDomain {
       };
     }
 
-    const status = row.status as StoreConnectionStatus;
+    const status = row.status;
     return {
-      platform: row.platform as StorePlatform,
+      platform: row.platform,
       status,
       phase: derivePhase(status, catalogReady),
       catalogReady,
@@ -104,8 +100,8 @@ export class StoreConnectionDomain {
     const { error } = await this.supabase
       .from("store_connections")
       .update({
-        platform: platform as DbStorePlatform,
-        status: "importing" as DbConnectionStatus,
+        platform,
+        status: "importing",
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId);

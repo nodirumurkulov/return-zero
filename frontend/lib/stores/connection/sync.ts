@@ -4,11 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import { ConnectionError } from "./errors";
-import type { StorePlatform } from "./types";
 import { MockImportLoader } from "../import/mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "../import/mock/pack";
 import { ShopifyImportLoader } from "../import/shopify";
+import { ConnectionError } from "./errors";
+import type { StorePlatform } from "./types";
 
 export type RunStoreSyncOpts = {
   organizationId: string;

@@ -12,7 +12,7 @@ export async function createOrganizationWithOwner(
   const { data: org, error: orgErr } = await supabase
     .from("organizations")
     .insert({ name: params.name, slug: params.slug })
-    .select("id, name, slug, slack_team_id, created_at, updated_at")
+    .select("id, name, slug, slack_channel_id, slack_team_id, created_at, updated_at")
     .single();
 
   if (orgErr || !org) {

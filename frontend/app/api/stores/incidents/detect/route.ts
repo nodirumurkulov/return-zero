@@ -76,7 +76,12 @@ export async function POST(req: NextRequest) {
     );
     const created = results.flatMap((r) => r.created);
     const store = getStore(supabase);
-    await store.incidents.notifyNew(created);
+    await Promise.all(
+      organizationIds.flatMap((organizationId, index) => {
+        const orgCreated = results[index]?.created ?? [];
+        return orgCreated.length > 0 ? [store.incidents.notifyNew(organizationId, orgCreated)] : [];
+      }),
+    );
     void investigateCreatedIncidents(supabase, created);
 
     const scanned = results.reduce((sum, r) => sum + r.scanned, 0);

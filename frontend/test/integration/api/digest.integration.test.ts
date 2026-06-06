@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { listIncidentsMock, postWebhookBlocksMock } = vi.hoisted(() => ({
+const { listIncidentsMock, postOrgSlackBlocksMock } = vi.hoisted(() => ({
   listIncidentsMock: vi.fn(),
-  postWebhookBlocksMock: vi.fn(),
+  postOrgSlackBlocksMock: vi.fn(),
 }));
 vi.mock("@/lib/stores/server", () => ({
   getStore: vi.fn(() => ({
@@ -44,7 +44,7 @@ vi.mock("@/lib/organizations", () => ({
 }));
 
 vi.mock("@/lib/slack", () => ({
-  postWebhookBlocks: postWebhookBlocksMock,
+  postOrgSlackBlocks: postOrgSlackBlocksMock,
 }));
 
 import { GET } from "@/app/api/digest/route";
@@ -54,7 +54,7 @@ describe("GET /api/digest", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
     listIncidentsMock.mockResolvedValue([]);
-    postWebhookBlocksMock.mockResolvedValue(undefined);
+    postOrgSlackBlocksMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -68,7 +68,7 @@ describe("GET /api/digest", () => {
     expect(res.status).toBe(401);
   });
 
-  it("posts digest via webhook in cron mode", async () => {
+  it("posts digest to org Slack channel in cron mode", async () => {
     const req = new NextRequest("http://localhost/api/digest", {
       method: "GET",
       headers: { authorization: "Bearer cron-test-secret" },
@@ -80,7 +80,13 @@ describe("GET /api/digest", () => {
     const body = (await res.json()) as { success: boolean; digests: unknown[] };
     expect(body.success).toBe(true);
     expect(body.digests).toHaveLength(1);
-    expect(postWebhookBlocksMock).toHaveBeenCalledTimes(1);
+    expect(postOrgSlackBlocksMock).toHaveBeenCalledTimes(1);
+    expect(postOrgSlackBlocksMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "org-1",
+      expect.any(Array),
+      expect.stringContaining("Daily Digest"),
+    );
   });
 
   it("includes open count in response", async () => {

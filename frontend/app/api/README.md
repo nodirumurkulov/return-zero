@@ -25,7 +25,9 @@ Configure `SLACK_WEBHOOK_URL` for outbound incident cards and `SLACK_SIGNING_SEC
 
 ## @hugo Slack bot
 
-`POST /api/slack/events` powers the conversational `@hugo` assistant. Enable a Bot User + Event Subscriptions (`app_mention`) in the Slack app, scopes `app_mentions:read` + `chat:write`, and set the Request URL to `<app>/api/slack/events`. Requires `SLACK_SIGNING_SECRET` (verify requests) and `SLACK_BOT_TOKEN` (`chat:write`). The route acks within Slack's 3s window and generates + posts the LLM reply in-thread via `after()`; Slack retries and bot messages are ignored to prevent loops.
+`POST /api/slack/events` powers the conversational `@hugo` assistant. Enable a Bot User + Event Subscriptions (`app_mention`) in the Slack app, scopes `app_mentions:read` + `chat:write` + `channels:history` + `groups:history`, and set the Request URL to `<app>/api/slack/events`. Requires `SLACK_SIGNING_SECRET` (verify requests) and `SLACK_BOT_TOKEN` (`chat.postMessage`). The route acks within Slack's 3s window and generates + posts the LLM reply in-thread via `after()`; Slack retries and bot messages are ignored to prevent loops.
+
+Proactive alerts (digest, new incidents, post-approve cards) post to `organizations.slack_channel_id` via the bot token, then fall back to `SLACK_DEFAULT_CHANNEL`, then `SLACK_WEBHOOK_URL`.
 
 ## Usage
 

@@ -3,7 +3,8 @@ import { signIn } from "@/app/auth/actions";
 import AuthForm from "@/components/auth/AuthForm";
 import ComingSoonLoginButton from "@/components/auth/ComingSoonLoginButton";
 import OAuthButtons from "@/components/auth/OAuthButtons";
-import { MicrosoftIcon, ShopifyIcon } from "@/components/auth/provider-icons";
+import { MicrosoftIcon } from "@/components/auth/provider-icons";
+import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { authNextPathSchema } from "@/lib/auth/schemas";
@@ -29,7 +30,7 @@ export default async function SignInPage({
       <OAuthButtons />
       <div className="flex w-full max-w-sm flex-col gap-3">
         <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
-        <ComingSoonLoginButton provider="Shopify" icon={<ShopifyIcon />} />
+        <ShopifyLoginButton />
       </div>
       <p className="text-sm text-muted-foreground">
         New here?{" "}
