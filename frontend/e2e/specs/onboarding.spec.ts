@@ -64,6 +64,8 @@ test.describe("Onboarding upload", () => {
     await onboarding.chooseFiles(["products.csv", "orders.csv"]);
     await onboarding.uploadButton().click();
     await expect(onboarding.profileSaveButton()).toBeVisible({ timeout: 15_000 });
+    await page.getByLabel(/Store name/i).fill("Demo Store");
+    await expect(onboarding.profileSaveButton()).toBeEnabled();
     await onboarding.profileSaveButton().click();
     await expect(page).toHaveURL(/\/onboarding\/report$/, { timeout: 15_000 });
   });
