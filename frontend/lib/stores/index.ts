@@ -49,7 +49,6 @@ export type {
   IncidentDetail,
   IncidentRef,
   IncidentsGetOpts,
-  IncidentsListByProductOpts,
   IncidentsListOpts,
   IncidentsUpdateOpts,
   ListIncidentActionIdsOpts,

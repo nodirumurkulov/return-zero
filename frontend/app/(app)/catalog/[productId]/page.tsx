@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import LinkedIncidents from "@/components/catalog/LinkedIncidents";
 import { HealthBadge } from "@/components/catalog/HealthBadge";
 import KpiCard from "@/components/catalog/KpiCard";
+import LinkedIncidents from "@/components/catalog/LinkedIncidents";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -33,7 +33,7 @@ export default async function ProductDetailPage(props: PageProps) {
   const store = getStore(supabase);
   const [detail, linkedIncidents] = await Promise.all([
     store.catalog.get({ organizationId, productId: params.productId }),
-    store.incidents.listByProduct({ organizationId, productId: params.productId }),
+    store.incidents.list({ organizationId, productId: params.productId }),
   ]);
 
   if (!detail) notFound();

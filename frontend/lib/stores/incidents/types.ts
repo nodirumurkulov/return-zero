@@ -117,11 +117,7 @@ export type ApproveActionsInput = {
 
 export type IncidentsListOpts = {
   organizationId: string;
-};
-
-export type IncidentsListByProductOpts = {
-  organizationId: string;
-  productId: string;
+  productId?: string;
 };
 
 export type IncidentsGetOpts = {
