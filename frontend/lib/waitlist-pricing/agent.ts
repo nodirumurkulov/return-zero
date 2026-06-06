@@ -1,69 +1,49 @@
 import "server-only";
 
-import { generateText, Output, streamText, type ModelMessage, type UIMessage } from "ai";
+import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
+import { z } from "zod";
 import { getModel } from "@/lib/ai/model";
 import { catalogPromptText, formatUsdFromCents } from "./catalog";
-import { applyAgentTurn } from "./guardrails";
+import { canAcceptOffer, clampOfferCents } from "./guardrails";
 import {
   appendPricingMessage,
   finalizeNegotiation,
   markNegotiationInProgress,
-  upsertPricingState,
+  updateCurrentOffer,
 } from "./mutations";
 import { notifyNegotiationAccepted, notifyNegotiationDeclined } from "./notify";
-import type { PricingSession } from "./queries";
-import { agentTurnSchema, type NegotiationState } from "./schemas";
+import type { PricingMessage, PricingSession } from "./queries";
+import { pricingTierSchema } from "./schemas";
 
 const NEGOTIATION_PROMPT =
   "You are Hugo's early-access pricing specialist. You negotiate Teams and Enterprise plans for an ecommerce incident-response platform. " +
   "Be concise, friendly, and professional. Ask qualifying questions before quoting. " +
   "Never quote prices outside the authorized range. Early Access is free and not part of this negotiation. " +
-  "When the user clearly accepts an offer, confirm the tier and monthly price in plain language. " +
-  "If they decline, acknowledge gracefully and offer to stay in touch.";
+  "When you quote a price, call makeOffer with the tier and monthly price in cents. " +
+  "When the user clearly accepts an offer, call saveAgreedPrice with the tier and price they accepted. " +
+  "If they clearly opt out of paid plans, call declinePricing.";
 
-function uiMessagesToText(messages: UIMessage[]): string {
-  return messages
-    .map((message) => {
-      const text = message.parts
-        .filter((part): part is { type: "text"; text: string } => part.type === "text")
-        .map((part) => part.text)
-        .join("");
-      return `${message.role}: ${text}`;
-    })
-    .join("\n");
-}
-
-function toModelMessages(messages: UIMessage[]): ModelMessage[] {
-  return messages.reduce<ModelMessage[]>((accumulator, message) => {
-    const text = message.parts
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("");
-    if (!text.trim()) {
-      return accumulator;
-    }
+function toModelMessages(messages: PricingMessage[], userMessage: string): ModelMessage[] {
+  const history = messages.reduce<ModelMessage[]>((accumulator, message) => {
     if (message.role === "user") {
-      return [...accumulator, { role: "user", content: text }];
+      return [...accumulator, { role: "user", content: message.content }];
     }
     if (message.role === "assistant") {
-      return [...accumulator, { role: "assistant", content: text }];
+      return [...accumulator, { role: "assistant", content: message.content }];
     }
-    return [...accumulator, { role: "system", content: text }];
+    return [...accumulator, { role: "system", content: message.content }];
   }, []);
+
+  return [...history, { role: "user", content: userMessage }];
 }
 
 function buildSystemPrompt(session: PricingSession): string {
-  const state = session.state ?? {
-    currentOfferCents: null,
-    userBudgetCents: null,
-    companySignals: {},
-  };
-
+  const { signup } = session;
   const offerLine =
-    state.currentOfferCents && session.signup.selected_tier
-      ? `Current offer: ${session.signup.selected_tier} at ${formatUsdFromCents(state.currentOfferCents)}/mo.`
-      : state.currentOfferCents
-        ? `Current offer: ${formatUsdFromCents(state.currentOfferCents)}/mo.`
+    signup.offered_price_cents && signup.selected_tier
+      ? `Current offer: ${signup.selected_tier} at ${formatUsdFromCents(signup.offered_price_cents)}/mo.`
+      : signup.offered_price_cents
+        ? `Current offer: ${formatUsdFromCents(signup.offered_price_cents)}/mo.`
         : "No offer on the table yet.";
 
   return [
@@ -72,116 +52,103 @@ function buildSystemPrompt(session: PricingSession): string {
     "Authorized tiers:",
     catalogPromptText(),
     "",
-    `Lead email domain: ${session.signup.email.split("@")[1] ?? "unknown"}`,
-    `Negotiation status: ${session.signup.negotiation_status}`,
+    `Lead email domain: ${signup.email.split("@")[1] ?? "unknown"}`,
+    `Negotiation status: ${signup.negotiation_status}`,
     offerLine,
-    state.userBudgetCents ? `User budget signal: ${formatUsdFromCents(state.userBudgetCents)}/mo.` : "",
-    Object.keys(state.companySignals).length > 0
-      ? `Known company signals: ${JSON.stringify(state.companySignals)}`
-      : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].join("\n");
 }
 
-async function extractAgentTurn(
-  assistantReply: string,
-  transcript: string,
-  state: NegotiationState,
-): Promise<ReturnType<typeof applyAgentTurn>> {
-  const { output } = await generateText({
-    model: getModel(),
-    output: Output.object({ schema: agentTurnSchema }),
-    messages: [
-      {
-        role: "system",
-        content:
-          "Extract structured negotiation metadata from the conversation. " +
-          "Set userAccepted true only when the user explicitly accepts a specific tier and price. " +
-          "Set userDeclined true only when the user clearly opts out of paid plans. " +
-          "Use proposedTier/proposedPriceCents for the latest offer discussed by the assistant.",
+function createNegotiationTools(session: PricingSession) {
+  return {
+    makeOffer: tool({
+      description: "Record the current pricing offer when quoting Teams or Enterprise.",
+      inputSchema: z.object({
+        tier: pricingTierSchema,
+        priceCents: z.number().int().positive(),
+      }),
+      execute: async ({ tier, priceCents }) => {
+        const clamped = clampOfferCents(tier, priceCents);
+        await updateCurrentOffer(session.signup.id, tier, clamped);
+        return {
+          tier,
+          priceCents: clamped,
+          priceLabel: `${formatUsdFromCents(clamped)}/mo`,
+        };
       },
-      {
-        role: "user",
-        content: [
-          `Current state: ${JSON.stringify(state)}`,
-          `Transcript:\n${transcript}`,
-          `Latest assistant reply:\n${assistantReply}`,
-        ].join("\n\n"),
-      },
-    ],
-  });
+    }),
+    saveAgreedPrice: tool({
+      description:
+        "Save the final agreed monthly price when the user explicitly accepts a specific tier and price.",
+      inputSchema: z.object({
+        tier: pricingTierSchema,
+        priceCents: z.number().int().positive(),
+      }),
+      execute: async ({ tier, priceCents }) => {
+        if (!canAcceptOffer(tier, priceCents)) {
+          return { saved: false, reason: "Price is outside the authorized range for this tier." };
+        }
 
-  if (!output) {
-    throw new Error("waitlist-pricing: missing structured turn output");
-  }
-
-  return applyAgentTurn(state, output);
-}
-
-export function runPricingNegotiationTurn(session: PricingSession, messages: UIMessage[]) {
-  const initialState: NegotiationState = session.state ?? {
-    currentOfferCents: null,
-    userBudgetCents: null,
-    companySignals: {},
-  };
-
-  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user");
-  const latestUserText = latestUserMessage?.parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
-    .map((part) => part.text)
-    .join("")
-    .trim();
-
-  return streamText({
-    model: getModel(),
-    system: buildSystemPrompt(session),
-    messages: toModelMessages(messages),
-    onFinish: async ({ text }) => {
-      const assistantReply = text.trim();
-      if (!assistantReply) {
-        return;
-      }
-
-      if (latestUserText) {
-        await appendPricingMessage(session.signup.id, "user", latestUserText);
-      }
-      await appendPricingMessage(session.signup.id, "assistant", assistantReply);
-
-      if (session.signup.negotiation_status === "not_started") {
-        await markNegotiationInProgress(session.signup.id);
-      }
-
-      const transcript = uiMessagesToText(messages);
-      const applied = await extractAgentTurn(assistantReply, transcript, initialState);
-      await upsertPricingState(session.signup.id, applied.state);
-
-      if (applied.declined) {
         await finalizeNegotiation({
           waitlistSignupId: session.signup.id,
-          tier: applied.tier ?? "teams",
-          agreedPriceCents: applied.offerCents ?? 0,
-          offeredPriceCents: applied.offerCents,
-          status: "declined",
-        });
-        await notifyNegotiationDeclined({ email: session.signup.email });
-        return;
-      }
-
-      if (applied.accepted && applied.tier && applied.offerCents) {
-        await finalizeNegotiation({
-          waitlistSignupId: session.signup.id,
-          tier: applied.tier,
-          agreedPriceCents: applied.offerCents,
-          offeredPriceCents: applied.offerCents,
+          tier,
+          agreedPriceCents: priceCents,
+          offeredPriceCents: priceCents,
           status: "accepted",
         });
         await notifyNegotiationAccepted({
           email: session.signup.email,
           token: session.signup.confirmation_token,
-          tier: applied.tier,
-          agreedPriceCents: applied.offerCents,
+          tier,
+          agreedPriceCents: priceCents,
         });
+
+        return {
+          saved: true,
+          tier,
+          priceCents,
+          priceLabel: `${formatUsdFromCents(priceCents)}/mo`,
+        };
+      },
+    }),
+    declinePricing: tool({
+      description: "Record when the user clearly opts out of paid plans.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        await finalizeNegotiation({
+          waitlistSignupId: session.signup.id,
+          tier: session.signup.selected_tier ?? "teams",
+          agreedPriceCents: 0,
+          offeredPriceCents: session.signup.offered_price_cents,
+          status: "declined",
+        });
+        await notifyNegotiationDeclined({ email: session.signup.email });
+        return { declined: true };
+      },
+    }),
+  };
+}
+
+export function runPricingNegotiationTurn(session: PricingSession, userMessage: string) {
+  const trimmedMessage = userMessage.trim();
+
+  return streamText({
+    model: getModel(),
+    system: buildSystemPrompt(session),
+    messages: toModelMessages(session.messages, trimmedMessage),
+    tools: createNegotiationTools(session),
+    stopWhen: stepCountIs(5),
+    onFinish: async ({ text }) => {
+      if (trimmedMessage) {
+        await appendPricingMessage(session.signup.id, "user", trimmedMessage);
+      }
+
+      const assistantReply = text.trim();
+      if (assistantReply) {
+        await appendPricingMessage(session.signup.id, "assistant", assistantReply);
+      }
+
+      if (session.signup.negotiation_status === "not_started") {
+        await markNegotiationInProgress(session.signup.id);
       }
     },
   });

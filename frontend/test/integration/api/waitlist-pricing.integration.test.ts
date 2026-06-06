@@ -18,28 +18,8 @@ vi.mock("@/lib/waitlist-pricing", async () => {
 });
 
 import { POST } from "@/app/api/waitlist/pricing/chat/route";
-import { GET } from "@/app/api/waitlist/pricing/session/route";
 
 const TOKEN = "550e8400-e29b-41d4-a716-446655440000";
-
-describe("GET /api/waitlist/pricing/session", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns 400 for invalid token", async () => {
-    const res = await GET(new NextRequest("http://localhost/api/waitlist/pricing/session?token=bad"));
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 404 when session is missing", async () => {
-    getPricingSessionMock.mockResolvedValue(null);
-    const res = await GET(
-      new NextRequest(`http://localhost/api/waitlist/pricing/session?token=${TOKEN}`),
-    );
-    expect(res.status).toBe(404);
-  });
-});
 
 describe("POST /api/waitlist/pricing/chat", () => {
   afterEach(() => {
@@ -72,7 +52,6 @@ describe("POST /api/waitlist/pricing/chat", () => {
         negotiation_completed_at: new Date().toISOString(),
       },
       messages: [],
-      state: null,
     });
 
     const res = await POST(
@@ -81,13 +60,7 @@ describe("POST /api/waitlist/pricing/chat", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           token: TOKEN,
-          messages: [
-            {
-              id: "m1",
-              role: "user",
-              parts: [{ type: "text", text: "hello" }],
-            },
-          ],
+          message: "hello",
         }),
       }),
     );
@@ -101,7 +74,7 @@ describe("POST /api/waitlist/pricing/chat", () => {
         id: "signup-1",
         email: "lead@example.test",
         confirmation_token: TOKEN,
-        confirmed_at: new Date().toISOString(),
+        confirmed_at: null,
         negotiation_status: "in_progress",
         selected_tier: null,
         offered_price_cents: null,
@@ -109,7 +82,6 @@ describe("POST /api/waitlist/pricing/chat", () => {
         negotiation_completed_at: null,
       },
       messages: [],
-      state: null,
     });
 
     runPricingNegotiationTurnMock.mockReturnValue({
@@ -122,18 +94,13 @@ describe("POST /api/waitlist/pricing/chat", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           token: TOKEN,
-          messages: [
-            {
-              id: "m1",
-              role: "user",
-              parts: [{ type: "text", text: "We have 3 stores" }],
-            },
-          ],
+          message: "We have 3 stores",
         }),
       }),
     );
 
     expect(res.status).toBe(200);
     expect(runPricingNegotiationTurnMock).toHaveBeenCalledOnce();
+    expect(runPricingNegotiationTurnMock.mock.calls[0]?.[1]).toBe("We have 3 stores");
   });
 });

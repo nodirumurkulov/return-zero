@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 type FormStatus = "idle" | "loading" | "sent" | "error";
 
 export function WaitlistSection({ initialBanner }: { initialBanner?: string | null }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +28,19 @@ export function WaitlistSection({ initialBanner }: { initialBanner?: string | nu
       body: JSON.stringify({ email }),
     });
 
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      pricingToken?: string;
+    };
 
     if (!response.ok) {
       setStatus("error");
       setError(data.error ?? "Could not join waitlist. Try again.");
+      return;
+    }
+
+    if (data.pricingToken) {
+      router.push(`/waitlist/pricing?token=${data.pricingToken}`);
       return;
     }
 

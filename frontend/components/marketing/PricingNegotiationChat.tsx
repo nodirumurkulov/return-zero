@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,11 @@ function messageText(message: UIMessage): string {
     .join("");
 }
 
+function latestUserMessageText(messages: UIMessage[]): string {
+  const latestUser = [...messages].reverse().find((message) => message.role === "user");
+  return latestUser ? messageText(latestUser).trim() : "";
+}
+
 function formatOffer(cents: number | null): string | null {
   if (cents === null) {
     return null;
@@ -60,6 +66,7 @@ export function PricingNegotiationChat({
   initialMessages,
   currentOfferCents,
 }: PricingNegotiationChatProps) {
+  const router = useRouter();
   const [input, setInput] = useState("");
   const transport = useMemo(
     () =>
@@ -69,7 +76,7 @@ export function PricingNegotiationChat({
           return {
             body: {
               token,
-              messages,
+              message: latestUserMessageText(messages),
             },
           };
         },
@@ -80,6 +87,9 @@ export function PricingNegotiationChat({
   const { messages, sendMessage, status } = useChat({
     transport,
     messages: toUiMessages(initialMessages),
+    onFinish: () => {
+      router.refresh();
+    },
   });
 
   const isClosed = negotiationStatus === "accepted" || negotiationStatus === "declined";

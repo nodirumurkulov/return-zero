@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export type WaitlistInsertResult =
   | { status: "created"; confirmationToken: string }
   | { status: "exists_unconfirmed"; confirmationToken: string }
-  | { status: "exists_confirmed" };
+  | { status: "exists_confirmed"; confirmationToken: string };
 
 export async function insertWaitlistSignup(email: string): Promise<WaitlistInsertResult> {
   const supabase = createAdminClient();
@@ -21,7 +21,10 @@ export async function insertWaitlistSignup(email: string): Promise<WaitlistInser
 
   if (existing.data) {
     if (existing.data.confirmed_at) {
-      return { status: "exists_confirmed" };
+      return {
+        status: "exists_confirmed",
+        confirmationToken: existing.data.confirmation_token,
+      };
     }
     return {
       status: "exists_unconfirmed",

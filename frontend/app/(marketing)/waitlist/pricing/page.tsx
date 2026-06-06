@@ -7,7 +7,7 @@ import { formatUsdFromCents, getPricingSession, maskEmail, seedOpeningAssistantM
 
 export const metadata: Metadata = {
   title: "Pricing chat — Hugo",
-  description: "Negotiate Hugo Teams or Enterprise pricing after waitlist confirmation.",
+  description: "Negotiate Hugo Teams or Enterprise pricing after joining the waitlist.",
 };
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function WaitlistPricingPage({ searchParams }: PageProps) {
         <SectionLabel>Pricing</SectionLabel>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Link required</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Open the pricing chat from your waitlist confirmation email.
+          Open the pricing chat from your waitlist confirmation email, or join the waitlist to start.
         </p>
         <Button className="mt-6" asChild>
           <Link href="/#waitlist">Join the waitlist</Link>
@@ -40,9 +40,7 @@ export default async function WaitlistPricingPage({ searchParams }: PageProps) {
       <div className="mx-auto max-w-md px-4 py-16 text-center sm:px-6">
         <SectionLabel>Pricing</SectionLabel>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Invalid link</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          This pricing link is invalid or your email is not confirmed yet.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">This pricing link is invalid.</p>
         <Button className="mt-6" asChild>
           <Link href="/#waitlist">Join the waitlist</Link>
         </Button>
@@ -83,7 +81,7 @@ export default async function WaitlistPricingPage({ searchParams }: PageProps) {
           : null
       }
       initialMessages={messages}
-      currentOfferCents={session.state?.currentOfferCents ?? session.signup.offered_price_cents}
+      currentOfferCents={session.signup.offered_price_cents}
     />
   );
 }
