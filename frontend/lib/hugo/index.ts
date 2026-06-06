@@ -16,6 +16,7 @@ import {
 } from "./actions";
 import {
   buildCatalogContext,
+  buildDeepProductContext,
   buildIncidentDetailContext,
   buildInventoryContext,
   buildOpenIncidentsContext,
@@ -24,6 +25,7 @@ import {
   resolveIncident,
   resolveThreadIncidentReference,
   wantsCatalog,
+  wantsDeepProductContext,
   wantsInventory,
 } from "./context";
 import { classifyHugoIntent } from "./intent";
@@ -126,16 +128,15 @@ async function answerDataQuery(
   const parts = [await buildOpenIncidentsContext(supabase, scope)];
 
   const ref = (incidentReference ?? "").trim();
-  if (ref) {
-    const { match } = await resolveIncident(supabase, ref, scope);
-    if (match) {
-      const detail = await getStore(supabase).incidents.getDetail({
-        id: match.id,
-        scope,
-      });
-      if (detail) {
-        parts.push(buildIncidentDetailContext(detail));
-      }
+  const resolvedIncident = ref ? (await resolveIncident(supabase, ref, scope)).match : null;
+
+  if (resolvedIncident) {
+    const detail = await getStore(supabase).incidents.getDetail({
+      id: resolvedIncident.id,
+      scope,
+    });
+    if (detail) {
+      parts.push(buildIncidentDetailContext(detail));
     }
   }
 
@@ -145,6 +146,11 @@ async function answerDataQuery(
 
   if (wantsInventory(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
     parts.push(await buildInventoryContext(supabase, scope));
+  }
+
+  if (wantsDeepProductContext(`${mention.prompt}\n${threadTranscript ?? ""}`)) {
+    const deepContext = await buildDeepProductContext(supabase, scope, resolvedIncident?.id);
+    if (deepContext) parts.push(deepContext);
   }
 
   return generateDataReply(mention.prompt, parts.join("\n\n"), threadTranscript);
