@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import AgentMonitor from "@/components/catalog/AgentMonitor";
 import { HealthBadge } from "@/components/catalog/HealthBadge";
 import KpiCard from "@/components/catalog/KpiCard";
+import LinkedIncidents from "@/components/catalog/LinkedIncidents";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -30,7 +30,11 @@ export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = await createClient();
   const organizationId = await requireOrganizationId(supabase);
-  const detail = await getStore(supabase).catalog.get({ organizationId, productId: params.productId });
+  const store = getStore(supabase);
+  const [detail, linkedIncidents] = await Promise.all([
+    store.catalog.get({ organizationId, productId: params.productId }),
+    store.incidents.list({ organizationId, productId: params.productId }),
+  ]);
 
   if (!detail) notFound();
 
@@ -87,7 +91,7 @@ export default async function ProductDetailPage(props: PageProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AgentMonitor kpis={thresholdRows} />
+        <LinkedIncidents incidents={linkedIncidents} />
         <ThresholdEditor productId={params.productId} thresholds={thresholdRows} />
       </div>
     </div>

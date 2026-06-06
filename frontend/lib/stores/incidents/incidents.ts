@@ -24,11 +24,14 @@ export class Incidents {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
   async list(opts: IncidentsListOpts): Promise<Incident[]> {
-    const { data, error } = await this.supabase
+    const baseQuery = this.supabase
       .from("incidents")
       .select("*")
-      .eq("organization_id", opts.organizationId)
-      .order("created_at", { ascending: false });
+      .eq("organization_id", opts.organizationId);
+    const filteredQuery = opts.productId
+      ? baseQuery.eq("product_id", opts.productId)
+      : baseQuery;
+    const { data, error } = await filteredQuery.order("created_at", { ascending: false });
 
     if (error) throw new IncidentsError(`incidents list failed: ${error.message}`);
     return data ?? [];
