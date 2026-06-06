@@ -21,18 +21,20 @@ export async function sendWaitlistConfirmation(email: string, confirmationToken:
   });
 }
 
-export async function sendWaitlistWelcome(email: string): Promise<void> {
+export async function sendWaitlistWelcome(email: string, confirmationToken: string): Promise<void> {
+  const pricingUrl = `${appUrl()}/waitlist/pricing?token=${confirmationToken}`;
+
   await sendEmail({
     to: email,
     subject: "You're on the Hugo waitlist",
     html: `
       <p>You're confirmed on the Hugo waitlist.</p>
       <p>Hugo detects ecommerce KPI breaches, runs AI investigation, and tracks recovery — so you act before the P&amp;L closes.</p>
-      <p>We'll email you when early access opens.</p>
+      <p><a href="${pricingUrl}">Chat with us about Teams or Enterprise pricing</a> to lock in early-access terms.</p>
     `,
     text:
       "You're confirmed on the Hugo waitlist.\n\n" +
       "Hugo detects ecommerce KPI breaches, runs AI investigation, and tracks recovery.\n\n" +
-      "We'll email you when early access opens.",
+      `Chat about pricing: ${pricingUrl}`,
   });
 }

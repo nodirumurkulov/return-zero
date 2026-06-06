@@ -1903,30 +1903,109 @@ export type Database = {
       }
       waitlist_signups: {
         Row: {
+          agreed_price_cents: number | null
           confirmation_token: string
           confirmed_at: string | null
           created_at: string
           email: string
           id: string
+          negotiation_completed_at: string | null
+          negotiation_status: Database["public"]["Enums"]["negotiation_status"]
+          offered_price_cents: number | null
+          selected_tier: Database["public"]["Enums"]["pricing_tier"] | null
           welcome_sent_at: string | null
         }
         Insert: {
+          agreed_price_cents?: number | null
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
           email: string
           id?: string
+          negotiation_completed_at?: string | null
+          negotiation_status?: Database["public"]["Enums"]["negotiation_status"]
+          offered_price_cents?: number | null
+          selected_tier?: Database["public"]["Enums"]["pricing_tier"] | null
           welcome_sent_at?: string | null
         }
         Update: {
+          agreed_price_cents?: number | null
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
           email?: string
           id?: string
+          negotiation_completed_at?: string | null
+          negotiation_status?: Database["public"]["Enums"]["negotiation_status"]
+          offered_price_cents?: number | null
+          selected_tier?: Database["public"]["Enums"]["pricing_tier"] | null
           welcome_sent_at?: string | null
         }
         Relationships: []
+      }
+      waitlist_pricing_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["pricing_message_role"]
+          waitlist_signup_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["pricing_message_role"]
+          waitlist_signup_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["pricing_message_role"]
+          waitlist_signup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_pricing_messages_waitlist_signup_id_fkey"
+            columns: ["waitlist_signup_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_signups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_pricing_state: {
+        Row: {
+          company_signals: Json
+          current_offer_cents: number | null
+          updated_at: string
+          user_budget_cents: number | null
+          waitlist_signup_id: string
+        }
+        Insert: {
+          company_signals?: Json
+          current_offer_cents?: number | null
+          updated_at?: string
+          user_budget_cents?: number | null
+          waitlist_signup_id: string
+        }
+        Update: {
+          company_signals?: Json
+          current_offer_cents?: number | null
+          updated_at?: string
+          user_budget_cents?: number | null
+          waitlist_signup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_pricing_state_waitlist_signup_id_fkey"
+            columns: ["waitlist_signup_id"]
+            isOneToOne: true
+            referencedRelation: "waitlist_signups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       variants: {
         Row: {
@@ -2074,7 +2153,15 @@ export type Database = {
       metric_operation: "ratio" | "value"
       metric_severity: "critical" | "high" | "medium" | "low"
       metric_unit: "ratio" | "currency" | "count" | "percentage"
+      negotiation_status:
+        | "not_started"
+        | "in_progress"
+        | "accepted"
+        | "declined"
+        | "expired"
       organization_role: "owner" | "admin" | "member"
+      pricing_message_role: "user" | "assistant" | "system"
+      pricing_tier: "teams" | "enterprise"
       risk_level: "high" | "medium" | "low"
       store_connection_status:
         | "pending"
@@ -2254,7 +2341,16 @@ export const Constants = {
       metric_operation: ["ratio", "value"],
       metric_severity: ["critical", "high", "medium", "low"],
       metric_unit: ["ratio", "currency", "count", "percentage"],
+      negotiation_status: [
+        "not_started",
+        "in_progress",
+        "accepted",
+        "declined",
+        "expired",
+      ],
       organization_role: ["owner", "admin", "member"],
+      pricing_message_role: ["user", "assistant", "system"],
+      pricing_tier: ["teams", "enterprise"],
       risk_level: ["high", "medium", "low"],
       store_connection_status: [
         "pending",

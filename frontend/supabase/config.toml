@@ -76,6 +76,7 @@ schema_paths = [
   "./schemas/012_slack_team_mapping.sql",
   "./schemas/013_analytics_statement_timeout.sql",
   "./schemas/018_waitlist.sql",
+  "./schemas/019_waitlist_pricing.sql",
 ]
 
 [db.seed]

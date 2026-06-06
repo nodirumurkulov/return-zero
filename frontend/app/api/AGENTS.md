@@ -33,6 +33,8 @@ if (!parsed.success) {
 | `PATCH /api/stores/incidents/[id]` | `getStore().incidents.update` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 | `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |
+| `GET /api/waitlist/pricing/session` | `waitlist-pricing` session loader |
+| `POST /api/waitlist/pricing/chat` | `waitlist-pricing` streaming negotiation agent |
 
 Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
 
