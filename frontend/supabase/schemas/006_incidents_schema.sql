@@ -6,6 +6,7 @@
 create table public.incidents (
   id                       uuid primary key default gen_random_uuid(),
   organization_id          uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   title                    text not null,
   status                   public.incident_status not null default 'detected',
   severity                 public.incident_severity not null default 'medium',
@@ -26,6 +27,8 @@ create table public.incidents (
   investigation_started_at timestamptz,
   fix_proposed_at          timestamptz
 );
+
+create index idx_incidents_store_id on public.incidents (store_id);
 
 create index idx_incidents_organization_id on public.incidents (organization_id);
 create index idx_incidents_organization_status on public.incidents (organization_id, status);
@@ -79,3 +82,7 @@ create table public.incident_timeline (
 create index idx_incident_timeline_organization_id on public.incident_timeline (organization_id);
 create index idx_incident_timeline_incident_created
   on public.incident_timeline (organization_id, incident_id, created_at);
+
+alter table public.incidents
+  add constraint incidents_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;

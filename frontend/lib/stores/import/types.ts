@@ -20,6 +20,11 @@ export interface ImportRunResult {
   success: boolean;
 }
 
+export type ImportStartResult =
+  | { action: "skipped" }
+  | { action: "started" }
+  | { action: "already_importing" };
+
 export interface ImportLoadOpts {
   replace?: boolean;
 }
@@ -72,9 +77,23 @@ export const importPartialResponseSchema = z
   })
   .strict();
 
+export const importImportingResponseSchema = z
+  .object({
+    importing: z.literal(true),
+  })
+  .strict();
+
+export const importSkippedResponseSchema = z
+  .object({
+    skipped: z.literal(true),
+  })
+  .strict();
+
 export const importResponseSchema = z.union([
   importSuccessResponseSchema,
   importPartialResponseSchema,
+  importImportingResponseSchema,
+  importSkippedResponseSchema,
   z.object({ error: z.string() }),
 ]);
 

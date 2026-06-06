@@ -27,7 +27,9 @@ export default async function OnboardingPage() {
 
   const productCount = count ?? 0;
   const storeReady =
-    connection?.platform === "mock_csv" && connection.status === "connected" && productCount > 0;
+    connection?.platform === "mock_csv" &&
+    (connection.status === "connected" || connection.status === "importing") &&
+    productCount > 0;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12">

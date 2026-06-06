@@ -7,6 +7,7 @@
 create table public.suppliers (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   name             text,
   country          text,
@@ -16,16 +17,21 @@ create table public.suppliers (
   unique (organization_id, external_id)
 );
 
+create index idx_suppliers_store_id on public.suppliers (store_id);
+
 create index idx_suppliers_organization_id on public.suppliers (organization_id);
 
 -- ---- product_collections (M:N) -------------------------------
 create table public.product_collections (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   product_id       uuid not null references public.products(id) on delete cascade,
   collection_id    uuid not null references public.collections(id) on delete cascade,
   unique (organization_id, product_id, collection_id)
 );
+
+create index idx_product_collections_store_id on public.product_collections (store_id);
 
 create index idx_product_collections_organization_id
   on public.product_collections (organization_id);
@@ -38,6 +44,7 @@ create index idx_product_collections_collection_id
 create table public.addresses (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   customer_id      uuid not null references public.customers(id) on delete cascade,
   first_name       text,
@@ -51,6 +58,8 @@ create table public.addresses (
   unique (organization_id, external_id)
 );
 
+create index idx_addresses_store_id on public.addresses (store_id);
+
 create index idx_addresses_organization_id on public.addresses (organization_id);
 create index idx_addresses_customer_id on public.addresses (customer_id);
 
@@ -58,6 +67,7 @@ create index idx_addresses_customer_id on public.addresses (customer_id);
 create table public.discount_codes (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   code             text not null,
   type             text,
@@ -69,12 +79,15 @@ create table public.discount_codes (
   unique (organization_id, code)
 );
 
+create index idx_discount_codes_store_id on public.discount_codes (store_id);
+
 create index idx_discount_codes_organization_id on public.discount_codes (organization_id);
 
 -- ---- email_campaigns ------------------------------------------
 create table public.email_campaigns (
   id                     uuid primary key default gen_random_uuid(),
   organization_id        uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id            text not null,
   name                   text,
   type                   text,
@@ -90,12 +103,15 @@ create table public.email_campaigns (
   unique (organization_id, external_id)
 );
 
+create index idx_email_campaigns_store_id on public.email_campaigns (store_id);
+
 create index idx_email_campaigns_organization_id on public.email_campaigns (organization_id);
 
 -- ---- email_events ---------------------------------------------
 create table public.email_events (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   campaign_id      uuid references public.email_campaigns(id) on delete cascade,
   customer_id      uuid references public.customers(id) on delete set null,
@@ -103,6 +119,8 @@ create table public.email_events (
   timestamp        timestamptz,
   unique (organization_id, external_id)
 );
+
+create index idx_email_events_store_id on public.email_events (store_id);
 
 create index idx_email_events_organization_id on public.email_events (organization_id);
 create index idx_email_events_campaign_id on public.email_events (campaign_id);
@@ -112,11 +130,14 @@ create index idx_email_events_customer_id on public.email_events (customer_id);
 create table public.support_messages (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   ticket_id        uuid not null references public.support_tickets(id) on delete cascade,
   messages         jsonb not null default '[]'::jsonb,
   unique (organization_id, external_id)
 );
+
+create index idx_support_messages_store_id on public.support_messages (store_id);
 
 create index idx_support_messages_organization_id on public.support_messages (organization_id);
 create index idx_support_messages_ticket_id on public.support_messages (ticket_id);
@@ -125,6 +146,7 @@ create index idx_support_messages_ticket_id on public.support_messages (ticket_i
 create table public.bank_transactions (
   id               uuid primary key default gen_random_uuid(),
   organization_id  uuid not null references public.organizations(id) on delete cascade,
+  store_id             uuid not null,
   external_id      text not null,
   date             date not null,
   description      text,
@@ -135,6 +157,8 @@ create table public.bank_transactions (
   raw_category     text,
   unique (organization_id, external_id)
 );
+
+create index idx_bank_transactions_store_id on public.bank_transactions (store_id);
 
 create index idx_bank_transactions_organization_id on public.bank_transactions (organization_id);
 create index idx_bank_transactions_organization_date

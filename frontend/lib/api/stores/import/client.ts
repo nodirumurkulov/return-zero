@@ -1,59 +1,87 @@
+import { z } from "zod";
+
+import { apiClient } from "@/lib/api/client";
 import {
-  importPartialResponseSchema,
-  importResponseSchema,
+  importImportingResponseSchema,
+  importSkippedResponseSchema,
   type StorePlatform,
 } from "@/lib/stores";
 
+const POLL_INTERVAL_MS = 1500;
+const POLL_TIMEOUT_MS = 300_000;
+
+const importStatusResponseSchema = z.object({
+  connection: z
+    .object({
+      platform: z.string(),
+      status: z.string(),
+      connected_at: z.string().nullable(),
+    })
+    .nullable(),
+  productCount: z.number(),
+});
+
 export type PostImportStoreResult = {
-  readonly results: Array<{ table: string; count: number; error?: string }>;
+  readonly importing?: true;
+  readonly skipped?: true;
 };
 
-function formatImportFailure(
-  results: Array<{ table: string; count: number; error?: string }>,
-): string {
-  const failed = results.filter((result) => result.error);
-  if (failed.length === 0) return "Import failed";
-  return `Import failed: ${failed.map((result) => `${result.table}: ${result.error}`).join("; ")}`;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
-async function parseImportResponse(res: Response): Promise<PostImportStoreResult> {
-  const json: unknown = await res.json();
-  const parsed = importResponseSchema.safeParse(json);
-  if (!parsed.success) throw new Error("Import failed");
-  if ("error" in parsed.data) throw new Error(parsed.data.error);
+async function pollImportReady(): Promise<void> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
 
-  if (parsed.data.success) {
-    return { results: parsed.data.results };
-  }
-
-  throw new Error(formatImportFailure(parsed.data.results));
-}
-
-async function parseImportHttpResponse(res: Response): Promise<PostImportStoreResult> {
-  if (res.status === 207) {
-    const json: unknown = await res.json();
-    const partial = importPartialResponseSchema.safeParse(json);
-    if (partial.success) {
-      throw new Error(formatImportFailure(partial.data.results));
+  while (Date.now() < deadline) {
+    const raw: unknown = await apiClient("/api/stores/import/status", { method: "GET" });
+    const parsed = importStatusResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new Error("Import failed");
     }
-    throw new Error("Import failed");
-  }
-  return parseImportResponse(res);
-}
 
-async function postImport(path: string): Promise<PostImportStoreResult> {
-  const res = await fetch(path, { method: "POST" });
-  if (!res.ok && res.status !== 207) {
-    const json: unknown = await res.json().catch(() => null);
-    const parsed = importResponseSchema.safeParse(json);
-    if (parsed.success && "error" in parsed.data) {
-      throw new Error(parsed.data.error);
+    const { connection, productCount } = parsed.data;
+    if (connection?.status === "error") {
+      throw new Error("Import failed");
     }
-    throw new Error("Import failed");
+    if (connection?.status === "connected" && productCount > 0) {
+      return;
+    }
+    if (connection?.status === "importing" && productCount > 0) {
+      return;
+    }
+
+    await sleep(POLL_INTERVAL_MS);
   }
-  return parseImportHttpResponse(res);
+
+  throw new Error("Import timed out");
 }
 
 export async function postImportStore(platform: StorePlatform): Promise<PostImportStoreResult> {
-  return postImport(`/api/stores/import/${platform}`);
+  const res = await fetch(`/api/stores/import/${platform}`, { method: "POST" });
+  const json: unknown = await res.json().catch(() => null);
+
+  if (res.status === 202) {
+    const importing = importImportingResponseSchema.safeParse(json);
+    if (!importing.success) {
+      throw new Error("Import failed");
+    }
+    await pollImportReady();
+    return { importing: true };
+  }
+
+  if (res.status === 200) {
+    const skipped = importSkippedResponseSchema.safeParse(json);
+    if (skipped.success) {
+      return { skipped: true };
+    }
+  }
+
+  if (json && typeof json === "object" && "error" in json && typeof json.error === "string") {
+    throw new Error(json.error);
+  }
+
+  throw new Error("Import failed");
 }

@@ -1990,6 +1990,7 @@ export type Database = {
       risk_level: "high" | "medium" | "low"
       store_connection_status:
         | "pending"
+        | "importing"
         | "connected"
         | "error"
         | "disconnected"
@@ -2168,6 +2169,7 @@ export const Constants = {
       risk_level: ["high", "medium", "low"],
       store_connection_status: [
         "pending",
+        "importing",
         "connected",
         "error",
         "disconnected",

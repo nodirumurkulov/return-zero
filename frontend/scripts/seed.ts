@@ -12,7 +12,7 @@ import { ensureE2eUser, seedE2eDetectedIncident } from "../e2e/fixtures/e2e-user
 import { resolveDemoCredentials } from "../lib/auth/demo";
 import { HUGO_MOCK_STORE_NAME, HUGO_MOCK_STORE_SLUG } from "../lib/organizations/mock-store";
 import { MockImportLoader } from "../lib/stores/import/mock";
-import { hugoMockStorePack } from "../lib/stores/import/mock/pack";
+import { readHugoMockStorePack } from "../lib/stores/import/mock/pack";
 import type { Database } from "../lib/supabase/database.types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -98,7 +98,7 @@ async function ensureDemoUserMembership(organizationId: string) {
 async function ensureFullDemoStore(organizationId: string) {
   console.log(`  loading ${HUGO_MOCK_STORE_NAME}…`);
   const loader = new MockImportLoader();
-  const results = await loader.load(supabase, organizationId, hugoMockStorePack.read(), {
+  const results = await loader.load(supabase, organizationId, readHugoMockStorePack(), {
     replace: true,
   });
   if (!results.every((result) => !result.error)) {

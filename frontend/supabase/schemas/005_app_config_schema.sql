@@ -101,17 +101,101 @@ create table public.business_reports (
 create index idx_business_reports_organization_created
   on public.business_reports (organization_id, created_at desc);
 
--- ---- store_connections (one active store per org) --------------
+-- ---- store_connections (multi-store per org) -------------------
 create table public.store_connections (
-  organization_id  uuid primary key references public.organizations(id) on delete cascade,
+  id               uuid primary key default gen_random_uuid(),
+  organization_id  uuid not null references public.organizations(id) on delete cascade,
   platform         public.store_platform not null default 'mock_csv',
   sync_mode        public.store_sync_mode not null default 'static',
   status           public.store_connection_status not null default 'pending',
   replay_cursor    date,
   external_shop_id text,
+  label            text,
+  sync_error       text,
   connected_at     timestamptz,
   last_synced_at   timestamptz,
   metadata         jsonb not null default '{}'::jsonb,
   created_at       timestamptz not null default now(),
-  updated_at       timestamptz not null default now()
+  updated_at       timestamptz not null default now(),
+  unique (organization_id, id)
 );
+
+create index idx_store_connections_organization_id
+  on public.store_connections (organization_id);
+
+create unique index store_connections_one_mock_per_org
+  on public.store_connections (organization_id)
+  where platform = 'mock_csv';
+
+create unique index store_connections_shopify_shop_per_org
+  on public.store_connections (organization_id, external_shop_id)
+  where platform = 'shopify' and external_shop_id is not null;
+
+alter table public.organizations
+  add constraint organizations_active_store_id_fkey
+  foreign key (active_store_id) references public.store_connections (id) on delete set null;
+
+-- ---- store_id foreign keys (requires store_connections) --------
+alter table public.collections
+  add constraint collections_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.products
+  add constraint products_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.variants
+  add constraint variants_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.customers
+  add constraint customers_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.orders
+  add constraint orders_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.line_items
+  add constraint line_items_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.refunds
+  add constraint refunds_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.meta_ads_daily
+  add constraint meta_ads_daily_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.google_ads_daily
+  add constraint google_ads_daily_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.inventory_movements
+  add constraint inventory_movements_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.support_tickets
+  add constraint support_tickets_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.purchase_orders
+  add constraint purchase_orders_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.po_line_items
+  add constraint po_line_items_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.suppliers
+  add constraint suppliers_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.product_collections
+  add constraint product_collections_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.addresses
+  add constraint addresses_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.discount_codes
+  add constraint discount_codes_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.email_campaigns
+  add constraint email_campaigns_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.email_events
+  add constraint email_events_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.support_messages
+  add constraint support_messages_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;
+alter table public.bank_transactions
+  add constraint bank_transactions_store_id_fkey
+  foreign key (store_id) references public.store_connections (id) on delete cascade;

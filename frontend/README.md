@@ -7,7 +7,7 @@ Next.js 16 App Router application for Hugo: catalog KPIs, incident workflow, API
 - Bun 1.3+
 - `frontend/.env.local` from repo [`.env.example`](../.env.example)
 
-After `supabase start`, copy Supabase URL/keys from `supabase status` into `.env.local`, then also copy the **Demo login** block (`DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`) from `.env.example`. Run `bun run seed` for the demo org and account, then connect the Hugo mock store at `/onboarding`.
+After `supabase start`, copy Supabase URL/keys from `supabase status` into `.env.local`, then optionally copy the **Demo seed** block (`DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`) from `.env.example`. Run `bun run seed` for the demo org and account, then connect the Hugo mock store at `/onboarding`.
 
 ## Usage
 

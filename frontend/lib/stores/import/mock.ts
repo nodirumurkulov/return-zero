@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
 
-
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
 import type { MockStoreFiles } from "./mock/pack";
@@ -31,10 +30,37 @@ export class MockImportLoader implements ImportLoader {
       if (error) throw new Error(`reset_organization_data: ${error.message}`);
     }
 
-    const maps = new IdMapCache();
-    const parents = await this.loadParents(supabase, organizationId, files, maps);
-    const children = await this.loadChildren(supabase, organizationId, files, maps);
-    return [...parents, ...children];
+    const { results: catalogResults, maps } = await this.loadCatalogPhase(
+      supabase,
+      organizationId,
+      files,
+    );
+    const commerceResults = await this.loadCommercePhase(supabase, organizationId, files, maps);
+    return [...catalogResults, ...commerceResults];
+  }
+
+  async loadCatalogPhase(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    source: unknown,
+    existingMaps?: IdMapCache,
+  ): Promise<{ results: ImportTableResult[]; maps: IdMapCache }> {
+    const files = source as MockStoreFiles;
+    const maps = existingMaps ?? new IdMapCache();
+    const results = await this.loadCatalogTables(supabase, organizationId, files, maps);
+    return { results, maps };
+  }
+
+  async loadCommercePhase(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    source: unknown,
+    maps: IdMapCache,
+  ): Promise<ImportTableResult[]> {
+    const files = source as MockStoreFiles;
+    const parentResults = await this.loadCommerceParents(supabase, organizationId, files, maps);
+    const childResults = await this.loadCommerceChildren(supabase, organizationId, files, maps);
+    return [...parentResults, ...childResults];
   }
 
   fetchExternalIdMap(
@@ -58,7 +84,7 @@ export class MockImportLoader implements ImportLoader {
     maps[table] = await this.loader.fetchExternalIdMap(supabase, table, organizationId);
   }
 
-  private async loadParents(
+  private async loadCatalogTables(
     supabase: SupabaseClient<Database>,
     organizationId: string,
     files: MockStoreFiles,
@@ -113,21 +139,6 @@ export class MockImportLoader implements ImportLoader {
       results.push(result);
     }
 
-    const customers = files["customers.csv"];
-    if (customers != null) {
-      const result = await this.loader.upsert(
-        supabase,
-        "customers",
-        this.rows.mapCustomerRows(
-          this.loader.parseRows(schema.mockStoreCustomerRowSchema, customers),
-          organizationId,
-        ),
-        "organization_id,external_id",
-      );
-      await this.refreshIdMap(supabase, "customers", organizationId, maps);
-      results.push(result);
-    }
-
     const variants = files["variants.csv"];
     if (variants != null) {
       const result = await this.loader.upsert(
@@ -141,6 +152,49 @@ export class MockImportLoader implements ImportLoader {
         "organization_id,external_id",
       );
       await this.refreshIdMap(supabase, "variants", organizationId, maps);
+      results.push(result);
+    }
+
+    const productCollections = files["product_collections.csv"];
+    if (productCollections != null) {
+      results.push(
+        await this.loader.upsert(
+          supabase,
+          "product_collections",
+          this.rows.mapProductCollectionRows(
+            this.loader.parseRows(schema.mockStoreProductCollectionRowSchema, productCollections),
+            organizationId,
+            maps,
+          ),
+          "organization_id,product_id,collection_id",
+        ),
+      );
+    }
+
+    return results;
+  }
+
+  private async loadCommerceParents(
+    supabase: SupabaseClient<Database>,
+    organizationId: string,
+    files: MockStoreFiles,
+    maps: IdMapCache,
+  ): Promise<ImportTableResult[]> {
+    const { schema } = this.rows;
+    const results: ImportTableResult[] = [];
+
+    const customers = files["customers.csv"];
+    if (customers != null) {
+      const result = await this.loader.upsert(
+        supabase,
+        "customers",
+        this.rows.mapCustomerRows(
+          this.loader.parseRows(schema.mockStoreCustomerRowSchema, customers),
+          organizationId,
+        ),
+        "organization_id,external_id",
+      );
+      await this.refreshIdMap(supabase, "customers", organizationId, maps);
       results.push(result);
     }
 
@@ -207,7 +261,7 @@ export class MockImportLoader implements ImportLoader {
     return results;
   }
 
-  private async loadChildren(
+  private async loadCommerceChildren(
     supabase: SupabaseClient<Database>,
     organizationId: string,
     files: MockStoreFiles,
@@ -276,22 +330,6 @@ export class MockImportLoader implements ImportLoader {
             maps,
           ),
           "organization_id,external_id",
-        ),
-      );
-    }
-
-    const productCollections = files["product_collections.csv"];
-    if (productCollections != null) {
-      results.push(
-        await this.loader.upsert(
-          supabase,
-          "product_collections",
-          this.rows.mapProductCollectionRows(
-            this.loader.parseRows(schema.mockStoreProductCollectionRowSchema, productCollections),
-            organizationId,
-            maps,
-          ),
-          "organization_id,product_id,collection_id",
         ),
       );
     }

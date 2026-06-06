@@ -23,10 +23,12 @@ export async function GET() {
   }
 
   try {
-    const connection = await getStore(supabase).import.status({
-      organizationId: org.organizationId,
-    });
-    return NextResponse.json({ connection });
+    const store = getStore(supabase);
+    const [connection, productCount] = await Promise.all([
+      store.import.status({ organizationId: org.organizationId }),
+      store.import.productCount(org.organizationId),
+    ]);
+    return NextResponse.json({ connection, productCount });
   } catch (err) {
     logApiError("api/stores/import/status", err);
     return apiErrorResponse(err);

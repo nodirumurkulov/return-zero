@@ -43,3 +43,11 @@ export class HugoMockStorePack {
 }
 
 export const hugoMockStorePack = new HugoMockStorePack();
+
+const packCache: { value: MockStoreFiles | null } = { value: null };
+
+/** Read and memoize the Hugo mock store CSV pack (once per process). */
+export function readHugoMockStorePack(): MockStoreFiles {
+  packCache.value ??= hugoMockStorePack.read();
+  return packCache.value;
+}

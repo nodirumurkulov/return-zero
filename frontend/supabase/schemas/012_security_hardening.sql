@@ -4,9 +4,9 @@
 -- =============================================================
 
 -- ---- RPC grants: destructive fn service-role only ----------------
-revoke all on function public.reset_organization_data(uuid) from public;
-revoke all on function public.reset_organization_data(uuid) from anon, authenticated;
-grant execute on function public.reset_organization_data(uuid) to service_role;
+revoke all on function public.reset_store_data(uuid) from public;
+revoke all on function public.reset_store_data(uuid) from anon, authenticated;
+grant execute on function public.reset_store_data(uuid) to service_role;
 
 revoke all on function public.product_source_facts(uuid, integer, date) from public;
 revoke all on function public.product_source_facts(uuid, integer, date) from anon;

@@ -24,7 +24,7 @@ create type public.forecast_rule_kind as enum (
 create type public.store_platform as enum ('mock_csv', 'shopify');
 create type public.store_sync_mode as enum ('static', 'pull', 'push');
 create type public.store_connection_status as enum (
-  'pending', 'connected', 'error', 'disconnected'
+  'pending', 'syncing', 'connected', 'error', 'disconnected'
 );
 
 -- Incidents

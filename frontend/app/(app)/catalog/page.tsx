@@ -23,7 +23,5 @@ export default async function CatalogPage() {
     );
   }
 
-  return (
-    <CatalogGrid products={result.products} />
-  );
+  return <CatalogGrid products={result.products} />;
 }

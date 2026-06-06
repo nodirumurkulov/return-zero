@@ -2,9 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { resolveDemoCredentials } from "@/lib/auth/demo";
 import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
-import { createOrganizationWithOwner, tryRequireOrganizationId } from "@/lib/organizations";
+import { createOrganizationWithOwner } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -119,40 +118,6 @@ export async function signUp(formData: FormData) {
   }
 
   redirect("/onboarding");
-}
-
-export async function signInAsDemo() {
-  const credentials = resolveDemoCredentials();
-  if (!credentials) {
-    redirect("/sign-in?error=demo");
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(credentials);
-  if (error) {
-    redirect("/sign-in?error=demo");
-  }
-
-  const org = await tryRequireOrganizationId(supabase);
-  if (org.ok) {
-    const [{ count }, connectionRes] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*", { count: "exact", head: true })
-        .eq("organization_id", org.organizationId),
-      supabase
-        .from("store_connections")
-        .select("status")
-        .eq("organization_id", org.organizationId)
-        .maybeSingle(),
-    ]);
-    const storeReady = (count ?? 0) > 0 && connectionRes.data?.status === "connected";
-    if (!storeReady) {
-      redirect("/onboarding");
-    }
-  }
-
-  redirect("/catalog");
 }
 
 export async function signInWithProvider(provider: OAuthProvider) {

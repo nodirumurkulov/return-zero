@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { tryRequireOrganizationId } from "@/lib/organizations";
 import {
-  importPartialResponseSchema,
-  importSuccessResponseSchema,
+  importImportingResponseSchema,
+  importSkippedResponseSchema,
   storePlatformSchema,
 } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
@@ -42,17 +42,36 @@ export async function POST(
 
   try {
     const store = getStore(supabase);
-    const { results, success } = await store.import.run({
+    const start = await store.import.tryStartImport({
       organizationId: org.organizationId,
       platform: platformParsed.data,
     });
-    if (success) {
-      await store.orders.reset({ organizationId: org.organizationId });
+
+    if (start.action === "skipped") {
+      return NextResponse.json(importSkippedResponseSchema.parse({ skipped: true }));
     }
-    const body = success
-      ? importSuccessResponseSchema.parse({ success: true, results })
-      : importPartialResponseSchema.parse({ success: false, results });
-    return NextResponse.json(body, { status: success ? 200 : 207 });
+
+    if (start.action === "started") {
+      after(async () => {
+        try {
+          const { success } = await store.import.runBackgroundImport({
+            organizationId: org.organizationId,
+            platform: platformParsed.data,
+            replace: false,
+          });
+          if (success) {
+            await store.orders.reset({ organizationId: org.organizationId });
+          }
+        } catch (err) {
+          logApiError("api/stores/import/[platform]", err);
+        }
+      });
+    }
+
+    return NextResponse.json(
+      importImportingResponseSchema.parse({ importing: true }),
+      { status: 202 },
+    );
   } catch (err) {
     logApiError("api/stores/import/[platform]", err);
     return apiErrorResponse(err);

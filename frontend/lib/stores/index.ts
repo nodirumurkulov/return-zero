@@ -75,9 +75,11 @@ export type { SearchListOpts, SearchTarget } from "./search";
 
 export type { StoreConnection, StorePlatform } from "./import/types";
 export {
+  importImportingResponseSchema,
   importPartialResponseSchema,
   importResponseSchema,
   importResultSchema,
+  importSkippedResponseSchema,
   importSuccessResponseSchema,
   storePlatformSchema,
   type ImportResponse,

@@ -53,7 +53,17 @@ begin
   ) values (
     p_organization_id, 'mock_csv', 'static', 'pending', date '2025-12-01'
   )
-  on conflict (organization_id) do nothing;
+  on conflict (organization_id) where (platform = 'mock_csv') do nothing;
+
+  update public.organizations
+  set active_store_id = (
+    select sc.id
+    from public.store_connections sc
+    where sc.organization_id = p_organization_id
+      and sc.platform = 'mock_csv'
+    limit 1
+  )
+  where id = p_organization_id;
 end;
 $$;
 
