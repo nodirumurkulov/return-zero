@@ -21,6 +21,9 @@ export const E2E_DETECTED_INCIDENT_TITLE = "E2E Detected Incident";
 /** Demo org from scripts/seed.ts (store + incidents from seed --full --e2e). */
 export const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
 
+/** Pretty Fly mock store connection id (set via seed_organization_defaults). */
+export const DEMO_STORE_ID = "00000000-0000-0000-0000-000000000200";
+
 /** Court Trainer hero product external id (uuid resolved at runtime). */
 export const COURT_TRAINER_PRODUCT_EXTERNAL_ID = "prod_00005";
 

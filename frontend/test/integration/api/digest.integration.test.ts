@@ -94,6 +94,7 @@ describe("GET /api/digest", () => {
       {
         id: "inc-1",
         organization_id: "org-1",
+        store_id: "store-1",
         title: "Spike",
         status: "detected",
         severity: "high",

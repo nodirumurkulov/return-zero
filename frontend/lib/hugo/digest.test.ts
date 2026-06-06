@@ -7,6 +7,7 @@ function incident(overrides: Partial<Incident>): Incident {
   return {
     id: "11111111-2222-3333-4444-555555555555",
     organization_id: "00000000-0000-0000-0000-000000000100",
+    store_id: "00000000-0000-0000-0000-000000000200",
     title: "Return rate spike",
     status: "detected",
     severity: "high",

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { notifyNewIncident, sendIncidentNotification } from "@/lib/slack";
+import { resolveActiveStoreId } from "@/lib/stores/connection/reset-store-data";
 import { computeMetrics } from "@/lib/stores/metrics/engine";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -171,10 +172,13 @@ export class Incidents {
     const severity = primary.severity;
     const description = `${primary.display_name} ${fmtValue(primary.unit, value)} exceeded threshold ${target}`;
 
+    const storeId = await resolveActiveStoreId(this.supabase, organizationId);
+
     const { data: inc, error: insErr } = await this.supabase
       .from("incidents")
       .insert({
         organization_id: organizationId,
+        store_id: storeId,
         title,
         status: "detected",
         severity,
