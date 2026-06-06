@@ -1,6 +1,6 @@
 # Scripts
 
-Bun CLI utilities to bootstrap the demo org and validate the database. New signups auto-provision the Pretty Fly demo store at account creation.
+Bun CLI utilities to bootstrap the demo org and validate the database.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environmen
 
 ```bash
 bun run scripts/seed.ts
-bun run scripts/seed.ts -- --full          # + Pretty Fly store + demo kanban incidents
+bun run scripts/seed.ts -- --full          # + Hugo mock store + demo kanban incidents
 bun run scripts/seed.ts -- --full --e2e    # + E2E user (for Playwright)
 ```
 

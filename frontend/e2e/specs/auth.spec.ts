@@ -22,7 +22,7 @@ test.describe("Authentication", () => {
   });
 
   test("signs up a new account", async ({ page }) => {
-    const email = `e2e+${Date.now()}@resolve.local`;
+    const email = `e2e+${Date.now()}@hugo.local`;
     await page.goto("/sign-up");
     await page.locator("#auth-email").fill(email);
     await page.locator("#auth-password").fill("e2e-signup-password-12");

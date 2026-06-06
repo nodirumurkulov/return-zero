@@ -9,10 +9,10 @@ const SLACK_STYLE =
   "simple bullet points ('- '). Keep replies under ~1500 characters unless asked for more.";
 
 const CHAT_PROMPT =
-  `You are Hugo, a helpful assistant for the Resolve ecommerce incident-response app. ${SLACK_STYLE}`;
+  `You are Hugo, the AI assistant for this ecommerce incident-response platform. ${SLACK_STYLE}`;
 
 const DATA_PROMPT =
-  `You are Hugo, an assistant for the Resolve ecommerce incident-response app. ${SLACK_STYLE} ` +
+  `You are Hugo, the AI assistant for this ecommerce incident-response platform. ${SLACK_STYLE} ` +
   "Answer the user's question using ONLY the live app data provided below. " +
   "If the data does not contain the answer, say so plainly instead of guessing. " +
   "When referring to an incident, use its title (the [id] prefix is for your reference). " +

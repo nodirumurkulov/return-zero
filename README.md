@@ -1,10 +1,10 @@
-# Resolve (return-zero)
+# Hugo (return-zero)
 
 **Commerce incident response — detect, investigate, fix, and recover in one place.**
 
 Ecommerce incident response for the **Pretty Fly** demo brand: detect KPI breaches, investigate with AI, approve fixes, and track recovery. Built for the **Wayflyer × Fin Hackathon** (3–5 June 2026).
 
-> **Engineering has Incident.io. Ecommerce has Resolve.**
+> **Engineering has Incident.io. Ecommerce has Hugo.**
 
 | | |
 |---|---|
@@ -25,7 +25,7 @@ When conversion drops, returns spike, or inventory stockouts, the damage is alre
 - Debate root cause in Slack without a shared timeline
 - Ship fixes without tracking whether the metric actually recovered
 
-Resolve closes that loop: **math finds the breach, agents explain it, humans approve the fix, and the platform monitors recovery until the incident resolves.**
+Hugo closes that loop: **math finds the breach, agents explain it, humans approve the fix, and the platform monitors recovery until the incident resolves.**
 
 ---
 
@@ -237,7 +237,7 @@ Built by the **[Run-zero](https://linear.app/run-zero)** team (Wayflyer × Fin H
 
 ## Why this matters for Wayflyer
 
-Pretty Fly (and real merchants) live on **unit economics**: returns erode margin, ads amplify bad fit, stockouts kill reorder LTV. Resolve treats those KPIs like production incidents — with severity, ownership, evidence, and closure — so finance and ops can **act before the quarter closes**, not after.
+Pretty Fly (and real merchants) live on **unit economics**: returns erode margin, ads amplify bad fit, stockouts kill reorder LTV. Hugo treats those KPIs like production incidents — with severity, ownership, evidence, and closure — so finance and ops can **act before the quarter closes**, not after.
 
 ---
 

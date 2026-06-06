@@ -20,7 +20,7 @@ vi.mock("@/lib/supabase/admin", () => ({
         eq: vi.fn(() => ({
           single: vi.fn(() =>
           Promise.resolve({
-            data: { name: "Pretty Fly" },
+            data: { name: "Hugo mock store" },
             error: null,
           }),
         ),

@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in **return-zero** (Resolve). Humans: see [README.md](README.md).
+Instructions for AI coding agents working in **return-zero** (Hugo). Humans: see [README.md](README.md).
 
 ## Project overview
 
-Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
+Hugo is an ecommerce incident-response app backed by the Hugo mock store demo dataset: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
 
 | Area | Path | Stack |
 |------|------|-------|
@@ -12,7 +12,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 | Database | `frontend/supabase/` | Postgres migrations, RLS |
 | Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
-| Hackathon | `hackathon/` | Pretty Fly CSVs, demo guides (not app code) |
+| Hackathon | `hackathon/` | Mock store CSVs, demo guides (not app code) |
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
 

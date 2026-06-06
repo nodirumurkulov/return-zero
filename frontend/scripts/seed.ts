@@ -2,7 +2,7 @@
  * Bootstrap demo org and auth user. Store data is loaded by the user via onboarding connect.
  *
  *   bun run seed                  # org + demo user only
- *   bun run seed -- --full        # + Pretty Fly store + demo kanban incidents
+ *   bun run seed -- --full        # + Hugo mock store + demo kanban incidents
  *   bun run seed -- --full --e2e  # + E2E user + detected incident (for Playwright)
  */
 import { createClient } from "@supabase/supabase-js";
@@ -10,8 +10,9 @@ import { createClient } from "@supabase/supabase-js";
 import { seedDemoKanbanData } from "../e2e/fixtures/demo-data";
 import { ensureE2eUser, seedE2eDetectedIncident } from "../e2e/fixtures/e2e-user";
 import { resolveDemoCredentials } from "../lib/auth/demo";
+import { HUGO_MOCK_STORE_NAME, HUGO_MOCK_STORE_SLUG } from "../lib/organizations/mock-store";
 import { MockImportLoader } from "../lib/stores/import/mock";
-import { prettyFlyPack } from "../lib/stores/import/mock/pack";
+import { hugoMockStorePack } from "../lib/stores/import/mock/pack";
 import type { Database } from "../lib/supabase/database.types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,15 +33,15 @@ async function ensureDemoOrganization(): Promise<string> {
   const { error } = await supabase.from("organizations").upsert(
     {
       id: DEMO_ORG_ID,
-      name: "Pretty Fly",
-      slug: "pretty-fly",
+      name: HUGO_MOCK_STORE_NAME,
+      slug: HUGO_MOCK_STORE_SLUG,
     },
     { onConflict: "id" },
   );
   if (error) {
     throw new Error(`demo organization: ${error.message}`);
   }
-  console.log("  ✓ Pretty Fly organization");
+  console.log(`  ✓ ${HUGO_MOCK_STORE_NAME} organization`);
   return DEMO_ORG_ID;
 }
 
@@ -95,9 +96,9 @@ async function ensureDemoUserMembership(organizationId: string) {
 }
 
 async function ensureFullDemoStore(organizationId: string) {
-  console.log("  loading Pretty Fly demo store…");
+  console.log(`  loading ${HUGO_MOCK_STORE_NAME}…`);
   const loader = new MockImportLoader();
-  const results = await loader.load(supabase, organizationId, prettyFlyPack.read(), {
+  const results = await loader.load(supabase, organizationId, hugoMockStorePack.read(), {
     replace: true,
   });
   if (!results.every((result) => !result.error)) {
@@ -132,7 +133,7 @@ async function ensureE2eFixtures(organizationId: string) {
 }
 
 async function main() {
-  console.log("=== Resolve — seed script ===\n");
+  console.log("=== Hugo — seed script ===\n");
 
   try {
     const organizationId = await ensureDemoOrganization();
@@ -150,7 +151,7 @@ async function main() {
     }
 
     if (!fullBootstrap) {
-      console.log("\nConnect the Pretty Fly demo store at /onboarding to load catalog data.\n");
+      console.log(`\nConnect the ${HUGO_MOCK_STORE_NAME} at /onboarding to load catalog data.\n`);
     }
     console.log("=== Done ✓ ===\n");
   } catch (err) {

@@ -5,17 +5,17 @@ import type { Database } from "@/lib/supabase/db";
 
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
-import type { PrettyFlyFiles } from "./mock/pack";
-import { type IdMaps, prettyFlyRows } from "./mock/rows";
+import type { MockStoreFiles } from "./mock/pack";
+import { type IdMaps, mockStoreRows } from "./mock/rows";
 import type { ImportLoadOpts, ImportLoader, ImportTableResult } from "./types";
 
-export type { PrettyFlyFile, PrettyFlyFiles } from "./mock/pack";
+export type { MockStoreFile, MockStoreFiles } from "./mock/pack";
 
 export class MockImportLoader implements ImportLoader {
   readonly platform = "mock_csv" as const;
 
   private readonly loader = csvLoader;
-  private readonly rows = prettyFlyRows;
+  private readonly rows = mockStoreRows;
 
   async load(
     supabase: SupabaseClient<Database>,
@@ -23,7 +23,7 @@ export class MockImportLoader implements ImportLoader {
     source: unknown,
     opts?: ImportLoadOpts,
   ): Promise<ImportTableResult[]> {
-    const files = source as PrettyFlyFiles;
+    const files = source as MockStoreFiles;
     if (opts?.replace) {
       const { error } = await supabase.rpc("reset_organization_data", {
         p_organization_id: organizationId,
@@ -61,7 +61,7 @@ export class MockImportLoader implements ImportLoader {
   private async loadParents(
     supabase: SupabaseClient<Database>,
     organizationId: string,
-    files: PrettyFlyFiles,
+    files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
     const { schema } = this.rows;
@@ -73,7 +73,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "collections",
         this.rows.mapCollectionRows(
-          this.loader.parseRows(schema.prettyFlyCollectionRowSchema, collections),
+          this.loader.parseRows(schema.mockStoreCollectionRowSchema, collections),
           organizationId,
         ),
         "organization_id,external_id",
@@ -88,7 +88,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "suppliers",
         this.rows.mapSupplierRows(
-          this.loader.parseRows(schema.prettyFlySupplierRowSchema, suppliers),
+          this.loader.parseRows(schema.mockStoreSupplierRowSchema, suppliers),
           organizationId,
         ),
         "organization_id,external_id",
@@ -103,7 +103,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "products",
         this.rows.mapProductRows(
-          this.loader.parseRows(schema.prettyFlyProductRowSchema, products),
+          this.loader.parseRows(schema.mockStoreProductRowSchema, products),
           organizationId,
           maps,
         ),
@@ -119,7 +119,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "customers",
         this.rows.mapCustomerRows(
-          this.loader.parseRows(schema.prettyFlyCustomerRowSchema, customers),
+          this.loader.parseRows(schema.mockStoreCustomerRowSchema, customers),
           organizationId,
         ),
         "organization_id,external_id",
@@ -134,7 +134,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "variants",
         this.rows.mapVariantRows(
-          this.loader.parseRows(schema.prettyFlyVariantRowSchema, variants),
+          this.loader.parseRows(schema.mockStoreVariantRowSchema, variants),
           organizationId,
           maps,
         ),
@@ -151,7 +151,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "discount_codes",
           this.rows.mapDiscountCodeRows(
-            this.loader.parseRows(schema.prettyFlyDiscountCodeRowSchema, discountCodes),
+            this.loader.parseRows(schema.mockStoreDiscountCodeRowSchema, discountCodes),
             organizationId,
           ),
           "organization_id,external_id",
@@ -165,7 +165,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "email_campaigns",
         this.rows.mapEmailCampaignRows(
-          this.loader.parseRows(schema.prettyFlyEmailCampaignRowSchema, emailCampaigns),
+          this.loader.parseRows(schema.mockStoreEmailCampaignRowSchema, emailCampaigns),
           organizationId,
         ),
         "organization_id,external_id",
@@ -180,7 +180,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "purchase_orders",
         this.rows.mapPurchaseOrderRows(
-          this.loader.parseRows(schema.prettyFlyPurchaseOrderRowSchema, purchaseOrders),
+          this.loader.parseRows(schema.mockStorePurchaseOrderRowSchema, purchaseOrders),
           organizationId,
         ),
         "organization_id,external_id",
@@ -196,7 +196,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "bank_transactions",
           this.rows.mapBankTransactionRows(
-            this.loader.parseRows(schema.prettyFlyBankTransactionRowSchema, bankTransactions),
+            this.loader.parseRows(schema.mockStoreBankTransactionRowSchema, bankTransactions),
             organizationId,
           ),
           "organization_id,external_id",
@@ -210,7 +210,7 @@ export class MockImportLoader implements ImportLoader {
   private async loadChildren(
     supabase: SupabaseClient<Database>,
     organizationId: string,
-    files: PrettyFlyFiles,
+    files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
     const { schema } = this.rows;
@@ -222,7 +222,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "orders",
         this.rows.mapOrderRows(
-          this.loader.parseRows(schema.prettyFlyOrderRowSchema, orders),
+          this.loader.parseRows(schema.mockStoreOrderRowSchema, orders),
           organizationId,
           maps,
         ),
@@ -239,7 +239,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "line_items",
           this.rows.mapLineItemRows(
-            this.loader.parseRows(schema.prettyFlyLineItemRowSchema, lineItems),
+            this.loader.parseRows(schema.mockStoreLineItemRowSchema, lineItems),
             organizationId,
             maps,
           ),
@@ -255,7 +255,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "refunds",
           this.rows.mapRefundRows(
-            this.loader.parseRows(schema.prettyFlyRefundRowSchema, refunds),
+            this.loader.parseRows(schema.mockStoreRefundRowSchema, refunds),
             organizationId,
             maps,
           ),
@@ -271,7 +271,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "inventory_movements",
           this.rows.mapInventoryMovementRows(
-            this.loader.parseRows(schema.prettyFlyInventoryMovementRowSchema, inventoryMovements),
+            this.loader.parseRows(schema.mockStoreInventoryMovementRowSchema, inventoryMovements),
             organizationId,
             maps,
           ),
@@ -287,7 +287,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "product_collections",
           this.rows.mapProductCollectionRows(
-            this.loader.parseRows(schema.prettyFlyProductCollectionRowSchema, productCollections),
+            this.loader.parseRows(schema.mockStoreProductCollectionRowSchema, productCollections),
             organizationId,
             maps,
           ),
@@ -303,7 +303,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "addresses",
           this.rows.mapAddressRows(
-            this.loader.parseRows(schema.prettyFlyAddressRowSchema, addresses),
+            this.loader.parseRows(schema.mockStoreAddressRowSchema, addresses),
             organizationId,
             maps,
           ),
@@ -319,7 +319,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "email_events",
           this.rows.mapEmailEventRows(
-            this.loader.parseRows(schema.prettyFlyEmailEventRowSchema, emailEvents),
+            this.loader.parseRows(schema.mockStoreEmailEventRowSchema, emailEvents),
             organizationId,
             maps,
           ),
@@ -334,7 +334,7 @@ export class MockImportLoader implements ImportLoader {
         supabase,
         "support_tickets",
         this.rows.mapSupportTicketRows(
-          this.loader.parseRows(schema.prettyFlySupportTicketRowSchema, supportTickets),
+          this.loader.parseRows(schema.mockStoreSupportTicketRowSchema, supportTickets),
           organizationId,
           maps,
         ),
@@ -351,7 +351,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "support_messages",
           this.rows.mapSupportMessageRows(
-            this.loader.parseJsonRows(schema.prettyFlySupportMessageRowSchema, supportMessages),
+            this.loader.parseJsonRows(schema.mockStoreSupportMessageRowSchema, supportMessages),
             organizationId,
             maps,
           ),
@@ -367,7 +367,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "po_line_items",
           this.rows.mapPoLineItemRows(
-            this.loader.parseRows(schema.prettyFlyPoLineItemRowSchema, poLineItems),
+            this.loader.parseRows(schema.mockStorePoLineItemRowSchema, poLineItems),
             organizationId,
             maps,
           ),
@@ -383,7 +383,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "meta_ads_daily",
           this.rows.mapMetaAdsDailyRows(
-            this.loader.parseRows(schema.prettyFlyMetaAdsDailyRowSchema, metaAds),
+            this.loader.parseRows(schema.mockStoreMetaAdsDailyRowSchema, metaAds),
             organizationId,
           ),
           "organization_id,date,campaign_name,ad_name,placement",
@@ -398,7 +398,7 @@ export class MockImportLoader implements ImportLoader {
           supabase,
           "google_ads_daily",
           this.rows.mapGoogleAdsDailyRows(
-            this.loader.parseRows(schema.prettyFlyGoogleAdsDailyRowSchema, googleAds),
+            this.loader.parseRows(schema.mockStoreGoogleAdsDailyRowSchema, googleAds),
             organizationId,
           ),
           "organization_id,date,campaign_name,ad_group",

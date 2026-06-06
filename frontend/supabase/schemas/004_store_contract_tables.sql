@@ -1,6 +1,6 @@
 -- =============================================================
 -- 004_store_contract_tables.sql
--- Pretty Fly contract tables missing from 003 + org-scoped FKs.
+-- Hugo mock store contract tables missing from 003 + org-scoped FKs.
 -- =============================================================
 
 -- ---- suppliers ------------------------------------------------

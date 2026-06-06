@@ -1,3 +1,8 @@
+import {
+  HUGO_MOCK_STORE_ID,
+  HUGO_MOCK_STORE_NAME,
+} from "@/lib/organizations/mock-store";
+
 export type DemoShop = {
   id: string;
   name: string;
@@ -7,8 +12,9 @@ export type DemoShop = {
 
 export const DEMO_SHOPS: DemoShop[] = [
   {
-    id: "pretty-fly",
-    name: "Pretty Fly",
-    plan: "Demo store",
+    id: HUGO_MOCK_STORE_ID,
+    name: HUGO_MOCK_STORE_NAME,
+    plan: "Mock store",
+    logoSrc: "/catLogo.png",
   },
 ];

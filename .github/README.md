@@ -1,6 +1,6 @@
 # GitHub
 
-CI and repository automation for Resolve.
+CI and repository automation for Hugo.
 
 ## What's here
 

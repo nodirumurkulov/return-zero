@@ -107,7 +107,7 @@ export async function sendIncidentNotification(
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "*Recovery:*\nIncident approved — monitoring recovery in Resolve.",
+              text: "*Recovery:*\nIncident approved — monitoring recovery in Hugo.",
             },
           }]
         : []),

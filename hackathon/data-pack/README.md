@@ -3,7 +3,7 @@
 **Wayflyer × Fin AI - Build the Future of E-commerce**
 *Wednesday 3 - Friday 5 June 2026, London*
 
-## Using this pack with Resolve
+## Using this pack with Hugo
 
 This repo loads these CSVs into Supabase via [`../../frontend/scripts/README.md`](../../frontend/scripts/README.md):
 

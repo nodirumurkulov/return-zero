@@ -6,7 +6,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 import { ImportError } from "./errors";
 import { MockImportLoader } from "./mock";
-import { prettyFlyPack, type PrettyFlyFiles } from "./mock/pack";
+import { hugoMockStorePack, type MockStoreFiles } from "./mock/pack";
 import { ShopifyImportLoader } from "./shopify";
 import type {
   ImportExternalIdMapOpts,
@@ -35,7 +35,7 @@ export class Import {
 
   async run(opts: ImportRunOpts): Promise<ImportRunResult> {
     if (opts.platform === "mock_csv") {
-      const source = (opts.source as PrettyFlyFiles | undefined) ?? prettyFlyPack.read();
+      const source = (opts.source as MockStoreFiles | undefined) ?? hugoMockStorePack.read();
       const results = await this.mockLoader.load(this.supabase, opts.organizationId, source, {
         replace: opts.replace ?? true,
       });

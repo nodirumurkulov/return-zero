@@ -1,10 +1,10 @@
 ---
-description: Test pyramid expectations for Resolve domains and API routes
+description: Test pyramid expectations for Hugo domains and API routes
 globs: frontend/**/*.{test.ts,test.tsx}
 alwaysApply: false
 ---
 
-# Testing (Resolve)
+# Testing (Hugo)
 
 ## Pyramid
 

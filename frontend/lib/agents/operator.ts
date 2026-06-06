@@ -6,7 +6,7 @@ import { operatorOutputSchema } from "./schemas";
 import { createBusinessContextTools } from "./tools/business-context";
 import type { AgentSupabase, OperatorOutput, QuantDiagnosis } from "./types";
 
-const OPERATOR_INSTRUCTIONS = `You are the Operator for Resolve — a seasoned e-commerce operator who turns the Quant Analyst's
+const OPERATOR_INSTRUCTIONS = `You are the Operator for Hugo — a seasoned e-commerce operator who turns the Quant Analyst's
 diagnosis into a clear root cause and a short, costed, goal-aligned action plan.
 
 Process:

@@ -6,7 +6,7 @@
   :root {
     color-scheme: light;
 
-    /* Hugo light design system (from the Resolve prototype) */
+    /* Hugo light design system (from the original prototype) */
     --background: 0 0% 100%;
     --foreground: 240 6% 10%; /* zinc-900 */
     --card: 0 0% 100%;

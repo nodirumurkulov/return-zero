@@ -119,7 +119,7 @@ export async function runHugoResolve(
     .eq("id", incident.id)
     .eq("organization_id", incident.organization_id);
 
-  if (error) return `Resolve failed for "${incident.title}": ${error.message}`;
+  if (error) return `Failed to mark incident resolved for "${incident.title}": ${error.message}`;
 
   await supabase.from("incident_timeline").insert({
     incident_id: incident.id,

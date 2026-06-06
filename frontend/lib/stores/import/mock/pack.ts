@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const PRETTY_FLY_FILES = [
+export const MOCK_STORE_FILES = [
   "collections.csv",
   "suppliers.csv",
   "products.csv",
@@ -25,16 +25,16 @@ export const PRETTY_FLY_FILES = [
   "google_ads_daily.csv",
 ] as const;
 
-export type PrettyFlyFile = (typeof PRETTY_FLY_FILES)[number];
-export type PrettyFlyFiles = Partial<Record<PrettyFlyFile, string>>;
+export type MockStoreFile = (typeof MOCK_STORE_FILES)[number];
+export type MockStoreFiles = Partial<Record<MockStoreFile, string>>;
 
-/** Pretty Fly hackathon data pack shipped with the repo. */
-export class PrettyFlyPack {
+/** Hugo mock store CSV pack shipped with the repo (hackathon data-pack). */
+export class HugoMockStorePack {
   constructor(private readonly dataDir = path.resolve(process.cwd(), "../hackathon/data-pack/data")) {}
 
-  read(): PrettyFlyFiles {
+  read(): MockStoreFiles {
     return Object.fromEntries(
-      PRETTY_FLY_FILES.map((file) => {
+      MOCK_STORE_FILES.map((file) => {
         const filePath = path.join(this.dataDir, file);
         return [file, fs.readFileSync(filePath, "utf-8")] as const;
       }),
@@ -42,4 +42,4 @@ export class PrettyFlyPack {
   }
 }
 
-export const prettyFlyPack = new PrettyFlyPack();
+export const hugoMockStorePack = new HugoMockStorePack();

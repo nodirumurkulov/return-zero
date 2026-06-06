@@ -11,7 +11,7 @@ export default async function OnboardingPage() {
 
   if (!org.ok) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6 p-6">
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
         <p className="text-sm text-muted-foreground">{org.error}</p>
       </div>
     );
@@ -30,15 +30,17 @@ export default async function OnboardingPage() {
     connection?.platform === "mock_csv" && connection.status === "connected" && productCount > 0;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Connect your store</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Link a store to start monitoring products and incidents.
-        </p>
-      </div>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-3xl space-y-8 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Connect your store</h1>
+          <p className="text-sm text-muted-foreground">
+            Link a store to start monitoring products and incidents.
+          </p>
+        </div>
 
-      <StoreConnectForm storeReady={storeReady} />
+        <StoreConnectForm storeReady={storeReady} />
+      </div>
     </div>
   );
 }

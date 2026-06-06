@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
 import type { Incident } from "@/lib/stores";
 import { buildDigestBlocks, summarizeIncidents } from "./digest";
 
@@ -101,11 +102,11 @@ describe("summarizeIncidents", () => {
 describe("buildDigestBlocks", () => {
   it("returns all-clear message when no open incidents", () => {
     const summary = summarizeIncidents([]);
-    const blocks = buildDigestBlocks("Pretty Fly", summary, "https://app.test");
+    const blocks = buildDigestBlocks(HUGO_MOCK_STORE_NAME, summary, "https://app.test");
     expect(blocks).toHaveLength(2);
     const text = JSON.stringify(blocks);
     expect(text).toContain("All clear");
-    expect(text).toContain("Pretty Fly");
+    expect(text).toContain(HUGO_MOCK_STORE_NAME);
   });
 
   it("returns header + summary + incidents + action button when open incidents exist", () => {
@@ -126,12 +127,12 @@ describe("buildDigestBlocks", () => {
       }),
     ];
     const summary = summarizeIncidents(incidents);
-    const blocks = buildDigestBlocks("Pretty Fly", summary, "https://app.test");
+    const blocks = buildDigestBlocks(HUGO_MOCK_STORE_NAME, summary, "https://app.test");
 
     expect(blocks).toHaveLength(4);
 
     const text = JSON.stringify(blocks);
-    expect(text).toContain("Pretty Fly");
+    expect(text).toContain(HUGO_MOCK_STORE_NAME);
     expect(text).toContain("Stockout");
     expect(text).toContain("Return spike");
     expect(text).toContain("https://app.test/incidents");

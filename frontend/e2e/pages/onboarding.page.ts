@@ -13,7 +13,7 @@ export class OnboardingPage {
   }
 
   connectButton() {
-    return this.page.getByRole("button", { name: /Connect demo store/i });
+    return this.page.getByRole("button", { name: /Connect mock store/i });
   }
 
   continueButton() {

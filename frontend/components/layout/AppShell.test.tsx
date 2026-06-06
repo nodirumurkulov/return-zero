@@ -1,6 +1,7 @@
 import * as navigation from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 import AppShell from "@/components/layout/AppShell";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
 import { createShellUserFixture } from "@/test/fixtures";
 import { render, screen } from "@/test/test-utils";
 
@@ -24,7 +25,7 @@ describe("AppShell", () => {
       "href",
       "/incidents",
     );
-    expect(screen.getByText("Pretty Fly")).toBeInTheDocument();
+    expect(screen.getByText(HUGO_MOCK_STORE_NAME)).toBeInTheDocument();
     expect(screen.getByText("Alex Ops")).toBeInTheDocument();
     expect(screen.getByText("alex@prettyfly.test")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeInTheDocument();

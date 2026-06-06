@@ -1,6 +1,6 @@
 # Playwright E2E
 
-End-to-end tests for Resolve (auth, catalog, incidents, orders replay, onboarding) against local Supabase + seeded data.
+End-to-end tests for Hugo (auth, catalog, incidents, orders replay, onboarding) against local Supabase + seeded data.
 
 ## Environment
 

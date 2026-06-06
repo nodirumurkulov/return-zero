@@ -20,13 +20,13 @@ export const csvJsonArray = z.preprocess((value) => {
   return value;
 }, z.array(z.unknown()));
 
-export const prettyFlyCollectionRowSchema = z.object({
+export const mockStoreCollectionRowSchema = z.object({
   collection_id: csvString,
   title: csvOptionalString,
   created_at: csvOptionalString,
 });
 
-export const prettyFlySupplierRowSchema = z.object({
+export const mockStoreSupplierRowSchema = z.object({
   supplier_id: csvString,
   name: csvOptionalString,
   country: csvOptionalString,
@@ -35,7 +35,7 @@ export const prettyFlySupplierRowSchema = z.object({
   currency: csvOptionalString,
 });
 
-export const prettyFlyProductRowSchema = z.object({
+export const mockStoreProductRowSchema = z.object({
   product_id: csvString,
   title: csvOptionalString,
   handle: csvOptionalString,
@@ -49,7 +49,7 @@ export const prettyFlyProductRowSchema = z.object({
   created_at: csvOptionalString,
 });
 
-export const prettyFlyCustomerRowSchema = z.object({
+export const mockStoreCustomerRowSchema = z.object({
   customer_id: csvString,
   email: csvOptionalString,
   first_name: csvOptionalString,
@@ -64,7 +64,7 @@ export const prettyFlyCustomerRowSchema = z.object({
   gender_segment_affinity: csvOptionalString,
 });
 
-export const prettyFlyVariantRowSchema = z.object({
+export const mockStoreVariantRowSchema = z.object({
   variant_id: csvString,
   product_id: csvString,
   sku: csvOptionalString,
@@ -79,7 +79,7 @@ export const prettyFlyVariantRowSchema = z.object({
   inventory_quantity: z.coerce.number().optional().nullable(),
 });
 
-export const prettyFlyDiscountCodeRowSchema = z.object({
+export const mockStoreDiscountCodeRowSchema = z.object({
   code: csvString,
   type: csvOptionalString,
   value: z.coerce.number().optional().nullable(),
@@ -88,7 +88,7 @@ export const prettyFlyDiscountCodeRowSchema = z.object({
   ends_at: csvOptionalString,
 });
 
-export const prettyFlyEmailCampaignRowSchema = z.object({
+export const mockStoreEmailCampaignRowSchema = z.object({
   campaign_id: csvString,
   name: csvOptionalString,
   type: csvOptionalString,
@@ -101,7 +101,7 @@ export const prettyFlyEmailCampaignRowSchema = z.object({
   attributed_revenue_gbp: z.coerce.number().optional().nullable(),
 });
 
-export const prettyFlyPurchaseOrderRowSchema = z.object({
+export const mockStorePurchaseOrderRowSchema = z.object({
   po_id: csvString,
   supplier_id: csvOptionalString,
   created_at: csvOptionalString,
@@ -114,7 +114,7 @@ export const prettyFlyPurchaseOrderRowSchema = z.object({
   balance_paid_at: csvOptionalString,
 });
 
-export const prettyFlyBankTransactionRowSchema = z.object({
+export const mockStoreBankTransactionRowSchema = z.object({
   transaction_id: csvString,
   date: csvString,
   description: csvOptionalString,
@@ -125,7 +125,7 @@ export const prettyFlyBankTransactionRowSchema = z.object({
   raw_category: csvOptionalString,
 });
 
-export const prettyFlyOrderRowSchema = z.object({
+export const mockStoreOrderRowSchema = z.object({
   order_id: csvString,
   order_number: z.coerce.number().optional().nullable(),
   customer_id: csvString,
@@ -147,7 +147,7 @@ export const prettyFlyOrderRowSchema = z.object({
   discount_code: csvOptionalString,
 });
 
-export const prettyFlyLineItemRowSchema = z.object({
+export const mockStoreLineItemRowSchema = z.object({
   line_item_id: csvString,
   order_id: csvString,
   variant_id: csvString,
@@ -158,7 +158,7 @@ export const prettyFlyLineItemRowSchema = z.object({
   total_discount: z.coerce.number().optional().nullable(),
 });
 
-export const prettyFlyRefundRowSchema = z.object({
+export const mockStoreRefundRowSchema = z.object({
   refund_id: csvString,
   order_id: csvString,
   created_at: csvOptionalString,
@@ -167,7 +167,7 @@ export const prettyFlyRefundRowSchema = z.object({
   refund_line_items: csvJsonArray,
 });
 
-export const prettyFlyInventoryMovementRowSchema = z.object({
+export const mockStoreInventoryMovementRowSchema = z.object({
   movement_id: csvString,
   variant_id: csvString,
   date: csvString,
@@ -177,12 +177,12 @@ export const prettyFlyInventoryMovementRowSchema = z.object({
   reference_id: csvOptionalString,
 });
 
-export const prettyFlyProductCollectionRowSchema = z.object({
+export const mockStoreProductCollectionRowSchema = z.object({
   product_id: csvString,
   collection_id: csvString,
 });
 
-export const prettyFlyAddressRowSchema = z.object({
+export const mockStoreAddressRowSchema = z.object({
   customer_id: csvString,
   first_name: csvOptionalString,
   last_name: csvOptionalString,
@@ -194,7 +194,7 @@ export const prettyFlyAddressRowSchema = z.object({
   country: csvOptionalString,
 });
 
-export const prettyFlyEmailEventRowSchema = z.object({
+export const mockStoreEmailEventRowSchema = z.object({
   event_id: csvString,
   campaign_id: csvString,
   customer_id: csvOptionalString,
@@ -202,7 +202,7 @@ export const prettyFlyEmailEventRowSchema = z.object({
   timestamp: csvOptionalString,
 });
 
-export const prettyFlySupportTicketRowSchema = z.object({
+export const mockStoreSupportTicketRowSchema = z.object({
   ticket_id: csvString,
   customer_id: csvString,
   related_order_id: csvOptionalString,
@@ -220,12 +220,12 @@ export const prettyFlySupportTicketRowSchema = z.object({
   resolved_by: csvOptionalString,
 });
 
-export const prettyFlySupportMessageRowSchema = z.object({
+export const mockStoreSupportMessageRowSchema = z.object({
   ticket_id: csvString,
   messages: csvJsonArray,
 });
 
-export const prettyFlyPoLineItemRowSchema = z.object({
+export const mockStorePoLineItemRowSchema = z.object({
   po_line_id: csvString,
   po_id: csvString,
   variant_id: csvString,
@@ -235,7 +235,7 @@ export const prettyFlyPoLineItemRowSchema = z.object({
   landed_cost_per_unit_gbp: z.coerce.number().optional().nullable(),
 });
 
-export const prettyFlyMetaAdsDailyRowSchema = z.object({
+export const mockStoreMetaAdsDailyRowSchema = z.object({
   date: csvString,
   campaign_name: csvString,
   campaign_objective: csvOptionalString,
@@ -249,7 +249,7 @@ export const prettyFlyMetaAdsDailyRowSchema = z.object({
   conversion_value_gbp: z.coerce.number().optional().nullable(),
 });
 
-export const prettyFlyGoogleAdsDailyRowSchema = z.object({
+export const mockStoreGoogleAdsDailyRowSchema = z.object({
   date: csvString,
   campaign_name: csvString,
   campaign_type: csvOptionalString,
@@ -277,51 +277,51 @@ export interface IdMaps {
   support_tickets: Map<string, string>;
 }
 
-type CollectionRow = z.infer<typeof prettyFlyCollectionRowSchema>;
-type SupplierRow = z.infer<typeof prettyFlySupplierRowSchema>;
-type ProductRow = z.infer<typeof prettyFlyProductRowSchema>;
-type CustomerRow = z.infer<typeof prettyFlyCustomerRowSchema>;
-type VariantRow = z.infer<typeof prettyFlyVariantRowSchema>;
-type DiscountCodeRow = z.infer<typeof prettyFlyDiscountCodeRowSchema>;
-type EmailCampaignRow = z.infer<typeof prettyFlyEmailCampaignRowSchema>;
-type PurchaseOrderRow = z.infer<typeof prettyFlyPurchaseOrderRowSchema>;
-type BankTransactionRow = z.infer<typeof prettyFlyBankTransactionRowSchema>;
-type OrderRow = z.infer<typeof prettyFlyOrderRowSchema>;
-type LineItemRow = z.infer<typeof prettyFlyLineItemRowSchema>;
-type RefundRow = z.infer<typeof prettyFlyRefundRowSchema>;
-type InventoryMovementRow = z.infer<typeof prettyFlyInventoryMovementRowSchema>;
-type ProductCollectionRow = z.infer<typeof prettyFlyProductCollectionRowSchema>;
-type AddressRow = z.infer<typeof prettyFlyAddressRowSchema>;
-type EmailEventRow = z.infer<typeof prettyFlyEmailEventRowSchema>;
-type SupportTicketRow = z.infer<typeof prettyFlySupportTicketRowSchema>;
-type SupportMessageRow = z.infer<typeof prettyFlySupportMessageRowSchema>;
-type PoLineItemRow = z.infer<typeof prettyFlyPoLineItemRowSchema>;
-type MetaAdsDailyRow = z.infer<typeof prettyFlyMetaAdsDailyRowSchema>;
-type GoogleAdsDailyRow = z.infer<typeof prettyFlyGoogleAdsDailyRowSchema>;
+type CollectionRow = z.infer<typeof mockStoreCollectionRowSchema>;
+type SupplierRow = z.infer<typeof mockStoreSupplierRowSchema>;
+type ProductRow = z.infer<typeof mockStoreProductRowSchema>;
+type CustomerRow = z.infer<typeof mockStoreCustomerRowSchema>;
+type VariantRow = z.infer<typeof mockStoreVariantRowSchema>;
+type DiscountCodeRow = z.infer<typeof mockStoreDiscountCodeRowSchema>;
+type EmailCampaignRow = z.infer<typeof mockStoreEmailCampaignRowSchema>;
+type PurchaseOrderRow = z.infer<typeof mockStorePurchaseOrderRowSchema>;
+type BankTransactionRow = z.infer<typeof mockStoreBankTransactionRowSchema>;
+type OrderRow = z.infer<typeof mockStoreOrderRowSchema>;
+type LineItemRow = z.infer<typeof mockStoreLineItemRowSchema>;
+type RefundRow = z.infer<typeof mockStoreRefundRowSchema>;
+type InventoryMovementRow = z.infer<typeof mockStoreInventoryMovementRowSchema>;
+type ProductCollectionRow = z.infer<typeof mockStoreProductCollectionRowSchema>;
+type AddressRow = z.infer<typeof mockStoreAddressRowSchema>;
+type EmailEventRow = z.infer<typeof mockStoreEmailEventRowSchema>;
+type SupportTicketRow = z.infer<typeof mockStoreSupportTicketRowSchema>;
+type SupportMessageRow = z.infer<typeof mockStoreSupportMessageRowSchema>;
+type PoLineItemRow = z.infer<typeof mockStorePoLineItemRowSchema>;
+type MetaAdsDailyRow = z.infer<typeof mockStoreMetaAdsDailyRowSchema>;
+type GoogleAdsDailyRow = z.infer<typeof mockStoreGoogleAdsDailyRowSchema>;
 
-export class PrettyFlyRows {
+export class MockStoreRows {
   readonly schema = {
-    prettyFlyCollectionRowSchema: prettyFlyCollectionRowSchema,
-    prettyFlySupplierRowSchema: prettyFlySupplierRowSchema,
-    prettyFlyProductRowSchema: prettyFlyProductRowSchema,
-    prettyFlyCustomerRowSchema: prettyFlyCustomerRowSchema,
-    prettyFlyVariantRowSchema: prettyFlyVariantRowSchema,
-    prettyFlyDiscountCodeRowSchema: prettyFlyDiscountCodeRowSchema,
-    prettyFlyEmailCampaignRowSchema: prettyFlyEmailCampaignRowSchema,
-    prettyFlyPurchaseOrderRowSchema: prettyFlyPurchaseOrderRowSchema,
-    prettyFlyBankTransactionRowSchema: prettyFlyBankTransactionRowSchema,
-    prettyFlyOrderRowSchema: prettyFlyOrderRowSchema,
-    prettyFlyLineItemRowSchema: prettyFlyLineItemRowSchema,
-    prettyFlyRefundRowSchema: prettyFlyRefundRowSchema,
-    prettyFlyInventoryMovementRowSchema: prettyFlyInventoryMovementRowSchema,
-    prettyFlyProductCollectionRowSchema: prettyFlyProductCollectionRowSchema,
-    prettyFlyAddressRowSchema: prettyFlyAddressRowSchema,
-    prettyFlyEmailEventRowSchema: prettyFlyEmailEventRowSchema,
-    prettyFlySupportTicketRowSchema: prettyFlySupportTicketRowSchema,
-    prettyFlySupportMessageRowSchema: prettyFlySupportMessageRowSchema,
-    prettyFlyPoLineItemRowSchema: prettyFlyPoLineItemRowSchema,
-    prettyFlyMetaAdsDailyRowSchema: prettyFlyMetaAdsDailyRowSchema,
-    prettyFlyGoogleAdsDailyRowSchema: prettyFlyGoogleAdsDailyRowSchema,
+    mockStoreCollectionRowSchema: mockStoreCollectionRowSchema,
+    mockStoreSupplierRowSchema: mockStoreSupplierRowSchema,
+    mockStoreProductRowSchema: mockStoreProductRowSchema,
+    mockStoreCustomerRowSchema: mockStoreCustomerRowSchema,
+    mockStoreVariantRowSchema: mockStoreVariantRowSchema,
+    mockStoreDiscountCodeRowSchema: mockStoreDiscountCodeRowSchema,
+    mockStoreEmailCampaignRowSchema: mockStoreEmailCampaignRowSchema,
+    mockStorePurchaseOrderRowSchema: mockStorePurchaseOrderRowSchema,
+    mockStoreBankTransactionRowSchema: mockStoreBankTransactionRowSchema,
+    mockStoreOrderRowSchema: mockStoreOrderRowSchema,
+    mockStoreLineItemRowSchema: mockStoreLineItemRowSchema,
+    mockStoreRefundRowSchema: mockStoreRefundRowSchema,
+    mockStoreInventoryMovementRowSchema: mockStoreInventoryMovementRowSchema,
+    mockStoreProductCollectionRowSchema: mockStoreProductCollectionRowSchema,
+    mockStoreAddressRowSchema: mockStoreAddressRowSchema,
+    mockStoreEmailEventRowSchema: mockStoreEmailEventRowSchema,
+    mockStoreSupportTicketRowSchema: mockStoreSupportTicketRowSchema,
+    mockStoreSupportMessageRowSchema: mockStoreSupportMessageRowSchema,
+    mockStorePoLineItemRowSchema: mockStorePoLineItemRowSchema,
+    mockStoreMetaAdsDailyRowSchema: mockStoreMetaAdsDailyRowSchema,
+    mockStoreGoogleAdsDailyRowSchema: mockStoreGoogleAdsDailyRowSchema,
   } as const;
 
   requireId(map: Map<string, string>, externalId: string): string | null {
@@ -818,4 +818,4 @@ mapGoogleAdsDailyRows(
 }
 }
 
-export const prettyFlyRows = new PrettyFlyRows();
+export const mockStoreRows = new MockStoreRows();

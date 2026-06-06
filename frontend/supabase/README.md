@@ -1,6 +1,6 @@
 # Supabase
 
-PostgreSQL schema, views, RPCs, and RLS policies for Resolve.
+PostgreSQL schema, views, RPCs, and RLS policies for Hugo.
 
 ## Prerequisites
 

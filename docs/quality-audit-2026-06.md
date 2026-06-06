@@ -1,6 +1,6 @@
 # Codebase Quality Audit — June 2026
 
-**Project:** Resolve (`frontend/`)  
+**Project:** Hugo (`frontend/`)  
 **Stack:** Next.js 16, React 19, Supabase, Bun, Vitest, Playwright  
 **Depth:** Standard (automated gates + skill-guided area review)  
 **Last run:** 2026-06-05

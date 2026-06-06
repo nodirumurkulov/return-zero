@@ -63,7 +63,7 @@ function isHistoryScopeError(error: string): boolean {
 }
 
 function confirmationBlocks(action: "resolve" | "reject", incident: Incident): object[] {
-  const label = action === "resolve" ? "Resolve incident" : "Reject proposed fixes";
+  const label = action === "resolve" ? "Mark resolved" : "Reject proposed fixes";
   const actionId = action === "resolve" ? "confirm_hugo_resolve" : "confirm_hugo_reject";
   return [
     {

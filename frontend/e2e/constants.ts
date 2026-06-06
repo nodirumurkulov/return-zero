@@ -1,7 +1,7 @@
 /** Stable demo data from `seed --full --e2e` and e2e/fixtures. */
 
 export const E2E_USER_EMAIL =
-  process.env.E2E_USER_EMAIL ?? "e2e@resolve.local";
+  process.env.E2E_USER_EMAIL ?? "e2e@hugo.local";
 export const E2E_USER_PASSWORD =
   process.env.E2E_USER_PASSWORD ?? "e2e-test-password-12";
 
@@ -21,7 +21,7 @@ export const E2E_DETECTED_INCIDENT_TITLE = "E2E Detected Incident";
 /** Demo org from scripts/seed.ts (store + incidents from seed --full --e2e). */
 export const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
 
-/** First Pretty Fly trainer external id (uuid resolved at runtime). */
+/** Court Trainer hero product external id (uuid resolved at runtime). */
 export const COURT_TRAINER_PRODUCT_EXTERNAL_ID = "prod_00005";
 
 export const SEEDED_INCIDENT_TITLES = [

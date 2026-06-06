@@ -1,5 +1,5 @@
 /**
- * Assert imported row counts match the Pretty Fly data pack.
+ * Assert imported row counts match the Hugo mock store data pack.
  *
  *   bun run scripts/validate-counts.ts
  */
