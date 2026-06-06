@@ -128,8 +128,16 @@ function createNegotiationTools(session: PricingSession) {
   };
 }
 
-export function runPricingNegotiationTurn(session: PricingSession, userMessage: string) {
+export async function runPricingNegotiationTurn(session: PricingSession, userMessage: string) {
   const trimmedMessage = userMessage.trim();
+
+  if (trimmedMessage) {
+    await appendPricingMessage(session.signup.id, "user", trimmedMessage);
+  }
+
+  if (session.signup.negotiation_status === "not_started") {
+    await markNegotiationInProgress(session.signup.id);
+  }
 
   return streamText({
     model: getModel(),
@@ -138,17 +146,9 @@ export function runPricingNegotiationTurn(session: PricingSession, userMessage: 
     tools: createNegotiationTools(session),
     stopWhen: stepCountIs(5),
     onFinish: async ({ text }) => {
-      if (trimmedMessage) {
-        await appendPricingMessage(session.signup.id, "user", trimmedMessage);
-      }
-
       const assistantReply = text.trim();
       if (assistantReply) {
         await appendPricingMessage(session.signup.id, "assistant", assistantReply);
-      }
-
-      if (session.signup.negotiation_status === "not_started") {
-        await markNegotiationInProgress(session.signup.id);
       }
     },
   });

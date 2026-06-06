@@ -24,6 +24,6 @@ export async function POST(req: Request) {
     return Response.json({ error: "This pricing conversation is closed." }, { status: 409 });
   }
 
-  const result = runPricingNegotiationTurn(session, parsed.data.message);
+  const result = await runPricingNegotiationTurn(session, parsed.data.message);
   return result.toUIMessageStreamResponse();
 }

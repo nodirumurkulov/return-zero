@@ -62,7 +62,7 @@ export default defineConfig({
     {
       name: "chromium-guest",
       testDir: "./e2e",
-      testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
+      testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/, /waitlist-pricing\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["setup"],
     },

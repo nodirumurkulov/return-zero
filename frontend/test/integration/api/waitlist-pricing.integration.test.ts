@@ -84,7 +84,7 @@ describe("POST /api/waitlist/pricing/chat", () => {
       messages: [],
     });
 
-    runPricingNegotiationTurnMock.mockReturnValue({
+    runPricingNegotiationTurnMock.mockResolvedValue({
       toUIMessageStreamResponse: () => new Response("stream", { status: 200 }),
     });
 
