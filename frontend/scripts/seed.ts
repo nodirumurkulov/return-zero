@@ -43,14 +43,6 @@ async function ensureDemoOrganization(): Promise<string> {
   if (error) {
     throw new Error(`demo organization: ${error.message}`);
   }
-
-  const { error: defaultsError } = await supabase.rpc("seed_organization_defaults", {
-    p_organization_id: DEMO_ORG_ID,
-  });
-  if (defaultsError) {
-    throw new Error(`seed_organization_defaults: ${defaultsError.message}`);
-  }
-
   console.log(`  ✓ ${HUGO_MOCK_STORE_NAME} organization`);
   return DEMO_ORG_ID;
 }
