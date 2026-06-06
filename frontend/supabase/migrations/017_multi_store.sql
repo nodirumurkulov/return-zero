@@ -4,12 +4,99 @@
 -- active_store_id on organizations, reset_store_data.
 -- =============================================================
 
+-- Repair prod drift: store_connections missing despite migration history.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
+    where n.nspname = 'public'
+      and t.typname = 'store_platform'
+  ) then
+    create type public.store_platform as enum ('mock_csv', 'shopify');
+  end if;
+
+  if not exists (
+    select 1
+    from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
+    where n.nspname = 'public'
+      and t.typname = 'store_sync_mode'
+  ) then
+    create type public.store_sync_mode as enum ('static', 'pull', 'push');
+  end if;
+
+  if not exists (
+    select 1
+    from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
+    where n.nspname = 'public'
+      and t.typname = 'store_connection_status'
+  ) then
+    create type public.store_connection_status as enum (
+      'pending', 'connected', 'error', 'disconnected'
+    );
+    alter type public.store_connection_status add value if not exists 'importing' before 'connected';
+  end if;
+end $$;
+
+create table if not exists public.store_connections (
+  organization_id  uuid primary key references public.organizations(id) on delete cascade,
+  platform         public.store_platform not null default 'mock_csv',
+  sync_mode        public.store_sync_mode not null default 'static',
+  status           public.store_connection_status not null default 'pending',
+  replay_cursor    date,
+  external_shop_id text,
+  connected_at     timestamptz,
+  last_synced_at   timestamptz,
+  metadata         jsonb not null default '{}'::jsonb,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+
+insert into public.store_connections (
+  organization_id, platform, sync_mode, status, replay_cursor
+)
+select
+  o.id,
+  'mock_csv'::public.store_platform,
+  'static'::public.store_sync_mode,
+  'pending'::public.store_connection_status,
+  date '2025-12-01'
+from public.organizations o
+where not exists (
+  select 1
+  from public.store_connections sc
+  where sc.organization_id = o.id
+);
+
+alter table public.store_connections enable row level security;
+drop policy if exists store_connections_org_read on public.store_connections;
+create policy store_connections_org_read on public.store_connections
+  for select to authenticated
+  using (organization_id in (select private.user_organization_ids()));
+alter table public.store_connections force row level security;
+
 -- ---- enum: importing → syncing --------------------------------
-alter type public.store_connection_status rename value 'importing' to 'syncing';
+do $$
+begin
+  if exists (
+    select 1
+    from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+    join pg_namespace n on n.oid = t.typnamespace
+    where n.nspname = 'public'
+      and t.typname = 'store_connection_status'
+      and e.enumlabel = 'importing'
+  ) then
+    alter type public.store_connection_status rename value 'importing' to 'syncing';
+  end if;
+end $$;
 
 -- ---- store_connections: id PK, label, sync_error ------------
 alter table public.store_connections
-  add column id uuid default gen_random_uuid();
+  add column if not exists id uuid default gen_random_uuid();
 
 update public.store_connections
 set id = gen_random_uuid()
@@ -18,33 +105,45 @@ where id is null;
 alter table public.store_connections
   alter column id set not null;
 
-alter table public.store_connections
-  drop constraint store_connections_pkey;
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'store_connections_pkey'
+      and conrelid = 'public.store_connections'::regclass
+      and contype = 'p'
+      and pg_get_constraintdef(oid) like '%organization_id%'
+  ) then
+    alter table public.store_connections drop constraint store_connections_pkey;
+    alter table public.store_connections add primary key (id);
+  end if;
+end $$;
 
-alter table public.store_connections
-  add primary key (id);
-
+alter table public.store_connections drop constraint if exists store_connections_org_id_unique;
 alter table public.store_connections
   add constraint store_connections_org_id_unique unique (organization_id, id);
 
 alter table public.store_connections
-  add column label text,
-  add column sync_error text;
+  add column if not exists label text,
+  add column if not exists sync_error text;
 
+drop index if exists store_connections_one_mock_per_org;
 create unique index store_connections_one_mock_per_org
   on public.store_connections (organization_id)
   where platform = 'mock_csv';
 
+drop index if exists store_connections_shopify_shop_per_org;
 create unique index store_connections_shopify_shop_per_org
   on public.store_connections (organization_id, external_shop_id)
   where platform = 'shopify' and external_shop_id is not null;
 
-create index idx_store_connections_organization_id
+create index if not exists idx_store_connections_organization_id
   on public.store_connections (organization_id);
 
 -- ---- organizations.active_store_id ---------------------------
 alter table public.organizations
-  add column active_store_id uuid references public.store_connections (id) on delete set null;
+  add column if not exists active_store_id uuid references public.store_connections (id) on delete set null;
 
 update public.organizations o
 set active_store_id = sc.id
@@ -65,7 +164,7 @@ declare
 begin
   foreach t in array tables loop
     execute format(
-      'alter table public.%I add column store_id uuid',
+      'alter table public.%I add column if not exists store_id uuid',
       t
     );
     execute format(
@@ -74,12 +173,18 @@ begin
         set store_id = sc.id
         from public.store_connections sc
         where sc.organization_id = tbl.organization_id
+          and tbl.store_id is null
       $u$,
       t
     );
     execute format(
       'alter table public.%I alter column store_id set not null',
       t
+    );
+    execute format(
+      'alter table public.%I drop constraint if exists %I',
+      t,
+      t || '_store_id_fkey'
     );
     execute format(
       $f$
@@ -91,7 +196,7 @@ begin
       t || '_store_id_fkey'
     );
     execute format(
-      'create index %I on public.%I (store_id)',
+      'create index if not exists %I on public.%I (store_id)',
       'idx_' || t || '_store_id',
       t
     );

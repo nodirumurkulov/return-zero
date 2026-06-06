@@ -1,5 +1,3 @@
-"use client";
-
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { KANBAN_COLUMNS, type Incident } from "@/lib/stores";
@@ -58,7 +56,7 @@ export default function IncidentKanban({ incidents }: { incidents: Incident[] })
 
             <div className="flex flex-1 flex-col gap-3">
               {cards.map((incident) => (
-                <IncidentCard key={incident.id} incident={incident} editable />
+                <IncidentCard key={incident.id} incident={incident} />
               ))}
               {cards.length === 0 && (
                 <div className="flex min-h-[80px] flex-1 items-center justify-center rounded-lg border border-dashed border-border">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SectionLabel } from "@/components/ui/section-label";
 import { BLOG_POSTS, getPost } from "@/content/blog/posts";
 
 export function generateStaticParams() {
@@ -35,15 +36,18 @@ export default async function BlogPostPage({
   }
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-28 sm:px-6">
+    <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <Link href="/blog" className="text-sm text-primary hover:underline">
         ← Blog
       </Link>
-      <p className="mt-6 font-mono text-xs text-muted-foreground tabnum">
+      <SectionLabel className="mt-6">Post</SectionLabel>
+      <p className="mt-2 font-mono text-xs text-muted-foreground tabnum">
         {new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(new Date(post.date))}
       </p>
-      <h1 className="mt-2 font-display text-4xl font-medium tracking-tight">{post.title}</h1>
-      <div className="prose prose-invert mt-8 max-w-none space-y-4 text-muted-foreground">
+      <h1 className="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
+        {post.title}
+      </h1>
+      <div className="mt-8 space-y-4 text-sm leading-relaxed text-muted-foreground">
         {post.body.map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>
         ))}

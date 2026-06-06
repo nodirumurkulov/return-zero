@@ -1,49 +1,29 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import IncidentCard from "@/components/incidents/IncidentCard";
 import { createIncidentFixture } from "@/test/fixtures";
-import { renderWithProviders, screen } from "@/test/test-utils";
-
-vi.mock("@/hooks/stores/incidents", async () => {
-  const actual = await vi.importActual("@/hooks/stores/incidents");
-  return {
-    ...actual,
-    useUpdateIncidentStatus: () => ({
-      mutate: vi.fn(),
-      isPending: false,
-    }),
-  };
-});
+import { render, screen } from "@/test/test-utils";
 
 describe("IncidentCard", () => {
-  it("renders title link and impact", () => {
+  it("renders title link and meta line with impact", () => {
     const incident = createIncidentFixture({
       title: "Refund spike",
       impact_amount: 5000,
-      affected_kpi_keys: ["refund_rate", "return_rate", "support_volume", "extra"],
     });
-    renderWithProviders(<IncidentCard incident={incident} />);
-    expect(screen.getByRole("link", { name: "Refund spike" })).toHaveAttribute(
+    render(<IncidentCard incident={incident} />);
+    expect(screen.getByRole("link", { name: /Refund spike/ })).toHaveAttribute(
       "href",
       `/incidents/${incident.id}`,
     );
     expect(screen.getByText(/£5,000/)).toBeInTheDocument();
-    expect(screen.getByText("refund_rate")).toBeInTheDocument();
-    expect(screen.queryByText("extra")).not.toBeInTheDocument();
   });
 
-  it("shows status dropdown when editable", () => {
-    const incident = createIncidentFixture({ status: "detected" });
-    renderWithProviders(<IncidentCard incident={incident} editable />);
-    expect(screen.getByRole("button")).toBeInTheDocument();
-    expect(screen.getByText("Detected")).toBeInTheDocument();
-  });
-
-  it("shows confidence bar when not editable", () => {
+  it("renders time without impact when impact is absent", () => {
     const incident = createIncidentFixture({
-      root_cause_confidence: 72,
-      root_cause: "Batch issue",
+      title: "Minor drift",
+      impact_amount: null,
     });
-    renderWithProviders(<IncidentCard incident={incident} />);
-    expect(screen.getByText("72%")).toBeInTheDocument();
+    render(<IncidentCard incident={incident} />);
+    expect(screen.getByRole("link", { name: /Minor drift/ })).toBeInTheDocument();
+    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
   });
 });
