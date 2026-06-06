@@ -3,8 +3,6 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
-import { createOrganizationWithOwner } from "@/lib/organizations";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -25,16 +23,6 @@ function readCredentials(formData: FormData) {
   });
 }
 
-function orgSlugFromEmail(email: string): string {
-  const local = email.split("@")[0] ?? "store";
-  const base =
-    local
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "store";
-  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
-}
-
 export async function signIn(formData: FormData) {
   const parsed = readCredentials(formData);
   if (!parsed.success) {
@@ -49,75 +37,12 @@ export async function signIn(formData: FormData) {
   redirect(nextParsed.success ? nextParsed.data : AUTH_NEXT_DEFAULT);
 }
 
-export async function signUp(formData: FormData) {
-  const parsed = readCredentials(formData);
-  if (!parsed.success) {
-    return { ok: false as const, error: "Enter a valid email and password (8+ characters)." };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    ...parsed.data,
-    options: {
-      // New accounts go straight to onboarding — both when a session is created
-      // immediately (the redirect below) and after email confirmation (the
-      // callback reads ?next), so account creation always lands on /onboarding.
-      emailRedirectTo: `${appUrl()}/auth/callback?next=/onboarding`,
-    },
-  });
-  if (error) return { ok: false as const, error: error.message };
-
-  if (data.user && data.user.identities && data.user.identities.length === 0) {
-    return {
-      ok: false as const,
-      error: "An account with this email already exists. Try signing in instead.",
-    };
-  }
-
-  if (!data.session) {
-    const userId = data.user?.id;
-    if (userId) {
-      const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
-      const admin = createAdminClient();
-      try {
-        await createOrganizationWithOwner(admin, {
-          userId,
-          name: storeName,
-          slug: orgSlugFromEmail(parsed.data.email),
-        });
-      } catch (orgErr) {
-        const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
-        return { ok: false as const, error: message };
-      }
-    }
-    return {
-      ok: true as const,
-      message: `Account created. Check ${parsed.data.email} for a confirmation link to finish signing in.`,
-    };
-  }
-
-  const userId = data.user?.id;
-  if (!userId) {
-    return {
-      ok: false as const,
-      error: "Account created but organization setup failed. Sign in and try again.",
-    };
-  }
-
-  const storeName = `${parsed.data.email.split("@")[0] ?? "My"}'s store`;
-  const admin = createAdminClient();
-  try {
-    await createOrganizationWithOwner(admin, {
-      userId,
-      name: storeName,
-      slug: orgSlugFromEmail(parsed.data.email),
-    });
-  } catch (orgErr) {
-    const message = orgErr instanceof Error ? orgErr.message : "Failed to create organization";
-    return { ok: false as const, error: message };
-  }
-
-  redirect("/onboarding");
+export async function signUp(_formData: FormData) {
+  await Promise.resolve();
+  return {
+    ok: false as const,
+    error: "Public sign-up is closed. Join the waitlist or sign in if you already have access.",
+  };
 }
 
 export async function signInWithProvider(provider: OAuthProvider) {

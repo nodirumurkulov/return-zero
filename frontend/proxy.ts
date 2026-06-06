@@ -3,9 +3,14 @@ import { hasCronAuth, matchesCronPath } from "@/lib/cron-auth";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_PREFIXES = [
+  "/",
+  "/features",
+  "/pricing",
+  "/blog",
   "/sign-in",
   "/sign-up",
   "/auth/callback",
+  "/api/waitlist",
   "/api/slack/webhook",
   "/api/slack/events",
 ];

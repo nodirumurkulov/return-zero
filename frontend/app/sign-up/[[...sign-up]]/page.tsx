@@ -1,11 +1,7 @@
 import Link from "next/link";
-import { signUp } from "@/app/auth/actions";
-import AuthForm from "@/components/auth/AuthForm";
-import ComingSoonLoginButton from "@/components/auth/ComingSoonLoginButton";
-import OAuthButtons from "@/components/auth/OAuthButtons";
-import { MicrosoftIcon, ShopifyIcon } from "@/components/auth/provider-icons";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { Button } from "@/components/ui/button";
 
 export default function SignUpPage() {
   return (
@@ -14,17 +10,22 @@ export default function SignUpPage() {
         <ThemeToggle />
       </div>
       <BrandLogo variant="auth" />
-      <AuthForm title="Create account" action={signUp} passwordAutoComplete="new-password" />
-      <OAuthButtons />
-      <div className="flex w-full max-w-sm flex-col gap-3">
-        <ComingSoonLoginButton provider="Microsoft" icon={<MicrosoftIcon />} />
-        <ComingSoonLoginButton provider="Shopify" icon={<ShopifyIcon />} />
+      <div className="w-full max-w-md space-y-4 text-center">
+        <h2 className="text-xl font-semibold tracking-tight">Early access only</h2>
+        <p className="text-sm text-muted-foreground">
+          Hugo is in early access. Join the waitlist and we&apos;ll notify you when your spot
+          opens.
+        </p>
+        <Button size="lg" className="w-full" asChild>
+          <Link href="/#waitlist">Join Waitlist</Link>
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/sign-in" className="text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
-      <p className="text-sm text-muted-foreground">
-        <Link href="/sign-in" className="text-primary hover:underline">
-          Already have an account? Sign in
-        </Link>
-      </p>
     </div>
   );
 }
