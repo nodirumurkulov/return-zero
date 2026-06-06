@@ -10,7 +10,7 @@ export default function ShopifyLoginButton() {
   const [showNotice, setShowNotice] = useState(false);
 
   return (
-    <div className="w-full max-w-sm space-y-2 pb-2">
+    <div className="w-full max-w-sm space-y-2 pb-6">
       <Button
         type="button"
         variant="outline"
