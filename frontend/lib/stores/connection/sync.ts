@@ -9,6 +9,7 @@ import { MockImportLoader } from "../import/mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "../import/mock/pack";
 import { ShopifyImportLoader } from "../import/shopify";
 import { ConnectionError } from "./errors";
+import { resetStoreData } from "./reset-store-data";
 import type { StorePlatform } from "./types";
 
 export type RunStoreSyncOpts = {
@@ -58,10 +59,7 @@ async function runMockCsvSync(
   const replace = opts.replace ?? false;
 
   if (replace) {
-    const { error } = await supabase.rpc("reset_store_data", {
-      p_store_id: opts.scope.storeId,
-    });
-    if (error) throw new ConnectionError(`reset_store_data: ${error.message}`);
+    await resetStoreData(supabase, opts.scope);
   }
 
   const { results: catalogResults, maps } = await loader.loadCatalogPhase(

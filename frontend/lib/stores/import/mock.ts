@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/db";
 import type { StoreScope } from "@/lib/tenancy/types";
 
+import { resetStoreData } from "../connection/reset-store-data";
+
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
 import type { MockStoreFiles } from "./mock/pack";
@@ -25,10 +27,7 @@ export class MockImportLoader implements ImportLoader {
   ): Promise<ImportTableResult[]> {
     const files = source as MockStoreFiles;
     if (opts?.replace) {
-      const { error } = await supabase.rpc("reset_store_data", {
-        p_store_id: scope.storeId,
-      });
-      if (error) throw new Error(`reset_store_data: ${error.message}`);
+      await resetStoreData(supabase, scope);
     }
 
     const { results: catalogResults, maps } = await this.loadCatalogPhase(

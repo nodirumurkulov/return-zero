@@ -2253,7 +2253,10 @@ export type Database = {
           support_count: number
         }[]
       }
-      reset_store_data: { Args: { p_store_id: string }; Returns: undefined }
+      reset_store_data: {
+        Args: { p_store_id: string }
+        Returns: undefined
+      }
       seed_organization_defaults: {
         Args: { p_organization_id: string }
         Returns: undefined
