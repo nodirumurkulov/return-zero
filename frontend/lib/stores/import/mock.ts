@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
 
+import { resetActiveStoreData, resolveActiveStoreId } from "../connection/reset-store-data";
+
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
 import type { MockStoreFiles } from "./mock/pack";
@@ -16,6 +18,13 @@ export class MockImportLoader implements ImportLoader {
   private readonly loader = csvLoader;
   private readonly rows = mockStoreRows;
 
+  private withStoreId<T extends { organization_id: string }>(
+    rows: T[],
+    storeId: string,
+  ): (T & { store_id: string })[] {
+    return rows.map((row) => ({ ...row, store_id: storeId }));
+  }
+
   async load(
     supabase: SupabaseClient<Database>,
     organizationId: string,
@@ -23,43 +32,62 @@ export class MockImportLoader implements ImportLoader {
     opts?: ImportLoadOpts,
   ): Promise<ImportTableResult[]> {
     const files = source as MockStoreFiles;
+    const storeId = await resolveActiveStoreId(supabase, organizationId);
     if (opts?.replace) {
-      const { error } = await supabase.rpc("reset_organization_data", {
-        p_organization_id: organizationId,
-      });
-      if (error) throw new Error(`reset_organization_data: ${error.message}`);
+      await resetActiveStoreData(supabase, organizationId);
     }
 
     const { results: catalogResults, maps } = await this.loadCatalogPhase(
       supabase,
       organizationId,
+      storeId,
       files,
     );
-    const commerceResults = await this.loadCommercePhase(supabase, organizationId, files, maps);
+    const commerceResults = await this.loadCommercePhase(
+      supabase,
+      organizationId,
+      storeId,
+      files,
+      maps,
+    );
     return [...catalogResults, ...commerceResults];
   }
 
   async loadCatalogPhase(
     supabase: SupabaseClient<Database>,
     organizationId: string,
+    storeId: string,
     source: unknown,
     existingMaps?: IdMapCache,
   ): Promise<{ results: ImportTableResult[]; maps: IdMapCache }> {
     const files = source as MockStoreFiles;
     const maps = existingMaps ?? new IdMapCache();
-    const results = await this.loadCatalogTables(supabase, organizationId, files, maps);
+    const results = await this.loadCatalogTables(supabase, organizationId, storeId, files, maps);
     return { results, maps };
   }
 
   async loadCommercePhase(
     supabase: SupabaseClient<Database>,
     organizationId: string,
+    storeId: string,
     source: unknown,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
     const files = source as MockStoreFiles;
-    const parentResults = await this.loadCommerceParents(supabase, organizationId, files, maps);
-    const childResults = await this.loadCommerceChildren(supabase, organizationId, files, maps);
+    const parentResults = await this.loadCommerceParents(
+      supabase,
+      organizationId,
+      storeId,
+      files,
+      maps,
+    );
+    const childResults = await this.loadCommerceChildren(
+      supabase,
+      organizationId,
+      storeId,
+      files,
+      maps,
+    );
     return [...parentResults, ...childResults];
   }
 
@@ -87,6 +115,7 @@ export class MockImportLoader implements ImportLoader {
   private async loadCatalogTables(
     supabase: SupabaseClient<Database>,
     organizationId: string,
+    storeId: string,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -98,9 +127,12 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "collections",
-        this.rows.mapCollectionRows(
+        this.withStoreId(
+          this.rows.mapCollectionRows(
           this.loader.parseRows(schema.mockStoreCollectionRowSchema, collections),
           organizationId,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -113,9 +145,12 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "suppliers",
-        this.rows.mapSupplierRows(
+        this.withStoreId(
+          this.rows.mapSupplierRows(
           this.loader.parseRows(schema.mockStoreSupplierRowSchema, suppliers),
           organizationId,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -128,10 +163,13 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "products",
-        this.rows.mapProductRows(
+        this.withStoreId(
+          this.rows.mapProductRows(
           this.loader.parseRows(schema.mockStoreProductRowSchema, products),
           organizationId,
           maps,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -144,10 +182,13 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "variants",
-        this.rows.mapVariantRows(
+        this.withStoreId(
+          this.rows.mapVariantRows(
           this.loader.parseRows(schema.mockStoreVariantRowSchema, variants),
           organizationId,
           maps,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -161,11 +202,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "product_collections",
+          this.withStoreId(
           this.rows.mapProductCollectionRows(
             this.loader.parseRows(schema.mockStoreProductCollectionRowSchema, productCollections),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,product_id,collection_id",
         ),
       );
@@ -177,6 +221,7 @@ export class MockImportLoader implements ImportLoader {
   private async loadCommerceParents(
     supabase: SupabaseClient<Database>,
     organizationId: string,
+    storeId: string,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -188,9 +233,12 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "customers",
-        this.rows.mapCustomerRows(
+        this.withStoreId(
+          this.rows.mapCustomerRows(
           this.loader.parseRows(schema.mockStoreCustomerRowSchema, customers),
           organizationId,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -204,10 +252,13 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "discount_codes",
+          this.withStoreId(
           this.rows.mapDiscountCodeRows(
             this.loader.parseRows(schema.mockStoreDiscountCodeRowSchema, discountCodes),
             organizationId,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -218,9 +269,12 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "email_campaigns",
-        this.rows.mapEmailCampaignRows(
+        this.withStoreId(
+          this.rows.mapEmailCampaignRows(
           this.loader.parseRows(schema.mockStoreEmailCampaignRowSchema, emailCampaigns),
           organizationId,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -233,9 +287,12 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "purchase_orders",
-        this.rows.mapPurchaseOrderRows(
+        this.withStoreId(
+          this.rows.mapPurchaseOrderRows(
           this.loader.parseRows(schema.mockStorePurchaseOrderRowSchema, purchaseOrders),
           organizationId,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -249,10 +306,13 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "bank_transactions",
+          this.withStoreId(
           this.rows.mapBankTransactionRows(
             this.loader.parseRows(schema.mockStoreBankTransactionRowSchema, bankTransactions),
             organizationId,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -264,6 +324,7 @@ export class MockImportLoader implements ImportLoader {
   private async loadCommerceChildren(
     supabase: SupabaseClient<Database>,
     organizationId: string,
+    storeId: string,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -275,10 +336,13 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "orders",
-        this.rows.mapOrderRows(
+        this.withStoreId(
+          this.rows.mapOrderRows(
           this.loader.parseRows(schema.mockStoreOrderRowSchema, orders),
           organizationId,
           maps,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -292,11 +356,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "line_items",
+          this.withStoreId(
           this.rows.mapLineItemRows(
             this.loader.parseRows(schema.mockStoreLineItemRowSchema, lineItems),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -308,11 +375,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "refunds",
+          this.withStoreId(
           this.rows.mapRefundRows(
             this.loader.parseRows(schema.mockStoreRefundRowSchema, refunds),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -324,11 +394,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "inventory_movements",
+          this.withStoreId(
           this.rows.mapInventoryMovementRows(
             this.loader.parseRows(schema.mockStoreInventoryMovementRowSchema, inventoryMovements),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -340,11 +413,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "addresses",
+          this.withStoreId(
           this.rows.mapAddressRows(
             this.loader.parseRows(schema.mockStoreAddressRowSchema, addresses),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -356,11 +432,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "email_events",
+          this.withStoreId(
           this.rows.mapEmailEventRows(
             this.loader.parseRows(schema.mockStoreEmailEventRowSchema, emailEvents),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -371,10 +450,13 @@ export class MockImportLoader implements ImportLoader {
       const result = await this.loader.upsert(
         supabase,
         "support_tickets",
-        this.rows.mapSupportTicketRows(
+        this.withStoreId(
+          this.rows.mapSupportTicketRows(
           this.loader.parseRows(schema.mockStoreSupportTicketRowSchema, supportTickets),
           organizationId,
           maps,
+        ),
+          storeId,
         ),
         "organization_id,external_id",
       );
@@ -388,11 +470,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "support_messages",
+          this.withStoreId(
           this.rows.mapSupportMessageRows(
             this.loader.parseJsonRows(schema.mockStoreSupportMessageRowSchema, supportMessages),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -404,11 +489,14 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "po_line_items",
+          this.withStoreId(
           this.rows.mapPoLineItemRows(
             this.loader.parseRows(schema.mockStorePoLineItemRowSchema, poLineItems),
             organizationId,
             maps,
           ),
+          storeId,
+        ),
           "organization_id,external_id",
         ),
       );
@@ -420,10 +508,13 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "meta_ads_daily",
+          this.withStoreId(
           this.rows.mapMetaAdsDailyRows(
             this.loader.parseRows(schema.mockStoreMetaAdsDailyRowSchema, metaAds),
             organizationId,
           ),
+          storeId,
+        ),
           "organization_id,date,campaign_name,ad_name,placement",
         ),
       );
@@ -435,10 +526,13 @@ export class MockImportLoader implements ImportLoader {
         await this.loader.upsert(
           supabase,
           "google_ads_daily",
+          this.withStoreId(
           this.rows.mapGoogleAdsDailyRows(
             this.loader.parseRows(schema.mockStoreGoogleAdsDailyRowSchema, googleAds),
             organizationId,
           ),
+          storeId,
+        ),
           "organization_id,date,campaign_name,ad_group",
         ),
       );
