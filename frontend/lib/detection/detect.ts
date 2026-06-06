@@ -283,7 +283,8 @@ export async function detectBreaches(
       impact_amount: Math.round(primary.impact),
     });
 
-    await notifyNewIncident({
+    await notifyNewIncident(supabase, {
+      organization_id: opts.organizationId,
       incident_id: inc.id as string,
       title,
       severity,

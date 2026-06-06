@@ -97,17 +97,21 @@ export async function POST(req: NextRequest) {
       }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      await sendIncidentNotification({
-        title: incident.title,
-        severity: incident.severity,
-        status: "monitoring",
-        impact_amount: incident.impact_amount,
-        impact_label: incident.impact_label,
-        root_cause: incident.root_cause,
-        root_cause_confidence: incident.root_cause_confidence,
-        incident_id: incidentId,
-        app_url: appUrl,
-      });
+      await sendIncidentNotification(
+        {
+          organization_id: incident.organization_id,
+          title: incident.title,
+          severity: incident.severity,
+          status: "monitoring",
+          impact_amount: incident.impact_amount,
+          impact_label: incident.impact_label,
+          root_cause: incident.root_cause,
+          root_cause_confidence: incident.root_cause_confidence,
+          incident_id: incidentId,
+          app_url: appUrl,
+        },
+        supabase,
+      );
     }
   }
 

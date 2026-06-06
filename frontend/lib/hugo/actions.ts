@@ -88,17 +88,21 @@ export async function runHugoApproval(
         updated.affected_kpi_keys,
       );
     }
-    await sendIncidentNotification({
-      title: updated.title,
-      severity: updated.severity,
-      status: "monitoring",
-      impact_amount: updated.impact_amount,
-      impact_label: updated.impact_label,
-      root_cause: updated.root_cause,
-      root_cause_confidence: updated.root_cause_confidence,
-      incident_id: updated.id,
-      app_url: appUrl(),
-    });
+    await sendIncidentNotification(
+      {
+        organization_id: updated.organization_id,
+        title: updated.title,
+        severity: updated.severity,
+        status: "monitoring",
+        impact_amount: updated.impact_amount,
+        impact_label: updated.impact_label,
+        root_cause: updated.root_cause,
+        root_cause_confidence: updated.root_cause_confidence,
+        incident_id: updated.id,
+        app_url: appUrl(),
+      },
+      supabase,
+    );
   }
 
   return [

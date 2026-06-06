@@ -4,7 +4,7 @@ import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { buildDigestBlocks, summarizeIncidents } from "@/lib/hugo/digest";
 import { listIncidents } from "@/lib/incidents";
 import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
-import { postWebhookBlocks } from "@/lib/slack";
+import { postOrgSlackBlocks } from "@/lib/slack";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,8 +48,12 @@ export async function GET(req: NextRequest) {
       const summary = summarizeIncidents(incidents);
       const orgName = org?.name ?? "Organization";
       const blocks = buildDigestBlocks(orgName, summary, appUrl);
+      const fallbackText =
+        summary.openCount === 0
+          ? `Daily Digest — ${orgName}: all clear`
+          : `Daily Digest — ${orgName}: ${summary.openCount} open incident(s)`;
 
-      await postWebhookBlocks(blocks);
+      await postOrgSlackBlocks(supabase, organizationId, blocks, fallbackText);
       digests.push({ organizationId, openCount: summary.openCount });
     }
 

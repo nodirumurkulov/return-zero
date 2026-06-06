@@ -909,6 +909,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          slack_channel_id: string | null
           slack_team_id: string | null
           slug: string
           updated_at: string
@@ -917,6 +918,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          slack_channel_id?: string | null
           slack_team_id?: string | null
           slug: string
           updated_at?: string
@@ -925,6 +927,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          slack_channel_id?: string | null
           slack_team_id?: string | null
           slug?: string
           updated_at?: string
