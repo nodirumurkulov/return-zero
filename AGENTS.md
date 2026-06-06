@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in **return-zero** (Resolve). Humans: see [README.md](README.md).
+Instructions for AI coding agents working in **return-zero** (Hugo). Humans: see [README.md](README.md).
 
 ## Project overview
 
-Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
+Hugo is an ecommerce incident-response app backed by the Hugo mock store demo dataset: detect KPI breaches, run AI investigation, approve fixes, monitor recovery.
 
 | Area | Path | Stack |
 |------|------|-------|
@@ -12,7 +12,7 @@ Resolve is an ecommerce incident-response app for the Pretty Fly demo brand: det
 | Database | `frontend/supabase/` | Postgres migrations, RLS |
 | Seed / validators | `frontend/scripts/` | Bun + `@supabase/supabase-js` |
 | Long-form docs | `docs/` | Deployment, analytics |
-| Hackathon | `hackathon/` | Pretty Fly CSVs, demo guides (not app code) |
+| Hackathon | `hackathon/` | Mock store CSVs, demo guides (not app code) |
 
 **Closest `AGENTS.md` wins.** Read the file in the directory you edit, then parent files up to this root.
 
@@ -81,7 +81,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 - Prefer pure functions, `reduce`, and early returns over mutable index loops.
 - **No backward compatibility** (see [Best practices mandate](#best-practices-mandate)): delete deprecated surfaces and fix all imports in the same PR.
 - **Domain modules** under `frontend/lib/<domain>/`: types match Supabase columns, queries, mutations, Zod `schemas.ts`.
-- Import from `@/lib/incidents`, `@/lib/catalog`, etc. Never re-export domain types from `components/`.
+- Import from `@/lib/stores/incidents`, `@/lib/stores/analytics/catalog`, etc. Never re-export domain types from `components/`.
 - **API JSON:** Zod in `lib/<domain>/schemas.ts`; routes use `schema.safeParse(await req.json().catch(...))` inline.
 - **No trivial utility wrappers.** Do not add single-function files or exported helpers whose only job is a few lines of validation, coercion, or renaming that belongs at the call site. Validate at boundaries with Zod (`safeParse` inline in server actions, route handlers, API routes). Narrow types at parse time (e.g. `z.string().startsWith("/").refine(...)`) instead of widening to `FormDataEntryValue`, `unknown`, or `string` and “fixing” in a helper. Put shared schemas in `lib/<domain>/schemas.ts` only when **two or more** modules need the same shape; delete wrapper files and update all imports in the same change.
 
@@ -147,3 +147,30 @@ Each folder also has **README.md** for human onboarding.
 | Empty UI | Seed DB; env vars in `frontend/.env.local` |
 | Types out of sync with DB | Run `bun run db:types`; update domain types + migration — do not add `from-table` shims |
 | Investigation errors | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |
+
+## Cursor Cloud specific instructions
+
+**One-time VM bootstrap** (not in the update script): install Bun 1.3.14+, Docker CE (fuse-overlayfs storage driver), and Supabase CLI v2.105.0 from the [GitHub release tarball](https://github.com/supabase/cli/releases) into `$HOME/.local/share/supabase` (extract the full tarball — do not copy only the `supabase` shim). Add `$HOME/.local/share/supabase` and `$HOME/.bun/bin` to `PATH`. Add the `ubuntu` user to the `docker` group, or wrap Docker commands in `sg docker -c "…"`.
+
+**First-time app bootstrap:**
+
+```bash
+cp .env.example frontend/.env.local
+cd frontend/supabase && sg docker -c "supabase start --exclude studio,imgproxy,mailpit,edge-runtime" && cd ..
+eval "$(cd frontend/supabase && sg docker -c 'supabase status -o env')"
+# Paste API_URL, ANON_KEY, SERVICE_ROLE_KEY into frontend/.env.local
+cd frontend && bun run db:reset && bun run seed
+```
+
+Demo login uses `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` from `.env.example` (defaults: `demo@example.test` / `change-me`). LLM keys are optional for catalog/incidents browsing; set real `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for investigation.
+
+**Starting services** (each new session — Supabase does not auto-start):
+
+```bash
+cd frontend/supabase && sg docker -c "supabase start --exclude studio,imgproxy,mailpit,edge-runtime"
+cd frontend && bun run dev   # http://localhost:3000
+```
+
+Ports: app **3000**, Supabase API **54321**, Postgres **54322**.
+
+**Quality checks** (see [Testing instructions](#testing-instructions)): `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run validate` (needs seeded DB).

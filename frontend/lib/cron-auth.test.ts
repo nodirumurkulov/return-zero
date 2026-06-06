@@ -14,7 +14,7 @@ import {
 function requestWithAuth(auth: string | null): NextRequest {
   const headers = new Headers();
   if (auth) headers.set("authorization", auth);
-  return new NextRequest("http://localhost/api/detect", { headers });
+  return new NextRequest("http://localhost/api/stores/incidents/detect", { headers });
 }
 
 describe("cron-auth", () => {
@@ -22,14 +22,16 @@ describe("cron-auth", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lists scheduler API paths including replay", () => {
-    expect(CRON_API_PATHS).toContain("/api/detect");
-    expect(CRON_API_PATHS).toContain("/api/replay");
+  it("lists scheduler API paths including replay and digest", () => {
+    expect(CRON_API_PATHS).toContain("/api/digest");
+    expect(CRON_API_PATHS).toContain("/api/stores/incidents/detect");
+    expect(CRON_API_PATHS).toContain("/api/stores/orders/advance");
   });
 
   it("matchesCronPath recognizes cron routes", () => {
-    expect(matchesCronPath("/api/detect")).toBe(true);
-    expect(matchesCronPath("/api/replay")).toBe(true);
+    expect(matchesCronPath("/api/digest")).toBe(true);
+    expect(matchesCronPath("/api/stores/incidents/detect")).toBe(true);
+    expect(matchesCronPath("/api/stores/orders/advance")).toBe(true);
     expect(matchesCronPath("/api/incidents")).toBe(false);
   });
 

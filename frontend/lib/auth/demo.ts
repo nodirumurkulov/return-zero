@@ -1,7 +1,7 @@
 export const DEMO_USER_EMAIL_DEFAULT = "demo@example.test";
 export const DEMO_USER_PASSWORD_DEFAULT = "change-me";
 
-/** Credentials for the Pretty Fly one-click demo account (server-only). */
+/** Credentials for the Hugo mock store one-click demo account (server-only). */
 export function resolveDemoCredentials():
   | { email: string; password: string }
   | null {

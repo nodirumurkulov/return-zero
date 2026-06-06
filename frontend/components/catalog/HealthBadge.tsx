@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { HealthLevel } from "@/lib/catalog";
+import type { HealthLevel } from "@/lib/stores";
 import { cn } from "@/lib/utils";
 
 const styles: Record<HealthLevel, string> = {

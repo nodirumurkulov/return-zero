@@ -1,3 +1,5 @@
+// Generated from migrations 001–011. Regenerate with `bun run db:types` after schema changes.
+
 export type Json =
   | string
   | number
@@ -7,8 +9,93 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          address1: string | null
+          address2: string | null
+          city: string | null
+          country: string | null
+          customer_id: string
+          external_id: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          organization_id: string
+          postcode: string | null
+          province: string | null
+        }
+        Insert: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string | null
+          customer_id: string
+          external_id: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id: string
+          postcode?: string | null
+          province?: string | null
+        }
+        Update: {
+          address1?: string | null
+          address2?: string | null
+          city?: string | null
+          country?: string | null
+          customer_id?: string
+          external_id?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id?: string
+          postcode?: string | null
+          province?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "addresses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_findings: {
         Row: {
           agent_icon: string | null
@@ -57,36 +144,48 @@ export type Database = {
           },
         ]
       }
-      business_profile: {
+      bank_transactions: {
         Row: {
-          hero_product_ids: string[]
+          amount_gbp: number | null
+          balance_gbp: number | null
+          category: string | null
+          counterparty: string | null
+          date: string
+          description: string | null
+          external_id: string
+          id: string
           organization_id: string
-          platform: string
-          primary_goal: string
-          store_name: string
-          updated_at: string
+          raw_category: string | null
         }
         Insert: {
-          hero_product_ids?: string[]
+          amount_gbp?: number | null
+          balance_gbp?: number | null
+          category?: string | null
+          counterparty?: string | null
+          date: string
+          description?: string | null
+          external_id: string
+          id?: string
           organization_id: string
-          platform?: string
-          primary_goal?: string
-          store_name?: string
-          updated_at?: string
+          raw_category?: string | null
         }
         Update: {
-          hero_product_ids?: string[]
+          amount_gbp?: number | null
+          balance_gbp?: number | null
+          category?: string | null
+          counterparty?: string | null
+          date?: string
+          description?: string | null
+          external_id?: string
+          id?: string
           organization_id?: string
-          platform?: string
-          primary_goal?: string
-          store_name?: string
-          updated_at?: string
+          raw_category?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "business_profile_organization_id_fkey"
+            foreignKeyName: "bank_transactions_organization_id_fkey"
             columns: ["organization_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -119,6 +218,41 @@ export type Database = {
             foreignKeyName: "business_reports_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profile: {
+        Row: {
+          hero_product_ids: string[]
+          organization_id: string
+          platform: string
+          primary_goal: string
+          store_name: string
+          updated_at: string
+        }
+        Insert: {
+          hero_product_ids?: string[]
+          organization_id: string
+          platform?: string
+          primary_goal?: string
+          store_name?: string
+          updated_at?: string
+        }
+        Update: {
+          hero_product_ids?: string[]
+          organization_id?: string
+          platform?: string
+          primary_goal?: string
+          store_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profile_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -237,6 +371,155 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_codes: {
+        Row: {
+          code: string
+          ends_at: string | null
+          external_id: string
+          id: string
+          organization_id: string
+          starts_at: string | null
+          type: string | null
+          usage_count: number | null
+          value: number | null
+        }
+        Insert: {
+          code: string
+          ends_at?: string | null
+          external_id: string
+          id?: string
+          organization_id: string
+          starts_at?: string | null
+          type?: string | null
+          usage_count?: number | null
+          value?: number | null
+        }
+        Update: {
+          code?: string
+          ends_at?: string | null
+          external_id?: string
+          id?: string
+          organization_id?: string
+          starts_at?: string | null
+          type?: string | null
+          usage_count?: number | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          attributed_orders: number | null
+          attributed_revenue_gbp: number | null
+          clicks: number | null
+          external_id: string
+          id: string
+          name: string | null
+          opens: number | null
+          organization_id: string
+          recipients: number | null
+          sent_at: string | null
+          type: string | null
+          unsubscribes: number | null
+        }
+        Insert: {
+          attributed_orders?: number | null
+          attributed_revenue_gbp?: number | null
+          clicks?: number | null
+          external_id: string
+          id?: string
+          name?: string | null
+          opens?: number | null
+          organization_id: string
+          recipients?: number | null
+          sent_at?: string | null
+          type?: string | null
+          unsubscribes?: number | null
+        }
+        Update: {
+          attributed_orders?: number | null
+          attributed_revenue_gbp?: number | null
+          clicks?: number | null
+          external_id?: string
+          id?: string
+          name?: string | null
+          opens?: number | null
+          organization_id?: string
+          recipients?: number | null
+          sent_at?: string | null
+          type?: string | null
+          unsubscribes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_events: {
+        Row: {
+          campaign_id: string | null
+          customer_id: string | null
+          event_type: string | null
+          external_id: string
+          id: string
+          organization_id: string
+          timestamp: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          customer_id?: string | null
+          event_type?: string | null
+          external_id: string
+          id?: string
+          organization_id: string
+          timestamp?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          customer_id?: string | null
+          event_type?: string | null
+          external_id?: string
+          id?: string
+          organization_id?: string
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_campaign_org_fkey"
+            columns: ["organization_id", "campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "email_events_customer_org_fkey"
+            columns: ["organization_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "email_events_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -909,6 +1192,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          slack_channel_id: string | null
           slack_team_id: string | null
           slug: string
           updated_at: string
@@ -917,6 +1201,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          slack_channel_id?: string | null
           slack_team_id?: string | null
           slug: string
           updated_at?: string
@@ -925,6 +1210,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          slack_channel_id?: string | null
           slack_team_id?: string | null
           slug?: string
           updated_at?: string
@@ -1034,6 +1320,49 @@ export type Database = {
           },
           {
             foreignKeyName: "product_baselines_product_org_fkey"
+            columns: ["organization_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
+      product_collections: {
+        Row: {
+          collection_id: string
+          id: string
+          organization_id: string
+          product_id: string
+        }
+        Insert: {
+          collection_id: string
+          id?: string
+          organization_id: string
+          product_id: string
+        }
+        Update: {
+          collection_id?: string
+          id?: string
+          organization_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_collections_collection_org_fkey"
+            columns: ["organization_id", "collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "product_collections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_collections_product_org_fkey"
             columns: ["organization_id", "product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1296,26 +1625,133 @@ export type Database = {
           },
         ]
       }
-      replay_state: {
+      store_connections: {
         Row: {
-          cursor: string | null
+          connected_at: string | null
+          created_at: string
+          external_shop_id: string | null
+          last_synced_at: string | null
+          metadata: Json
           organization_id: string
+          platform: Database["public"]["Enums"]["store_platform"]
+          replay_cursor: string | null
+          status: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at: string
         }
         Insert: {
-          cursor?: string | null
+          connected_at?: string | null
+          created_at?: string
+          external_shop_id?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
           organization_id: string
+          platform?: Database["public"]["Enums"]["store_platform"]
+          replay_cursor?: string | null
+          status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at?: string
         }
         Update: {
-          cursor?: string | null
+          connected_at?: string | null
+          created_at?: string
+          external_shop_id?: string | null
+          last_synced_at?: string | null
+          metadata?: Json
           organization_id?: string
+          platform?: Database["public"]["Enums"]["store_platform"]
+          replay_cursor?: string | null
+          status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "replay_state_organization_id_fkey"
+            foreignKeyName: "store_connections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          country: string | null
+          currency: string | null
+          external_id: string
+          id: string
+          lead_time_days: number | null
+          name: string | null
+          organization_id: string
+          payment_terms: string | null
+        }
+        Insert: {
+          country?: string | null
+          currency?: string | null
+          external_id: string
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          organization_id: string
+          payment_terms?: string | null
+        }
+        Update: {
+          country?: string | null
+          currency?: string | null
+          external_id?: string
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          organization_id?: string
+          payment_terms?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          external_id: string
+          id: string
+          messages: Json
+          organization_id: string
+          ticket_id: string
+        }
+        Insert: {
+          external_id: string
+          id?: string
+          messages?: Json
+          organization_id: string
+          ticket_id: string
+        }
+        Update: {
+          external_id?: string
+          id?: string
+          messages?: Json
+          organization_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_org_fkey"
+            columns: ["organization_id", "ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1555,6 +1991,14 @@ export type Database = {
       metric_unit: "ratio" | "currency" | "count" | "percentage"
       organization_role: "owner" | "admin" | "member"
       risk_level: "high" | "medium" | "low"
+      store_connection_status:
+        | "pending"
+        | "importing"
+        | "connected"
+        | "error"
+        | "disconnected"
+      store_platform: "mock_csv" | "shopify"
+      store_sync_mode: "static" | "pull" | "push"
       timeline_event_type:
         | "anomaly_detected"
         | "incident_created"
@@ -1690,6 +2134,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       forecast_rule_kind: [
@@ -1723,6 +2170,15 @@ export const Constants = {
       metric_unit: ["ratio", "currency", "count", "percentage"],
       organization_role: ["owner", "admin", "member"],
       risk_level: ["high", "medium", "low"],
+      store_connection_status: [
+        "pending",
+        "importing",
+        "connected",
+        "error",
+        "disconnected",
+      ],
+      store_platform: ["mock_csv", "shopify"],
+      store_sync_mode: ["static", "pull", "push"],
       timeline_event_type: [
         "anomaly_detected",
         "incident_created",

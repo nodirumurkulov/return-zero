@@ -3,9 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/detection/replay", () => ({
-  resetReplay: vi.fn(),
-  runReplay: vi.fn(),
+const { ordersStoreMock, notifyNewMock } = vi.hoisted(() => ({
+  ordersStoreMock: { advance: vi.fn(), reset: vi.fn() },
+  notifyNewMock: vi.fn(),
+}));
+
+vi.mock("@/lib/stores/server", () => ({
+  getStore: vi.fn(() => ({
+    orders: ordersStoreMock,
+    incidents: { notifyNew: notifyNewMock },
+  })),
+}));
+
+vi.mock("@/lib/hugo/investigate-incident", () => ({
+  investigateCreatedIncidents: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -13,34 +24,34 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
-  })),
+  createClient: vi.fn(() =>
+    Promise.resolve({
+      auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
+    }),
+  ),
 }));
 
 vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(async () => ["org-1"]),
-  requireOrganizationId: vi.fn(async () => "org-1"),
+  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
+  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
 }));
 
-import { POST } from "@/app/api/replay/route";
-import { runReplay } from "@/lib/detection/replay";
+import { POST } from "@/app/api/stores/orders/advance/route";
 
-const runReplayMock = vi.mocked(runReplay);
+const advanceMock = ordersStoreMock.advance;
 
-const replayResult = {
+const advanceResult = {
   previous_cursor: "2024-01-01",
   cursor: "2024-01-08",
   at_end: false,
   breaches: { scanned: 1, created: [], skipped: [] },
-  forecast: { scanned: 1, created: [], skipped: [] },
 };
 
-describe("POST /api/replay", () => {
+describe("POST /api/stores/orders/advance", () => {
   beforeEach(() => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
-    runReplayMock.mockResolvedValue(replayResult);
+    advanceMock.mockResolvedValue(advanceResult);
   });
 
   afterEach(() => {
@@ -49,14 +60,14 @@ describe("POST /api/replay", () => {
   });
 
   it("returns 401 without cron credentials when secret is set", async () => {
-    const res = await POST(new NextRequest("http://localhost/api/replay", { method: "POST" }));
+    const res = await POST(new NextRequest("http://localhost/api/stores/orders/advance", { method: "POST" }));
     expect(res.status).toBe(401);
-    expect(runReplayMock).not.toHaveBeenCalled();
+    expect(advanceMock).not.toHaveBeenCalled();
   });
 
-  it("delegates to runReplay with parsed advance_days", async () => {
+  it("delegates to orders.advance with parsed advance_days", async () => {
     const res = await POST(
-      new NextRequest("http://localhost/api/replay", {
+      new NextRequest("http://localhost/api/stores/orders/advance", {
         method: "POST",
         headers: {
           authorization: "Bearer cron-test-secret",
@@ -66,6 +77,39 @@ describe("POST /api/replay", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(runReplayMock).toHaveBeenCalledWith({}, { organizationId: "org-1", advanceDays: 3 });
+    expect(advanceMock).toHaveBeenCalledWith({ organizationId: "org-1", days: 3 });
+    expect(notifyNewMock).not.toHaveBeenCalled();
+  });
+
+  it("notifies Slack when advance creates incidents", async () => {
+    const created = [
+      {
+        incident_id: "inc-1",
+        product_id: "prod-1",
+        title: "Test breach",
+        severity: "high",
+        affected_kpi_keys: ["margin"],
+        impact_amount: 0,
+        impact_label: null,
+      },
+    ];
+    advanceMock.mockResolvedValue({
+      ...advanceResult,
+      breaches: { scanned: 1, created, skipped: [] },
+    });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/stores/orders/advance", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer cron-test-secret",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ advance_days: 7 }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(notifyNewMock).toHaveBeenCalledWith("org-1", created);
   });
 });

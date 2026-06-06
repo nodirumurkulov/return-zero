@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SectionLabel } from "@/components/ui/section-label";
-import type { KpiThreshold } from "@/lib/catalog";
-import { useUpdateThreshold } from "@/lib/catalog/hooks";
+import { useUpdateThreshold } from "@/hooks/stores/catalog";
+import type { KpiThreshold } from "@/lib/stores";
 
-const METRIC_LABELS: Record<string, string> = {
+const METRIC_LABELS: Record<KpiThreshold["metric_key"], string> = {
   return_rate: "Return rate",
   refund_rate: "Refund rate",
   support_volume: "Support volume",
@@ -28,8 +28,8 @@ export default function ThresholdEditor({
   function onSave(formData: FormData) {
     setMessage(null);
     updateThreshold.mutate(formData, {
-      onSuccess: (result) => {
-        setMessage(result.ok ? "Saved" : (result.error ?? "Failed to save"));
+      onSuccess: () => {
+        setMessage("Saved");
       },
       onError: () => {
         setMessage("Failed to save");
@@ -62,11 +62,9 @@ export default function ThresholdEditor({
           >
             <input type="hidden" name="metric_key" value={threshold.metric_key} />
             <div className="md:col-span-3">
-              <p className="text-sm font-medium">
-                {METRIC_LABELS[threshold.metric_key] ?? threshold.metric_key}
-              </p>
+              <p className="text-sm font-medium">{METRIC_LABELS[threshold.metric_key]}</p>
               <p className="text-xs text-muted-foreground">
-                Alert when {effectiveDirection(threshold) === "below" ? "below" : "above"} threshold
+                Alert when {threshold.direction === "below" ? "below" : "above"} threshold
               </p>
             </div>
             <label className="space-y-1 text-xs md:col-span-2">
@@ -90,8 +88,4 @@ export default function ThresholdEditor({
       </CardContent>
     </Card>
   );
-}
-
-function effectiveDirection(threshold: KpiThreshold): "above" | "below" {
-  return threshold.direction === "below" ? "below" : "above";
 }

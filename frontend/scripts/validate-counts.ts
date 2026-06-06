@@ -1,5 +1,5 @@
 /**
- * Assert imported row counts match the Pretty Fly data pack.
+ * Assert imported row counts match the Hugo mock store data pack.
  *
  *   bun run scripts/validate-counts.ts
  */
@@ -20,6 +20,14 @@ const EXPECTED: Record<string, number> = {
   line_items: 69956,
   refunds: 5843,
   collections: 9,
+  product_collections: 62,
+  addresses: 22440,
+  discount_codes: 8,
+  suppliers: 5,
+  email_campaigns: 6,
+  email_events: 11368,
+  support_messages: 1204,
+  bank_transactions: 560,
   meta_ads_daily: 3102,
   google_ads_daily: 5110,
   inventory_movements: 76444,

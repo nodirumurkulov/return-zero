@@ -12,36 +12,39 @@ Use the service role only when RLS cannot perform the write. Document new except
 
 | Route / module | Why admin |
 |----------------|-----------|
-| `POST /api/onboarding/upload` | Bulk replace of contract tables after user auth |
-| `POST /api/replay` | Cron replay cursor; also accepts session user when not cron |
-| `POST /api/learn` | Baseline/report writes scoped to resolved `organizationId` |
+| `POST /api/stores/import/[platform]` | Load platform data into contract tables after user auth |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
-| Cron schedulers (`detect`, `forecast`, `recover`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
+| Cron schedulers (`detect`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
 
 ## Domain modules
 
 | Module | Import | Owns |
 |--------|--------|------|
 | `organizations/` | `@/lib/organizations` | Tenancy: org membership, `requireOrganizationId`, cron tenant iteration |
-| `incidents/` | `@/lib/incidents` | Incidents, actions, findings, timeline, approve |
-| `catalog/` | `@/lib/catalog` | Metrics, thresholds, health, catalog queries |
-| `metrics/` | `@/lib/metrics/*` | KPI engine, definitions, series |
-| `detection/` | `@/lib/detection/*` | Detect, severity, recover |
-| `forecast/` | `@/lib/forecast` | Deterministic forecasts |
+| `stores/incidents/` | `@/lib/stores/incidents` | KPI breach detect + incident CRUD |
+| `stores/analytics/catalog/` | `@/lib/stores/analytics/catalog` | Metrics, thresholds, health, catalog queries |
+| `stores/analytics/metrics/` | `@/lib/stores/analytics/metrics` | KPI engine, definitions, series |
+| `stores/analytics/search/` | `@/lib/stores/analytics/search` | Global search targets |
 | `ai/` | `@/lib/ai/model` | `getModel()` — provider env switch + DevTools middleware (dev only) |
+| `api/` | `@/lib/api/*` | Client HTTP boundary (`@better-fetch/fetch`); see [api/AGENTS.md](api/AGENTS.md) |
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
+| `stores/` | `@/lib/stores`, `@/lib/stores/server` | `getStore`, domain facade (catalog, orders, import, …) |
+| `stores/import/` | internal | Platform import loaders |
+| `stores/catalog/` | via `@/lib/stores` | Metrics, thresholds, health |
+| `stores/orders/` | via `@/lib/stores` | Replay cursor, orders feed |
+| `stores/search/` | via `@/lib/stores` | Global search targets |
 | `supabase/` | `@/lib/supabase/server` | Service-role client |
 
-Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client/TanStack code lives in `api/` (functions) and `hooks/` (thin wrappers around `api/`); import via `@/lib/<domain>/api` and `@/lib/<domain>/hooks`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
+Each domain folder has its own `AGENTS.md`. Entity types are one file per table (`incident.ts`, not `types.ts`). Client TanStack hooks live under `frontend/hooks/stores/<domain>/` and call `@/lib/api/*`; server query options live in `hooks/stores/<domain>/query-options.server.ts`. Shared `getQueryClient()` only in `lib/query/query-client.ts`.
 
 ### Multi-tenant organization context
 
 - **User routes / server actions:** `const organizationId = await requireOrganizationId(await createClient())`, then pass `organizationId` into domain functions and scoped queries.
-- **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `forecast`, `recover`, `replay`).
-- **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (service role for member insert).
+- **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `replay`).
+- **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (org + owner membership only; store connect on `/onboarding`).
 - See [organizations/AGENTS.md](organizations/AGENTS.md) for module layout.
 
 ## Best practices (domain layer)
@@ -51,7 +54,7 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 - **Public surface = `index.ts`.** Schemas in `schemas.ts`; queries/mutations in named files — do not grow god-modules. `lib/` owns domain logic and **shared** Zod schemas — not one-off 3-line utilities for a single server action.
 - **Refactor across domains in one PR** when boundaries move; no deprecated barrels or `@deprecated` re-exports.
 - Prefer **TypeScript advanced types** only when they clarify domain invariants; avoid clever types that obscure DB shape.
-- Cross-domain: `detection` → `metrics` / `forecast` OK; avoid `catalog` ↔ `incidents` coupling.
+- Cross-domain: `stores/incidents` → `metrics` OK; avoid `catalog` ↔ `stores/incidents` coupling.
 
 ## Code style
 

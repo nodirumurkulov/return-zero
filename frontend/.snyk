@@ -4,7 +4,7 @@ ignore:
   SNYK-JS-AI-16734889:
     - '*':
         reason: >-
-          CVE-2026-8768 SSRF in ai download helpers; no fixed release. Resolve uses
+          CVE-2026-8768 SSRF in ai download helpers; no fixed release. Hugo uses
           server-only ToolLoopAgent/generateText with trusted OpenAI/Anthropic providers
           and does not accept user-supplied download URLs.
         expires: 2027-06-05T00:00:00.000Z
@@ -20,7 +20,7 @@ ignore:
     - '*':
         reason: >-
           CVE-2026-8769 unbounded response buffering in @ai-sdk/provider-utils; no fixed
-          release. Resolve only calls configured LLM providers, not attacker-controlled
+          release. Hugo only calls configured LLM providers, not attacker-controlled
           endpoints.
         expires: 2027-06-05T00:00:00.000Z
         created: 2026-06-05T00:00:00.000Z

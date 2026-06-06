@@ -1,4 +1,7 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+loadEnvConfig(process.cwd());
 
 const isCI = !!process.env.CI;
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
@@ -23,13 +26,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
-  workers: isCI ? 1 : undefined,
+  workers: 1,
   timeout: 60_000,
   expect: { timeout: 15_000 },
   reporter: isCI
     ? [["github"], ["html", { outputFolder: "playwright-report", open: "never" }], ["blob"]]
     : [["list"]],
-  globalSetup: "./e2e/global-setup.ts",
   outputDir: "test-results",
   use: {
     baseURL,
@@ -62,7 +64,7 @@ export default defineConfig({
       testDir: "./e2e",
       testMatch: [/specs\/auth\.spec\.ts/, /smoke\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
-      dependencies: ["chromium"],
+      dependencies: ["setup"],
     },
   ],
 });

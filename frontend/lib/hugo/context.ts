@@ -1,11 +1,11 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeProductHealth, listCatalogWithThresholds } from "@/lib/catalog";
-import { forecastStockout } from "@/lib/forecast/predictors";
-import { type Incident, type IncidentDetail, listIncidents } from "@/lib/incidents";
+import type { SlackThreadMessage } from "@/lib/slack";
+import type { Incident, IncidentDetail } from "@/lib/stores";
+import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
 
-// Mirror the reorder horizon defaults used by the detector/forecast modules.
+// Reorder horizon defaults from business_settings seed.
 const LEAD_DAYS_DEFAULT = 71;
 const BUFFER_DAYS_DEFAULT = 14;
 const OUTFLOW_WINDOW_DAYS = 28;
@@ -46,7 +46,7 @@ export async function resolveIncident(
   reference: string | null | undefined,
   organizationId: string,
 ): Promise<{ match: Incident | null; candidates: Incident[] }> {
-  const incidents = await listIncidents(supabase, organizationId);
+  const incidents = await getStore(supabase).incidents.list({ organizationId });
   const ref = (reference ?? "").trim().toLowerCase();
 
   if (!ref) {
@@ -81,7 +81,7 @@ export async function buildOpenIncidentsContext(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<string> {
-  const incidents = await listIncidents(supabase, organizationId);
+  const incidents = await getStore(supabase).incidents.list({ organizationId });
   const open = incidents.filter(isOpenIncident);
   const resolvedCount = incidents.length - open.length;
 
@@ -132,14 +132,10 @@ export async function buildCatalogContext(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<string> {
-  const { products, thresholdsByProduct } = await listCatalogWithThresholds(supabase, organizationId);
+  const store = getStore(supabase);
+  const { products } = await store.catalog.list({ organizationId });
 
-  const breaches = products
-    .map((p) => ({
-      product: p,
-      level: computeProductHealth(p, thresholdsByProduct[p.product_id] ?? []),
-    }))
-    .filter((row) => row.level !== "healthy");
+  const breaches = products.filter((p) => p.health !== "healthy");
 
   if (breaches.length === 0) {
     return `All ${products.length} products are within their KPI thresholds (no breaches).`;
@@ -148,8 +144,8 @@ export async function buildCatalogContext(
   const lines = breaches
     .slice(0, 15)
     .map(
-      ({ product, level }) =>
-        `- ${product.title} (${product.product_id}) — ${level}: return_rate=${
+      (product) =>
+        `- ${product.title} (${product.product_id}) — ${product.health}: return_rate=${
           product.return_rate ?? "—"
         }, refund_rate=${product.refund_rate ?? "—"}, ad_roas=${product.ad_roas ?? "—"}`,
     );
@@ -171,10 +167,74 @@ export function wantsCatalog(prompt: string): boolean {
 }
 
 const INVENTORY_KEYWORDS =
-  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|on hand|supply|left)\b/i;
+  /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|stocks out|stocked out|days to stockout|on hand|supply|left)\b/i;
 
 export function wantsInventory(prompt: string): boolean {
   return INVENTORY_KEYWORDS.test(prompt);
+}
+
+export function buildThreadTranscript(messages: SlackThreadMessage[]): string {
+  return messages
+    .map((message) => {
+      const text = (message.text ?? "")
+        .split("\n")
+        .map((line) => line.replace(/<@[A-Z0-9]+>/g, " ").replace(/[ \t]+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n");
+      if (!text) return null;
+      const speaker = message.bot_id ? "Hugo" : "User";
+      return `${speaker}: ${text}`;
+    })
+    .filter((line): line is string => Boolean(line))
+    .slice(-12)
+    .join("\n");
+}
+
+const ORDINALS = new Map([
+  ["first", 1],
+  ["1st", 1],
+  ["second", 2],
+  ["2nd", 2],
+  ["third", 3],
+  ["3rd", 3],
+  ["fourth", 4],
+  ["4th", 4],
+  ["fifth", 5],
+  ["5th", 5],
+]);
+
+function extractIncidentIdsFromTranscript(transcript: string): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const match of transcript.matchAll(/\[([a-f0-9]{8})\]/gi)) {
+    const id = match[1].toLowerCase();
+    if (!seen.has(id)) {
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+export function resolveThreadIncidentReference(prompt: string, transcript: string): string | null {
+  const clean = prompt.toLowerCase();
+  const ids = extractIncidentIdsFromTranscript(transcript);
+  if (ids.length === 0) return null;
+
+  for (const [word, position] of ORDINALS) {
+    if (new RegExp(`\\b${word}\\b`).test(clean)) {
+      return ids[position - 1] ?? null;
+    }
+  }
+
+  const numeric = clean.match(/\b(?:number|#)?\s*([1-5])\b/);
+  if (numeric) return ids[Number(numeric[1]) - 1] ?? null;
+
+  if (/\b(it|that|this|one|same)\b/.test(clean)) {
+    return ids.at(-1) ?? null;
+  }
+
+  return null;
 }
 
 function formatStockoutDays(days: number): string {
@@ -182,9 +242,23 @@ function formatStockoutDays(days: number): string {
   return `~${Math.round(days)}d to stockout`;
 }
 
+function daysToStockout(currentUnits: number, dailyOutflow: number): number {
+  if (dailyOutflow <= 0) return Infinity;
+  return currentUnits <= 0 ? 0 : currentUnits / dailyOutflow;
+}
+
+function reorderUrgent(
+  currentUnits: number,
+  dailyOutflow: number,
+  leadDays: number,
+  bufferDays: number,
+): boolean {
+  const days = daysToStockout(currentUnits, dailyOutflow);
+  return currentUnits > 0 && Number.isFinite(days) && days <= leadDays + bufferDays;
+}
+
 /**
- * Per-product stock levels: current units on hand, recent daily outflow, and the
- * resulting days-to-stockout (reusing the forecast module's reorder logic).
+ * Per-product stock levels: current units on hand, recent daily outflow, and days-to-stockout.
  * Most-urgent products are listed first so low/out-of-stock items always surface.
  */
 export async function buildInventoryContext(
@@ -214,26 +288,28 @@ export async function buildInventoryContext(
     .map((r) => {
       const currentUnits = Number(r.current_balance ?? 0);
       const dailyOutflow = Number(r.daily_outflow ?? 0);
+      const days_to_stockout = daysToStockout(currentUnits, dailyOutflow);
       return {
         title: titleById.get(r.product_id) ?? "(untitled product)",
         productId: r.product_id,
         currentUnits,
         dailyOutflow,
-        forecast: forecastStockout({ currentUnits, dailyOutflow, leadDays, bufferDays }),
+        days_to_stockout,
+        reorder_urgent: reorderUrgent(currentUnits, dailyOutflow, leadDays, bufferDays),
       };
     })
-    .sort((a, b) => a.forecast.days_to_stockout - b.forecast.days_to_stockout);
+    .sort((a, b) => a.days_to_stockout - b.days_to_stockout);
 
   const outOfStock = stock.filter((s) => s.currentUnits <= 0).length;
-  const reorderUrgent = stock.filter((s) => s.forecast.reorder_urgent).length;
+  const reorderUrgentCount = stock.filter((s) => s.reorder_urgent).length;
 
   const lines = stock.slice(0, INVENTORY_MAX_LINES).map((s) => {
-    const flag = s.currentUnits <= 0 ? " — OUT OF STOCK" : s.forecast.reorder_urgent ? " — reorder urgent" : "";
-    return `- ${s.title} (${shortId(s.productId)}): ${Math.round(s.currentUnits)} units in stock, ~${s.dailyOutflow.toFixed(1)} units/day, ${formatStockoutDays(s.forecast.days_to_stockout)}${flag}`;
+    const flag = s.currentUnits <= 0 ? " — OUT OF STOCK" : s.reorder_urgent ? " — reorder urgent" : "";
+    return `- ${s.title} (${shortId(s.productId)}): ${Math.round(s.currentUnits)} units in stock, ~${s.dailyOutflow.toFixed(1)} units/day, ${formatStockoutDays(s.days_to_stockout)}${flag}`;
   });
 
   return [
-    `Inventory / stock (${stock.length} products; ${outOfStock} out of stock, ${reorderUrgent} need reorder within lead+buffer time):`,
+    `Inventory / stock (${stock.length} products; ${outOfStock} out of stock, ${reorderUrgentCount} need reorder within lead+buffer time):`,
     ...lines,
     stock.length > INVENTORY_MAX_LINES
       ? `…and ${stock.length - INVENTORY_MAX_LINES} more — ask about a specific product for its exact stock.`

@@ -5,9 +5,13 @@
 
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { resolveOrganizationSlackDeliveryChannel } from "@/lib/organizations/slack";
+import type { Database } from "@/lib/supabase/database.types";
 
 export type SlackIncidentPayload = {
+  organization_id: string;
   title: string;
   severity: string;
   status: string;
@@ -42,15 +46,8 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export async function sendIncidentNotification(
-  payload: SlackIncidentPayload
-): Promise<void> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) {
-    console.warn("[Slack] SLACK_WEBHOOK_URL not set — skipping notification");
-    return;
-  }
-
+/** Block Kit payload for an incident notification card. */
+export function buildIncidentNotificationBlocks(payload: SlackIncidentPayload): object[] {
   const emoji = severityEmoji(payload.severity);
   const impact = payload.impact_amount
     ? `${formatCurrency(payload.impact_amount)} ${payload.impact_label ?? ""}`
@@ -65,7 +62,7 @@ export async function sendIncidentNotification(
   const showApproveButton =
     payload.status === "fix_proposed" && (payload.actions?.length ?? 0) > 0;
 
-  const blocks = [
+  return [
     {
       type: "header",
       text: {
@@ -107,7 +104,7 @@ export async function sendIncidentNotification(
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "*Recovery:*\nIncident approved — monitoring recovery in Resolve.",
+              text: "*Recovery:*\nIncident approved — monitoring recovery in Hugo.",
             },
           }]
         : []),
@@ -133,22 +130,19 @@ export async function sendIncidentNotification(
       ],
     },
   ];
+}
 
-  const body = JSON.stringify({ blocks });
-
-  const res = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`[Slack] Webhook failed: ${res.status} ${text}`);
-  }
+export async function sendIncidentNotification(
+  payload: SlackIncidentPayload,
+  supabase: SupabaseClient<Database>,
+): Promise<void> {
+  const blocks = buildIncidentNotificationBlocks(payload);
+  const text = `Incident: ${payload.title} (${payload.severity})`;
+  await postOrgSlackBlocks(supabase, payload.organization_id, blocks, text);
 }
 
 export type NewIncidentAlert = {
+  organization_id: string;
   incident_id: string;
   title: string;
   severity: string;
@@ -161,18 +155,25 @@ export type NewIncidentAlert = {
  * button). Called from detection when a breach/forecast opens an incident.
  * Never throws — a Slack failure must not abort detection.
  */
-export async function notifyNewIncident(alert: NewIncidentAlert): Promise<void> {
+export async function notifyNewIncident(
+  supabase: SupabaseClient<Database>,
+  alert: NewIncidentAlert,
+): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   try {
-    await sendIncidentNotification({
-      title: alert.title,
-      severity: alert.severity,
-      status: "detected",
-      impact_amount: alert.impact_amount,
-      impact_label: alert.impact_label,
-      incident_id: alert.incident_id,
-      app_url: appUrl,
-    });
+    await sendIncidentNotification(
+      {
+        organization_id: alert.organization_id,
+        title: alert.title,
+        severity: alert.severity,
+        status: "detected",
+        impact_amount: alert.impact_amount,
+        impact_label: alert.impact_label,
+        incident_id: alert.incident_id,
+        app_url: appUrl,
+      },
+      supabase,
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[Slack] new-incident alert failed: ${message}`);
@@ -300,6 +301,42 @@ export function stripSlackMentions(text: string): string {
   return text.replace(/<@[A-Z0-9]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+export type SlackThreadMessage = {
+  type?: string;
+  user?: string;
+  bot_id?: string;
+  text?: string;
+  ts?: string;
+  thread_ts?: string;
+};
+
+export type SlackThreadReadResult =
+  | { ok: true; messages: SlackThreadMessage[] }
+  | { ok: false; error: string };
+
+export async function fetchSlackThreadMessages(args: {
+  channel: string;
+  threadTs: string;
+}): Promise<SlackThreadReadResult> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return { ok: false, error: "missing_bot_token" };
+
+  const url = new URL("https://slack.com/api/conversations.replies");
+  url.searchParams.set("channel", args.channel);
+  url.searchParams.set("ts", args.threadTs);
+  url.searchParams.set("limit", "20");
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = (await res.json().catch(() => null)) as
+    | { ok?: boolean; error?: string; messages?: SlackThreadMessage[] }
+    | null;
+
+  if (!json?.ok) return { ok: false, error: json?.error ?? `http_${res.status}` };
+  return { ok: true, messages: json.messages ?? [] };
+}
+
 /**
  * Post a message to a Slack channel via the Web API (`chat.postMessage`),
  * authenticated with the bot token. `threadTs` keeps replies in-thread.
@@ -309,6 +346,7 @@ export async function postSlackMessage(args: {
   channel: string;
   text: string;
   threadTs?: string;
+  blocks?: object[];
 }): Promise<void> {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) {
@@ -326,6 +364,7 @@ export async function postSlackMessage(args: {
       channel: args.channel,
       text: args.text,
       ...(args.threadTs ? { thread_ts: args.threadTs } : {}),
+      ...(args.blocks ? { blocks: args.blocks } : {}),
     }),
   });
 
@@ -335,3 +374,44 @@ export async function postSlackMessage(args: {
   }
 }
 
+/**
+ * Post Block Kit blocks to an org's Slack channel via the bot token when
+ * `organizations.slack_channel_id` or `SLACK_DEFAULT_CHANNEL` is set; otherwise
+ * falls back to the incoming webhook. Never throws — logs on failure.
+ */
+export async function postOrgSlackBlocks(
+  supabase: SupabaseClient<Database>,
+  organizationId: string,
+  blocks: object[],
+  fallbackText: string,
+): Promise<void> {
+  const channel = await resolveOrganizationSlackDeliveryChannel(supabase, organizationId);
+  if (channel && process.env.SLACK_BOT_TOKEN) {
+    await postSlackMessage({ channel, text: fallbackText, blocks });
+    return;
+  }
+  await postWebhookBlocks(blocks);
+}
+
+/**
+ * Post Block Kit blocks to the incoming webhook channel (legacy global fallback).
+ * Never throws — logs on failure.
+ */
+export async function postWebhookBlocks(blocks: object[]): Promise<void> {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.warn("[Slack] SLACK_WEBHOOK_URL not set — skipping webhook post");
+    return;
+  }
+
+  const res = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blocks }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[Slack] Webhook blocks failed: ${res.status} ${text}`);
+  }
+}

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { OrderFeedItem } from "@/lib/orders/types";
+import type { OrderFeedItem } from "@/lib/stores";
 import { OrderRow } from "./OrderRow";
 
 const order: OrderFeedItem = {

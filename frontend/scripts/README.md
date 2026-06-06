@@ -1,6 +1,6 @@
 # Scripts
 
-Bun CLI utilities to seed Pretty Fly CSVs into Supabase and validate the database. Same package as the app — reads Supabase env from `process.env` (or `.env.local` when Bun loads it locally).
+Bun CLI utilities to bootstrap the demo org and validate the database.
 
 ## Prerequisites
 
@@ -23,22 +23,24 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environmen
 
 ```bash
 bun run scripts/seed.ts
+bun run scripts/seed.ts -- --full          # + Hugo mock store + demo kanban incidents
+bun run scripts/seed.ts -- --full --e2e    # + E2E user (for Playwright)
 ```
 
 ## What's here
 
 | File | Purpose |
 |------|---------|
-| `seed.ts` | Upsert CSVs from `hackathon/data-pack/data/` + demo incidents |
+| `seed.ts` | Demo org + auth user; `--full` loads store + incidents; `--e2e` adds Playwright user |
 | `validate-counts.ts` | Assert table row counts |
 | `validate-metrics.ts` | Assert metrics RPCs on seeded data |
+
 No separate `scripts/` package at repo root; `createClient()` from `@supabase/supabase-js` in each script. DB setup uses Supabase CLI (`bun run db:reset` in `frontend/`).
 
 ## Notes
 
-- Validators need a **real** seeded project; CI does not run these.
-- Batched writes in `seed.ts` use inline `Array.from` slices (500 rows per request).
+- Validators need store data loaded (`seed --full` or onboarding connect); CI does not run these.
+- Store import for scripts uses `provisionMockCsvStore` from `lib/stores/import/provision.ts` (script-safe, no `server-only`).
 
 **Agents:** [../AGENTS.md](../AGENTS.md)  
-**Parent:** [../README.md](../README.md)  
-**Last reviewed:** 2026-06-04
+**Parent:** [../README.md](../README.md)

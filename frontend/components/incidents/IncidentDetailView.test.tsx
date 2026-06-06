@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import IncidentDetailView from "@/components/incidents/IncidentDetailView";
 import {
   createAnomalyDetectedEventFixture,
@@ -7,37 +7,8 @@ import {
 } from "@/test/fixtures";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
-const mockUseQuery = vi.fn();
-const mockMutate = vi.fn();
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual("@tanstack/react-query");
-  return {
-    ...actual,
-    useQuery: (options: unknown) => mockUseQuery(options),
-  };
-});
-
-vi.mock("@/lib/agents/hooks", () => ({
-  useTriggerInvestigation: () => ({
-    mutate: mockMutate,
-    isPending: false,
-  }),
-}));
-
 describe("IncidentDetailView", () => {
-  it("renders loading state", () => {
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      isPending: true,
-      isError: false,
-      error: null,
-    });
-    const { container } = renderWithProviders(<IncidentDetailView incidentId="inc-1" />);
-    expect(container.querySelectorAll("[data-slot='skeleton']").length).toBeGreaterThan(0);
-  });
-
-  it("renders incident title and root cause when loaded", () => {
+  it("renders incident title and root cause", () => {
     const detail = createIncidentDetailFixture({
       incident: createIncidentFixture({
         title: "Major return spike",
@@ -50,14 +21,8 @@ describe("IncidentDetailView", () => {
       actions: [],
       timeline: [],
     });
-    mockUseQuery.mockReturnValue({
-      data: detail,
-      isPending: false,
-      isError: false,
-      error: null,
-    });
 
-    renderWithProviders(<IncidentDetailView incidentId={detail.incident.id} />);
+    renderWithProviders(<IncidentDetailView detail={detail} />);
     expect(screen.getByRole("heading", { name: "Major return spike" })).toBeInTheDocument();
     expect(screen.getByText("Supplier defect in batch 12")).toBeInTheDocument();
     expect(screen.getByText("return_rate")).toBeInTheDocument();
@@ -76,14 +41,8 @@ describe("IncidentDetailView", () => {
       actions: [],
       timeline: [createAnomalyDetectedEventFixture()],
     });
-    mockUseQuery.mockReturnValue({
-      data: detail,
-      isPending: false,
-      isError: false,
-      error: null,
-    });
 
-    renderWithProviders(<IncidentDetailView incidentId={detail.incident.id} />);
+    renderWithProviders(<IncidentDetailView detail={detail} />);
     expect(screen.getByText("Why this was detected")).toBeInTheDocument();
     expect(screen.getAllByText("22.5% (target ≤20.0%)").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("No findings yet")).not.toBeInTheDocument();

@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { resolveDemoCredentials } from "@/lib/auth/demo";
 import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
 import { createOrganizationWithOwner } from "@/lib/organizations";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -119,21 +118,6 @@ export async function signUp(formData: FormData) {
   }
 
   redirect("/onboarding");
-}
-
-export async function signInAsDemo() {
-  const credentials = resolveDemoCredentials();
-  if (!credentials) {
-    redirect("/sign-in?error=demo");
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(credentials);
-  if (error) {
-    redirect("/sign-in?error=demo");
-  }
-
-  redirect("/catalog");
 }
 
 export async function signInWithProvider(provider: OAuthProvider) {
