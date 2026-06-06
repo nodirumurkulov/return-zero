@@ -1,6 +1,6 @@
 export { StoreConnectionDomain } from "./connection";
 export { ConnectionError } from "./errors";
-export { resetActiveStoreData } from "./reset-store-data";
+export { resetActiveStoreData, resolveActiveStoreId } from "./reset-store-data";
 export { runStoreSync } from "./sync";
 export * from "./schemas";
 export type {

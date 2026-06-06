@@ -8,7 +8,7 @@ import { MockImportLoader } from "../import/mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "../import/mock/pack";
 import { ShopifyImportLoader } from "../import/shopify";
 import { ConnectionError } from "./errors";
-import { resetActiveStoreData } from "./reset-store-data";
+import { resetActiveStoreData, resolveActiveStoreId } from "./reset-store-data";
 import type { StorePlatform } from "./types";
 
 export type RunStoreSyncOpts = {
@@ -59,6 +59,8 @@ async function runMockCsvSync(
   const source = (opts.source as MockStoreFiles | undefined) ?? readHugoMockStorePack();
   const replace = opts.replace ?? false;
 
+  const storeId = await resolveActiveStoreId(supabase, opts.organizationId);
+
   if (replace) {
     await resetActiveStoreData(supabase, opts.organizationId);
   }
@@ -66,6 +68,7 @@ async function runMockCsvSync(
   const { results: catalogResults, maps } = await loader.loadCatalogPhase(
     supabase,
     opts.organizationId,
+    storeId,
     source,
   );
   if (!catalogResults.every((result) => !result.error)) {
@@ -76,6 +79,7 @@ async function runMockCsvSync(
   const commerceResults = await loader.loadCommercePhase(
     supabase,
     opts.organizationId,
+    storeId,
     source,
     maps,
   );

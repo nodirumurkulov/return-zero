@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import { resetActiveStoreData } from "../connection/reset-store-data";
+import { resetActiveStoreData, resolveActiveStoreId } from "../connection/reset-store-data";
 import { ImportError } from "./errors";
 import { MockImportLoader } from "./mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "./mock/pack";
@@ -105,6 +105,8 @@ export class Import {
     const source = (opts.source as MockStoreFiles | undefined) ?? readHugoMockStorePack();
     const replace = opts.replace ?? false;
 
+    const storeId = await resolveActiveStoreId(this.supabase, opts.organizationId);
+
     if (replace) {
       try {
         await resetActiveStoreData(this.supabase, opts.organizationId);
@@ -117,6 +119,7 @@ export class Import {
     const { results: catalogResults, maps } = await this.mockLoader.loadCatalogPhase(
       this.supabase,
       opts.organizationId,
+      storeId,
       source,
     );
     const catalogSuccess = catalogResults.every((result) => !result.error);
@@ -130,6 +133,7 @@ export class Import {
     const commerceResults = await this.mockLoader.loadCommercePhase(
       this.supabase,
       opts.organizationId,
+      storeId,
       source,
       maps,
     );
