@@ -23,7 +23,10 @@ const CLASSIFIER_PROMPT =
   "duration_days is null unless intent is snooze.";
 
 /** Classify a Slack mention into a Hugo intent. */
-export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
+export async function classifyHugoIntent(
+  prompt: string,
+  threadTranscript?: string,
+): Promise<HugoIntent> {
   const clean = prompt.trim();
   if (!clean) return { intent: "chat", incident_reference: null, duration_days: null };
 
@@ -31,6 +34,9 @@ export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
   if (deterministic && deterministic.intent !== "data_query") {
     return deterministic;
   }
+  const userContent = threadTranscript
+    ? `Slack thread so far:\n${threadTranscript}\n\nLatest message: ${clean}`
+    : clean;
 
   try {
     const { output } = await generateText({
@@ -38,7 +44,7 @@ export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
       output: Output.object({ schema: hugoIntentSchema }),
       messages: [
         { role: "system", content: CLASSIFIER_PROMPT },
-        { role: "user", content: clean },
+        { role: "user", content: userContent },
       ],
     });
 

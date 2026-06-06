@@ -35,6 +35,28 @@ describe("classifyHugoIntent", () => {
     expect(result.incident_reference).toBe("ROAS");
   });
 
+  it("includes Slack thread context when classifying ambiguous follow-ups", async () => {
+    generateTextMock.mockResolvedValue({
+      output: { intent: "approve", incident_reference: "second one", duration_days: null },
+    });
+
+    await classifyHugoIntent(
+      "approve the second one",
+      "Hugo: 1. Return spike [aaaaaaaa]\n2. ROAS drop [bbbbbbbb]",
+    );
+
+    expect(generateTextMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: "user",
+            content: expect.stringContaining("Slack thread so far:"),
+          }),
+        ]),
+      }),
+    );
+  });
+
   it("falls back to deterministic data query routing when the LLM returns no structured output", async () => {
     generateTextMock.mockResolvedValue({ output: undefined });
     await expect(classifyHugoIntent("what is the recovery status?")).resolves.toEqual({

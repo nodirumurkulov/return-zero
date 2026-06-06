@@ -190,7 +190,7 @@ export async function handleHugoMention(mention: HugoMention): Promise<void> {
 
     const threadTranscript = threadRead?.ok ? buildThreadTranscript(threadRead.messages) : undefined;
 
-    const intent = await classifyHugoIntent(mention.prompt);
+    const intent = await classifyHugoIntent(mention.prompt, threadTranscript);
 
     if (intent.intent === "investigate" || intent.intent === "approve") {
       const verb = intent.intent;
