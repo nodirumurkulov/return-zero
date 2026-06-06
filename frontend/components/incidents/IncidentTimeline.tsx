@@ -1,4 +1,6 @@
+import DetectionReasonDetails from "@/components/incidents/DetectionReasonDetails";
 import type { TimelineEvent } from "@/lib/stores";
+import { formatDetectionReasonFromEvent } from "@/lib/stores/incidents/format-detection-reason";
 
 const icons: Record<string, string> = {
   anomaly_detected: "🔍",
@@ -20,6 +22,10 @@ function formatTime(dateStr: string) {
   });
 }
 
+function isDetectionEvent(event: TimelineEvent): boolean {
+  return event.event_type === "anomaly_detected" || event.event_type === "incident_created";
+}
+
 export default function IncidentTimeline({ events }: { events: TimelineEvent[] }) {
   if (events.length === 0) {
     return <p className="text-sm text-muted-foreground">No events yet</p>;
@@ -28,6 +34,10 @@ export default function IncidentTimeline({ events }: { events: TimelineEvent[] }
     <ol className="relative">
       {events.map((event, i) => {
         const last = i === events.length - 1;
+        const detectionReason = isDetectionEvent(event)
+          ? formatDetectionReasonFromEvent(event)
+          : null;
+        const showDetails = detectionReason != null && detectionReason.lines.length > 0;
         return (
           <li key={event.id} className="relative flex gap-3 pb-4 last:pb-0">
             {!last ? <span className="absolute left-[15px] top-8 h-full w-px bg-border" /> : null}
@@ -38,6 +48,9 @@ export default function IncidentTimeline({ events }: { events: TimelineEvent[] }
               <p className="text-[13px] leading-snug text-foreground [text-wrap:pretty]">
                 {event.description}
               </p>
+              {showDetails && detectionReason ? (
+                <DetectionReasonDetails reason={detectionReason} />
+              ) : null}
               <time className="mt-0.5 block tabnum text-[11px] text-muted-foreground">
                 {formatTime(event.created_at)}
               </time>

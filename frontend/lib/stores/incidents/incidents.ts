@@ -157,8 +157,16 @@ export class Incidents {
     if (prodErr) throw new IncidentsError(`load product: ${prodErr.message}`);
 
     const productTitle = product?.title ?? productId;
-    const title = `${productTitle}: ${primary.display_name} breach`;
+    const fmtValue = (unit: string, value: number) => {
+      if (unit === "ratio" || unit === "percentage") return `${(value * 100).toFixed(1)}%`;
+      if (unit === "currency") return `£${Math.round(value).toLocaleString("en-GB")}`;
+      return `${Math.round(value)}`;
+    };
+    const target = `${primary.direction === "above" ? "≤" : "≥"}${fmtValue(primary.unit, primary.threshold)}`;
+    const value = primary.value ?? 0;
+    const title = `${productTitle}: ${primary.display_name} ${fmtValue(primary.unit, value)} (target ${target})`;
     const severity = primary.severity;
+    const description = `${primary.display_name} ${fmtValue(primary.unit, value)} exceeded threshold ${target}`;
 
     const { data: inc, error: insErr } = await this.supabase
       .from("incidents")
@@ -186,10 +194,12 @@ export class Incidents {
       incident_id: inc.id,
       organization_id: organizationId,
       event_type: "incident_created",
-      description: `KPI threshold breach: ${affected_kpi_keys.join(", ")}`,
+      description,
       metadata: {
         breaches: breached.map((m) => ({
           metric: m.metric_key,
+          display_name: m.display_name,
+          unit: m.unit,
           value: m.value,
           threshold: m.threshold,
           direction: m.direction,

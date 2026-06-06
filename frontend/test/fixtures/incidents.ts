@@ -72,6 +72,37 @@ export function createAgentFindingFixture(
   };
 }
 
+export function createAnomalyDetectedEventFixture(
+  overrides?: Partial<TimelineEvent>,
+): TimelineEvent {
+  return createTimelineEventFixture({
+    event_type: "anomaly_detected",
+    description: "Return rate 22.5% exceeded threshold ≤20.0%",
+    metadata: {
+      breaches: [
+        {
+          metric: "return_rate",
+          display_name: "Return rate",
+          unit: "ratio",
+          value: 0.225,
+          threshold: 0.2,
+          direction: "above",
+        },
+        {
+          metric: "refund_rate",
+          display_name: "Refund rate",
+          unit: "ratio",
+          value: 0.141,
+          threshold: 0.12,
+          direction: "above",
+        },
+      ],
+      quant: { z_score: 2.34, confidence: "high" },
+    },
+    ...overrides,
+  });
+}
+
 export function createTimelineEventFixture(
   overrides?: Partial<TimelineEvent>,
 ): TimelineEvent {
