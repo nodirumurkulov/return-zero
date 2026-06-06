@@ -147,3 +147,30 @@ Each folder also has **README.md** for human onboarding.
 | Empty UI | Seed DB; env vars in `frontend/.env.local` |
 | Types out of sync with DB | Run `bun run db:types`; update domain types + migration — do not add `from-table` shims |
 | Investigation errors | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` and `LLM_PROVIDER` |
+
+## Cursor Cloud specific instructions
+
+**One-time VM bootstrap** (not in the update script): install Bun 1.3.14+, Docker CE (fuse-overlayfs storage driver), and Supabase CLI v2.105.0 from the [GitHub release tarball](https://github.com/supabase/cli/releases) into `$HOME/.local/share/supabase` (extract the full tarball — do not copy only the `supabase` shim). Add `$HOME/.local/share/supabase` and `$HOME/.bun/bin` to `PATH`. Add the `ubuntu` user to the `docker` group, or wrap Docker commands in `sg docker -c "…"`.
+
+**First-time app bootstrap:**
+
+```bash
+cp .env.example frontend/.env.local
+cd frontend/supabase && sg docker -c "supabase start --exclude studio,imgproxy,mailpit,edge-runtime" && cd ..
+eval "$(cd frontend/supabase && sg docker -c 'supabase status -o env')"
+# Paste API_URL, ANON_KEY, SERVICE_ROLE_KEY into frontend/.env.local
+cd frontend && bun run db:reset && bun run seed
+```
+
+Demo login uses `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` from `.env.example` (defaults: `demo@example.test` / `change-me`). LLM keys are optional for catalog/incidents browsing; set real `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for investigation.
+
+**Starting services** (each new session — Supabase does not auto-start):
+
+```bash
+cd frontend/supabase && sg docker -c "supabase start --exclude studio,imgproxy,mailpit,edge-runtime"
+cd frontend && bun run dev   # http://localhost:3000
+```
+
+Ports: app **3000**, Supabase API **54321**, Postgres **54322**.
+
+**Quality checks** (see [Testing instructions](#testing-instructions)): `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run validate` (needs seeded DB).
