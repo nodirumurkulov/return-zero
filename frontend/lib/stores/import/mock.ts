@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
 
-import { resetActiveStoreData } from "../connection/sync";
+import { resetActiveStoreData } from "../connection/reset-store-data";
 
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";

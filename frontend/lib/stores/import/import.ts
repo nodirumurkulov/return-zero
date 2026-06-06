@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import { resetActiveStoreData } from "../connection/sync";
+import { resetActiveStoreData } from "../connection/reset-store-data";
 import { ImportError } from "./errors";
 import { MockImportLoader } from "./mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "./mock/pack";
