@@ -8,7 +8,13 @@ export type { Incident, IncidentRef } from "./incident";
 export type { IncidentAction } from "./incident-action";
 export type { IncidentDetail } from "./incident-detail";
 export type { TimelineEvent } from "./timeline-event";
-export { getIncident, getIncidentDetail, listIncidents, patchIncident } from "./queries";
+export {
+  getIncident,
+  getIncidentDetail,
+  listIncidents,
+  listIncidentsForProduct,
+  patchIncident,
+} from "./queries";
 export {
   INCIDENT_STATUSES,
   isIncidentStatus,

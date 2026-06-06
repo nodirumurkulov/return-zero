@@ -39,6 +39,26 @@ export async function listIncidents(
   return data ?? [];
 }
 
+export async function listIncidentsForProduct(
+  supabase: SupabaseClient<Database>,
+  productId: string,
+  organizationId?: string,
+): Promise<Incident[]> {
+  const orgId = await resolveOrganizationId(supabase, organizationId);
+  const query = withOrgFilter(
+    supabase
+      .from("incidents")
+      .select("*")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false }),
+    orgId,
+  );
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function getIncident(
   supabase: SupabaseClient<Database>,
   id: string,
