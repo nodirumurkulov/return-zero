@@ -47,11 +47,16 @@ export async function ensureE2eUser(supabase: SupabaseClient): Promise<string> {
   return e2eUserId;
 }
 
-export async function seedE2eDetectedIncident(supabase: SupabaseClient, organizationId: string) {
+export async function seedE2eDetectedIncident(
+  supabase: SupabaseClient,
+  organizationId: string,
+  storeId: string,
+) {
   const { data: heroProduct, error: productError } = await supabase
     .from("products")
     .select("id")
     .eq("organization_id", organizationId)
+    .eq("store_id", storeId)
     .eq("external_id", COURT_TRAINER_PRODUCT_EXTERNAL_ID)
     .maybeSingle();
   if (productError) {
@@ -65,6 +70,7 @@ export async function seedE2eDetectedIncident(supabase: SupabaseClient, organiza
     {
       id: E2E_DETECTED_INCIDENT_ID,
       organization_id: organizationId,
+      store_id: storeId,
       title: E2E_DETECTED_INCIDENT_TITLE,
       status: "detected",
       severity: "medium",
