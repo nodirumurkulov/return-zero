@@ -1,12 +1,30 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  buildIncidentNotificationBlocks,
   parseSlackEventEnvelope,
   parseSlackInteractionPayload,
   slackInteractionPayloadSchema,
   stripSlackMentions,
   verifySlackRequest,
 } from "./slack";
+
+describe("buildIncidentNotificationBlocks", () => {
+  it("includes approve button for fix_proposed incidents with actions", () => {
+    const blocks = buildIncidentNotificationBlocks({
+      organization_id: "org-1",
+      title: "Return spike",
+      severity: "high",
+      status: "fix_proposed",
+      incident_id: "inc-1",
+      app_url: "http://localhost:3000",
+      actions: [{ title: "Pause ads", auto_deploy: false, risk_level: "low" }],
+    });
+    const json = JSON.stringify(blocks);
+    expect(json).toContain("approve_low_risk");
+    expect(json).toContain("Return spike");
+  });
+});
 
 describe("parseSlackInteractionPayload", () => {
   it("parses valid Slack interaction JSON", () => {

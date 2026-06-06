@@ -199,7 +199,8 @@ export async function detectForecastRisks(
 
     created.push({ incident_id: inc.id as string, product_id: productId, title, severity: primary.severity, kinds: risks.map((r) => r.kind) });
 
-    await notifyNewIncident({
+    await notifyNewIncident(supabase, {
+      organization_id: opts.organizationId,
       incident_id: inc.id as string,
       title,
       severity: primary.severity,
