@@ -8,6 +8,11 @@ import { createClient } from "@/lib/supabase/server";
 import { listAllOrganizationIds, listAllStoreScopes } from "./admin";
 import { createOrganizationWithOwner } from "./create";
 import {
+  createMagicLinkSession,
+  ensureShopOwnerOrg,
+  ensureShopOwnerUser,
+} from "./shopify-onboard";
+import {
   getOrganizationSlackChannel,
   resolveOrganizationIdForSlackTeam,
   resolveOrganizationSlackDeliveryChannel,
@@ -41,4 +46,7 @@ export {
   resolveOrganizationIdForSlackTeam,
   resolveOrganizationSlackDeliveryChannel,
   resolveSlackDeliveryChannel,
+  createMagicLinkSession,
+  ensureShopOwnerOrg,
+  ensureShopOwnerUser,
 };

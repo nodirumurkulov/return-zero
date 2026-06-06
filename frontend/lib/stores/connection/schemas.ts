@@ -33,3 +33,22 @@ export const connectStoreBodySchema = z
     platform: storePlatformSchema,
   })
   .strict();
+
+export const storeConnectionListItemSchema = z
+  .object({
+    id: z.string().uuid(),
+    label: z.string().nullable(),
+    platform: storePlatformSchema,
+    status: storeConnectionStatusSchema,
+    externalShopId: z.string().nullable(),
+    connectedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
+export const connectShopifyResultSchema = z
+  .object({
+    storeId: z.string().uuid(),
+    organizationId: z.string().uuid(),
+    created: z.boolean(),
+  })
+  .strict();

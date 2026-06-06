@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { authNextPathSchema } from "@/lib/auth/schemas";
+
 const myshopifyHostSchema = z
   .string()
   .regex(
@@ -44,5 +46,12 @@ export const shopifyAccessTokenResponseSchema = z
   .object({
     access_token: z.string().min(1),
     scope: z.string(),
+  })
+  .strict();
+
+export const shopifyAuthQuerySchema = z
+  .object({
+    shop: shopifyShopInputSchema,
+    returnTo: authNextPathSchema.optional(),
   })
   .strict();

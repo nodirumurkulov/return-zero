@@ -13,6 +13,7 @@ Store domains (`stores/connection/`, `stores/import/shopify.ts`) import from her
 | `shop.ts` | `normalizeShop` via `shopify.utils.sanitizeShop` |
 | `oauth.ts` | Authorize URL, `verifyOAuthHmac`, token exchange, `auth.begin` / `auth.callback` wrappers |
 | `state.ts` | Hugo-specific signed state cookie (`returnTo` — not in SDK) |
+| `shop-info.ts` | `fetchShopInfo` via REST `/shop.json` |
 | `client.ts` | `createShopifyAdminClient` → SDK `Graphql` + `Rest` clients |
 | `secrets.ts` | Read/write `store_connection_secrets` via `createAdminClient()` |
 | `errors.ts` | `ShopifyError` |
@@ -24,22 +25,22 @@ Store domains (`stores/connection/`, `stores/import/shopify.ts`) import from her
 ```typescript
 import { shopifyOAuthCallbackQuerySchema } from "@/lib/shopify";
 import {
-  beginShopifyOAuth,
-  completeShopifyOAuth,
+  buildAuthorizeUrl,
   createShopifyAdminClient,
-  getShopifyApi,
+  exchangeCodeForToken,
+  fetchShopInfo,
   upsertStoreSecret,
   verifyOAuthHmac,
 } from "@/lib/shopify/server";
 ```
 
-Prefer `beginShopifyOAuth` / `completeShopifyOAuth` in RUN-125 routes (SDK manages state cookie + token exchange). Use `state.ts` helpers when you need `returnTo` in the Hugo connect flow.
+**Next.js App Router:** use `buildAuthorizeUrl` + `state.ts` cookie helpers + `verifyOAuthHmac` / `exchangeCodeForToken` in route handlers. The SDK `auth.begin` / `auth.callback` wrappers expect Node `IncomingMessage` / `ServerResponse`, not `NextRequest` / `NextResponse`.
 
-## RUN-125 wiring
+## OAuth routes
 
-- Add `/api/shopify/auth` and `/api/shopify/callback` to [`PUBLIC_PREFIXES`](../../proxy.ts).
-- Auth: `beginShopifyOAuth({ shop, callbackPath, rawRequest, rawResponse })` or custom URL + `state.ts` cookie.
-- Callback: `completeShopifyOAuth({ rawRequest, rawResponse })` → `upsertStoreSecret` → upsert `store_connections`.
+- `GET /api/shopify/auth` — signed state cookie → redirect to Shopify authorize URL
+- `GET /api/shopify/callback` — HMAC + state → token → `fetchShopInfo` → `StoreConnectionDomain.connectShopify`
+- Both paths are in [`PUBLIC_PREFIXES`](../../proxy.ts)
 
 ## Env
 
