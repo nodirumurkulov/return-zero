@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import IncidentDetailView from "@/components/incidents/IncidentDetailView";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +13,13 @@ type PageProps = {
 export default async function IncidentDetailPage(props: PageProps) {
   const { incidentId } = await props.params;
   const supabase = await createClient();
-  const org = await tryRequireOrganizationId(supabase);
-  if (!org.ok) notFound();
+  const scopeResult = await tryGetStoreScope(supabase);
+  if (!scopeResult.ok) notFound();
 
+  const scope = scopeResult.scope;
   const detail = await getStore(supabase).incidents.getDetail({
     id: incidentId,
-    organizationId: org.organizationId,
+    scope,
   });
 
   if (!detail) notFound();

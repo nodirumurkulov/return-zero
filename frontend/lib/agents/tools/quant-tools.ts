@@ -11,10 +11,12 @@ import {
   confidenceInterval,
   zScore,
 } from "@/lib/stores/metrics/spc";
+import type { StoreScope } from "@/lib/tenancy/types";
 import type { AgentSupabase } from "../types";
 import { fetchMarketingContext } from "./marketing-tools";
 
-export function createQuantTools(supabase: AgentSupabase, organizationId: string) {
+export function createQuantTools(supabase: AgentSupabase, scope: StoreScope) {
+  const { organizationId } = scope;
   return {
     getAnomalyProfile: tool({
       description:
@@ -22,7 +24,7 @@ export function createQuantTools(supabase: AgentSupabase, organizationId: string
       inputSchema: z.object({ productId: z.string() }),
       execute: async ({ productId }) => {
         const [metrics, mdRes, baselineRes, series] = await Promise.all([
-          computeProductMetrics(supabase, organizationId, productId),
+          computeProductMetrics(supabase, scope, productId),
           supabase
             .from("metric_definitions")
             .select("id, metric_key")
@@ -32,7 +34,7 @@ export function createQuantTools(supabase: AgentSupabase, organizationId: string
             .select("metric_definition_id, mean, stddev, sample_n")
             .eq("organization_id", organizationId)
             .eq("product_id", productId),
-          getProductSeries(supabase, organizationId, productId, 24),
+          getProductSeries(supabase, scope, productId, 24),
         ]);
         const keyByDefId = new Map(
           (mdRes.data ?? []).map((d) => [String(d.id), String(d.metric_key)]),

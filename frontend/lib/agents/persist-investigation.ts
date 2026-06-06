@@ -22,7 +22,7 @@ export async function persistInvestigation(
 ): Promise<PersistInvestigationResult> {
   const { data: incident, error: incLoadErr } = await supabase
     .from("incidents")
-    .select("organization_id, product_id, affected_kpi_keys")
+    .select("organization_id, store_id, product_id, affected_kpi_keys")
     .eq("id", incidentId)
     .single();
   if (incLoadErr || !incident) {
@@ -30,6 +30,7 @@ export async function persistInvestigation(
   }
 
   const organizationId = incident.organization_id;
+  const scope = { organizationId, storeId: incident.store_id };
   const resolvedProductId = incident.product_id ?? productId;
   const affectedKpiKeys = incident.affected_kpi_keys;
   const runId = createInvestigationRunId();
@@ -62,7 +63,7 @@ export async function persistInvestigation(
     try {
       const investigation = await runInvestigation(
         supabase,
-        organizationId,
+        scope,
         incidentId,
         resolvedProductId,
         affectedKpiKeys,

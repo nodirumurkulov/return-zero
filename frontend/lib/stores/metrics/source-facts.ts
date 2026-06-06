@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 export interface ProductSourceFacts {
   product_id: string;
@@ -14,7 +15,7 @@ export interface ProductSourceFacts {
 }
 
 export interface SourceFactsOpts {
-  organizationId: string;
+  scope: StoreScope;
   windowDays: number;
   asOf?: string | null;
 }
@@ -36,19 +37,17 @@ function toFacts(row: SourceRow): ProductSourceFacts {
 
 export async function getSourceFacts(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
-  windowDays: number,
-  asOf?: string | null,
+  opts: SourceFactsOpts,
 ): Promise<Map<string, ProductSourceFacts>> {
   const args: Database["public"]["Functions"]["product_source_facts"]["Args"] = {
-    p_organization_id: organizationId,
-    p_window_days: windowDays,
-    ...(asOf ? { p_asof: asOf } : {}),
+    p_store_id: opts.scope.storeId,
+    p_window_days: opts.windowDays,
+    ...(opts.asOf ? { p_asof: opts.asOf } : {}),
   };
   const { data, error } = await supabase.rpc("product_source_facts", args);
   if (error) {
     throw new Error(
-      `product_source_facts(${organizationId}, ${windowDays}) failed: ${error.message}`,
+      `product_source_facts(${opts.scope.storeId}, ${opts.windowDays}) failed: ${error.message}`,
     );
   }
   const map = new Map<string, ProductSourceFacts>();

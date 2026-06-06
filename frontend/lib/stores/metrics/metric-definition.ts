@@ -1,4 +1,5 @@
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 import type { KpiDirection, KpiHealthStatus, KpiSeverity, MetricKey } from "../catalog/types";
 
 export type { KpiDirection, KpiHealthStatus, KpiSeverity, MetricKey };
@@ -29,7 +30,7 @@ export interface MetricValue {
 }
 
 export interface ComputeOpts {
-  organizationId: string;
+  scope: StoreScope;
   productId?: string;
   windowDays?: number;
   asOf?: string;

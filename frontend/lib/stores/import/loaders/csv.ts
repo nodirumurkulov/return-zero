@@ -3,6 +3,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import type { Database, TablesInsert } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
 import type { ImportTableResult } from "../types";
 
 export type ContractTable =
@@ -80,7 +81,7 @@ export class CsvLoader {
   async fetchExternalIdMap(
     supabase: SupabaseClient<Database>,
     table: ExternalIdTable,
-    organizationId: string,
+    scope: StoreScope,
   ): Promise<Map<string, string>> {
     const map = new Map<string, string>();
     const pageSize = 1000;
@@ -89,7 +90,8 @@ export class CsvLoader {
       const { data, error } = await supabase
         .from(table)
         .select("id, external_id")
-        .eq("organization_id", organizationId)
+        .eq("organization_id", scope.organizationId)
+        .eq("store_id", scope.storeId)
         .range(offset, offset + pageSize - 1);
       if (error) throw new Error(`fetchExternalIdMap ${table}: ${error.message}`);
       if (!data?.length) return;

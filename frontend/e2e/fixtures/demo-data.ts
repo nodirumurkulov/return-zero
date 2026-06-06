@@ -102,6 +102,7 @@ export async function seedProductKpiThresholds(
 export async function seedDemoIncidents(
   supabase: SupabaseClient<Database>,
   organizationId: string,
+  storeId: string,
   productIdByExternalId: Map<string, string>,
 ) {
   const heroProductId = productIdByExternalId.get(HERO_PRODUCT_EXTERNAL_ID) ?? null;
@@ -114,6 +115,7 @@ export async function seedDemoIncidents(
       {
         id: "00000000-0000-0000-0000-000000000001",
         organization_id: organizationId,
+        store_id: storeId,
         title: "Court Trainer Return Spike",
         status: "awaiting_approval",
         severity: "high",
@@ -333,6 +335,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000002",
       organization_id: organizationId,
+      store_id: storeId,
       title: "Wasted Ad Spend — Low-ROAS Campaigns",
       status: "monitoring",
       severity: "medium",
@@ -355,6 +358,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000003",
       organization_id: organizationId,
+      store_id: storeId,
       title: "Court Trainer UK11/UK12 Stockout",
       status: "fix_proposed",
       severity: "critical",
@@ -377,6 +381,7 @@ export async function seedDemoIncidents(
     {
       id: "00000000-0000-0000-0000-000000000004",
       organization_id: organizationId,
+      store_id: storeId,
       title: "M3 Customer Retention at 9.5%",
       status: "investigating",
       severity: "high",
@@ -396,8 +401,9 @@ export async function seedDemoIncidents(
 export async function seedDemoKanbanData(
   supabase: SupabaseClient<Database>,
   organizationId: string,
+  storeId: string,
   productIdByExternalId: Map<string, string>,
 ) {
   await seedProductKpiThresholds(supabase, organizationId);
-  await seedDemoIncidents(supabase, organizationId, productIdByExternalId);
+  await seedDemoIncidents(supabase, organizationId, storeId, productIdByExternalId);
 }

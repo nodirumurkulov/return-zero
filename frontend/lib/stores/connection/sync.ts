@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import { MockImportLoader } from "../import/mock";
 import { readHugoMockStorePack, type MockStoreFiles } from "../import/mock/pack";
@@ -11,7 +12,7 @@ import { ConnectionError } from "./errors";
 import type { StorePlatform } from "./types";
 
 export type RunStoreSyncOpts = {
-  organizationId: string;
+  scope: StoreScope;
   platform: StorePlatform;
   source?: unknown;
   replace?: boolean;
@@ -19,7 +20,7 @@ export type RunStoreSyncOpts = {
 
 async function markStoreConnected(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
   platform: StorePlatform,
 ): Promise<void> {
   const { error } = await supabase
@@ -30,13 +31,13 @@ async function markStoreConnected(
       connected_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("organization_id", organizationId);
+    .eq("id", scope.storeId);
   if (error) throw new ConnectionError(`store_connections update failed: ${error.message}`);
 }
 
 async function markStoreError(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
 ): Promise<void> {
   const { error } = await supabase
     .from("store_connections")
@@ -44,7 +45,7 @@ async function markStoreError(
       status: "error",
       updated_at: new Date().toISOString(),
     })
-    .eq("organization_id", organizationId);
+    .eq("id", scope.storeId);
   if (error) throw new ConnectionError(`store_connections update failed: ${error.message}`);
 }
 
@@ -57,36 +58,36 @@ async function runMockCsvSync(
   const replace = opts.replace ?? false;
 
   if (replace) {
-    const { error } = await supabase.rpc("reset_organization_data", {
-      p_organization_id: opts.organizationId,
+    const { error } = await supabase.rpc("reset_store_data", {
+      p_store_id: opts.scope.storeId,
     });
-    if (error) throw new ConnectionError(`reset_organization_data: ${error.message}`);
+    if (error) throw new ConnectionError(`reset_store_data: ${error.message}`);
   }
 
   const { results: catalogResults, maps } = await loader.loadCatalogPhase(
     supabase,
-    opts.organizationId,
+    opts.scope,
     source,
   );
   if (!catalogResults.every((result) => !result.error)) {
-    await markStoreError(supabase, opts.organizationId);
+    await markStoreError(supabase, opts.scope);
     return false;
   }
 
   const commerceResults = await loader.loadCommercePhase(
     supabase,
-    opts.organizationId,
+    opts.scope,
     source,
     maps,
   );
   const results = [...catalogResults, ...commerceResults];
   const success = results.every((result) => !result.error);
   if (!success) {
-    await markStoreError(supabase, opts.organizationId);
+    await markStoreError(supabase, opts.scope);
     return false;
   }
 
-  await markStoreConnected(supabase, opts.organizationId, "mock_csv");
+  await markStoreConnected(supabase, opts.scope, "mock_csv");
   return true;
 }
 
@@ -95,15 +96,15 @@ async function runShopifySync(
   opts: RunStoreSyncOpts,
 ): Promise<boolean> {
   const loader = new ShopifyImportLoader();
-  const results = await loader.load(supabase, opts.organizationId, opts.source, {
+  const results = await loader.load(supabase, opts.scope, opts.source, {
     replace: opts.replace ?? true,
   });
   const success = results.every((result) => !result.error);
   if (!success) {
-    await markStoreError(supabase, opts.organizationId);
+    await markStoreError(supabase, opts.scope);
     return false;
   }
-  await markStoreConnected(supabase, opts.organizationId, "shopify");
+  await markStoreConnected(supabase, opts.scope, "shopify");
   return true;
 }
 
@@ -120,7 +121,7 @@ export async function runStoreSync(
       return;
     }
   } catch (err) {
-    await markStoreError(supabase, opts.organizationId);
+    await markStoreError(supabase, opts.scope);
     throw err;
   }
 }

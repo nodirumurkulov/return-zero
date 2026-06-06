@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
 import type { Incident } from "@/lib/stores";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/tenancy";
 import { buildDigestBlocks, summarizeIncidents } from "./digest";
 
 function incident(overrides: Partial<Incident>): Incident {
   return {
     id: "11111111-2222-3333-4444-555555555555",
     organization_id: "00000000-0000-0000-0000-000000000100",
+    store_id: "00000000-0000-0000-0000-000000000101",
     title: "Return rate spike",
     status: "detected",
     severity: "high",

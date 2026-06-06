@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import type { IdMaps } from "./rows";
 
@@ -18,7 +19,7 @@ export class IdMapCache implements IdMaps {
 
   async refreshCollections(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
   ): Promise<void> {
     const pageSize = 1000;
     this.collections.clear();
@@ -28,7 +29,8 @@ export class IdMapCache implements IdMaps {
       const { data, error } = await supabase
         .from("collections")
         .select("id, external_id, title")
-        .eq("organization_id", organizationId)
+        .eq("organization_id", scope.organizationId)
+        .eq("store_id", scope.storeId)
         .range(offset, offset + pageSize - 1);
       if (error) throw new Error(`refreshCollections: ${error.message}`);
       if (!data?.length) return;

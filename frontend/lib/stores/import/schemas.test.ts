@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  importImportingResponseSchema,
+  importSyncingResponseSchema,
   importPartialResponseSchema,
   importResponseSchema,
   importSkippedResponseSchema,
@@ -25,8 +25,8 @@ describe("importResponseSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
-  it("accepts importing responses", () => {
-    const parsed = importImportingResponseSchema.safeParse({ importing: true });
+  it("accepts syncing responses", () => {
+    const parsed = importSyncingResponseSchema.safeParse({ syncing: true });
     expect(parsed.success).toBe(true);
   });
 

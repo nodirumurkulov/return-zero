@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 import { METRIC_KEYS, type MetricKey } from "../catalog/types";
 import type {
   ComputeOpts,
@@ -66,17 +68,18 @@ export async function computeMetricsDetailed(
   supabase: SupabaseClient<Database>,
   opts: ComputeOpts,
 ): Promise<EngineRun> {
+  const { organizationId } = opts.scope;
   const [{ data: defsData, error: defsErr }, { data: ovrData, error: ovrErr }] = await Promise.all([
     supabase
       .from("metric_definitions")
       .select("*")
-      .eq("organization_id", opts.organizationId)
+      .eq("organization_id", organizationId)
       .eq("enabled", true)
       .order("sort_order"),
     supabase
       .from("product_kpi_thresholds")
       .select("product_id, metric_definition_id, threshold, direction, active")
-      .eq("organization_id", opts.organizationId)
+      .eq("organization_id", organizationId)
       .eq("active", true),
   ]);
   if (defsErr) throw new Error(`load metric_definitions: ${defsErr.message}`);
@@ -103,7 +106,7 @@ export async function computeMetricsDetailed(
   for (const w of Array.from(windows)) {
     factsByWindow.set(
       w,
-      await getSourceFacts(supabase, opts.organizationId, w, opts.asOf),
+      await getSourceFacts(supabase, { scope: opts.scope, windowDays: w, asOf: opts.asOf }),
     );
   }
 
@@ -145,10 +148,10 @@ export async function computeMetrics(
 /** Metrics for a single product, ordered by definition sort_order. */
 export async function computeProductMetrics(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
   productId: string,
   windowDays?: number,
 ): Promise<MetricValue[]> {
-  const all = await computeMetrics(supabase, { organizationId, productId, windowDays });
+  const all = await computeMetrics(supabase, { scope, productId, windowDays });
   return all[productId] ?? [];
 }

@@ -30,6 +30,7 @@ function incident(overrides: Partial<Incident>): Incident {
   return {
     id: "11111111-2222-3333-4444-555555555555",
     organization_id: "00000000-0000-0000-0000-000000000100",
+    store_id: "00000000-0000-0000-0000-000000000101",
     title: "Return rate spike",
     status: "detected",
     severity: "high",
@@ -54,7 +55,7 @@ function incident(overrides: Partial<Incident>): Incident {
 }
 
 const supabase = {} as SupabaseClient<Database>;
-const orgId = "org-1";
+const scope = { organizationId: "org-1", storeId: "store-1" };
 
 describe("hugo context helpers", () => {
   beforeEach(() => {
@@ -83,7 +84,7 @@ describe("hugo context helpers", () => {
       incident({ id: "a", status: "detected" }),
       incident({ id: "b", status: "resolved" }),
     ]);
-    const { match } = await resolveIncident(supabase, "", orgId);
+    const { match } = await resolveIncident(supabase, "", scope);
     expect(match?.id).toBe("a");
   });
 
@@ -92,7 +93,7 @@ describe("hugo context helpers", () => {
       incident({ title: "Refund spike on SKU-1" }),
       incident({ title: "Other issue" }),
     ]);
-    const { match } = await resolveIncident(supabase, "refund spike", orgId);
+    const { match } = await resolveIncident(supabase, "refund spike", scope);
     expect(match?.title).toBe("Refund spike on SKU-1");
   });
 });
@@ -104,7 +105,7 @@ describe("buildOpenIncidentsContext", () => {
 
   it("reports when there are no open incidents", async () => {
     listMock.mockResolvedValue([incident({ status: "resolved" })]);
-    const ctx = await buildOpenIncidentsContext(supabase, orgId);
+    const ctx = await buildOpenIncidentsContext(supabase, scope);
     expect(ctx).toContain("no open incidents");
   });
 
@@ -113,7 +114,7 @@ describe("buildOpenIncidentsContext", () => {
       incident({ id: "aaaaaaaa-0000", title: "Return rate spike", status: "detected" }),
       incident({ status: "resolved" }),
     ]);
-    const ctx = await buildOpenIncidentsContext(supabase, orgId);
+    const ctx = await buildOpenIncidentsContext(supabase, scope);
     expect(ctx).toContain("Open incidents (1 of 2");
     expect(ctx).toContain("Return rate spike");
   });
@@ -189,7 +190,12 @@ function inventorySupabase(opts: {
     rpc: vi.fn().mockResolvedValue({ data: opts.outflow, error: null }),
     from: (table: string) => ({
       select: () => ({
-        eq: () => Promise.resolve({ data: tableData[table] ?? [], error: null }),
+        eq: () => {
+          const result = Promise.resolve({ data: tableData[table] ?? [], error: null });
+          return Object.assign(result, {
+            eq: () => Promise.resolve({ data: tableData[table] ?? [], error: null }),
+          });
+        },
       }),
     }),
   } as unknown as SupabaseClient<Database>;
@@ -199,7 +205,7 @@ describe("buildInventoryContext", () => {
   it("reports when no inventory data exists", async () => {
     const ctx = await buildInventoryContext(
       inventorySupabase({ outflow: [], products: [], settings: [] }),
-      orgId,
+      scope,
     );
     expect(ctx).toContain("No inventory data");
   });
@@ -222,7 +228,7 @@ describe("buildInventoryContext", () => {
           { key: "buffer_days", value: 14 },
         ],
       }),
-      orgId,
+      scope,
     );
 
     expect(ctx).toContain("3 products; 1 out of stock, 1 need reorder");

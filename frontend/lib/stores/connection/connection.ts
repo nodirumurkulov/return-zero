@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import { ConnectionError } from "./errors";
 import type {
@@ -22,7 +23,7 @@ function derivePhase(status: StoreConnectionStatus, catalogReady: boolean): Stor
   if (status === "connected") {
     return "ready";
   }
-  if (status === "importing") {
+  if (status === "syncing") {
     return catalogReady ? "commerce" : "catalog";
   }
   return "idle";
@@ -33,8 +34,8 @@ export class StoreConnectionDomain {
 
   async snapshot(opts: ConnectionSnapshotOpts): Promise<StoreConnectionSnapshot> {
     const [row, catalogReady] = await Promise.all([
-      this.readConnectionRow(opts.organizationId),
-      this.catalogReady(opts.organizationId),
+      this.readConnectionRow(opts.scope),
+      this.catalogReady(opts.scope),
     ]);
 
     if (!row) {
@@ -58,9 +59,9 @@ export class StoreConnectionDomain {
   }
 
   async connect(opts: ConnectionConnectOpts): Promise<ConnectResult> {
-    const current = await this.snapshot({ organizationId: opts.organizationId });
+    const current = await this.snapshot({ scope: opts.scope });
 
-    if (current.status === "importing") {
+    if (current.status === "syncing") {
       return { snapshot: current, outcome: "already_syncing" };
     }
 
@@ -72,39 +73,40 @@ export class StoreConnectionDomain {
       return { snapshot: current, outcome: "already_connected" };
     }
 
-    await this.markImporting(opts.organizationId, opts.platform);
-    const snapshot = await this.snapshot({ organizationId: opts.organizationId });
+    await this.markSyncing(opts.scope, opts.platform);
+    const snapshot = await this.snapshot({ scope: opts.scope });
     return { snapshot, outcome: "started" };
   }
 
-  private async readConnectionRow(organizationId: string) {
+  private async readConnectionRow(scope: StoreScope) {
     const { data, error } = await this.supabase
       .from("store_connections")
       .select("platform, status, connected_at")
-      .eq("organization_id", organizationId)
+      .eq("id", scope.storeId)
       .maybeSingle();
     if (error) throw new ConnectionError(`store_connections read failed: ${error.message}`);
     return data;
   }
 
-  private async catalogReady(organizationId: string): Promise<boolean> {
+  private async catalogReady(scope: StoreScope): Promise<boolean> {
     const { count, error } = await this.supabase
       .from("products")
       .select("*", { count: "exact", head: true })
-      .eq("organization_id", organizationId);
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId);
     if (error) throw new ConnectionError(`products count failed: ${error.message}`);
     return (count ?? 0) > 0;
   }
 
-  private async markImporting(organizationId: string, platform: StorePlatform): Promise<void> {
+  private async markSyncing(scope: StoreScope, platform: StorePlatform): Promise<void> {
     const { error } = await this.supabase
       .from("store_connections")
       .update({
         platform,
-        status: "importing",
+        status: "syncing",
         updated_at: new Date().toISOString(),
       })
-      .eq("organization_id", organizationId);
+      .eq("id", scope.storeId);
     if (error) throw new ConnectionError(`store_connections update failed: ${error.message}`);
   }
 }

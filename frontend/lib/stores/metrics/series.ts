@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import type { MonthlyPoint, SeriesOpts } from "./monthly-point";
 
@@ -30,7 +31,7 @@ export async function getMonthlySeries(
   const pageSize = 1000;
   const fetchPage = async (from: number): Promise<SeriesRow[]> => {
     const args: Database["public"]["Functions"]["product_monthly_series"]["Args"] = {
-      p_organization_id: opts.organizationId,
+      p_store_id: opts.scope.storeId,
       p_months: months,
     };
     const { data, error } = await supabase.rpc("product_monthly_series", args).range(from, from + pageSize - 1);
@@ -57,11 +58,11 @@ export async function getMonthlySeries(
 
 export async function getProductSeries(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
   productId: string,
   months?: number,
 ): Promise<MonthlyPoint[]> {
   return (
-    (await getMonthlySeries(supabase, { organizationId, productId, months })).get(productId) ?? []
+    (await getMonthlySeries(supabase, { scope, productId, months })).get(productId) ?? []
   );
 }

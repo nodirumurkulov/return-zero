@@ -1,3 +1,5 @@
+export type { StoreScope } from "@/lib/tenancy/types";
+
 export type {
   CatalogGetOpts,
   CatalogHealthOpts,
@@ -75,7 +77,7 @@ export type { SearchListOpts, SearchTarget } from "./search";
 
 export type { StoreConnection, StorePlatform } from "./import/types";
 export {
-  importImportingResponseSchema,
+  importSyncingResponseSchema,
   importPartialResponseSchema,
   importResponseSchema,
   importResultSchema,

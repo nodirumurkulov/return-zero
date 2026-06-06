@@ -1,6 +1,7 @@
 import type { AgentFinding, Incident, ProductMetric } from "@/lib/stores";
 
 const DEMO_ORG = "00000000-0000-0000-0000-000000000100";
+const DEMO_STORE_ID = "00000000-0000-0000-0000-000000000101";
 const HOUR = 3600000;
 
 function hoursAgo(h: number) {
@@ -11,6 +12,7 @@ export const MARKETING_HERO_INCIDENTS: Incident[] = [
   {
     id: "inc-demo-court-trainer",
     organization_id: DEMO_ORG,
+    store_id: DEMO_STORE_ID,
     title: "Court Trainer Return Spike",
     status: "investigating",
     severity: "critical",
@@ -34,6 +36,7 @@ export const MARKETING_HERO_INCIDENTS: Incident[] = [
   {
     id: "inc-demo-roas",
     organization_id: DEMO_ORG,
+    store_id: DEMO_STORE_ID,
     title: "ROAS dip — UK cold campaigns",
     status: "detected",
     severity: "high",
@@ -57,6 +60,7 @@ export const MARKETING_HERO_INCIDENTS: Incident[] = [
   {
     id: "inc-demo-stockout",
     organization_id: DEMO_ORG,
+    store_id: DEMO_STORE_ID,
     title: "UK12 stockout loop",
     status: "monitoring",
     severity: "medium",

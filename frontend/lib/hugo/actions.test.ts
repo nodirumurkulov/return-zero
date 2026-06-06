@@ -15,6 +15,7 @@ function incident(overrides: Partial<Incident> = {}): Incident {
   return {
     id: "inc-1",
     organization_id: "org-1",
+    store_id: "store-1",
     title: "Return rate spike",
     status: "fix_proposed",
     severity: "high",

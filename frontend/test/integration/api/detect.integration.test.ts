@@ -11,7 +11,12 @@ const { detectMock, notifyNewMock } = vi.hoisted(() => ({
 const adminSupabase = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
-      eq: vi.fn(() => Promise.resolve({ data: [{ id: "prod-1" }], error: null })),
+      eq: vi.fn(() => {
+        const result = Promise.resolve({ data: [{ id: "prod-1" }], error: null });
+        return Object.assign(result, {
+          eq: vi.fn(() => Promise.resolve({ data: [{ id: "prod-1" }], error: null })),
+        });
+      }),
     })),
   })),
 };
@@ -41,9 +46,10 @@ vi.mock("@/lib/supabase/server", () => ({
   ),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
-  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
+vi.mock("@/lib/tenancy/server", () => ({
+  listAllStoreScopes: vi.fn(() =>
+    Promise.resolve([{ organizationId: "org-1", storeId: "store-1" }]),
+  ),
 }));
 
 import { POST } from "@/app/api/stores/incidents/detect/route";

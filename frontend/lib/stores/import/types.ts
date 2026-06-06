@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-
 import type { Database, Enums, Tables } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import type { ExternalIdTable } from "./loaders/csv";
 
@@ -23,7 +23,7 @@ export interface ImportRunResult {
 export type ImportStartResult =
   | { action: "skipped" }
   | { action: "started" }
-  | { action: "already_importing" };
+  | { action: "already_syncing" };
 
 export interface ImportLoadOpts {
   replace?: boolean;
@@ -33,25 +33,25 @@ export interface ImportLoader {
   readonly platform: StorePlatform;
   load(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     source: unknown,
     opts?: ImportLoadOpts,
   ): Promise<ImportTableResult[]>;
 }
 
 export type ImportRunOpts = {
-  organizationId: string;
+  scope: StoreScope;
   platform: StorePlatform;
   source?: unknown;
   replace?: boolean;
 };
 
 export type ImportStatusOpts = {
-  organizationId: string;
+  scope: StoreScope;
 };
 
 export type ImportExternalIdMapOpts = {
-  organizationId: string;
+  scope: StoreScope;
   table: ExternalIdTable;
 };
 
@@ -77,9 +77,9 @@ export const importPartialResponseSchema = z
   })
   .strict();
 
-export const importImportingResponseSchema = z
+export const importSyncingResponseSchema = z
   .object({
-    importing: z.literal(true),
+    syncing: z.literal(true),
   })
   .strict();
 
@@ -92,7 +92,7 @@ export const importSkippedResponseSchema = z
 export const importResponseSchema = z.union([
   importSuccessResponseSchema,
   importPartialResponseSchema,
-  importImportingResponseSchema,
+  importSyncingResponseSchema,
   importSkippedResponseSchema,
   z.object({ error: z.string() }),
 ]);

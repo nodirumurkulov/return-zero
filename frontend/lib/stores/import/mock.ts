@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 import { type ExternalIdTable, csvLoader } from "./loaders/csv";
 import { IdMapCache } from "./mock/id-maps";
@@ -18,75 +19,75 @@ export class MockImportLoader implements ImportLoader {
 
   async load(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     source: unknown,
     opts?: ImportLoadOpts,
   ): Promise<ImportTableResult[]> {
     const files = source as MockStoreFiles;
     if (opts?.replace) {
-      const { error } = await supabase.rpc("reset_organization_data", {
-        p_organization_id: organizationId,
+      const { error } = await supabase.rpc("reset_store_data", {
+        p_store_id: scope.storeId,
       });
-      if (error) throw new Error(`reset_organization_data: ${error.message}`);
+      if (error) throw new Error(`reset_store_data: ${error.message}`);
     }
 
     const { results: catalogResults, maps } = await this.loadCatalogPhase(
       supabase,
-      organizationId,
+      scope,
       files,
     );
-    const commerceResults = await this.loadCommercePhase(supabase, organizationId, files, maps);
+    const commerceResults = await this.loadCommercePhase(supabase, scope, files, maps);
     return [...catalogResults, ...commerceResults];
   }
 
   async loadCatalogPhase(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     source: unknown,
     existingMaps?: IdMapCache,
   ): Promise<{ results: ImportTableResult[]; maps: IdMapCache }> {
     const files = source as MockStoreFiles;
     const maps = existingMaps ?? new IdMapCache();
-    const results = await this.loadCatalogTables(supabase, organizationId, files, maps);
+    const results = await this.loadCatalogTables(supabase, scope, files, maps);
     return { results, maps };
   }
 
   async loadCommercePhase(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     source: unknown,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
     const files = source as MockStoreFiles;
-    const parentResults = await this.loadCommerceParents(supabase, organizationId, files, maps);
-    const childResults = await this.loadCommerceChildren(supabase, organizationId, files, maps);
+    const parentResults = await this.loadCommerceParents(supabase, scope, files, maps);
+    const childResults = await this.loadCommerceChildren(supabase, scope, files, maps);
     return [...parentResults, ...childResults];
   }
 
   fetchExternalIdMap(
     supabase: SupabaseClient<Database>,
     table: ExternalIdTable,
-    organizationId: string,
+    scope: StoreScope,
   ): Promise<Map<string, string>> {
-    return this.loader.fetchExternalIdMap(supabase, table, organizationId);
+    return this.loader.fetchExternalIdMap(supabase, table, scope);
   }
 
   private async refreshIdMap(
     supabase: SupabaseClient<Database>,
     table: keyof IdMaps,
-    organizationId: string,
+    scope: StoreScope,
     maps: IdMapCache,
   ): Promise<void> {
     if (table === "collections" || table === "collectionsByTitle") {
-      await maps.refreshCollections(supabase, organizationId);
+      await maps.refreshCollections(supabase, scope);
       return;
     }
-    maps[table] = await this.loader.fetchExternalIdMap(supabase, table, organizationId);
+    maps[table] = await this.loader.fetchExternalIdMap(supabase, table, scope);
   }
 
   private async loadCatalogTables(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -100,11 +101,11 @@ export class MockImportLoader implements ImportLoader {
         "collections",
         this.rows.mapCollectionRows(
           this.loader.parseRows(schema.mockStoreCollectionRowSchema, collections),
-          organizationId,
+          scope,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "collections", organizationId, maps);
+      await this.refreshIdMap(supabase, "collections", scope, maps);
       results.push(result);
     }
 
@@ -115,11 +116,11 @@ export class MockImportLoader implements ImportLoader {
         "suppliers",
         this.rows.mapSupplierRows(
           this.loader.parseRows(schema.mockStoreSupplierRowSchema, suppliers),
-          organizationId,
+          scope,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "suppliers", organizationId, maps);
+      await this.refreshIdMap(supabase, "suppliers", scope, maps);
       results.push(result);
     }
 
@@ -130,12 +131,12 @@ export class MockImportLoader implements ImportLoader {
         "products",
         this.rows.mapProductRows(
           this.loader.parseRows(schema.mockStoreProductRowSchema, products),
-          organizationId,
+          scope,
           maps,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "products", organizationId, maps);
+      await this.refreshIdMap(supabase, "products", scope, maps);
       results.push(result);
     }
 
@@ -146,12 +147,12 @@ export class MockImportLoader implements ImportLoader {
         "variants",
         this.rows.mapVariantRows(
           this.loader.parseRows(schema.mockStoreVariantRowSchema, variants),
-          organizationId,
+          scope,
           maps,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "variants", organizationId, maps);
+      await this.refreshIdMap(supabase, "variants", scope, maps);
       results.push(result);
     }
 
@@ -163,7 +164,7 @@ export class MockImportLoader implements ImportLoader {
           "product_collections",
           this.rows.mapProductCollectionRows(
             this.loader.parseRows(schema.mockStoreProductCollectionRowSchema, productCollections),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,product_id,collection_id",
@@ -176,7 +177,7 @@ export class MockImportLoader implements ImportLoader {
 
   private async loadCommerceParents(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -190,11 +191,11 @@ export class MockImportLoader implements ImportLoader {
         "customers",
         this.rows.mapCustomerRows(
           this.loader.parseRows(schema.mockStoreCustomerRowSchema, customers),
-          organizationId,
+          scope,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "customers", organizationId, maps);
+      await this.refreshIdMap(supabase, "customers", scope, maps);
       results.push(result);
     }
 
@@ -206,7 +207,7 @@ export class MockImportLoader implements ImportLoader {
           "discount_codes",
           this.rows.mapDiscountCodeRows(
             this.loader.parseRows(schema.mockStoreDiscountCodeRowSchema, discountCodes),
-            organizationId,
+            scope,
           ),
           "organization_id,external_id",
         ),
@@ -220,11 +221,11 @@ export class MockImportLoader implements ImportLoader {
         "email_campaigns",
         this.rows.mapEmailCampaignRows(
           this.loader.parseRows(schema.mockStoreEmailCampaignRowSchema, emailCampaigns),
-          organizationId,
+          scope,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "email_campaigns", organizationId, maps);
+      await this.refreshIdMap(supabase, "email_campaigns", scope, maps);
       results.push(result);
     }
 
@@ -235,11 +236,11 @@ export class MockImportLoader implements ImportLoader {
         "purchase_orders",
         this.rows.mapPurchaseOrderRows(
           this.loader.parseRows(schema.mockStorePurchaseOrderRowSchema, purchaseOrders),
-          organizationId,
+          scope,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "purchase_orders", organizationId, maps);
+      await this.refreshIdMap(supabase, "purchase_orders", scope, maps);
       results.push(result);
     }
 
@@ -251,7 +252,7 @@ export class MockImportLoader implements ImportLoader {
           "bank_transactions",
           this.rows.mapBankTransactionRows(
             this.loader.parseRows(schema.mockStoreBankTransactionRowSchema, bankTransactions),
-            organizationId,
+            scope,
           ),
           "organization_id,external_id",
         ),
@@ -263,7 +264,7 @@ export class MockImportLoader implements ImportLoader {
 
   private async loadCommerceChildren(
     supabase: SupabaseClient<Database>,
-    organizationId: string,
+    scope: StoreScope,
     files: MockStoreFiles,
     maps: IdMapCache,
   ): Promise<ImportTableResult[]> {
@@ -277,12 +278,12 @@ export class MockImportLoader implements ImportLoader {
         "orders",
         this.rows.mapOrderRows(
           this.loader.parseRows(schema.mockStoreOrderRowSchema, orders),
-          organizationId,
+          scope,
           maps,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "orders", organizationId, maps);
+      await this.refreshIdMap(supabase, "orders", scope, maps);
       results.push(result);
     }
 
@@ -294,7 +295,7 @@ export class MockImportLoader implements ImportLoader {
           "line_items",
           this.rows.mapLineItemRows(
             this.loader.parseRows(schema.mockStoreLineItemRowSchema, lineItems),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -310,7 +311,7 @@ export class MockImportLoader implements ImportLoader {
           "refunds",
           this.rows.mapRefundRows(
             this.loader.parseRows(schema.mockStoreRefundRowSchema, refunds),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -326,7 +327,7 @@ export class MockImportLoader implements ImportLoader {
           "inventory_movements",
           this.rows.mapInventoryMovementRows(
             this.loader.parseRows(schema.mockStoreInventoryMovementRowSchema, inventoryMovements),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -342,7 +343,7 @@ export class MockImportLoader implements ImportLoader {
           "addresses",
           this.rows.mapAddressRows(
             this.loader.parseRows(schema.mockStoreAddressRowSchema, addresses),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -358,7 +359,7 @@ export class MockImportLoader implements ImportLoader {
           "email_events",
           this.rows.mapEmailEventRows(
             this.loader.parseRows(schema.mockStoreEmailEventRowSchema, emailEvents),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -373,12 +374,12 @@ export class MockImportLoader implements ImportLoader {
         "support_tickets",
         this.rows.mapSupportTicketRows(
           this.loader.parseRows(schema.mockStoreSupportTicketRowSchema, supportTickets),
-          organizationId,
+          scope,
           maps,
         ),
         "organization_id,external_id",
       );
-      await this.refreshIdMap(supabase, "support_tickets", organizationId, maps);
+      await this.refreshIdMap(supabase, "support_tickets", scope, maps);
       results.push(result);
     }
 
@@ -390,7 +391,7 @@ export class MockImportLoader implements ImportLoader {
           "support_messages",
           this.rows.mapSupportMessageRows(
             this.loader.parseJsonRows(schema.mockStoreSupportMessageRowSchema, supportMessages),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -406,7 +407,7 @@ export class MockImportLoader implements ImportLoader {
           "po_line_items",
           this.rows.mapPoLineItemRows(
             this.loader.parseRows(schema.mockStorePoLineItemRowSchema, poLineItems),
-            organizationId,
+            scope,
             maps,
           ),
           "organization_id,external_id",
@@ -422,7 +423,7 @@ export class MockImportLoader implements ImportLoader {
           "meta_ads_daily",
           this.rows.mapMetaAdsDailyRows(
             this.loader.parseRows(schema.mockStoreMetaAdsDailyRowSchema, metaAds),
-            organizationId,
+            scope,
           ),
           "organization_id,date,campaign_name,ad_name,placement",
         ),
@@ -437,7 +438,7 @@ export class MockImportLoader implements ImportLoader {
           "google_ads_daily",
           this.rows.mapGoogleAdsDailyRows(
             this.loader.parseRows(schema.mockStoreGoogleAdsDailyRowSchema, googleAds),
-            organizationId,
+            scope,
           ),
           "organization_id,date,campaign_name,ad_group",
         ),

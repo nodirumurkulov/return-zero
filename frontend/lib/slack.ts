@@ -7,8 +7,8 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { resolveOrganizationSlackDeliveryChannel } from "@/lib/organizations/slack";
 import type { Database } from "@/lib/supabase/database.types";
+import { resolveOrganizationSlackDeliveryChannel } from "@/lib/tenancy/server";
 
 export type SlackIncidentPayload = {
   organization_id: string;

@@ -4,6 +4,7 @@ import type { SlackThreadMessage } from "@/lib/slack";
 import type { Incident, IncidentDetail } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 // Reorder horizon defaults from business_settings seed.
 const LEAD_DAYS_DEFAULT = 71;
@@ -44,9 +45,9 @@ export function formatIncidentLine(incident: Incident): string {
 export async function resolveIncident(
   supabase: SupabaseClient<Database>,
   reference: string | null | undefined,
-  organizationId: string,
+  scope: StoreScope,
 ): Promise<{ match: Incident | null; candidates: Incident[] }> {
-  const incidents = await getStore(supabase).incidents.list({ organizationId });
+  const incidents = await getStore(supabase).incidents.list({ scope });
   const ref = (reference ?? "").trim().toLowerCase();
 
   if (!ref) {
@@ -79,9 +80,9 @@ export async function resolveIncident(
 /** Compact, model-friendly summary of currently open incidents. */
 export async function buildOpenIncidentsContext(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
 ): Promise<string> {
-  const incidents = await getStore(supabase).incidents.list({ organizationId });
+  const incidents = await getStore(supabase).incidents.list({ scope });
   const open = incidents.filter(isOpenIncident);
   const resolvedCount = incidents.length - open.length;
 
@@ -130,10 +131,10 @@ export function buildIncidentDetailContext(detail: IncidentDetail): string {
 /** Summary of catalog KPI health, highlighting products that breach thresholds. */
 export async function buildCatalogContext(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
 ): Promise<string> {
   const store = getStore(supabase);
-  const { products } = await store.catalog.list({ organizationId });
+  const { products } = await store.catalog.list({ scope });
 
   const breaches = products.filter((p) => p.health !== "healthy");
 
@@ -263,15 +264,22 @@ function reorderUrgent(
  */
 export async function buildInventoryContext(
   supabase: SupabaseClient<Database>,
-  organizationId: string,
+  scope: StoreScope,
 ): Promise<string> {
   const [{ data: outflowRows }, { data: productRows }, { data: settingsRows }] = await Promise.all([
     supabase.rpc("product_daily_outflow", {
-      p_organization_id: organizationId,
+      p_store_id: scope.storeId,
       p_days: OUTFLOW_WINDOW_DAYS,
     }),
-    supabase.from("products").select("id, title").eq("organization_id", organizationId),
-    supabase.from("business_settings").select("key, value").eq("organization_id", organizationId),
+    supabase
+      .from("products")
+      .select("id, title")
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId),
+    supabase
+      .from("business_settings")
+      .select("key, value")
+      .eq("organization_id", scope.organizationId),
   ]);
 
   const rows = outflowRows ?? [];

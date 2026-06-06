@@ -3,9 +3,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { investigateBodySchema } from "@/lib/agents";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { investigateIncident } from "@/lib/hugo/investigate-incident";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +30,15 @@ export async function POST(req: NextRequest) {
   const { incident_id, product_id } = parsed.data;
 
   try {
-    const org = await tryRequireOrganizationId(supabase);
-    if (!org.ok) {
-      return NextResponse.json({ error: org.error }, { status: 403 });
+    const scopeResult = await tryGetStoreScope(supabase);
+    if (!scopeResult.ok) {
+      return NextResponse.json({ error: scopeResult.error }, { status: 403 });
     }
 
+    const scope = scopeResult.scope;
     const incident = await getStore(supabase).incidents.get({
       id: incident_id,
-      organizationId: org.organizationId,
+      scope,
     });
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });

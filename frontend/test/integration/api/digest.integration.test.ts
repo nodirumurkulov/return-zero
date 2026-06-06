@@ -38,9 +38,10 @@ vi.mock("@/lib/supabase/server", () => ({
   ),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
-  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
+vi.mock("@/lib/tenancy/server", () => ({
+  listAllStoreScopes: vi.fn(() =>
+    Promise.resolve([{ organizationId: "org-1", storeId: "store-1" }]),
+  ),
 }));
 
 vi.mock("@/lib/slack", () => ({

@@ -6,9 +6,9 @@ import LinkedIncidents from "@/components/catalog/LinkedIncidents";
 import ThresholdEditor from "@/components/catalog/ThresholdEditor";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
-import { requireOrganizationId } from "@/lib/organizations/queries";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { getStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +29,11 @@ type PageProps = {
 export default async function ProductDetailPage(props: PageProps) {
   const params = await props.params;
   const supabase = await createClient();
-  const organizationId = await requireOrganizationId(supabase);
+  const scope = await getStoreScope();
   const store = getStore(supabase);
   const [detail, linkedIncidents] = await Promise.all([
-    store.catalog.get({ organizationId, productId: params.productId }),
-    store.incidents.list({ organizationId, productId: params.productId }),
+    store.catalog.get({ scope, productId: params.productId }),
+    store.incidents.list({ scope, productId: params.productId }),
   ]);
 
   if (!detail) notFound();

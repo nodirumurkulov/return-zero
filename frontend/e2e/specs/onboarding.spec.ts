@@ -16,7 +16,7 @@ test.describe("Onboarding connect", () => {
       await route.fulfill({
         status: 202,
         contentType: "application/json",
-        body: JSON.stringify({ importing: true }),
+        body: JSON.stringify({ syncing: true }),
       });
     });
 
