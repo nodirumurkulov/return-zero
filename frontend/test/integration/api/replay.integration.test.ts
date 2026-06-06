@@ -141,11 +141,13 @@ describe("POST /api/stores/orders/advance", () => {
 
     const body = (await res.json()) as { recovered: number; recovery_milestones: number };
     expect(res.status).toBe(200);
-    expect(notifyRecoveryMock).toHaveBeenCalledWith({
-      scope: { organizationId: "org-1", storeId: "store-1" },
-      days: 7,
-      appUrl: expect.stringMatching(/^http:\/\/(localhost|127\.0\.0\.1):3000$/),
-    });
+    expect(notifyRecoveryMock).toHaveBeenCalledTimes(1);
+    const recoveryCall = notifyRecoveryMock.mock.calls[0]?.[0] as
+      | { appUrl: string; days: number; scope: { organizationId: string; storeId: string } }
+      | undefined;
+    expect(recoveryCall?.scope).toEqual({ organizationId: "org-1", storeId: "store-1" });
+    expect(recoveryCall?.days).toBe(7);
+    expect(recoveryCall?.appUrl).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):3000$/);
     expect(body.recovered).toBe(1);
     expect(body.recovery_milestones).toBe(1);
   });

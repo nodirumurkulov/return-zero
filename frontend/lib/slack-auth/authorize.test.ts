@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { Database } from "@/lib/supabase/database.types";
+import type { TypedSupabaseClient } from "@/lib/supabase/db";
+
 import { authorizeSlackAction } from "./authorize";
 
 type QueryBuilder = {
@@ -9,11 +12,14 @@ type QueryBuilder = {
 };
 
 type QueryResult = {
-  data: unknown;
+  data: {
+    user_id: string;
+    role: Database["public"]["Enums"]["organization_role"];
+  } | null;
   error: { message: string } | null;
 };
 
-function mockSupabase(result: QueryResult) {
+function mockSupabase(result: QueryResult): TypedSupabaseClient {
   const builder: QueryBuilder = {
     select: () => builder,
     eq: () => builder,
@@ -22,7 +28,7 @@ function mockSupabase(result: QueryResult) {
 
   return {
     from: () => builder,
-  };
+  } as unknown as TypedSupabaseClient;
 }
 
 describe("authorizeSlackAction", () => {
