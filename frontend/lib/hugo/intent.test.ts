@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { matchDeterministicIntent } from "./intent-fallback";
 import { classifyHugoIntent } from "./intent";
 import { hugoIntentSchema } from "./schemas";
 
@@ -14,6 +15,17 @@ beforeEach(() => {
 });
 
 describe("classifyHugoIntent", () => {
+  it("uses deterministic routing for obvious commands without calling the LLM", async () => {
+    const result = await classifyHugoIntent("investigate return spike");
+
+    expect(result).toEqual({
+      intent: "investigate",
+      incident_reference: "return spike",
+      duration_days: null,
+    });
+    expect(generateTextMock).not.toHaveBeenCalled();
+  });
+
   it("uses the LLM classification when available", async () => {
     generateTextMock.mockResolvedValue({
       output: { intent: "approve", incident_reference: "ROAS", duration_days: null },
@@ -23,11 +35,13 @@ describe("classifyHugoIntent", () => {
     expect(result.incident_reference).toBe("ROAS");
   });
 
-  it("throws when the LLM returns no structured output", async () => {
+  it("falls back to deterministic data query routing when the LLM returns no structured output", async () => {
     generateTextMock.mockResolvedValue({ output: undefined });
-    await expect(classifyHugoIntent("investigate the return spike")).rejects.toThrow(
-      /missing structured output/,
-    );
+    await expect(classifyHugoIntent("what is the recovery status?")).resolves.toEqual({
+      intent: "data_query",
+      incident_reference: null,
+      duration_days: null,
+    });
   });
 
   it("returns chat for empty prompts without calling the LLM", async () => {
@@ -61,5 +75,24 @@ describe("classifyHugoIntent", () => {
         duration_days: null,
       }).success,
     ).toBe(true);
+  });
+});
+
+describe("matchDeterministicIntent", () => {
+  it("matches obvious action commands", () => {
+    expect(matchDeterministicIntent("approve ROAS drop")).toEqual({
+      intent: "approve",
+      incident_reference: "ROAS drop",
+      duration_days: null,
+    });
+    expect(matchDeterministicIntent("snooze return spike for 3 days")).toEqual({
+      intent: "snooze",
+      incident_reference: "return spike for 3 days",
+      duration_days: 3,
+    });
+  });
+
+  it("returns null for prompts that need the LLM", () => {
+    expect(matchDeterministicIntent("hello there")).toBeNull();
   });
 });

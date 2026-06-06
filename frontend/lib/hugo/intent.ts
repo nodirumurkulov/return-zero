@@ -2,6 +2,7 @@ import "server-only";
 
 import { generateText, Output } from "ai";
 import { getModel } from "@/lib/ai/model";
+import { matchDeterministicIntent } from "./intent-fallback";
 import { hugoIntentSchema, type HugoIntent } from "./schemas";
 
 const CLASSIFIER_PROMPT =
@@ -26,18 +27,25 @@ export async function classifyHugoIntent(prompt: string): Promise<HugoIntent> {
   const clean = prompt.trim();
   if (!clean) return { intent: "chat", incident_reference: null, duration_days: null };
 
-  const { output } = await generateText({
-    model: getModel(),
-    output: Output.object({ schema: hugoIntentSchema }),
-    messages: [
-      { role: "system", content: CLASSIFIER_PROMPT },
-      { role: "user", content: clean },
-    ],
-  });
-
-  if (!output) {
-    throw new Error("Hugo intent classifier: missing structured output");
+  const deterministic = matchDeterministicIntent(clean);
+  if (deterministic && deterministic.intent !== "data_query") {
+    return deterministic;
   }
 
-  return output;
+  try {
+    const { output } = await generateText({
+      model: getModel(),
+      output: Output.object({ schema: hugoIntentSchema }),
+      messages: [
+        { role: "system", content: CLASSIFIER_PROMPT },
+        { role: "user", content: clean },
+      ],
+    });
+
+    if (output) return output;
+  } catch {
+    // Fall through to deterministic fallback below.
+  }
+
+  return deterministic ?? { intent: "chat", incident_reference: null, duration_days: null };
 }
