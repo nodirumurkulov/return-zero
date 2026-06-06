@@ -31,9 +31,10 @@ vi.mock("@/lib/supabase/server", () => ({
   ),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  listAllOrganizationIds: vi.fn(() => Promise.resolve(["org-1"])),
-  requireOrganizationId: vi.fn(() => Promise.resolve("org-1")),
+vi.mock("@/lib/tenancy/server", () => ({
+  listAllStoreScopes: vi.fn(() =>
+    Promise.resolve([{ organizationId: "org-1", storeId: "store-1" }]),
+  ),
 }));
 
 import { POST } from "@/app/api/stores/orders/advance/route";
@@ -77,7 +78,10 @@ describe("POST /api/stores/orders/advance", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(advanceMock).toHaveBeenCalledWith({ organizationId: "org-1", days: 3 });
+    expect(advanceMock).toHaveBeenCalledWith({
+      scope: { organizationId: "org-1", storeId: "store-1" },
+      days: 3,
+    });
     expect(notifyNewMock).not.toHaveBeenCalled();
   });
 

@@ -75,7 +75,7 @@ Package manager: **Bun** in `frontend/` (app + scripts).
 
 ## Code style
 
-- Prefer **`const`**. No **`let`** unless ESLint cannot be satisfied (rare). No **`var`**. Use `tryRequireOrganizationId()` or early returns instead of `try/catch` + `let`.
+- Prefer **`const`**. No **`let`** unless ESLint cannot be satisfied (rare). No **`var`**. Use `tryGetStoreScope()` or early returns instead of `try/catch` + `let`.
 - **No Supabase escape hatches.** Use `supabase.from("table")` and `supabase.rpc(...)` with `SupabaseClient<Database>` — never wrappers that cast `from()` to `Record<string, unknown>`, loose table-name strings, or “row value” coercers. If types are stale, run `bun run db:types` and fix `database.types.ts` in the same PR.
 - No **IIFEs** for variable init (sync or async). Use a named function or inline `safeParse`. ESLint enforces via `no-restricted-syntax`.
 - Prefer pure functions, `reduce`, and early returns over mutable index loops.

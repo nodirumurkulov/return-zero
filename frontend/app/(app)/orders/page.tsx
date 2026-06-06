@@ -1,7 +1,7 @@
 import { OrdersFeed } from "@/components/orders/OrdersFeed";
-import { requireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { getStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,12 +10,12 @@ export const dynamic = "force-dynamic";
 // detection runs as orders arrive.
 export default async function OrdersPage() {
   const supabase = await createClient();
-  const organizationId = await requireOrganizationId(supabase);
+  const scope = await getStoreScope();
   const store = getStore(supabase);
-  const bounds = await store.orders.bounds({ organizationId });
+  const bounds = await store.orders.bounds({ scope });
   const start = bounds.streamStart;
   const initialOrders = await store.orders.list({
-    organizationId,
+    scope,
     after: `${start}T00:00:00Z`,
     limit: 30,
   });

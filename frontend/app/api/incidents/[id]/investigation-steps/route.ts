@@ -3,9 +3,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { loadLatestInvestigationSteps } from "@/lib/agents/investigation-steps";
 import { investigationStepsResponseSchema } from "@/lib/agents/schemas";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { getStore } from "@/lib/stores/server";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,22 +19,23 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ id: stri
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const org = await tryRequireOrganizationId(supabase);
-  if (!org.ok) {
-    return NextResponse.json({ error: org.error }, { status: 403 });
+  const scopeResult = await tryGetStoreScope(supabase);
+  if (!scopeResult.ok) {
+    return NextResponse.json({ error: scopeResult.error }, { status: 403 });
   }
 
   try {
+    const scope = scopeResult.scope;
     const incident = await getStore(supabase).incidents.get({
       id: params.id,
-      organizationId: org.organizationId,
+      scope,
     });
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
     const snapshot = await loadLatestInvestigationSteps(supabase, {
-      organizationId: org.organizationId,
+      organizationId: scope.organizationId,
       incidentId: params.id,
       incidentStatus: incident.status,
     });

@@ -24,10 +24,12 @@ export class Incidents {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
   async list(opts: IncidentsListOpts): Promise<Incident[]> {
+    const { scope } = opts;
     const baseQuery = this.supabase
       .from("incidents")
       .select("*")
-      .eq("organization_id", opts.organizationId);
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId);
     const filteredQuery = opts.productId
       ? baseQuery.eq("product_id", opts.productId)
       : baseQuery;
@@ -39,11 +41,13 @@ export class Incidents {
 
   /** Single `incidents` row — kanban cards, Slack, notifications. */
   async get(opts: IncidentsGetOpts): Promise<Incident | null> {
+    const { id, scope } = opts;
     const { data, error } = await this.supabase
       .from("incidents")
       .select("*")
-      .eq("id", opts.id)
-      .eq("organization_id", opts.organizationId)
+      .eq("id", id)
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
       .maybeSingle();
 
     if (error) throw new IncidentsError(`incidents read failed: ${error.message}`);
@@ -52,7 +56,8 @@ export class Incidents {
 
   /** Incident row plus findings, actions, and timeline. */
   async getDetail(opts: IncidentsGetOpts): Promise<IncidentDetail | null> {
-    const { id, organizationId } = opts;
+    const { id, scope } = opts;
+    const { organizationId } = scope;
 
     const [incidentRes, findingsRes, actionsRes, timelineRes] = await Promise.all([
       this.supabase
@@ -60,6 +65,7 @@ export class Incidents {
         .select("*")
         .eq("id", id)
         .eq("organization_id", organizationId)
+        .eq("store_id", scope.storeId)
         .single(),
       this.supabase
         .from("agent_findings")
@@ -101,11 +107,13 @@ export class Incidents {
   }
 
   async update(opts: IncidentsUpdateOpts): Promise<Incident> {
+    const { id, scope, patch } = opts;
     const { data, error } = await this.supabase
       .from("incidents")
-      .update(opts.patch)
-      .eq("id", opts.id)
-      .eq("organization_id", opts.organizationId)
+      .update(patch)
+      .eq("id", id)
+      .eq("organization_id", scope.organizationId)
+      .eq("store_id", scope.storeId)
       .select()
       .single();
 
@@ -115,11 +123,12 @@ export class Incidents {
   }
 
   async detect(opts: DetectOpts): Promise<DetectionResult> {
-    const { organizationId, productId } = opts;
+    const { scope, productId } = opts;
+    const { organizationId, storeId } = scope;
 
     const metrics =
       (await computeMetrics(this.supabase, {
-        organizationId,
+        scope,
         productId,
         asOf: opts.asOf,
       }))[productId] ?? [];
@@ -134,6 +143,7 @@ export class Incidents {
       .from("incidents")
       .select("status")
       .eq("organization_id", organizationId)
+      .eq("store_id", storeId)
       .eq("product_id", productId);
     if (incErr) throw new IncidentsError(`load incidents: ${incErr.message}`);
 
@@ -155,6 +165,7 @@ export class Incidents {
       .from("products")
       .select("title")
       .eq("organization_id", organizationId)
+      .eq("store_id", storeId)
       .eq("id", productId)
       .maybeSingle();
     if (prodErr) throw new IncidentsError(`load product: ${prodErr.message}`);
@@ -175,6 +186,7 @@ export class Incidents {
       .from("incidents")
       .insert({
         organization_id: organizationId,
+        store_id: storeId,
         title,
         status: "detected",
         severity,
@@ -248,7 +260,7 @@ export class Incidents {
       .from("incident_actions")
       .select("id")
       .eq("incident_id", opts.incidentId)
-      .eq("organization_id", opts.organizationId);
+      .eq("organization_id", opts.scope.organizationId);
 
     const queryWithStatus = opts.filter?.status
       ? baseQuery.eq("status", opts.filter.status)
@@ -354,12 +366,12 @@ export class Incidents {
     const result = await this.approve(opts);
     const incident = await this.get({
       id: opts.incidentId,
-      organizationId: opts.organizationId,
+      scope: opts.scope,
     });
     if (incident) {
       await sendIncidentNotification(
         {
-          organization_id: opts.organizationId,
+          organization_id: opts.scope.organizationId,
           title: incident.title,
           severity: incident.severity,
           status: "monitoring",

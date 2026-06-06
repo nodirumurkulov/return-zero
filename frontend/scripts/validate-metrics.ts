@@ -30,7 +30,7 @@ const check = (name: string, cond: boolean, detail: string) => {
 
 const { data: orgRow, error: orgErr } = await supabase
   .from("organizations")
-  .select("id")
+  .select("id, active_store_id")
   .order("created_at", { ascending: true })
   .limit(1)
   .maybeSingle();
@@ -40,10 +40,26 @@ if (orgErr || !orgRow?.id) {
 }
 const organizationId = orgRow.id;
 
+const { data: storeRow, error: storeErr } = orgRow.active_store_id
+  ? { data: { id: orgRow.active_store_id }, error: null }
+  : await supabase
+      .from("store_connections")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+if (storeErr || !storeRow?.id) {
+  console.error(storeErr?.message ?? "No store found — seed the database first");
+  process.exit(1);
+}
+const storeId = storeRow.id;
+
 const { data: courtTrainer, error: ctErr } = await supabase
   .from("products")
   .select("id")
   .eq("organization_id", organizationId)
+  .eq("store_id", storeId)
   .eq("external_id", "prod_00005")
   .maybeSingle();
 if (ctErr) {
@@ -57,7 +73,7 @@ async function fetchAllMonthlySeries(): Promise<MonthlySeriesRow[]> {
   const loadPage = async (from: number, acc: MonthlySeriesRow[]): Promise<MonthlySeriesRow[]> => {
     const { data, error } = await supabase
       .rpc("product_monthly_series", {
-        p_organization_id: organizationId,
+        p_store_id: storeId,
         p_months: 24,
       })
       .range(from, from + pageSize - 1);
@@ -71,7 +87,7 @@ async function fetchAllMonthlySeries(): Promise<MonthlySeriesRow[]> {
 }
 
 const { data: facts, error: fErr } = await supabase.rpc("product_source_facts", {
-  p_organization_id: organizationId,
+  p_store_id: storeId,
   p_window_days: 30,
 });
 if (fErr) {

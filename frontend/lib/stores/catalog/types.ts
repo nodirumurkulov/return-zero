@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import type { Database } from "@/lib/supabase/database.types";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 export const METRIC_KEYS = ["refund_rate", "return_rate", "ad_roas", "support_volume"] as const;
 export type MetricKey = (typeof METRIC_KEYS)[number];
@@ -52,12 +53,12 @@ export type ProductMonthlyMetric = {
 export type CatalogInclude = "thresholds" | "series" | "metrics";
 
 export type CatalogListOpts = {
-  organizationId: string;
+  scope: StoreScope;
   include?: CatalogInclude[];
 };
 
 export type CatalogGetOpts = {
-  organizationId: string;
+  scope: StoreScope;
   productId: string;
   include?: CatalogInclude[];
 };
@@ -68,7 +69,7 @@ export type CatalogHealthOpts = {
 };
 
 export type CatalogUpdateOpts = {
-  organizationId: string;
+  scope: StoreScope;
   productId: string;
   metricKey: MetricKey;
   threshold: number;

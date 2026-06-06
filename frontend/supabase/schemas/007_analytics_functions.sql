@@ -1,10 +1,10 @@
 -- =============================================================
 -- 006_analytics_functions.sql
--- Org-scoped KPI-neutral analytics RPCs.
+-- Store-scoped KPI-neutral analytics RPCs.
 -- =============================================================
 
 create or replace function public.product_source_facts(
-  p_organization_id uuid,
+  p_store_id uuid,
   p_window_days int default 30,
   p_asof date default null
 )
@@ -30,7 +30,7 @@ as $$
         max(o.created_at)
       ) as hi
       from public.orders o
-      where o.organization_id = p_organization_id
+      where o.store_id = p_store_id
     ) anchor
   ),
   sales as (
@@ -39,8 +39,8 @@ as $$
            sum(li.quantity)                                             as units
     from public.line_items li
     join public.orders o on o.id = li.order_id, win
-    where o.organization_id = p_organization_id
-      and li.organization_id = p_organization_id
+    where o.store_id = p_store_id
+      and li.store_id = p_store_id
       and o.created_at > win.lo and o.created_at <= win.hi
     group by li.product_id
   ),
@@ -51,8 +51,8 @@ as $$
     cross join lateral jsonb_array_elements_text(r.refund_line_items) as elem(variant_external_id)
     join public.variants v
       on v.external_id = elem.variant_external_id
-     and v.organization_id = p_organization_id
-    where r.organization_id = p_organization_id
+     and v.store_id = p_store_id
+    where r.store_id = p_store_id
       and r.created_at > win.lo and r.created_at <= win.hi
   ),
   refunds_agg as (
@@ -65,11 +65,11 @@ as $$
     from (
       select campaign_name, date, spend_gbp
       from public.google_ads_daily
-      where organization_id = p_organization_id
+      where store_id = p_store_id
       union all
       select campaign_name, date, spend_gbp
       from public.meta_ads_daily
-      where organization_id = p_organization_id
+      where store_id = p_store_id
     ) a, win
     where a.date > win.lo::date and a.date <= win.hi::date
     group by campaign_name
@@ -79,8 +79,8 @@ as $$
            sum(li.quantity * li.price - coalesce(li.total_discount, 0)) as rev
     from public.orders o
     join public.line_items li on li.order_id = o.id, win
-    where o.organization_id = p_organization_id
-      and li.organization_id = p_organization_id
+    where o.store_id = p_store_id
+      and li.store_id = p_store_id
       and o.created_at > win.lo and o.created_at <= win.hi
       and o.utm_campaign is not null
     group by o.utm_campaign, li.product_id
@@ -102,7 +102,7 @@ as $$
   support_agg as (
     select related_product_id as product_id, count(*)::numeric as cnt
     from public.support_tickets, win
-    where organization_id = p_organization_id
+    where store_id = p_store_id
       and created_at > win.lo and created_at <= win.hi
       and related_product_id is not null
     group by related_product_id
@@ -120,11 +120,11 @@ as $$
   left join refunds_agg r on r.product_id = p.id
   left join ads_agg a on a.product_id = p.id
   left join support_agg t on t.product_id = p.id
-  where p.organization_id = p_organization_id;
+  where p.store_id = p_store_id;
 $$;
 
 create or replace function public.product_monthly_series(
-  p_organization_id uuid,
+  p_store_id uuid,
   p_months int default 24
 )
 returns table (
@@ -144,7 +144,7 @@ as $$
   with bounds as (
     select date_trunc('month', max(created_at))::date as last_month
     from public.orders
-    where organization_id = p_organization_id
+    where store_id = p_store_id
   ),
   lo as (
     select (last_month - make_interval(months => p_months - 1))::date as from_month
@@ -161,7 +161,7 @@ as $$
     select p.id as product_id, m.month
     from public.products p
     cross join months m
-    where p.organization_id = p_organization_id
+    where p.store_id = p_store_id
   ),
   sales as (
     select li.product_id, date_trunc('month', o.created_at)::date as month,
@@ -169,8 +169,8 @@ as $$
            sum(li.quantity * li.price - coalesce(li.total_discount, 0)) as revenue
     from public.line_items li
     join public.orders o on o.id = li.order_id
-    where o.organization_id = p_organization_id
-      and li.organization_id = p_organization_id
+    where o.store_id = p_store_id
+      and li.store_id = p_store_id
       and o.created_at >= (select from_month from lo)
     group by 1, 2
   ),
@@ -182,8 +182,8 @@ as $$
     cross join lateral jsonb_array_elements_text(r.refund_line_items) as elem(variant_external_id)
     join public.variants v
       on v.external_id = elem.variant_external_id
-     and v.organization_id = p_organization_id
-    where r.organization_id = p_organization_id
+     and v.store_id = p_store_id
+    where r.store_id = p_store_id
       and r.created_at >= (select from_month from lo)
     group by 1, 2
   ),
@@ -192,11 +192,11 @@ as $$
     from (
       select campaign_name, date, spend_gbp
       from public.google_ads_daily
-      where organization_id = p_organization_id
+      where store_id = p_store_id
       union all
       select campaign_name, date, spend_gbp
       from public.meta_ads_daily
-      where organization_id = p_organization_id
+      where store_id = p_store_id
     ) a
     where a.date >= (select from_month from lo)
     group by 1, 2
@@ -208,8 +208,8 @@ as $$
            sum(li.quantity * li.price - coalesce(li.total_discount, 0)) as rev
     from public.orders o
     join public.line_items li on li.order_id = o.id
-    where o.organization_id = p_organization_id
-      and li.organization_id = p_organization_id
+    where o.store_id = p_store_id
+      and li.store_id = p_store_id
       and o.utm_campaign is not null
       and o.created_at >= (select from_month from lo)
     group by 1, 2, 3
@@ -240,7 +240,7 @@ as $$
 $$;
 
 create or replace function public.product_daily_outflow(
-  p_organization_id uuid,
+  p_store_id uuid,
   p_days int default 28,
   p_asof date default null
 )
@@ -256,7 +256,7 @@ as $$
   with asof as (
     select coalesce(
       p_asof,
-      (select max(date) from public.inventory_movements where organization_id = p_organization_id)
+      (select max(date) from public.inventory_movements where store_id = p_store_id)
     ) as d
   ),
   recent as (
@@ -265,8 +265,8 @@ as $$
              / nullif(p_days, 0) as daily_outflow
     from public.inventory_movements im
     join public.variants v on v.id = im.variant_id, asof
-    where im.organization_id = p_organization_id
-      and v.organization_id = p_organization_id
+    where im.store_id = p_store_id
+      and v.store_id = p_store_id
       and im.date > asof.d - p_days and im.date <= asof.d
     group by v.product_id
   ),
@@ -277,60 +277,17 @@ as $$
       select im2.running_balance
       from public.inventory_movements im2, asof
       where im2.variant_id = v.id
-        and im2.organization_id = p_organization_id
+        and im2.store_id = p_store_id
         and im2.date <= asof.d
       order by im2.date desc
       limit 1
     ) lb on true
-    where v.organization_id = p_organization_id
+    where v.store_id = p_store_id
     group by v.product_id
   )
   select p.id, coalesce(r.daily_outflow, 0), coalesce(b.current_balance, 0)
   from public.products p
   left join recent r on r.product_id = p.id
   left join bal b on b.product_id = p.id
-  where p.organization_id = p_organization_id;
-$$;
-
-create or replace function public.reset_organization_data(p_organization_id uuid)
-returns void
-language plpgsql
-set search_path = public
-as $$
-begin
-  delete from public.incident_actions where organization_id = p_organization_id;
-  delete from public.incident_timeline where organization_id = p_organization_id;
-  delete from public.agent_findings where organization_id = p_organization_id;
-  delete from public.incidents where organization_id = p_organization_id;
-  delete from public.product_kpi_thresholds where organization_id = p_organization_id;
-  delete from public.product_baselines where organization_id = p_organization_id;
-  delete from public.business_reports where organization_id = p_organization_id;
-
-  delete from public.support_messages where organization_id = p_organization_id;
-  delete from public.email_events where organization_id = p_organization_id;
-  delete from public.product_collections where organization_id = p_organization_id;
-  delete from public.addresses where organization_id = p_organization_id;
-  delete from public.discount_codes where organization_id = p_organization_id;
-  delete from public.suppliers where organization_id = p_organization_id;
-  delete from public.bank_transactions where organization_id = p_organization_id;
-  delete from public.email_campaigns where organization_id = p_organization_id;
-
-  update public.store_connections
-  set replay_cursor = date '2025-12-01', updated_at = now()
-  where organization_id = p_organization_id;
-
-  delete from public.line_items where organization_id = p_organization_id;
-  delete from public.refunds where organization_id = p_organization_id;
-  delete from public.po_line_items where organization_id = p_organization_id;
-  delete from public.inventory_movements where organization_id = p_organization_id;
-  delete from public.support_tickets where organization_id = p_organization_id;
-  delete from public.orders where organization_id = p_organization_id;
-  delete from public.variants where organization_id = p_organization_id;
-  delete from public.purchase_orders where organization_id = p_organization_id;
-  delete from public.products where organization_id = p_organization_id;
-  delete from public.customers where organization_id = p_organization_id;
-  delete from public.collections where organization_id = p_organization_id;
-  delete from public.meta_ads_daily where organization_id = p_organization_id;
-  delete from public.google_ads_daily where organization_id = p_organization_id;
-end;
+  where p.store_id = p_store_id;
 $$;

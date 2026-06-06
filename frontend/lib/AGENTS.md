@@ -13,6 +13,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | Route / module | Why admin |
 |----------------|-----------|
 | `POST /api/stores/import/[platform]` | Load platform data into contract tables after user auth |
+| `lib/shopify/secrets.ts` | `store_connection_secrets` is service_role only |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
 | `lib/waitlist-pricing` + `/api/waitlist/pricing/*` | Post-waitlist pricing chat; token auth, no user session |
@@ -22,7 +23,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 
 | Module | Import | Owns |
 |--------|--------|------|
-| `organizations/` | `@/lib/organizations` | Tenancy: org membership, `requireOrganizationId`, cron tenant iteration |
+| `tenancy/` | `@/lib/tenancy`, `@/lib/tenancy/server` | Org + store scope, bootstrap, Slack routing, cron iteration |
 | `stores/incidents/` | `@/lib/stores/incidents` | KPI breach detect + incident CRUD |
 | `stores/analytics/catalog/` | `@/lib/stores/analytics/catalog` | Metrics, thresholds, health, catalog queries |
 | `stores/analytics/metrics/` | `@/lib/stores/analytics/metrics` | KPI engine, definitions, series |
@@ -33,6 +34,7 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
 | `waitlist-pricing/` | `@/lib/waitlist-pricing` | Post-waitlist pricing negotiation agent + guardrails |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
+| `shopify/` | `@/lib/shopify`, `@/lib/shopify/server` | `@shopify/shopify-api` — OAuth, Admin client, `store_connection_secrets` |
 | `stores/` | `@/lib/stores`, `@/lib/stores/server` | `getStore`, domain facade (catalog, orders, import, …) |
 | `stores/import/` | internal | Platform import loaders |
 | `stores/catalog/` | via `@/lib/stores` | Metrics, thresholds, health |
@@ -44,10 +46,10 @@ Each domain folder has its own `AGENTS.md`. Entity types are one file per table 
 
 ### Multi-tenant organization context
 
-- **User routes / server actions:** `const organizationId = await requireOrganizationId(await createClient())`, then pass `organizationId` into domain functions and scoped queries.
-- **Cron schedulers:** `listAllOrganizationIds(createAdminClient())` and loop per tenant (`detect`, `replay`).
+- **User routes / server actions:** `getStoreScope()` or `getAppTenancy()` from `@/lib/tenancy/server`, then pass `scope` into domain functions.
+- **Cron schedulers:** `listAllStoreScopes(createAdminClient())` (`detect`, `replay`, `digest`).
 - **Sign-up bootstrap:** `createOrganizationWithOwner(createAdminClient(), { userId, name, slug })` after `auth.signUp` (org + owner membership only; store connect on `/onboarding`).
-- See [organizations/AGENTS.md](organizations/AGENTS.md) for module layout.
+- See [tenancy/AGENTS.md](tenancy/AGENTS.md) for module layout.
 
 ## Best practices (domain layer)
 

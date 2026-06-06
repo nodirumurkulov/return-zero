@@ -3,14 +3,27 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
 import { assertCronAuthorized, isCronInvocation } from "@/lib/cron-auth";
 import { investigateCreatedIncidents } from "@/lib/hugo/investigate-incident";
-import { listAllOrganizationIds, requireOrganizationId } from "@/lib/organizations";
 import { advanceBodySchema } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { TypedSupabaseClient } from "@/lib/supabase/db";
 import { createClient } from "@/lib/supabase/server";
+import { getStoreScope, listAllStoreScopes } from "@/lib/tenancy/server";
+import type { StoreScope } from "@/lib/tenancy/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+async function scopesForRequest(
+  supabase: TypedSupabaseClient,
+  cronMode: boolean,
+): Promise<StoreScope[]> {
+  if (!cronMode) {
+    return [await getStoreScope()];
+  }
+
+  return listAllStoreScopes(supabase);
+}
 
 export async function POST(req: NextRequest) {
   const cronDenied = assertCronAuthorized(req);
@@ -35,15 +48,11 @@ export async function POST(req: NextRequest) {
 
   const supabase = cronMode ? createAdminClient() : session!;
   try {
-    const organizationIds = cronMode
-      ? await listAllOrganizationIds(supabase)
-      : [await requireOrganizationId(supabase)];
+    const scopes = await scopesForRequest(supabase, cronMode);
 
     const store = getStore(supabase);
     if (parsed.data.reset) {
-      const resets = await Promise.all(
-        organizationIds.map((organizationId) => store.orders.reset({ organizationId })),
-      );
+      const resets = await Promise.all(scopes.map((scope) => store.orders.reset({ scope })));
       const cursor = resets[0]?.cursor ?? null;
       return NextResponse.json({
         success: true,
@@ -56,8 +65,8 @@ export async function POST(req: NextRequest) {
     }
 
     const results = await Promise.all(
-      organizationIds.map((organizationId) =>
-        store.orders.advance({ organizationId, days: parsed.data.advance_days }),
+      scopes.map((scope) =>
+        store.orders.advance({ scope, days: parsed.data.advance_days }),
       ),
     );
     const result = results[0];
@@ -74,10 +83,10 @@ export async function POST(req: NextRequest) {
     const createdIncidents = results.flatMap((r) => r.breaches.created);
 
     await Promise.all(
-      organizationIds.flatMap((organizationId, index) => {
+      scopes.flatMap((scope, index) => {
         const orgCreated = results[index]?.breaches.created ?? [];
         return orgCreated.length > 0
-          ? [store.incidents.notifyNew(organizationId, orgCreated)]
+          ? [store.incidents.notifyNew(scope.organizationId, orgCreated)]
           : [];
       }),
     );

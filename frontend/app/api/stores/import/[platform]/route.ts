@@ -1,15 +1,15 @@
 import { after, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import {
-  importImportingResponseSchema,
   importSkippedResponseSchema,
+  importSyncingResponseSchema,
   storePlatformSchema,
 } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -32,18 +32,19 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const org = await tryRequireOrganizationId(auth);
-  if (!org.ok) {
-    logApiError("api/stores/import/[platform]", new Error(org.error));
-    return apiErrorResponse(new Error(org.error), 403);
+  const scopeResult = await tryGetStoreScope(auth);
+  if (!scopeResult.ok) {
+    logApiError("api/stores/import/[platform]", new Error(scopeResult.error));
+    return apiErrorResponse(new Error(scopeResult.error), 403);
   }
 
+  const scope = scopeResult.scope;
   const supabase = createAdminClient();
 
   try {
     const store = getStore(supabase);
     const start = await store.import.tryStartImport({
-      organizationId: org.organizationId,
+      scope,
       platform: platformParsed.data,
     });
 
@@ -55,12 +56,12 @@ export async function POST(
       after(async () => {
         try {
           const { success } = await store.import.runBackgroundImport({
-            organizationId: org.organizationId,
+            scope,
             platform: platformParsed.data,
             replace: false,
           });
           if (success) {
-            await store.orders.reset({ organizationId: org.organizationId });
+            await store.orders.reset({ scope });
           }
         } catch (err) {
           logApiError("api/stores/import/[platform]", err);
@@ -69,7 +70,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      importImportingResponseSchema.parse({ importing: true }),
+      importSyncingResponseSchema.parse({ syncing: true }),
       { status: 202 },
     );
   } catch (err) {

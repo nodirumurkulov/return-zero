@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { StoreScope } from "@/lib/tenancy/types";
+
 import type { DetectionResult } from "../incidents/types";
 
 export interface OrderFeedLineItem {
@@ -102,20 +104,20 @@ export type OrdersAdvanceResult = {
 };
 
 export type OrdersListOpts = {
-  organizationId: string;
+  scope: StoreScope;
   after: string;
   limit?: number;
 };
 
 export type OrdersAdvanceOpts = {
-  organizationId: string;
+  scope: StoreScope;
   days?: number;
 };
 
 export type OrdersBoundsOpts = {
-  organizationId: string;
+  scope: StoreScope;
 };
 
 export type OrdersResetOpts = {
-  organizationId: string;
+  scope: StoreScope;
 };

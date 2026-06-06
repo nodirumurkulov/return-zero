@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HUGO_MOCK_STORE_NAME } from "@/lib/organizations/mock-store";
+import { HUGO_MOCK_STORE_NAME } from "@/lib/tenancy";
 import { loadBusinessProfile } from "./queries";
 
 function asThenable<T>(data: T) {

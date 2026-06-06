@@ -12,6 +12,8 @@ declare
   org_b uuid := 'bbbbbbbb-2222-2222-2222-222222222222';
   user_a uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   user_b uuid := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  store_a uuid;
+  store_b uuid;
   product_a uuid := 'aaaaaaaa-1111-1111-1111-111111111101';
   product_b uuid := 'bbbbbbbb-2222-2222-2222-222222222201';
   metric_a uuid;
@@ -39,9 +41,31 @@ begin
     (org_b, user_b, 'owner')
   on conflict (organization_id, user_id) do nothing;
 
-  insert into public.products (id, organization_id, external_id, title) values
-    (product_a, org_a, 'prod_a', 'Product A'),
-    (product_b, org_b, 'prod_b', 'Product B')
+  select id into store_a
+  from public.store_connections
+  where organization_id = org_a
+  limit 1;
+
+  select id into store_b
+  from public.store_connections
+  where organization_id = org_b
+  limit 1;
+
+  if store_a is null or store_b is null then
+    raise exception 'FAIL: setup missing store_connections for test orgs';
+  end if;
+
+  update public.organizations
+  set active_store_id = store_a
+  where id = org_a;
+
+  update public.organizations
+  set active_store_id = store_b
+  where id = org_b;
+
+  insert into public.products (id, organization_id, store_id, external_id, title) values
+    (product_a, org_a, store_a, 'prod_a', 'Product A'),
+    (product_b, org_b, store_b, 'prod_b', 'Product B')
   on conflict (id) do nothing;
 
   select id into metric_a
@@ -55,10 +79,10 @@ begin
   limit 1;
 
   insert into public.incidents (
-    id, organization_id, title, status, severity, product_id, affected_kpi_keys
+    id, organization_id, store_id, title, status, severity, product_id, affected_kpi_keys
   ) values
-    (incident_a, org_a, 'Incident A', 'detected', 'medium', product_a, array['return_rate']),
-    (incident_b, org_b, 'Incident B', 'detected', 'medium', product_b, array['return_rate'])
+    (incident_a, org_a, store_a, 'Incident A', 'detected', 'medium', product_a, array['return_rate']),
+    (incident_b, org_b, store_b, 'Incident B', 'detected', 'medium', product_b, array['return_rate'])
   on conflict (id) do nothing;
 
   insert into public.product_kpi_thresholds (
@@ -121,9 +145,13 @@ end $$;
 \echo '== user A: can write within org A =='
 do $$ begin
   insert into public.incidents (
-    organization_id, title, status, severity
+    organization_id, store_id, title, status, severity
   ) values (
-    'aaaaaaaa-1111-1111-1111-111111111111', 'User A incident', 'detected', 'low'
+    'aaaaaaaa-1111-1111-1111-111111111111',
+    (select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1),
+    'User A incident',
+    'detected',
+    'low'
   );
   insert into public.agent_findings (
     incident_id, agent_name, summary
@@ -137,9 +165,13 @@ end $$;
 do $$ begin
   begin
     insert into public.incidents (
-      organization_id, title, status, severity
+      organization_id, store_id, title, status, severity
     ) values (
-      'bbbbbbbb-2222-2222-2222-222222222222', 'cross-tenant', 'detected', 'low'
+      'bbbbbbbb-2222-2222-2222-222222222222',
+      (select id from public.store_connections where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222' limit 1),
+      'cross-tenant',
+      'detected',
+      'low'
     );
     raise exception 'FAIL: user A inserted incident into org B';
   exception when insufficient_privilege then
@@ -150,8 +182,13 @@ end $$;
 \echo '== user A: contract tables read-only =='
 do $$ begin
   begin
-    insert into public.products (organization_id, external_id, title)
-    values ('aaaaaaaa-1111-1111-1111-111111111111', 'hack', 'Hack');
+    insert into public.products (organization_id, store_id, external_id, title)
+    values (
+      'aaaaaaaa-1111-1111-1111-111111111111',
+      (select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1),
+      'hack',
+      'Hack'
+    );
     raise exception 'FAIL: user A wrote to read-only products';
   exception when insufficient_privilege then
     raise notice 'PASS: user A insert into products denied (read-only)';
@@ -189,13 +226,41 @@ do $$ begin
   end;
 end $$;
 
-\echo '== authenticated: reset_organization_data denied =='
+\echo '== authenticated: reset_store_data denied =='
 do $$ begin
   begin
-    perform public.reset_organization_data('aaaaaaaa-1111-1111-1111-111111111111');
-    raise exception 'FAIL: authenticated called reset_organization_data';
+    perform public.reset_store_data(
+      (select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1)
+    );
+    raise exception 'FAIL: authenticated called reset_store_data';
   exception when insufficient_privilege then
-    raise notice 'PASS: reset_organization_data denied for authenticated';
+    raise notice 'PASS: reset_store_data denied for authenticated';
+  end;
+end $$;
+
+\echo '== authenticated: store_connection_secrets denied =='
+do $$ begin
+  begin
+    insert into public.store_connection_secrets (store_id, access_token, scopes)
+    values (
+      (select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1),
+      'secret-token',
+      'read_products'
+    );
+    raise exception 'FAIL: authenticated inserted store_connection_secrets';
+  exception when insufficient_privilege then
+    raise notice 'PASS: authenticated insert into store_connection_secrets denied';
+  end;
+
+  begin
+    perform 1
+    from public.store_connection_secrets
+    where store_id = (
+      select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1
+    );
+    raise exception 'FAIL: authenticated read store_connection_secrets';
+  exception when insufficient_privilege then
+    raise notice 'PASS: authenticated select from store_connection_secrets denied';
   end;
 end $$;
 reset role;

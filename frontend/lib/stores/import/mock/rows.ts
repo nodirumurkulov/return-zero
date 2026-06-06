@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import type { Json, TablesInsert } from "@/lib/supabase/db";
+import type { StoreScope } from "@/lib/tenancy/types";
+
 const emptyToNull = (value: unknown) => (value === "" || value == null ? null : value);
 
 export const csvString = z.union([z.string(), z.number()]).transform(String);
@@ -261,8 +264,6 @@ export const mockStoreGoogleAdsDailyRowSchema = z.object({
   conversion_value_gbp: z.coerce.number().optional().nullable(),
 });
 
-import type { Json, TablesInsert } from "@/lib/supabase/db";
-
 /** External id → uuid maps built during two-pass CSV load. */
 export interface IdMaps {
   collections: Map<string, string>;
@@ -338,10 +339,11 @@ export class MockStoreRows {
 
   mapCollectionRows(
   rows: CollectionRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"collections">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.collection_id,
     title: row.title,
     created_at: row.created_at ?? undefined,
@@ -350,10 +352,11 @@ export class MockStoreRows {
 
 mapSupplierRows(
   rows: SupplierRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"suppliers">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.supplier_id,
     name: row.name,
     country: row.country,
@@ -365,7 +368,7 @@ mapSupplierRows(
 
 mapProductRows(
   rows: ProductRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"products">[] {
   return rows.flatMap((row) => {
@@ -376,7 +379,8 @@ mapProductRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.product_id,
         title: row.title,
         handle: row.handle,
@@ -395,10 +399,11 @@ mapProductRows(
 
 mapCustomerRows(
   rows: CustomerRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"customers">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.customer_id,
     email: row.email,
     first_name: row.first_name,
@@ -416,7 +421,7 @@ mapCustomerRows(
 
 mapVariantRows(
   rows: VariantRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"variants">[] {
   return rows.flatMap((row) => {
@@ -425,7 +430,8 @@ mapVariantRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.variant_id,
         product_id: productId,
         sku: row.sku,
@@ -445,10 +451,11 @@ mapVariantRows(
 
 mapDiscountCodeRows(
   rows: DiscountCodeRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"discount_codes">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.code,
     code: row.code,
     type: row.type,
@@ -461,10 +468,11 @@ mapDiscountCodeRows(
 
 mapEmailCampaignRows(
   rows: EmailCampaignRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"email_campaigns">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.campaign_id,
     name: row.name,
     type: row.type,
@@ -480,10 +488,11 @@ mapEmailCampaignRows(
 
 mapPurchaseOrderRows(
   rows: PurchaseOrderRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"purchase_orders">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.po_id,
     supplier_id: row.supplier_id,
     created_at: row.created_at ?? undefined,
@@ -499,10 +508,11 @@ mapPurchaseOrderRows(
 
 mapBankTransactionRows(
   rows: BankTransactionRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"bank_transactions">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     external_id: row.transaction_id,
     date: row.date,
     description: row.description,
@@ -516,7 +526,7 @@ mapBankTransactionRows(
 
 mapOrderRows(
   rows: OrderRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"orders">[] {
   return rows.flatMap((row) => {
@@ -525,7 +535,8 @@ mapOrderRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.order_id,
         customer_id: customerId,
         order_number: row.order_number != null ? String(row.order_number) : null,
@@ -552,7 +563,7 @@ mapOrderRows(
 
 mapLineItemRows(
   rows: LineItemRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"line_items">[] {
   return rows.flatMap((row) => {
@@ -563,7 +574,8 @@ mapLineItemRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.line_item_id,
         order_id: orderId,
         variant_id: variantId,
@@ -579,7 +591,7 @@ mapLineItemRows(
 
 mapRefundRows(
   rows: RefundRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"refunds">[] {
   return rows.flatMap((row) => {
@@ -588,7 +600,8 @@ mapRefundRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.refund_id,
         order_id: orderId,
         created_at: row.created_at ?? undefined,
@@ -602,7 +615,7 @@ mapRefundRows(
 
 mapInventoryMovementRows(
   rows: InventoryMovementRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"inventory_movements">[] {
   return rows.flatMap((row) => {
@@ -611,7 +624,8 @@ mapInventoryMovementRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.movement_id,
         variant_id: variantId,
         date: row.date,
@@ -626,7 +640,7 @@ mapInventoryMovementRows(
 
 mapProductCollectionRows(
   rows: ProductCollectionRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"product_collections">[] {
   return rows.flatMap((row) => {
@@ -634,13 +648,14 @@ mapProductCollectionRows(
     const collectionId = this.requireId(maps.collections, row.collection_id);
     if (productId == null || collectionId == null) return [];
 
-    return [{ organization_id: organizationId, product_id: productId, collection_id: collectionId }];
+    return [{ organization_id: scope.organizationId,
+    store_id: scope.storeId, product_id: productId, collection_id: collectionId }];
   });
 }
 
 mapAddressRows(
   rows: AddressRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"addresses">[] {
   return rows.flatMap((row) => {
@@ -649,7 +664,8 @@ mapAddressRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.customer_id,
         customer_id: customerId,
         first_name: row.first_name,
@@ -667,7 +683,7 @@ mapAddressRows(
 
 mapEmailEventRows(
   rows: EmailEventRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"email_events">[] {
   return rows.flatMap((row) => {
@@ -681,7 +697,8 @@ mapEmailEventRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.event_id,
         campaign_id: campaignId,
         customer_id: customerId,
@@ -694,7 +711,7 @@ mapEmailEventRows(
 
 mapSupportTicketRows(
   rows: SupportTicketRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"support_tickets">[] {
   return rows.flatMap((row) => {
@@ -713,7 +730,8 @@ mapSupportTicketRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.ticket_id,
         customer_id: customerId,
         related_order_id: relatedOrderId,
@@ -736,7 +754,7 @@ mapSupportTicketRows(
 
 mapSupportMessageRows(
   rows: SupportMessageRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"support_messages">[] {
   return rows.flatMap((row) => {
@@ -745,7 +763,8 @@ mapSupportMessageRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.ticket_id,
         ticket_id: ticketId,
         messages: row.messages as Json,
@@ -756,7 +775,7 @@ mapSupportMessageRows(
 
 mapPoLineItemRows(
   rows: PoLineItemRow[],
-  organizationId: string,
+  scope: StoreScope,
   maps: IdMaps,
 ): TablesInsert<"po_line_items">[] {
   return rows.flatMap((row) => {
@@ -766,7 +785,8 @@ mapPoLineItemRows(
 
     return [
       {
-        organization_id: organizationId,
+        organization_id: scope.organizationId,
+    store_id: scope.storeId,
         external_id: row.po_line_id,
         po_id: poId,
         variant_id: variantId,
@@ -781,10 +801,11 @@ mapPoLineItemRows(
 
 mapMetaAdsDailyRows(
   rows: MetaAdsDailyRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"meta_ads_daily">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     date: row.date,
     campaign_name: row.campaign_name,
     campaign_objective: row.campaign_objective,
@@ -801,10 +822,11 @@ mapMetaAdsDailyRows(
 
 mapGoogleAdsDailyRows(
   rows: GoogleAdsDailyRow[],
-  organizationId: string,
+  scope: StoreScope,
 ): TablesInsert<"google_ads_daily">[] {
   return rows.map((row) => ({
-    organization_id: organizationId,
+    organization_id: scope.organizationId,
+    store_id: scope.storeId,
     date: row.date,
     campaign_name: row.campaign_name,
     campaign_type: row.campaign_type,

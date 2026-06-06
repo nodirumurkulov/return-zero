@@ -1,3 +1,5 @@
+import type { StoreScope } from "@/lib/tenancy/types";
+
 /** One month of a product time series (from product_monthly_series RPC). */
 export interface MonthlyPoint {
   product_id: string;
@@ -11,7 +13,7 @@ export interface MonthlyPoint {
 }
 
 export interface SeriesOpts {
-  organizationId: string;
+  scope: StoreScope;
   productId?: string;
   months?: number;
 }

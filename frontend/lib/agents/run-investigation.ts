@@ -1,4 +1,5 @@
 import "server-only";
+import type { StoreScope } from "@/lib/tenancy/types";
 import type { InvestigationStepEmitter } from "./investigation-steps";
 import { runOperator } from "./operator";
 import { runQuantAnalyst } from "./quant-analyst";
@@ -53,7 +54,7 @@ function toAction(a: OperatorAction): InvestigationAction {
 
 export async function runInvestigation(
   supabase: AgentSupabase,
-  organizationId: string,
+  scope: StoreScope,
   _incidentId: string,
   productId: string,
   _affectedKpiKeys: string[],
@@ -68,7 +69,7 @@ export async function runInvestigation(
     await steps.finishStep("quant:dispatched");
   }
 
-  const diagnosis = await runQuantAnalyst(supabase, organizationId, productId, steps);
+  const diagnosis = await runQuantAnalyst(supabase, scope, productId, steps);
 
   if (steps) {
     await steps.startStep({
@@ -85,7 +86,7 @@ export async function runInvestigation(
     await steps.finishStep("operator:dispatched");
   }
 
-  const operator = await runOperator(supabase, organizationId, productId, diagnosis, steps);
+  const operator = await runOperator(supabase, scope.organizationId, productId, diagnosis, steps);
 
   if (steps) {
     await steps.startStep({

@@ -29,16 +29,21 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
-vi.mock("@/lib/organizations", () => ({
-  tryRequireOrganizationId: vi.fn(),
+vi.mock("@/lib/tenancy/server", () => ({
+  tryGetStoreScope: vi.fn(),
 }));
 
 import { POST } from "@/app/api/stores/incidents/[id]/approve/route";
-import { tryRequireOrganizationId } from "@/lib/organizations";
 import { createClient } from "@/lib/supabase/server";
+import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 const createClientMock = vi.mocked(createClient);
-const tryRequireOrganizationIdMock = vi.mocked(tryRequireOrganizationId);
+const tryGetStoreScopeMock = vi.mocked(tryGetStoreScope);
+
+const testScope = {
+  organizationId: "00000000-0000-0000-0000-000000000100",
+  storeId: "00000000-0000-0000-0000-000000000200",
+};
 
 describe("POST /api/stores/incidents/[id]/approve", () => {
   afterEach(() => {
@@ -65,9 +70,9 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
     } as never);
-    tryRequireOrganizationIdMock.mockResolvedValue({
+    tryGetStoreScopeMock.mockResolvedValue({
       ok: true,
-      organizationId: "00000000-0000-0000-0000-000000000100",
+      scope: testScope,
     });
 
     const res = await POST(
@@ -85,9 +90,9 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
     createClientMock.mockResolvedValue({
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
     } as never);
-    tryRequireOrganizationIdMock.mockResolvedValue({
+    tryGetStoreScopeMock.mockResolvedValue({
       ok: true,
-      organizationId: "00000000-0000-0000-0000-000000000100",
+      scope: testScope,
     });
     listActionIdsMock.mockResolvedValue(["low-1"]);
     approveAndNotifyMock.mockResolvedValue(undefined);
@@ -103,7 +108,7 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
     expect(res.status).toBe(200);
     expect(listActionIdsMock).toHaveBeenCalledWith({
       incidentId: "inc-1",
-      organizationId: "00000000-0000-0000-0000-000000000100",
+      scope: testScope,
       filter: { status: "proposed", riskLevel: "low" },
     });
     expect(approveAndNotifyMock).toHaveBeenCalledWith(
@@ -111,7 +116,7 @@ describe("POST /api/stores/incidents/[id]/approve", () => {
         incidentId: "inc-1",
         actionIds: ["low-1"],
         approvedByUserId: "user-1",
-        organizationId: "00000000-0000-0000-0000-000000000100",
+        scope: testScope,
       }),
     );
     const approveArgs = approveAndNotifyMock.mock.calls[0]?.[0] as

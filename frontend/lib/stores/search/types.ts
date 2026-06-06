@@ -1,3 +1,5 @@
+import type { StoreScope } from "@/lib/tenancy/types";
+
 export type SearchTarget = {
   id: string;
   label: string;
@@ -6,6 +8,6 @@ export type SearchTarget = {
 };
 
 export type SearchListOpts = {
-  organizationId: string;
+  scope: StoreScope;
   query?: string;
 };

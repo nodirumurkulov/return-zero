@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
-import { resolveOrganizationIdForSlackTeam } from "@/lib/organizations";
 import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveOrganizationIdForSlackTeam , getTenancy } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const scope = await getTenancy(supabase).getStoreScope({ organizationId });
+
   const action = payload.actions?.[0];
   if (!action) {
     return NextResponse.json({ ok: true });
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
 
   if (action.action_id === "confirm_hugo_resolve" || action.action_id === "confirm_hugo_reject") {
     const store = getStore(supabase);
-    const incident = await store.incidents.get({ id: incidentId, organizationId });
+    const incident = await store.incidents.get({ id: incidentId, scope });
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
@@ -73,14 +75,14 @@ export async function POST(req: NextRequest) {
 
   if (action.action_id === "approve_low_risk") {
     const store = getStore(supabase);
-    const incident = await store.incidents.get({ id: incidentId, organizationId });
+    const incident = await store.incidents.get({ id: incidentId, scope });
     if (!incident) {
       return NextResponse.json({ error: "Incident not found" }, { status: 404 });
     }
 
     const actionIds = await store.incidents.listActionIds({
       incidentId,
-      organizationId,
+      scope,
       filter: { status: "proposed", riskLevel: "low" },
     });
     if (actionIds.length > 0) {
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
           incidentId,
           actionIds,
           approvedByUserId: null,
-          organizationId,
+          scope,
           appUrl,
           extraMetadata: { slack_user: slackUser },
         });

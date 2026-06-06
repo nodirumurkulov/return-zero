@@ -20,14 +20,14 @@ Audit of every `/api/*` route handler in `frontend/app/api/`: auth enforcement, 
 | `/api/forecast` | POST | yes | Same as detect | admin or RLS |
 | `/api/recover` | POST | yes | Same as detect | admin or RLS |
 | `/api/replay` | POST | yes | Same as detect | admin or RLS |
-| `/api/learn` | POST | yes | Session + `tryRequireOrganizationId` | admin (scoped) |
-| `/api/investigate` | POST | yes | Session + `getUser()` | RLS |
-| `/api/orders` | GET | no | Session + `tryRequireOrganizationId` | RLS |
-| `/api/onboarding/upload` | POST | yes | Session + org; bulk replace | admin (scoped) |
-| `/api/onboarding/profile` | GET, POST | POST yes | Session + `requireOrganizationId` | RLS |
-| `/api/incidents/[id]` | GET, PATCH | PATCH yes | Session + `getUser()` | RLS |
-| `/api/incidents/[id]/approve` | POST | yes | Session + `tryRequireOrganizationId` | RLS |
-| `/api/slack/webhook` | POST | yes | HMAC + `resolveOrganizationIdForSlackTeam` | admin (org-scoped) |
+| `/api/learn` | POST | yes | Session + `tryGetStoreScope` | admin (scoped) |
+| `/api/investigate` | POST | yes | Session + `tryGetStoreScope` | RLS |
+| `/api/orders` | GET | no | Session + `tryGetStoreScope` | RLS |
+| `/api/onboarding/upload` | POST | yes | Session + store scope; bulk replace | admin (scoped) |
+| `/api/onboarding/profile` | GET, POST | POST yes | Session + `tryGetStoreScope` | RLS |
+| `/api/incidents/[id]` | GET, PATCH | PATCH yes | Session + `tryGetStoreScope` | RLS |
+| `/api/incidents/[id]/approve` | POST | yes | Session + `tryGetStoreScope` | RLS |
+| `/api/slack/webhook` | POST | yes | HMAC + `resolveOrganizationIdForSlackTeam` | admin (store-scoped) |
 | `/api/slack/events` | POST | yes (async) | HMAC; Hugo resolves org from `team_id` | admin via Hugo (org-scoped) |
 
 ## In-route validation

@@ -7,11 +7,13 @@ import type {
 } from "@/lib/stores";
 
 const DEMO_ORG_ID = "00000000-0000-0000-0000-000000000100";
+const DEMO_STORE_ID = "00000000-0000-0000-0000-000000000101";
 
 export function createIncidentFixture(overrides?: Partial<Incident>): Incident {
   return {
     id: "inc-00000000-0000-0000-0000-000000000001",
     organization_id: DEMO_ORG_ID,
+    store_id: DEMO_STORE_ID,
     title: "Return rate spike on SKU-42",
     status: "detected",
     severity: "high",

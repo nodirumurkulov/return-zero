@@ -4,7 +4,7 @@ export const storePlatformSchema = z.enum(["mock_csv", "shopify"]);
 
 export const storeConnectionStatusSchema = z.enum([
   "pending",
-  "importing",
+  "syncing",
   "connected",
   "error",
   "disconnected",

@@ -1,5 +1,3 @@
-// Generated from migrations 001–011. Regenerate with `bun run db:types` after schema changes.
-
 export type Json =
   | string
   | number
@@ -9,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       addresses: {
@@ -50,6 +23,7 @@ export type Database = {
           organization_id: string
           postcode: string | null
           province: string | null
+          store_id: string
         }
         Insert: {
           address1?: string | null
@@ -64,6 +38,7 @@ export type Database = {
           organization_id: string
           postcode?: string | null
           province?: string | null
+          store_id: string
         }
         Update: {
           address1?: string | null
@@ -78,6 +53,7 @@ export type Database = {
           organization_id?: string
           postcode?: string | null
           province?: string | null
+          store_id?: string
         }
         Relationships: [
           {
@@ -92,6 +68,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "addresses_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -156,6 +139,7 @@ export type Database = {
           id: string
           organization_id: string
           raw_category: string | null
+          store_id: string
         }
         Insert: {
           amount_gbp?: number | null
@@ -168,6 +152,7 @@ export type Database = {
           id?: string
           organization_id: string
           raw_category?: string | null
+          store_id: string
         }
         Update: {
           amount_gbp?: number | null
@@ -180,6 +165,7 @@ export type Database = {
           id?: string
           organization_id?: string
           raw_category?: string | null
+          store_id?: string
         }
         Relationships: [
           {
@@ -189,36 +175,11 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      business_reports: {
-        Row: {
-          created_at: string
-          id: string
-          narrative: string | null
-          organization_id: string
-          summary: Json
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          narrative?: string | null
-          organization_id: string
-          summary: Json
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          narrative?: string | null
-          organization_id?: string
-          summary?: Json
-        }
-        Relationships: [
           {
-            foreignKeyName: "business_reports_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "bank_transactions_store_id_fkey"
+            columns: ["store_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -253,6 +214,38 @@ export type Database = {
             foreignKeyName: "business_profile_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_reports: {
+        Row: {
+          created_at: string
+          id: string
+          narrative: string | null
+          organization_id: string
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          organization_id: string
+          summary: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          narrative?: string | null
+          organization_id?: string
+          summary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -293,6 +286,7 @@ export type Database = {
           external_id: string
           id: string
           organization_id: string
+          store_id: string
           title: string | null
         }
         Insert: {
@@ -300,6 +294,7 @@ export type Database = {
           external_id: string
           id?: string
           organization_id: string
+          store_id: string
           title?: string | null
         }
         Update: {
@@ -307,6 +302,7 @@ export type Database = {
           external_id?: string
           id?: string
           organization_id?: string
+          store_id?: string
           title?: string | null
         }
         Relationships: [
@@ -315,6 +311,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -334,6 +337,7 @@ export type Database = {
           last_name: string | null
           orders_count: number | null
           organization_id: string
+          store_id: string
           total_spent: number | null
         }
         Insert: {
@@ -350,6 +354,7 @@ export type Database = {
           last_name?: string | null
           orders_count?: number | null
           organization_id: string
+          store_id: string
           total_spent?: number | null
         }
         Update: {
@@ -366,6 +371,7 @@ export type Database = {
           last_name?: string | null
           orders_count?: number | null
           organization_id?: string
+          store_id?: string
           total_spent?: number | null
         }
         Relationships: [
@@ -374,6 +380,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -386,6 +399,7 @@ export type Database = {
           id: string
           organization_id: string
           starts_at: string | null
+          store_id: string
           type: string | null
           usage_count: number | null
           value: number | null
@@ -397,6 +411,7 @@ export type Database = {
           id?: string
           organization_id: string
           starts_at?: string | null
+          store_id: string
           type?: string | null
           usage_count?: number | null
           value?: number | null
@@ -408,6 +423,7 @@ export type Database = {
           id?: string
           organization_id?: string
           starts_at?: string | null
+          store_id?: string
           type?: string | null
           usage_count?: number | null
           value?: number | null
@@ -418,6 +434,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_codes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -434,6 +457,7 @@ export type Database = {
           organization_id: string
           recipients: number | null
           sent_at: string | null
+          store_id: string
           type: string | null
           unsubscribes: number | null
         }
@@ -448,6 +472,7 @@ export type Database = {
           organization_id: string
           recipients?: number | null
           sent_at?: string | null
+          store_id: string
           type?: string | null
           unsubscribes?: number | null
         }
@@ -462,6 +487,7 @@ export type Database = {
           organization_id?: string
           recipients?: number | null
           sent_at?: string | null
+          store_id?: string
           type?: string | null
           unsubscribes?: number | null
         }
@@ -471,6 +497,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_campaigns_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -483,6 +516,7 @@ export type Database = {
           external_id: string
           id: string
           organization_id: string
+          store_id: string
           timestamp: string | null
         }
         Insert: {
@@ -492,6 +526,7 @@ export type Database = {
           external_id: string
           id?: string
           organization_id: string
+          store_id: string
           timestamp?: string | null
         }
         Update: {
@@ -501,6 +536,7 @@ export type Database = {
           external_id?: string
           id?: string
           organization_id?: string
+          store_id?: string
           timestamp?: string | null
         }
         Relationships: [
@@ -523,6 +559,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -584,6 +627,7 @@ export type Database = {
           impressions: number | null
           organization_id: string
           spend_gbp: number | null
+          store_id: string
         }
         Insert: {
           ad_group?: string
@@ -597,6 +641,7 @@ export type Database = {
           impressions?: number | null
           organization_id: string
           spend_gbp?: number | null
+          store_id: string
         }
         Update: {
           ad_group?: string
@@ -610,6 +655,7 @@ export type Database = {
           impressions?: number | null
           organization_id?: string
           spend_gbp?: number | null
+          store_id?: string
         }
         Relationships: [
           {
@@ -617,6 +663,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_ads_daily_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -729,6 +782,164 @@ export type Database = {
           },
         ]
       }
+      incidents: {
+        Row: {
+          affected_kpi_keys: string[]
+          baseline_value: number | null
+          created_at: string
+          fix_proposed_at: string | null
+          id: string
+          impact_amount: number | null
+          impact_label: string | null
+          investigation_started_at: string | null
+          monitoring_kpi: string | null
+          monitoring_started_at: string | null
+          organization_id: string
+          product_id: string | null
+          recovery_pct: number
+          resolved_at: string | null
+          root_cause: string | null
+          root_cause_confidence: number | null
+          severity: Database["public"]["Enums"]["incident_severity"]
+          status: Database["public"]["Enums"]["incident_status"]
+          store_id: string
+          target_value: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_kpi_keys?: string[]
+          baseline_value?: number | null
+          created_at?: string
+          fix_proposed_at?: string | null
+          id?: string
+          impact_amount?: number | null
+          impact_label?: string | null
+          investigation_started_at?: string | null
+          monitoring_kpi?: string | null
+          monitoring_started_at?: string | null
+          organization_id: string
+          product_id?: string | null
+          recovery_pct?: number
+          resolved_at?: string | null
+          root_cause?: string | null
+          root_cause_confidence?: number | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          status?: Database["public"]["Enums"]["incident_status"]
+          store_id: string
+          target_value?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_kpi_keys?: string[]
+          baseline_value?: number | null
+          created_at?: string
+          fix_proposed_at?: string | null
+          id?: string
+          impact_amount?: number | null
+          impact_label?: string | null
+          investigation_started_at?: string | null
+          monitoring_kpi?: string | null
+          monitoring_started_at?: string | null
+          organization_id?: string
+          product_id?: string | null
+          recovery_pct?: number
+          resolved_at?: string | null
+          root_cause?: string | null
+          root_cause_confidence?: number | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          status?: Database["public"]["Enums"]["incident_status"]
+          store_id?: string
+          target_value?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_product_org_fkey"
+            columns: ["organization_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "incidents_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          date: string
+          external_id: string
+          id: string
+          organization_id: string
+          quantity_delta: number | null
+          reference_id: string | null
+          running_balance: number | null
+          store_id: string
+          type: string | null
+          variant_id: string
+        }
+        Insert: {
+          date: string
+          external_id: string
+          id?: string
+          organization_id: string
+          quantity_delta?: number | null
+          reference_id?: string | null
+          running_balance?: number | null
+          store_id: string
+          type?: string | null
+          variant_id: string
+        }
+        Update: {
+          date?: string
+          external_id?: string
+          id?: string
+          organization_id?: string
+          quantity_delta?: number | null
+          reference_id?: string | null
+          running_balance?: number | null
+          store_id?: string
+          type?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_variant_org_fkey"
+            columns: ["organization_id", "variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["organization_id", "id"]
+          },
+        ]
+      }
       investigation_steps: {
         Row: {
           agent_name: string
@@ -786,144 +997,6 @@ export type Database = {
           },
         ]
       }
-      incidents: {
-        Row: {
-          affected_kpi_keys: string[]
-          baseline_value: number | null
-          created_at: string
-          fix_proposed_at: string | null
-          id: string
-          impact_amount: number | null
-          impact_label: string | null
-          investigation_started_at: string | null
-          monitoring_kpi: string | null
-          monitoring_started_at: string | null
-          organization_id: string
-          product_id: string | null
-          recovery_pct: number
-          resolved_at: string | null
-          root_cause: string | null
-          root_cause_confidence: number | null
-          severity: Database["public"]["Enums"]["incident_severity"]
-          status: Database["public"]["Enums"]["incident_status"]
-          target_value: number | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          affected_kpi_keys?: string[]
-          baseline_value?: number | null
-          created_at?: string
-          fix_proposed_at?: string | null
-          id?: string
-          impact_amount?: number | null
-          impact_label?: string | null
-          investigation_started_at?: string | null
-          monitoring_kpi?: string | null
-          monitoring_started_at?: string | null
-          organization_id: string
-          product_id?: string | null
-          recovery_pct?: number
-          resolved_at?: string | null
-          root_cause?: string | null
-          root_cause_confidence?: number | null
-          severity?: Database["public"]["Enums"]["incident_severity"]
-          status?: Database["public"]["Enums"]["incident_status"]
-          target_value?: number | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          affected_kpi_keys?: string[]
-          baseline_value?: number | null
-          created_at?: string
-          fix_proposed_at?: string | null
-          id?: string
-          impact_amount?: number | null
-          impact_label?: string | null
-          investigation_started_at?: string | null
-          monitoring_kpi?: string | null
-          monitoring_started_at?: string | null
-          organization_id?: string
-          product_id?: string | null
-          recovery_pct?: number
-          resolved_at?: string | null
-          root_cause?: string | null
-          root_cause_confidence?: number | null
-          severity?: Database["public"]["Enums"]["incident_severity"]
-          status?: Database["public"]["Enums"]["incident_status"]
-          target_value?: number | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "incidents_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidents_product_org_fkey"
-            columns: ["organization_id", "product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["organization_id", "id"]
-          },
-        ]
-      }
-      inventory_movements: {
-        Row: {
-          date: string
-          external_id: string
-          id: string
-          organization_id: string
-          quantity_delta: number | null
-          reference_id: string | null
-          running_balance: number | null
-          type: string | null
-          variant_id: string
-        }
-        Insert: {
-          date: string
-          external_id: string
-          id?: string
-          organization_id: string
-          quantity_delta?: number | null
-          reference_id?: string | null
-          running_balance?: number | null
-          type?: string | null
-          variant_id: string
-        }
-        Update: {
-          date?: string
-          external_id?: string
-          id?: string
-          organization_id?: string
-          quantity_delta?: number | null
-          reference_id?: string | null
-          running_balance?: number | null
-          type?: string | null
-          variant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inventory_movements_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_movements_variant_org_fkey"
-            columns: ["organization_id", "variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
-            referencedColumns: ["organization_id", "id"]
-          },
-        ]
-      }
       line_items: {
         Row: {
           external_id: string
@@ -933,6 +1006,7 @@ export type Database = {
           price: number | null
           product_id: string
           quantity: number | null
+          store_id: string
           title: string | null
           total_discount: number | null
           variant_id: string | null
@@ -945,6 +1019,7 @@ export type Database = {
           price?: number | null
           product_id: string
           quantity?: number | null
+          store_id: string
           title?: string | null
           total_discount?: number | null
           variant_id?: string | null
@@ -957,6 +1032,7 @@ export type Database = {
           price?: number | null
           product_id?: string
           quantity?: number | null
+          store_id?: string
           title?: string | null
           total_discount?: number | null
           variant_id?: string | null
@@ -984,6 +1060,13 @@ export type Database = {
             referencedColumns: ["organization_id", "id"]
           },
           {
+            foreignKeyName: "line_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "line_items_variant_org_fkey"
             columns: ["organization_id", "variant_id"]
             isOneToOne: false
@@ -1007,6 +1090,7 @@ export type Database = {
           organization_id: string
           placement: string
           spend_gbp: number | null
+          store_id: string
         }
         Insert: {
           ad_name?: string
@@ -1022,6 +1106,7 @@ export type Database = {
           organization_id: string
           placement?: string
           spend_gbp?: number | null
+          store_id: string
         }
         Update: {
           ad_name?: string
@@ -1037,6 +1122,7 @@ export type Database = {
           organization_id?: string
           placement?: string
           spend_gbp?: number | null
+          store_id?: string
         }
         Relationships: [
           {
@@ -1044,6 +1130,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_ads_daily_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -1142,6 +1235,7 @@ export type Database = {
           order_number: string | null
           organization_id: string
           referring_site: string | null
+          store_id: string
           subtotal: number | null
           tags: string | null
           total_discounts: number | null
@@ -1165,6 +1259,7 @@ export type Database = {
           order_number?: string | null
           organization_id: string
           referring_site?: string | null
+          store_id: string
           subtotal?: number | null
           tags?: string | null
           total_discounts?: number | null
@@ -1188,6 +1283,7 @@ export type Database = {
           order_number?: string | null
           organization_id?: string
           referring_site?: string | null
+          store_id?: string
           subtotal?: number | null
           tags?: string | null
           total_discounts?: number | null
@@ -1211,6 +1307,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -1246,6 +1349,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          active_store_id: string | null
           created_at: string
           id: string
           name: string
@@ -1255,6 +1359,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_store_id?: string | null
           created_at?: string
           id?: string
           name: string
@@ -1264,6 +1369,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_store_id?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -1272,7 +1378,15 @@ export type Database = {
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_active_store_id_fkey"
+            columns: ["active_store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       po_line_items: {
         Row: {
@@ -1283,6 +1397,7 @@ export type Database = {
           po_id: string
           quantity_ordered: number | null
           quantity_received: number | null
+          store_id: string
           unit_cost_supplier_ccy: number | null
           variant_id: string
         }
@@ -1294,6 +1409,7 @@ export type Database = {
           po_id: string
           quantity_ordered?: number | null
           quantity_received?: number | null
+          store_id: string
           unit_cost_supplier_ccy?: number | null
           variant_id: string
         }
@@ -1305,6 +1421,7 @@ export type Database = {
           po_id?: string
           quantity_ordered?: number | null
           quantity_received?: number | null
+          store_id?: string
           unit_cost_supplier_ccy?: number | null
           variant_id?: string
         }
@@ -1322,6 +1439,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "po_line_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "po_line_items_variant_org_fkey"
@@ -1390,18 +1514,21 @@ export type Database = {
           id: string
           organization_id: string
           product_id: string
+          store_id: string
         }
         Insert: {
           collection_id: string
           id?: string
           organization_id: string
           product_id: string
+          store_id: string
         }
         Update: {
           collection_id?: string
           id?: string
           organization_id?: string
           product_id?: string
+          store_id?: string
         }
         Relationships: [
           {
@@ -1424,6 +1551,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "product_collections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1455,11 +1589,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_cost_overrides_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
+            foreignKeyName: "product_cost_overrides_product_org_fkey"
+            columns: ["organization_id", "product_id"]
+            isOneToOne: true
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["organization_id", "id"]
           },
         ]
       }
@@ -1530,6 +1664,7 @@ export type Database = {
           organization_id: string
           product_type: string | null
           status: string | null
+          store_id: string
           tags: string | null
           title: string | null
           vendor: string | null
@@ -1545,6 +1680,7 @@ export type Database = {
           organization_id: string
           product_type?: string | null
           status?: string | null
+          store_id: string
           tags?: string | null
           title?: string | null
           vendor?: string | null
@@ -1560,6 +1696,7 @@ export type Database = {
           organization_id?: string
           product_type?: string | null
           status?: string | null
+          store_id?: string
           tags?: string | null
           title?: string | null
           vendor?: string | null
@@ -1579,6 +1716,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchase_orders: {
@@ -1592,6 +1736,7 @@ export type Database = {
           id: string
           organization_id: string
           status: string | null
+          store_id: string
           supplier_id: string | null
           total_cost_gbp: number | null
           total_cost_supplier_ccy: number | null
@@ -1606,6 +1751,7 @@ export type Database = {
           id?: string
           organization_id: string
           status?: string | null
+          store_id: string
           supplier_id?: string | null
           total_cost_gbp?: number | null
           total_cost_supplier_ccy?: number | null
@@ -1620,6 +1766,7 @@ export type Database = {
           id?: string
           organization_id?: string
           status?: string | null
+          store_id?: string
           supplier_id?: string | null
           total_cost_gbp?: number | null
           total_cost_supplier_ccy?: number | null
@@ -1631,6 +1778,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_org_fkey"
+            columns: ["organization_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["organization_id", "external_id"]
           },
         ]
       }
@@ -1644,6 +1805,7 @@ export type Database = {
           organization_id: string
           reason: string | null
           refund_line_items: Json
+          store_id: string
         }
         Insert: {
           amount: number
@@ -1654,6 +1816,7 @@ export type Database = {
           organization_id: string
           reason?: string | null
           refund_line_items?: Json
+          store_id: string
         }
         Update: {
           amount?: number
@@ -1664,6 +1827,7 @@ export type Database = {
           organization_id?: string
           reason?: string | null
           refund_line_items?: Json
+          store_id?: string
         }
         Relationships: [
           {
@@ -1680,6 +1844,45 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "refunds_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_connection_secrets: {
+        Row: {
+          access_token: string
+          created_at: string
+          scopes: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          scopes: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          scopes?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_connection_secrets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
         ]
       }
       store_connections: {
@@ -1687,12 +1890,15 @@ export type Database = {
           connected_at: string | null
           created_at: string
           external_shop_id: string | null
+          id: string
+          label: string | null
           last_synced_at: string | null
           metadata: Json
           organization_id: string
           platform: Database["public"]["Enums"]["store_platform"]
           replay_cursor: string | null
           status: Database["public"]["Enums"]["store_connection_status"]
+          sync_error: string | null
           sync_mode: Database["public"]["Enums"]["store_sync_mode"]
           updated_at: string
         }
@@ -1700,12 +1906,15 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           external_shop_id?: string | null
+          id?: string
+          label?: string | null
           last_synced_at?: string | null
           metadata?: Json
           organization_id: string
           platform?: Database["public"]["Enums"]["store_platform"]
           replay_cursor?: string | null
           status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_error?: string | null
           sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
           updated_at?: string
         }
@@ -1713,12 +1922,15 @@ export type Database = {
           connected_at?: string | null
           created_at?: string
           external_shop_id?: string | null
+          id?: string
+          label?: string | null
           last_synced_at?: string | null
           metadata?: Json
           organization_id?: string
           platform?: Database["public"]["Enums"]["store_platform"]
           replay_cursor?: string | null
           status?: Database["public"]["Enums"]["store_connection_status"]
+          sync_error?: string | null
           sync_mode?: Database["public"]["Enums"]["store_sync_mode"]
           updated_at?: string
         }
@@ -1726,7 +1938,7 @@ export type Database = {
           {
             foreignKeyName: "store_connections_organization_id_fkey"
             columns: ["organization_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1742,6 +1954,7 @@ export type Database = {
           name: string | null
           organization_id: string
           payment_terms: string | null
+          store_id: string
         }
         Insert: {
           country?: string | null
@@ -1752,6 +1965,7 @@ export type Database = {
           name?: string | null
           organization_id: string
           payment_terms?: string | null
+          store_id: string
         }
         Update: {
           country?: string | null
@@ -1762,6 +1976,7 @@ export type Database = {
           name?: string | null
           organization_id?: string
           payment_terms?: string | null
+          store_id?: string
         }
         Relationships: [
           {
@@ -1769,6 +1984,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -1779,6 +2001,7 @@ export type Database = {
           id: string
           messages: Json
           organization_id: string
+          store_id: string
           ticket_id: string
         }
         Insert: {
@@ -1786,6 +2009,7 @@ export type Database = {
           id?: string
           messages?: Json
           organization_id: string
+          store_id: string
           ticket_id: string
         }
         Update: {
@@ -1793,6 +2017,7 @@ export type Database = {
           id?: string
           messages?: Json
           organization_id?: string
+          store_id?: string
           ticket_id?: string
         }
         Relationships: [
@@ -1801,6 +2026,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
             referencedColumns: ["id"]
           },
           {
@@ -1830,6 +2062,7 @@ export type Database = {
           resolved_by: string | null
           satisfaction_rating: number | null
           status: string | null
+          store_id: string
           subject: string | null
         }
         Insert: {
@@ -1849,6 +2082,7 @@ export type Database = {
           resolved_by?: string | null
           satisfaction_rating?: number | null
           status?: string | null
+          store_id: string
           subject?: string | null
         }
         Update: {
@@ -1868,6 +2102,7 @@ export type Database = {
           resolved_by?: string | null
           satisfaction_rating?: number | null
           status?: string | null
+          store_id?: string
           subject?: string | null
         }
         Relationships: [
@@ -1898,6 +2133,89 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "support_tickets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      variants: {
+        Row: {
+          barcode: string | null
+          compare_at_price: number | null
+          external_id: string
+          id: string
+          inventory_quantity: number | null
+          option1_name: string | null
+          option1_value: string | null
+          option2_name: string | null
+          option2_value: string | null
+          organization_id: string
+          price: number | null
+          product_id: string
+          sku: string | null
+          store_id: string
+          weight_grams: number | null
+        }
+        Insert: {
+          barcode?: string | null
+          compare_at_price?: number | null
+          external_id: string
+          id?: string
+          inventory_quantity?: number | null
+          option1_name?: string | null
+          option1_value?: string | null
+          option2_name?: string | null
+          option2_value?: string | null
+          organization_id: string
+          price?: number | null
+          product_id: string
+          sku?: string | null
+          store_id: string
+          weight_grams?: number | null
+        }
+        Update: {
+          barcode?: string | null
+          compare_at_price?: number | null
+          external_id?: string
+          id?: string
+          inventory_quantity?: number | null
+          option1_name?: string | null
+          option1_value?: string | null
+          option2_name?: string | null
+          option2_value?: string | null
+          organization_id?: string
+          price?: number | null
+          product_id?: string
+          sku?: string | null
+          store_id?: string
+          weight_grams?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variants_product_org_fkey"
+            columns: ["organization_id", "product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["organization_id", "id"]
+          },
+          {
+            foreignKeyName: "variants_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "store_connections"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2007,79 +2325,13 @@ export type Database = {
           },
         ]
       }
-      variants: {
-        Row: {
-          barcode: string | null
-          compare_at_price: number | null
-          external_id: string
-          id: string
-          inventory_quantity: number | null
-          option1_name: string | null
-          option1_value: string | null
-          option2_name: string | null
-          option2_value: string | null
-          organization_id: string
-          price: number | null
-          product_id: string
-          sku: string | null
-          weight_grams: number | null
-        }
-        Insert: {
-          barcode?: string | null
-          compare_at_price?: number | null
-          external_id: string
-          id?: string
-          inventory_quantity?: number | null
-          option1_name?: string | null
-          option1_value?: string | null
-          option2_name?: string | null
-          option2_value?: string | null
-          organization_id: string
-          price?: number | null
-          product_id: string
-          sku?: string | null
-          weight_grams?: number | null
-        }
-        Update: {
-          barcode?: string | null
-          compare_at_price?: number | null
-          external_id?: string
-          id?: string
-          inventory_quantity?: number | null
-          option1_name?: string | null
-          option1_value?: string | null
-          option2_name?: string | null
-          option2_value?: string | null
-          organization_id?: string
-          price?: number | null
-          product_id?: string
-          sku?: string | null
-          weight_grams?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "variants_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "variants_product_org_fkey"
-            columns: ["organization_id", "product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["organization_id", "id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       product_daily_outflow: {
-        Args: { p_asof?: string; p_days?: number; p_organization_id: string }
+        Args: { p_asof?: string; p_days?: number; p_store_id: string }
         Returns: {
           current_balance: number
           daily_outflow: number
@@ -2087,7 +2339,7 @@ export type Database = {
         }[]
       }
       product_monthly_series: {
-        Args: { p_months?: number; p_organization_id: string }
+        Args: { p_months?: number; p_store_id: string }
         Returns: {
           ad_revenue: number
           ad_spend: number
@@ -2100,11 +2352,7 @@ export type Database = {
         }[]
       }
       product_source_facts: {
-        Args: {
-          p_asof?: string
-          p_organization_id: string
-          p_window_days?: number
-        }
+        Args: { p_asof?: string; p_store_id: string; p_window_days?: number }
         Returns: {
           ads_revenue: number
           ads_spend: number
@@ -2116,10 +2364,7 @@ export type Database = {
           support_count: number
         }[]
       }
-      reset_organization_data: {
-        Args: { p_organization_id: string }
-        Returns: undefined
-      }
+      reset_store_data: { Args: { p_store_id: string }; Returns: undefined }
       seed_organization_defaults: {
         Args: { p_organization_id: string }
         Returns: undefined
@@ -2139,7 +2384,6 @@ export type Database = {
         | "deployed"
         | "monitoring"
       incident_severity: "critical" | "high" | "medium" | "low"
-      investigation_step_status: "running" | "done" | "error"
       incident_status:
         | "detected"
         | "investigating"
@@ -2149,6 +2393,7 @@ export type Database = {
         | "monitoring"
         | "resolved"
         | "canceled"
+      investigation_step_status: "running" | "done" | "error"
       metric_direction: "above" | "below"
       metric_operation: "ratio" | "value"
       metric_severity: "critical" | "high" | "medium" | "low"
@@ -2165,7 +2410,7 @@ export type Database = {
       risk_level: "high" | "medium" | "low"
       store_connection_status:
         | "pending"
-        | "importing"
+        | "syncing"
         | "connected"
         | "error"
         | "disconnected"
@@ -2306,9 +2551,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       forecast_rule_kind: [
@@ -2326,7 +2568,6 @@ export const Constants = {
         "monitoring",
       ],
       incident_severity: ["critical", "high", "medium", "low"],
-      investigation_step_status: ["running", "done", "error"],
       incident_status: [
         "detected",
         "investigating",
@@ -2337,6 +2578,7 @@ export const Constants = {
         "resolved",
         "canceled",
       ],
+      investigation_step_status: ["running", "done", "error"],
       metric_direction: ["above", "below"],
       metric_operation: ["ratio", "value"],
       metric_severity: ["critical", "high", "medium", "low"],
@@ -2354,7 +2596,7 @@ export const Constants = {
       risk_level: ["high", "medium", "low"],
       store_connection_status: [
         "pending",
-        "importing",
+        "syncing",
         "connected",
         "error",
         "disconnected",
