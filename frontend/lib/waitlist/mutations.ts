@@ -15,6 +15,10 @@ export async function insertWaitlistSignup(email: string): Promise<WaitlistInser
     .eq("email", normalized)
     .maybeSingle();
 
+  if (existing.error) {
+    throw new Error(existing.error.message);
+  }
+
   if (existing.data) {
     if (existing.data.confirmed_at) {
       return { status: "exists_confirmed" };
@@ -48,6 +52,10 @@ export async function confirmWaitlistSignup(token: string): Promise<"confirmed" 
     .select("id, confirmed_at, email")
     .eq("confirmation_token", token)
     .maybeSingle();
+
+  if (row.error) {
+    throw new Error(row.error.message);
+  }
 
   if (!row.data) {
     return "invalid";

@@ -36,5 +36,5 @@ lib/api/
 ## Conventions
 
 - Mutations throw `ApiError` (or `Error`) on failure — hooks rely on `useMutation` `onError`.
-- Prefer typed exported functions (`getIncidentDetail`, `patchIncidentStatus`) over leaking raw `$fetch`.
+- Prefer typed exported functions (`getIncidentDetail`, `approveIncidentActions`) over leaking raw `$fetch`.
 - Match route handler JSON shapes exactly; validate outputs with Zod when schemas exist.

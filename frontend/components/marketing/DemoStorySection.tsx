@@ -1,3 +1,10 @@
+import { MARKETING_HERO_INCIDENTS } from "@/components/marketing/fixtures/demo-data";
+import { ConfidenceBar } from "@/components/ui/confidence-bar";
+import { ImpactTag } from "@/components/ui/ImpactTag";
+import { SectionLabel } from "@/components/ui/section-label";
+import { SeverityBadge } from "@/components/ui/SeverityBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+
 const BULLETS = [
   "Sizing-driven return crisis on Court Trainer — cold Meta traffic amplifying misfit buys.",
   "UK11/UK12 stockouts downstream as returns flooded the warehouse loop.",
@@ -5,33 +12,45 @@ const BULLETS = [
 ] as const;
 
 export function DemoStorySection() {
+  const incident = MARKETING_HERO_INCIDENTS[0];
+
   return (
-    <section className="py-24">
+    <section className="border-b border-border py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-2xl border border-sev-criticalBd bg-sev-criticalBg/30 p-8 sm:p-10">
-          <div
-            aria-hidden
-            className="absolute -right-8 -top-8 size-32 rotate-12 border border-sev-critical/20 bg-sev-critical/5"
-          />
-          <p className="text-xs font-medium uppercase tracking-wider text-sev-critical">
-            Demo narrative
-          </p>
-          <h2 className="mt-2 text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
-            Court Trainer Return Spike
+        <article className="rounded-lg border border-sev-criticalBd bg-sev-criticalBg/15 p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <SectionLabel className="text-sev-critical">Demo incident</SectionLabel>
+            <SeverityBadge severity={incident.severity} />
+            <StatusBadge status={incident.status} />
+          </div>
+
+          <h2 className="mt-3 text-balance text-xl font-semibold tracking-tight sm:text-2xl">
+            {incident.title}
           </h2>
-          <p className="mt-4 max-w-2xl text-muted-foreground">
-            A real incident from the Pretty Fly demo dataset — seeded with agent findings and
-            proposed fixes judges can walk through in five minutes.
-          </p>
-          <ul className="mt-6 space-y-3">
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <ImpactTag amount={incident.impact_amount} label={incident.impact_label} />
+            <span className="font-mono text-xs text-muted-foreground tabnum">
+              opened {new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-6, "hour")}
+            </span>
+          </div>
+
+          {incident.root_cause ? (
+            <p className="mt-4 max-w-2xl text-sm text-muted-foreground">{incident.root_cause}</p>
+          ) : null}
+
+          {incident.root_cause_confidence != null ? (
+            <ConfidenceBar value={incident.root_cause_confidence} className="mt-4 max-w-sm" />
+          ) : null}
+
+          <ul className="mt-6 space-y-2 border-t border-sev-criticalBd/60 pt-6">
             {BULLETS.map((bullet) => (
-              <li key={bullet} className="flex gap-3 text-sm sm:text-base">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              <li key={bullet} className="text-sm text-muted-foreground">
                 {bullet}
               </li>
             ))}
           </ul>
-        </div>
+        </article>
       </div>
     </section>
   );

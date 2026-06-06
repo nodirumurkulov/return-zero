@@ -1,9 +1,10 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { HugoMark } from "@/components/layout/BrandLogo";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,16 +19,22 @@ export function MarketingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <nav aria-label="Marketing" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
+      <nav
+        aria-label="Marketing"
+        className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6"
+      >
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <Image src="/catLogo.png" alt="" width={32} height={32} className="rounded-lg shadow-card" />
-          <span className="text-sm font-semibold tracking-tight" translate="no">
-            Hugo
-          </span>
+          <HugoMark size={28} />
+          <div className="min-w-0 leading-tight">
+            <p className="text-[15px] font-semibold tracking-tight" translate="no">
+              Hugo
+            </p>
+            <p className="text-[11px] text-muted-foreground">Commerce IR</p>
+          </div>
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
@@ -42,28 +49,32 @@ export function MarketingNav() {
           ))}
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Button variant="outline" size="sm" asChild>
-            <Link href="/sign-in">Sign In</Link>
+            <Link href="/sign-in">Sign in</Link>
           </Button>
         </div>
 
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          onClick={() => {
-            setOpen((value) => !value);
-          }}
-        >
-          {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => {
+              setOpen((value) => !value);
+            }}
+          >
+            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          </button>
+        </div>
       </nav>
 
       <div
         className={cn(
-          "border-t border-border/60 bg-background/95 px-4 py-4 md:hidden",
+          "border-t border-border bg-background px-4 py-4 md:hidden",
           open ? "block" : "hidden",
         )}
       >
@@ -83,7 +94,7 @@ export function MarketingNav() {
           ))}
           <li className="pt-2">
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/sign-in">Sign In</Link>
+              <Link href="/sign-in">Sign in</Link>
             </Button>
           </li>
         </ul>
