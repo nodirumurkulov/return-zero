@@ -570,9 +570,9 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
       <span class="hero-tag"><span class="pip">CRITICAL</span> Return rate +9.2pts on Court Trainer</span>
       <h1 class="hero-title">Every KPI breach is an <span class="grad">incident.</span><br />Hugo runs the response.</h1>
       <form class="hero-form js-waitlist" id="wl-form-hero" novalidate>
-        <input type="email" class="wl-email" placeholder="you@yourbrand.com" required aria-label="Work email" />
+        <input type="email" class="wl-email" placeholder="you@yourbrand.com" required aria-label="Email address" />
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field" />
-        <button class="btn btn-primary btn-lg" type="submit">Join waitlist <svg class="arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="btn btn-primary btn-lg" type="submit">Join the waitlist <svg class="arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
       <div class="hero-success js-waitlist-success">✓ You're on the list — check your inbox to confirm.</div>
       <div class="hero-error js-waitlist-error">Something went wrong — please try again.</div>
@@ -892,7 +892,16 @@ export function HugoLanding() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, website: honeypot?.value ?? "" }),
         });
-        if (!response.ok) throw new Error("request failed");
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          pricingToken?: string;
+        };
+        if (!response.ok) throw new Error(data.error ?? "request failed");
+        // New signups get a pricing-negotiation token → open the pricing chat.
+        if (data.pricingToken) {
+          window.location.assign(`/waitlist/pricing?token=${data.pricingToken}`);
+          return;
+        }
         form.style.display = "none";
         if (success) success.style.display = "block";
       } catch {

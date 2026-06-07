@@ -9,8 +9,8 @@ test.describe("public routes", () => {
 
   test("landing page loads for unauthenticated visitors", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Incident.io");
-    await expect(page.getByRole("heading", { name: "Join the waitlist" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Hugo runs the response");
+    await expect(page.getByRole("button", { name: "Join the waitlist" })).toBeVisible();
   });
 
   test("sign-up shows waitlist gate", async ({ page }) => {
