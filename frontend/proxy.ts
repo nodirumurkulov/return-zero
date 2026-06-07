@@ -11,6 +11,7 @@ const PUBLIC_PREFIXES = [
   "/sign-up",
   "/auth/callback",
   "/api/waitlist",
+  "/api/waitlist/confirm",
   "/api/waitlist/pricing",
   "/waitlist/pricing",
   "/api/slack/webhook",

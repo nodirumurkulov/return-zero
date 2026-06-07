@@ -35,7 +35,7 @@ test.describe("waitlist pricing negotiation", () => {
     expect(openingMessages.data?.some((row) => row.role === "assistant")).toBe(true);
   });
 
-  test("persists user messages and saves agreed price for Stripe", async ({ page, admin, request }) => {
+  test("persists user messages and saves agreed price on waitlist_signups", async ({ page, admin, request }) => {
     const email = `pricing-deal-${Date.now()}@example.test`;
 
     const waitlistResponse = await request.post("/api/waitlist", {

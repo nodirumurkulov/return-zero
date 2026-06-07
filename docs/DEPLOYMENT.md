@@ -84,6 +84,8 @@ Uses [Vercel AI SDK](https://sdk.vercel.ai/) (`ToolLoopAgent` + `@ai-sdk/openai`
 
 Verify your domain in [Resend](https://resend.com) before production. Confirmation links use `NEXT_PUBLIC_APP_URL`.
 
+**Waitlist pricing chat** (`/waitlist/pricing`) requires migration `023_waitlist_pricing` on production (`negotiation_*` columns on `waitlist_signups`, `waitlist_pricing_messages` table). Agreed prices are stored on `waitlist_signups` after AI negotiation — there is no Stripe or payment checkout in this flow. If signup redirects to pricing chat but shows "Invalid link", check that migration 023 is applied and `SUPABASE_SERVICE_ROLE_KEY` is set on Vercel.
+
 ---
 
 ## 3. Scheduler / cron (Vercel Cron)

@@ -26,6 +26,11 @@ export type PricingSession = {
   messages: PricingMessage[];
 };
 
+export type PricingSessionLookup =
+  | { status: "found"; session: PricingSession }
+  | { status: "not_found" }
+  | { status: "error"; message: string };
+
 export async function getPricingSignupByToken(token: string): Promise<WaitlistPricingSignup | null> {
   const supabase = createAdminClient();
   const row = await supabase
@@ -43,26 +48,40 @@ export async function getPricingSignupByToken(token: string): Promise<WaitlistPr
   return row.data;
 }
 
-export async function getPricingSession(token: string): Promise<PricingSession | null> {
-  const signup = await getPricingSignupByToken(token);
-  if (!signup) {
-    return null;
+export async function lookupPricingSession(token: string): Promise<PricingSessionLookup> {
+  const signupResult = await getPricingSignupByToken(token).then(
+    (signup) => ({ ok: true as const, signup }),
+    (error: unknown) => ({
+      ok: false as const,
+      message: error instanceof Error ? error.message : "unknown error",
+    }),
+  );
+
+  if (!signupResult.ok) {
+    return { status: "error", message: signupResult.message };
+  }
+
+  if (!signupResult.signup) {
+    return { status: "not_found" };
   }
 
   const supabase = createAdminClient();
   const messagesResult = await supabase
     .from("waitlist_pricing_messages")
     .select("id, role, content, created_at")
-    .eq("waitlist_signup_id", signup.id)
+    .eq("waitlist_signup_id", signupResult.signup.id)
     .order("created_at", { ascending: true });
 
   if (messagesResult.error) {
-    throw new Error(messagesResult.error.message);
+    return { status: "error", message: messagesResult.error.message };
   }
 
   return {
-    signup,
-    messages: messagesResult.data,
+    status: "found",
+    session: {
+      signup: signupResult.signup,
+      messages: messagesResult.data,
+    },
   };
 }
 
