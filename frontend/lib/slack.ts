@@ -46,6 +46,19 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+function summarizeForSlack(text: string): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const firstSentence = normalized.match(/^.*?(?:[.!?](?=\s|$)|$)/)?.[0]?.trim() ?? normalized;
+  const mainClause = firstSentence.split(/\s+(?:but|because)\s+/i)[0]?.trim() ?? firstSentence;
+  if (mainClause.length >= 24) return mainClause;
+  if (firstSentence.length <= 150) return firstSentence;
+  return `${firstSentence.slice(0, 147).trimEnd()}...`;
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /** Block Kit payload for an incident notification card. */
 export function buildIncidentNotificationBlocks(payload: SlackIncidentPayload): object[] {
   const emoji = severityEmoji(payload.severity);
@@ -53,11 +66,7 @@ export function buildIncidentNotificationBlocks(payload: SlackIncidentPayload): 
     ? `${formatCurrency(payload.impact_amount)} ${payload.impact_label ?? ""}`
     : "Calculating…";
 
-  const actionLines = payload.actions
-    ?.map((a, i) =>
-      `${i + 1}. ${a.title} ${a.auto_deploy ? "[Auto-deploys]" : `[Risk: ${a.risk_level}]`}`,
-    )
-    .join("\n") ?? "Investigating…";
+  const actionCount = payload.actions?.length ?? 0;
 
   const showApproveButton =
     payload.status === "fix_proposed" && (payload.actions?.length ?? 0) > 0;
@@ -87,7 +96,7 @@ export function buildIncidentNotificationBlocks(payload: SlackIncidentPayload): 
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Root Cause:*\n${payload.root_cause}`,
+            text: `*Likely issue:*\n${summarizeForSlack(payload.root_cause)}`,
           },
         }]
       : []),
@@ -96,7 +105,11 @@ export function buildIncidentNotificationBlocks(payload: SlackIncidentPayload): 
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Proposed Actions:*\n${actionLines}`,
+            text: `*Fixes:*\n${pluralize(
+              actionCount,
+              "proposed fix",
+              "proposed fixes",
+            )} ready for review in the app.`,
           },
         }]
       : payload.status === "monitoring"
