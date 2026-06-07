@@ -176,6 +176,9 @@ const LANDING_CSS = `@import url('https://fonts.googleapis.com/css2?family=Brico
   .hero-form input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-100); }
   .hero-form .btn { white-space: nowrap; }
   .hero-success { margin-top: 14px; font-size: 14.5px; font-weight: 600; color: var(--sev-green); display: none; }
+  .hero-error { margin-top: 14px; font-size: 14px; font-weight: 600; color: var(--sev-critical); display: none; }
+  /* visually-hidden spam honeypot */
+  .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
   /* lighter-blue clickable pillar cards */
   .pillars { margin-top: 38px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 560px; }
@@ -398,6 +401,7 @@ const LANDING_CSS = `@import url('https://fonts.googleapis.com/css2?family=Brico
   .waitlist-form .btn:hover { background: #eef4ff; transform: translateY(-1px); }
   .cta-note { margin-top: 16px; font-size: 13.5px; color: rgba(255,255,255,.75); }
   #wl-success { margin-top: 18px; font-size: 15px; font-weight: 600; color: #fff; display: none; }
+  .cta-error { margin-top: 18px; font-size: 15px; font-weight: 600; color: #ffe3e0; display: none; }
 
   /* ---------- Footer ---------- */
   footer { padding: 56px 0 44px; border-top: 1px solid var(--line); margin-top: 96px; }
@@ -567,9 +571,11 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
       <h1 class="hero-title">Every KPI breach is an <span class="grad">incident.</span><br />Hugo runs the response.</h1>
       <form class="hero-form js-waitlist" id="wl-form-hero" novalidate>
         <input type="email" class="wl-email" placeholder="you@yourbrand.com" required aria-label="Work email" />
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field" />
         <button class="btn btn-primary btn-lg" type="submit">Join waitlist <svg class="arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
-      <div class="hero-success js-waitlist-success">✓ You're on the list — we'll be in touch shortly.</div>
+      <div class="hero-success js-waitlist-success">✓ You're on the list — check your inbox to confirm.</div>
+      <div class="hero-error js-waitlist-error">Something went wrong — please try again.</div>
       <div class="hero-note"><span class="dot"></span>Free during private beta · No card required · <a href="#how">See how it works</a></div>
 
     </div>
@@ -802,10 +808,12 @@ const LANDING_HTML = `<!-- ============ NAV ============ -->
         <p>Join the private beta and get early-access pricing locked for life.</p>
         <form class="waitlist-form js-waitlist" id="wl-form" novalidate>
           <input type="email" id="wl-email" placeholder="you@yourbrand.com" required aria-label="Work email" />
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field" />
           <button class="btn btn-lg" type="submit">Join waitlist</button>
         </form>
         <div class="cta-note">Free during private beta · No card required · One read-only connection</div>
-        <div id="wl-success" class="js-waitlist-success">✓ You're on the list — we'll be in touch shortly.</div>
+        <div id="wl-success" class="js-waitlist-success">✓ You're on the list — check your inbox to confirm.</div>
+        <div class="cta-error js-waitlist-error">Something went wrong — please try again.</div>
       </div>
     </div>
   </div>
@@ -854,19 +862,50 @@ export function HugoLanding() {
       io.observe(el);
     });
 
-    // Both the hero email box and the bottom CTA share this handler.
+    // Both the hero email box and the bottom CTA submit to the real
+    // /api/waitlist endpoint (insert + double opt-in email), sharing one handler.
     const waitlistForms = Array.from(
       document.querySelectorAll<HTMLFormElement>("form.js-waitlist"),
     );
-    const onSubmit = (event: Event) => {
+    const handleWaitlistSubmit = async (event: Event) => {
       event.preventDefault();
       const form = event.currentTarget as HTMLFormElement;
       const input = form.querySelector<HTMLInputElement>('input[type="email"]');
-      if (!input || !input.value.trim()) return;
-      form.style.display = "none";
-      const success =
-        form.parentElement?.querySelector<HTMLElement>(".js-waitlist-success");
-      if (success) success.style.display = "block";
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const honeypot = form.querySelector<HTMLInputElement>('input[name="website"]');
+      const email = input?.value.trim();
+      if (!input || !email) return;
+
+      const success = form.parentElement?.querySelector<HTMLElement>(".js-waitlist-success");
+      const error = form.parentElement?.querySelector<HTMLElement>(".js-waitlist-error");
+      if (error) error.style.display = "none";
+
+      const originalLabel = button?.innerHTML ?? "";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Joining…";
+      }
+
+      try {
+        const response = await fetch("/api/waitlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, website: honeypot?.value ?? "" }),
+        });
+        if (!response.ok) throw new Error("request failed");
+        form.style.display = "none";
+        if (success) success.style.display = "block";
+      } catch {
+        if (button) {
+          button.disabled = false;
+          button.innerHTML = originalLabel;
+        }
+        if (error) error.style.display = "block";
+      }
+    };
+    // addEventListener expects a void-returning handler, so wrap the async work.
+    const onSubmit = (event: Event) => {
+      void handleWaitlistSubmit(event);
     };
     waitlistForms.forEach((form) => form.addEventListener("submit", onSubmit));
 
