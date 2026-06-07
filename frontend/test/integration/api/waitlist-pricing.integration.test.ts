@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { getPricingSessionMock, runPricingNegotiationTurnMock } = vi.hoisted(() => ({
-  getPricingSessionMock: vi.fn(),
+const { lookupPricingSessionMock, runPricingNegotiationTurnMock } = vi.hoisted(() => ({
+  lookupPricingSessionMock: vi.fn(),
   runPricingNegotiationTurnMock: vi.fn(),
 }));
 
@@ -12,7 +12,7 @@ vi.mock("@/lib/waitlist-pricing", async () => {
   const actual = await vi.importActual("@/lib/waitlist-pricing");
   return {
     ...actual,
-    getPricingSession: getPricingSessionMock,
+    lookupPricingSession: lookupPricingSessionMock,
     runPricingNegotiationTurn: runPricingNegotiationTurnMock,
   };
 });
@@ -39,19 +39,22 @@ describe("POST /api/waitlist/pricing/chat", () => {
   });
 
   it("returns 409 when negotiation is closed", async () => {
-    getPricingSessionMock.mockResolvedValue({
-      signup: {
-        id: "signup-1",
-        email: "lead@example.test",
-        confirmation_token: TOKEN,
-        confirmed_at: new Date().toISOString(),
-        negotiation_status: "accepted",
-        selected_tier: "teams",
-        offered_price_cents: 39_900,
-        agreed_price_cents: 39_900,
-        negotiation_completed_at: new Date().toISOString(),
+    lookupPricingSessionMock.mockResolvedValue({
+      status: "found",
+      session: {
+        signup: {
+          id: "signup-1",
+          email: "lead@example.test",
+          confirmation_token: TOKEN,
+          confirmed_at: new Date().toISOString(),
+          negotiation_status: "accepted",
+          selected_tier: "teams",
+          offered_price_cents: 39_900,
+          agreed_price_cents: 39_900,
+          negotiation_completed_at: new Date().toISOString(),
+        },
+        messages: [],
       },
-      messages: [],
     });
 
     const res = await POST(
@@ -69,19 +72,22 @@ describe("POST /api/waitlist/pricing/chat", () => {
   });
 
   it("delegates open negotiations to the agent stream", async () => {
-    getPricingSessionMock.mockResolvedValue({
-      signup: {
-        id: "signup-1",
-        email: "lead@example.test",
-        confirmation_token: TOKEN,
-        confirmed_at: null,
-        negotiation_status: "in_progress",
-        selected_tier: null,
-        offered_price_cents: null,
-        agreed_price_cents: null,
-        negotiation_completed_at: null,
+    lookupPricingSessionMock.mockResolvedValue({
+      status: "found",
+      session: {
+        signup: {
+          id: "signup-1",
+          email: "lead@example.test",
+          confirmation_token: TOKEN,
+          confirmed_at: null,
+          negotiation_status: "in_progress",
+          selected_tier: null,
+          offered_price_cents: null,
+          agreed_price_cents: null,
+          negotiation_completed_at: null,
+        },
+        messages: [],
       },
-      messages: [],
     });
 
     runPricingNegotiationTurnMock.mockResolvedValue({

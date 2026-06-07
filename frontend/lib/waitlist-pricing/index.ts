@@ -8,7 +8,7 @@ export {
   updateCurrentOffer,
 } from "./mutations";
 export { notifyNegotiationAccepted, notifyNegotiationDeclined } from "./notify";
-export { getPricingSession, getPricingSignupByToken, maskEmail, type PricingMessage, type PricingSession } from "./queries";
+export { lookupPricingSession, getPricingSignupByToken, maskEmail, type PricingMessage, type PricingSession, type PricingSessionLookup } from "./queries";
 export {
   negotiationStatusSchema,
   pricingChatBodySchema,
