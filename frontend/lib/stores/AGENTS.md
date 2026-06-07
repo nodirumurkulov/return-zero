@@ -42,6 +42,7 @@ await store.import.run({ organizationId, platform: "mock_csv" });
 | `incidents/` | `Incidents` — KPI breach detect, CRUD, approve |
 | `search/` | `Search` — global search targets |
 | `import/` | `Import` — platform loaders |
+| `connection/` | `StoreConnectionDomain` — connect, sync (Shopify via `@/lib/shopify/server`) |
 | `metrics/` | Internal KPI engine (used by catalog + incidents) |
 
 ## Commands

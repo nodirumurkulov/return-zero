@@ -31,8 +31,11 @@ if (!parsed.success) {
 | `POST /api/investigate` | `hugo/investigate-incident` |
 | `POST /api/stores/incidents/[id]/approve` | `getStore().incidents.approveAndNotify` |
 | `PATCH /api/stores/incidents/[id]` | `getStore().incidents.update` |
+| `GET /api/shopify/auth` | `@/lib/shopify/server` OAuth redirect |
+| `GET /api/shopify/callback` | `getStore().connection.connectShopify` + `import.runBackgroundImport` |
 | `POST /api/slack/webhook` | `slack.parseSlackInteractionPayload` |
 | `POST /api/slack/events` | `slack` + `hugo.handleHugoMention` |
+| `POST /api/waitlist/pricing/chat` | `waitlist-pricing` streaming negotiation agent |
 
 Scheduler routes call `assertCronAuthorized` from `@/lib/cron-auth` (`CRON_SECRET` required in production).
 

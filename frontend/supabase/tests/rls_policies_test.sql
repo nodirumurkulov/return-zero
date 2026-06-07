@@ -237,6 +237,32 @@ do $$ begin
     raise notice 'PASS: reset_store_data denied for authenticated';
   end;
 end $$;
+
+\echo '== authenticated: store_connection_secrets denied =='
+do $$ begin
+  begin
+    insert into public.store_connection_secrets (store_id, access_token, scopes)
+    values (
+      (select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1),
+      'secret-token',
+      'read_products'
+    );
+    raise exception 'FAIL: authenticated inserted store_connection_secrets';
+  exception when insufficient_privilege then
+    raise notice 'PASS: authenticated insert into store_connection_secrets denied';
+  end;
+
+  begin
+    perform 1
+    from public.store_connection_secrets
+    where store_id = (
+      select id from public.store_connections where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111' limit 1
+    );
+    raise exception 'FAIL: authenticated read store_connection_secrets';
+  exception when insufficient_privilege then
+    raise notice 'PASS: authenticated select from store_connection_secrets denied';
+  end;
+end $$;
 reset role;
 
 \echo 'ALL RLS CHECKS PASSED'

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Incident } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
 import {
+  buildDeepProductContext,
   buildInventoryContext,
   buildOpenIncidentsContext,
   buildThreadTranscript,
@@ -11,14 +12,21 @@ import {
   resolveIncident,
   resolveThreadIncidentReference,
   wantsCatalog,
+  wantsDeepProductContext,
   wantsInventory,
+  wantsMarketing,
+  wantsReturns,
+  wantsSupport,
 } from "./context";
 
-const { listMock } = vi.hoisted(() => ({ listMock: vi.fn() }));
+const { getDetailMock, listMock } = vi.hoisted(() => ({
+  getDetailMock: vi.fn(),
+  listMock: vi.fn(),
+}));
 
 vi.mock("@/lib/stores/server", () => ({
   getStore: vi.fn(() => ({
-    incidents: { list: listMock },
+    incidents: { getDetail: getDetailMock, list: listMock },
     catalog: {
       list: vi.fn(),
       health: vi.fn(),
@@ -77,6 +85,14 @@ describe("hugo context helpers", () => {
   it("wantsCatalog detects KPI-related prompts", () => {
     expect(wantsCatalog("show me catalog health")).toBe(true);
     expect(wantsCatalog("hello hugo")).toBe(false);
+  });
+
+  it("detects deep product context prompts", () => {
+    expect(wantsReturns("why are returns up on this product?")).toBe(true);
+    expect(wantsMarketing("is ROAS down because of ads?")).toBe(true);
+    expect(wantsSupport("any support tickets about sizing?")).toBe(true);
+    expect(wantsDeepProductContext("why are refunds and support tickets up?")).toBe(true);
+    expect(wantsDeepProductContext("hello hugo")).toBe(false);
   });
 
   it("resolveIncident returns single open match when reference empty", async () => {
@@ -232,11 +248,98 @@ describe("buildInventoryContext", () => {
     );
 
     expect(ctx).toContain("3 products; 1 out of stock, 1 need reorder");
-    expect(ctx).toContain("Hoodie (aaaaaaaa): 10 units in stock, ~5.0 units/day, ~2d to stockout — reorder urgent");
+    expect(ctx).toContain(
+      "Hoodie (aaaaaaaa): 10 units in stock, ~5.0 units/day, ~2d to stockout — reorder urgent",
+    );
     expect(ctx).toContain("Cap (bbbbbbbb): 0 units in stock");
     expect(ctx).toContain("OUT OF STOCK");
     expect(ctx).toContain("Socks (cccccccc): 1000 units in stock");
     expect(ctx.indexOf("Cap")).toBeLessThan(ctx.indexOf("Hoodie"));
     expect(ctx.indexOf("Hoodie")).toBeLessThan(ctx.indexOf("Socks"));
+  });
+});
+
+describe("buildDeepProductContext", () => {
+  beforeEach(() => {
+    getDetailMock.mockReset();
+  });
+
+  it("returns nothing when no incident product is referenced", async () => {
+    getDetailMock.mockResolvedValue({ incident: incident({ product_id: null }) });
+
+    await expect(
+      buildDeepProductContext(supabase, scope, "inc-1"),
+    ).resolves.toBeNull();
+  });
+
+  it("formats returns, marketing, and support context for an incident product", async () => {
+    getDetailMock.mockResolvedValue({
+      incident: incident({ id: "inc-1", product_id: "prod-1" }),
+    });
+    const ctxSupabase = {
+      rpc: vi.fn(() => ({
+        range: vi.fn(() =>
+          Promise.resolve({
+            data: [
+              {
+                product_id: "prod-1",
+                month: "2024-01-01",
+                units: 10,
+                revenue: 1000,
+                refund_amount: 100,
+                refund_count: 2,
+                ad_spend: 200,
+                ad_revenue: 600,
+              },
+              {
+                product_id: "prod-1",
+                month: "2024-02-01",
+                units: 8,
+                revenue: 800,
+                refund_amount: 160,
+                refund_count: 4,
+                ad_spend: 300,
+                ad_revenue: 450,
+              },
+            ],
+            error: null,
+          }),
+        ),
+      })),
+      from: vi.fn((table: string) => {
+        const builder = {
+          select: vi.fn(() => builder),
+          eq: vi.fn(() => builder),
+          single: vi.fn(() =>
+            Promise.resolve({ data: { default_threshold: 1.5 }, error: null }),
+          ),
+          limit: vi.fn(() => {
+            if (table === "support_tickets") {
+              return Promise.resolve({
+                data: [
+                  {
+                    subject: "Sizing issue",
+                    status: "open",
+                    priority: "high",
+                    category: "returns",
+                  },
+                ],
+                error: null,
+              });
+            }
+            return Promise.resolve({ data: [], error: null });
+          }),
+        };
+        return builder;
+      }),
+    } as unknown as SupabaseClient<Database>;
+
+    const context = await buildDeepProductContext(ctxSupabase, scope, "inc-1");
+
+    expect(context).toContain("Deep product context");
+    expect(context).toContain("refund rate 20.0%");
+    expect(context).toContain("ROAS 1.50");
+    expect(context).toContain("support tickets");
+    expect(context).toContain("Sizing issue");
   });
 });

@@ -70,11 +70,7 @@ export class Import {
         return await this.runMockBackgroundImport(opts);
       }
 
-      const results = await this.shopifyLoader.load(this.supabase, opts.scope, opts.source, {
-        replace: opts.replace ?? true,
-      });
-      await this.markStoreConnected(opts.scope, opts.platform);
-      return { results, success: results.every((result) => !result.error) };
+      return await this.runShopifyBackgroundImport(opts);
     } catch (err) {
       await this.markStoreError(opts.scope);
       throw err;
@@ -135,6 +131,26 @@ export class Import {
       source,
       maps,
     );
+
+    const results = [...catalogResults, ...commerceResults];
+    const success = results.every((result) => !result.error);
+    return { results, success };
+  }
+
+  private async runShopifyBackgroundImport(opts: ImportRunOpts): Promise<ImportRunResult> {
+    const { catalogResults, commerceResults } = await this.shopifyLoader.loadPhased(
+      this.supabase,
+      opts.scope,
+      { replace: opts.replace ?? false },
+    );
+
+    const catalogSuccess = catalogResults.every((result) => !result.error);
+    if (!catalogSuccess) {
+      await this.markStoreError(opts.scope);
+      return { results: catalogResults, success: false };
+    }
+
+    await this.markStoreConnected(opts.scope, "shopify");
 
     const results = [...catalogResults, ...commerceResults];
     const success = results.every((result) => !result.error);

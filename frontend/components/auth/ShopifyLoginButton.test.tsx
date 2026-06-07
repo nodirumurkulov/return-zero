@@ -3,20 +3,21 @@ import ShopifyLoginButton from "@/components/auth/ShopifyLoginButton";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
 describe("ShopifyLoginButton", () => {
-  it("renders the Shopify login button without a notice", () => {
+  it("renders shop input and submit button", () => {
     renderWithProviders(<ShopifyLoginButton />);
-    const button = screen.getByRole("button", { name: /continue with shopify/i });
 
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute("type", "button");
-    expect(screen.queryByText(/shopify login is coming soon/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/shopify store/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /continue with shopify/i })).toHaveAttribute(
+      "type",
+      "submit",
+    );
   });
 
-  it("reveals the Shopify placeholder notice on click", async () => {
+  it("shows validation error for empty shop handle", async () => {
     const { user } = renderWithProviders(<ShopifyLoginButton />);
 
     await user.click(screen.getByRole("button", { name: /continue with shopify/i }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Shopify login is coming soon.");
+    expect(screen.getByText(/enter your shopify store handle/i)).toBeInTheDocument();
   });
 });

@@ -6,9 +6,13 @@ export * from "./schemas";
 export type {
   ConnectOutcome,
   ConnectResult,
+  ConnectShopifyOpts,
+  ConnectShopifyResult,
   ConnectStoreBody,
   ConnectionConnectOpts,
+  ConnectionListOpts,
   ConnectionSnapshotOpts,
+  StoreConnectionListItem,
   StoreConnectionPhase,
   StoreConnectionResponse,
   StoreConnectionSnapshot,

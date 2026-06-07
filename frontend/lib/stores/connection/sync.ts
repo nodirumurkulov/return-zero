@@ -94,15 +94,24 @@ async function runShopifySync(
   opts: RunStoreSyncOpts,
 ): Promise<boolean> {
   const loader = new ShopifyImportLoader();
-  const results = await loader.load(supabase, opts.scope, opts.source, {
+  const { catalogResults, commerceResults } = await loader.loadPhased(supabase, opts.scope, {
     replace: opts.replace ?? true,
   });
+
+  if (!catalogResults.every((result) => !result.error)) {
+    await markStoreError(supabase, opts.scope);
+    return false;
+  }
+
+  await markStoreConnected(supabase, opts.scope, "shopify");
+
+  const results = [...catalogResults, ...commerceResults];
   const success = results.every((result) => !result.error);
   if (!success) {
     await markStoreError(supabase, opts.scope);
     return false;
   }
-  await markStoreConnected(supabase, opts.scope, "shopify");
+
   return true;
 }
 

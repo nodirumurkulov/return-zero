@@ -3,8 +3,11 @@ import { sendWaitlistWelcome } from "@/lib/email/send-waitlist";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmWaitlistSignup, markWelcomeSent } from "@/lib/waitlist/mutations";
 
-function redirectUrl(status: string): URL {
+function redirectUrl(status: string, token?: string): URL {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  if (status === "confirmed" && token) {
+    return new URL(`/waitlist/pricing?token=${token}`, base);
+  }
   return new URL(`/?waitlist=${status}#waitlist`, base);
 }
 
@@ -22,7 +25,7 @@ export async function GET(req: Request) {
   }
 
   if (result === "already") {
-    return NextResponse.redirect(redirectUrl("already"));
+    return NextResponse.redirect(redirectUrl("confirmed", token));
   }
 
   const supabase = createAdminClient();
@@ -33,9 +36,9 @@ export async function GET(req: Request) {
     .maybeSingle();
 
   if (row.data && !row.data.welcome_sent_at) {
-    await sendWaitlistWelcome(row.data.email).catch(() => undefined);
+    await sendWaitlistWelcome(row.data.email, token).catch(() => undefined);
     await markWelcomeSent(row.data.email).catch(() => undefined);
   }
 
-  return NextResponse.redirect(redirectUrl("confirmed"));
+  return NextResponse.redirect(redirectUrl("confirmed", token));
 }

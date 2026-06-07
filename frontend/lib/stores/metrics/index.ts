@@ -17,6 +17,13 @@ export type {
 export { getSourceFacts, type ProductSourceFacts, type SourceFactsOpts } from "./source-facts";
 export { getMonthlySeries, getProductSeries, type MonthlyPoint, type SeriesOpts } from "./series";
 export {
+  formatProductDeepContext,
+  getProductDeepContext,
+  getProductMarketingContext,
+  type ProductDeepContext,
+  type ProductMarketingContext,
+} from "./context";
+export {
   confidenceFromN,
   confidenceInterval,
   isAnomalous,

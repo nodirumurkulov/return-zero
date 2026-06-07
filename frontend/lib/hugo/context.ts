@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SlackThreadMessage } from "@/lib/slack";
 import type { Incident, IncidentDetail } from "@/lib/stores";
+import { formatProductDeepContext, getProductDeepContext } from "@/lib/stores/metrics";
 import { getStore } from "@/lib/stores/server";
 import type { Database } from "@/lib/supabase/database.types";
 import type { StoreScope } from "@/lib/tenancy/types";
@@ -167,11 +168,57 @@ export function wantsCatalog(prompt: string): boolean {
   return CATALOG_KEYWORDS.test(prompt);
 }
 
+const RETURNS_KEYWORDS =
+  /\b(return|returns|refund|refunds|refund rate|refund amount|chargeback|chargebacks)\b/i;
+
+export function wantsReturns(prompt: string): boolean {
+  return RETURNS_KEYWORDS.test(prompt);
+}
+
+const MARKETING_KEYWORDS =
+  /\b(marketing|ads?|ad spend|roas|campaign|campaigns|meta|google ads|paid|conversion)\b/i;
+
+export function wantsMarketing(prompt: string): boolean {
+  return MARKETING_KEYWORDS.test(prompt);
+}
+
+const SUPPORT_KEYWORDS =
+  /\b(support|ticket|tickets|complaint|complaints|csat|sizing|customer service)\b/i;
+
+export function wantsSupport(prompt: string): boolean {
+  return SUPPORT_KEYWORDS.test(prompt);
+}
+
+const WHY_KEYWORDS = /\b(why|cause|driver|drivers|explain|because)\b/i;
+
+export function wantsDeepProductContext(prompt: string): boolean {
+  return (
+    wantsReturns(prompt) ||
+    wantsMarketing(prompt) ||
+    wantsSupport(prompt) ||
+    WHY_KEYWORDS.test(prompt)
+  );
+}
+
 const INVENTORY_KEYWORDS =
   /\b(stock|stocks|stockout|stocked|inventory|units?|in stock|out of stock|sold out|restock|reorder|running low|run out|stocks out|stocked out|days to stockout|on hand|supply|left)\b/i;
 
 export function wantsInventory(prompt: string): boolean {
   return INVENTORY_KEYWORDS.test(prompt);
+}
+
+export async function buildDeepProductContext(
+  supabase: SupabaseClient<Database>,
+  scope: StoreScope,
+  incidentId: string | null | undefined,
+): Promise<string | null> {
+  if (!incidentId) return null;
+
+  const detail = await getStore(supabase).incidents.getDetail({ id: incidentId, scope });
+  const productId = detail?.incident.product_id;
+  if (!productId) return null;
+
+  return formatProductDeepContext(await getProductDeepContext(supabase, scope, productId));
 }
 
 export function buildThreadTranscript(messages: SlackThreadMessage[]): string {

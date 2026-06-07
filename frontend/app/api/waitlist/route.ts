@@ -32,19 +32,20 @@ export async function POST(req: Request) {
   }
 
   const result = insertResult.result;
-
-  if (result.status === "exists_confirmed") {
-    return NextResponse.json({ ok: true, message: "already_confirmed" });
-  }
-
-  const token =
-    result.status === "created" || result.status === "exists_unconfirmed"
+  const pricingToken =
+    result.status === "created" ||
+    result.status === "exists_unconfirmed" ||
+    result.status === "exists_confirmed"
       ? result.confirmationToken
       : null;
 
-  if (token) {
-    await sendWaitlistConfirmation(parsed.data.email, token).catch(() => undefined);
+  if (result.status === "created" || result.status === "exists_unconfirmed") {
+    await sendWaitlistConfirmation(parsed.data.email, result.confirmationToken).catch(() => undefined);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    pricingToken,
+    alreadyConfirmed: result.status === "exists_confirmed",
+  });
 }

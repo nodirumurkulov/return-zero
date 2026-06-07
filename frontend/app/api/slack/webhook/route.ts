@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { runHugoRejectProposedActions, runHugoResolve } from "@/lib/hugo/actions";
 import { parseSlackInteractionPayload, verifySlackRequest } from "@/lib/slack";
+import { authorizeSlackAction, type SlackAction } from "@/lib/slack-auth/authorize";
 import { getStore } from "@/lib/stores/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { resolveOrganizationIdForSlackTeam , getTenancy } from "@/lib/tenancy/server";
+import { getTenancy, resolveOrganizationIdForSlackTeam } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
 
@@ -52,13 +53,25 @@ export async function POST(req: NextRequest) {
   }
 
   const incidentId = action.value;
-  const slackUser = payload.user?.name ?? "slack-user";
+  const slackUserId = payload.user?.id;
+  const slackUser = payload.user?.name ?? slackUserId ?? "slack-user";
 
   if (action.action_id === "cancel_hugo_action") {
     return NextResponse.json({ text: "Canceled. No changes were made." });
   }
 
   if (action.action_id === "confirm_hugo_resolve" || action.action_id === "confirm_hugo_reject") {
+    const slackAction: SlackAction =
+      action.action_id === "confirm_hugo_resolve" ? "resolve" : "reject";
+    const authorization = await authorizeSlackAction(supabase, {
+      organizationId,
+      slackUserId,
+      action: slackAction,
+    });
+    if (!authorization.allowed) {
+      return NextResponse.json({ text: authorization.reason }, { status: 403 });
+    }
+
     const store = getStore(supabase);
     const incident = await store.incidents.get({ id: incidentId, scope });
     if (!incident) {
@@ -74,6 +87,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (action.action_id === "approve_low_risk") {
+    const authorization = await authorizeSlackAction(supabase, {
+      organizationId,
+      slackUserId,
+      action: "approve",
+    });
+    if (!authorization.allowed) {
+      return NextResponse.json({ text: authorization.reason }, { status: 403 });
+    }
+
     const store = getStore(supabase);
     const incident = await store.incidents.get({ id: incidentId, scope });
     if (!incident) {

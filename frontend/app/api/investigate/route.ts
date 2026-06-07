@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { tryGetStoreScope } from "@/lib/tenancy/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   const raw: unknown = await req.json().catch(() => null);

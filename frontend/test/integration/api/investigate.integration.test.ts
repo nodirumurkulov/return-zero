@@ -28,7 +28,7 @@ vi.mock("@/lib/tenancy/server", () => ({
   tryGetStoreScope: vi.fn(),
 }));
 
-import { POST } from "@/app/api/investigate/route";
+import { maxDuration, POST } from "@/app/api/investigate/route";
 import { createClient } from "@/lib/supabase/server";
 import { tryGetStoreScope } from "@/lib/tenancy/server";
 
@@ -43,6 +43,10 @@ const PRODUCT_ID = "550e8400-e29b-41d4-a716-446655440002";
 describe("POST /api/investigate", () => {
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("allows long-running investigation persistence on Vercel", () => {
+    expect(maxDuration).toBe(300);
   });
 
   it("returns 400 for non-uuid incident_id", async () => {

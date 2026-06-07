@@ -13,8 +13,10 @@ Use the service role only when RLS cannot perform the write. Document new except
 | Route / module | Why admin |
 |----------------|-----------|
 | `POST /api/stores/import/[platform]` | Load platform data into contract tables after user auth |
+| `lib/shopify/secrets.ts` | `store_connection_secrets` is service_role only |
 | `POST /api/slack/webhook` | No Slack user session; HMAC-verified inbound |
 | `lib/hugo` | Slack @hugo bot; no session (see `hugo/AGENTS.md`) |
+| `lib/waitlist-pricing` + `/api/waitlist/pricing/*` | Post-waitlist pricing chat; token auth, no user session |
 | Cron schedulers (`detect`, `replay`) | `isCronInvocation()` only — valid `CRON_SECRET` header |
 
 ## Domain modules
@@ -30,7 +32,9 @@ Use the service role only when RLS cannot perform the write. Document new except
 | `api/` | `@/lib/api/*` | Client HTTP boundary (`@better-fetch/fetch`); see [api/AGENTS.md](api/AGENTS.md) |
 | `agents/` | `@/lib/agents` | `ToolLoopAgent` investigation (`LlmAgentFinding` ≠ DB `AgentFinding`); tools in `agents/tools/` |
 | `hugo/` | `@/lib/hugo` | `@hugo` Slack assistant: intent → chat / data Q&A / investigate / approve |
+| `waitlist-pricing/` | `@/lib/waitlist-pricing` | Post-waitlist pricing negotiation agent + guardrails |
 | `slack.ts` | `@/lib/slack` | Notifications + Slack payload Zod + Events transport |
+| `shopify/` | `@/lib/shopify`, `@/lib/shopify/server` | `@shopify/shopify-api` — OAuth, Admin client, `store_connection_secrets` |
 | `stores/` | `@/lib/stores`, `@/lib/stores/server` | `getStore`, domain facade (catalog, orders, import, …) |
 | `stores/import/` | internal | Platform import loaders |
 | `stores/catalog/` | via `@/lib/stores` | Metrics, thresholds, health |

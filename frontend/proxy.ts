@@ -11,8 +11,12 @@ const PUBLIC_PREFIXES = [
   "/sign-up",
   "/auth/callback",
   "/api/waitlist",
+  "/api/waitlist/pricing",
+  "/waitlist/pricing",
   "/api/slack/webhook",
   "/api/slack/events",
+  "/api/shopify/auth",
+  "/api/shopify/callback",
 ];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {

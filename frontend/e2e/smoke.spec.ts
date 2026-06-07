@@ -34,4 +34,9 @@ test.describe("public routes", () => {
     await page.goto("/blog");
     await expect(page.getByRole("heading", { level: 1, name: "Updates" })).toBeVisible();
   });
+
+  test("waitlist pricing page requires token", async ({ page }) => {
+    await page.goto("/waitlist/pricing");
+    await expect(page.getByRole("heading", { name: "Link required" })).toBeVisible();
+  });
 });

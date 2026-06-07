@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { ordersStoreMock, notifyNewMock } = vi.hoisted(() => ({
+const { ordersStoreMock, notifyNewMock, notifyRecoveryMock } = vi.hoisted(() => ({
+  notifyRecoveryMock: vi.fn(),
   ordersStoreMock: { advance: vi.fn(), reset: vi.fn() },
   notifyNewMock: vi.fn(),
 }));
@@ -11,7 +12,10 @@ const { ordersStoreMock, notifyNewMock } = vi.hoisted(() => ({
 vi.mock("@/lib/stores/server", () => ({
   getStore: vi.fn(() => ({
     orders: ordersStoreMock,
-    incidents: { notifyNew: notifyNewMock },
+    incidents: {
+      notifyNew: notifyNewMock,
+      advanceRecoveryAndNotify: notifyRecoveryMock,
+    },
   })),
 }));
 
@@ -53,6 +57,7 @@ describe("POST /api/stores/orders/advance", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "cron-test-secret");
     advanceMock.mockResolvedValue(advanceResult);
+    notifyRecoveryMock.mockResolvedValue({ advanced: 0, milestones: [] });
   });
 
   afterEach(() => {
@@ -115,5 +120,35 @@ describe("POST /api/stores/orders/advance", () => {
 
     expect(res.status).toBe(200);
     expect(notifyNewMock).toHaveBeenCalledWith("org-1", created);
+  });
+
+  it("advances monitoring recovery and returns milestone count", async () => {
+    notifyRecoveryMock.mockResolvedValue({
+      advanced: 1,
+      milestones: [{ incidentId: "inc-1", milestone: 50 }],
+    });
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/stores/orders/advance", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer cron-test-secret",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ advance_days: 7 }),
+      }),
+    );
+
+    const body = (await res.json()) as { recovered: number; recovery_milestones: number };
+    expect(res.status).toBe(200);
+    expect(notifyRecoveryMock).toHaveBeenCalledTimes(1);
+    const recoveryCall = notifyRecoveryMock.mock.calls[0]?.[0] as
+      | { appUrl: string; days: number; scope: { organizationId: string; storeId: string } }
+      | undefined;
+    expect(recoveryCall?.scope).toEqual({ organizationId: "org-1", storeId: "store-1" });
+    expect(recoveryCall?.days).toBe(7);
+    expect(recoveryCall?.appUrl).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):3000$/);
+    expect(body.recovered).toBe(1);
+    expect(body.recovery_milestones).toBe(1);
   });
 });

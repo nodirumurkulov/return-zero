@@ -80,6 +80,7 @@ Uses [Vercel AI SDK](https://sdk.vercel.ai/) (`ToolLoopAgent` + `@ai-sdk/openai`
 |----------|-------|----------|-------|
 | `RESEND_API_KEY` | server | optional | Sends waitlist confirmation + welcome emails; signups still persist without it |
 | `RESEND_FROM_EMAIL` | server | optional | Verified sender, e.g. `Hugo <onboarding@yourdomain.com>` |
+| `NEGOTIATION_OPS_EMAIL` | server | optional | Receives accepted/declined waitlist pricing deals from the post-confirm chat |
 
 Verify your domain in [Resend](https://resend.com) before production. Confirmation links use `NEXT_PUBLIC_APP_URL`.
 
