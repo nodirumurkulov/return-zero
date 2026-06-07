@@ -14,6 +14,28 @@ function incidentLink(id: string): string {
   return `${appUrl()}/incidents/${id}`;
 }
 
+function formatConfidence(value: number | null | undefined): string {
+  if (value == null) return "—";
+  const percent = value > 1 ? value : value * 100;
+  return `${Math.round(percent)}%`;
+}
+
+function summarizeForSlack(text: string | null | undefined): string {
+  const fallback = "Inconclusive. Review the full investigation in the app.";
+  const normalized = text?.replace(/\s+/g, " ").trim();
+  if (!normalized) return fallback;
+
+  const firstSentence = normalized.match(/^.*?(?:[.!?](?=\s|$)|$)/)?.[0]?.trim() ?? normalized;
+  const mainClause = firstSentence.split(/\s+(?:but|because)\s+/i)[0]?.trim() ?? firstSentence;
+  if (mainClause.length >= 24) return mainClause;
+  if (firstSentence.length <= 180) return firstSentence;
+  return `${firstSentence.slice(0, 177).trimEnd()}...`;
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /**
  * Run the AI investigation for an incident and return a Slack-ready summary.
  * Requires an affected product (the investigation is product-scoped).
@@ -33,16 +55,16 @@ export async function runHugoInvestigation(
       incident.product_id,
     );
 
-    const confidence =
-      result.root_cause_confidence != null
-        ? ` (confidence ${Math.round(result.root_cause_confidence * 100)}%)`
-        : "";
-
     return [
-      `Investigation complete for "${incident.title}".`,
-      `Root cause${confidence}: ${result.root_cause ?? "inconclusive"}`,
-      `Found ${findings_count} finding(s) and proposed ${actions_count} fix action(s).`,
-      `Review and approve here: ${incidentLink(incident.id)}`,
+      `Investigation complete: "${incident.title}"`,
+      `Likely issue: ${summarizeForSlack(result.root_cause)}`,
+      `Confidence: ${formatConfidence(result.root_cause_confidence)}`,
+      `${pluralize(findings_count, "finding")}, ${pluralize(
+        actions_count,
+        "proposed fix",
+        "proposed fixes",
+      )}.`,
+      `Review details: ${incidentLink(incident.id)}`,
     ].join("\n");
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";

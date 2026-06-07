@@ -2,7 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import type { Incident } from "@/lib/stores";
 import type { Database } from "@/lib/supabase/database.types";
+
+vi.mock("./investigate-incident", () => ({
+  investigateIncident: vi.fn(),
+}));
+
+import { investigateIncident } from "./investigate-incident";
 import {
+  runHugoInvestigation,
   runHugoRejectProposedActions,
   runHugoReopen,
   runHugoResolve,
@@ -67,6 +74,38 @@ function chainMock(responses: QueryResult[]) {
 }
 
 describe("Hugo Slack action helpers", () => {
+  it("returns a concise investigation completion summary", async () => {
+    vi.mocked(investigateIncident).mockResolvedValueOnce({
+      result: {
+        findings: [],
+        root_cause:
+          "Product e4993b32-a221 has a refund-rate threshold breach: refund rate is 0.096 ratio versus the 0.08 threshold, but it is not a proven SPC anomaly because the confidence interval is wide.",
+        root_cause_confidence: 0.6,
+        actions: [],
+      },
+      findings_count: 1,
+      actions_count: 4,
+      run_id: "run-1",
+    });
+
+    const message = await runHugoInvestigation(
+      {} as SupabaseClient<Database>,
+      incident({
+        id: "inc-1",
+        title: "Cargo Sweatpants: Refund rate 9.7% (target <=8.0%)",
+      }),
+    );
+
+    expect(message).toContain("Investigation complete");
+    expect(message).toContain("Confidence: 60%");
+    expect(message).toContain("1 finding, 4 proposed fixes");
+    expect(message).toContain("Likely issue:");
+    expect(message).toContain("Review details:");
+    expect(message).not.toContain("Root cause");
+    expect(message).not.toContain("confidence 6000%");
+    expect(message).not.toContain("confidence interval is wide");
+  });
+
   it("resolves an incident", async () => {
     const { supabase, updates, inserts } = chainMock([
       { data: null, error: null },

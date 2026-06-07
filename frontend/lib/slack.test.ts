@@ -18,11 +18,22 @@ describe("buildIncidentNotificationBlocks", () => {
       status: "fix_proposed",
       incident_id: "inc-1",
       app_url: "http://localhost:3000",
-      actions: [{ title: "Pause ads", auto_deploy: false, risk_level: "low" }],
+      root_cause:
+        "Refund rate is above target, but the confidence interval is wide and there is no support-volume spike.",
+      actions: [
+        { title: "Pause ads", auto_deploy: false, risk_level: "low" },
+        { title: "Tag refund cases", auto_deploy: false, risk_level: "low" },
+      ],
     });
     const json = JSON.stringify(blocks);
     expect(json).toContain("approve_low_risk");
     expect(json).toContain("Return spike");
+    expect(json).toContain("Likely issue");
+    expect(json).toContain("Refund rate is above target");
+    expect(json).toContain("2 proposed fixes ready for review in the app");
+    expect(json).not.toContain("Pause ads");
+    expect(json).not.toContain("Tag refund cases");
+    expect(json).not.toContain("confidence interval is wide");
   });
 });
 
