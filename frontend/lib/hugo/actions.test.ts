@@ -7,7 +7,6 @@ vi.mock("./investigate-incident", () => ({
   investigateIncident: vi.fn(),
 }));
 
-import { investigateIncident } from "./investigate-incident";
 import {
   runHugoInvestigation,
   runHugoRejectProposedActions,
@@ -15,6 +14,7 @@ import {
   runHugoResolve,
   runHugoSnooze,
 } from "./actions";
+import { investigateIncident } from "./investigate-incident";
 
 type QueryResult = { data: unknown; error: { message: string } | null };
 

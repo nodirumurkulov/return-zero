@@ -1,0 +1,26 @@
+# Gitleaks configuration — secret scanning for return-zero
+# https://github.com/gitleaks/gitleaks
+#
+# Runs as a pre-commit hook and in CI to catch accidentally committed secrets.
+
+title = "return-zero gitleaks config"
+
+[extend]
+# Use the default gitleaks ruleset (covers AWS, GCP, Slack, Supabase, etc.)
+useDefault = true
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.local\.example$''',
+  '''\.test\.(ts|tsx|js|jsx)$''',
+  '''__mocks__/''',
+  '''__tests__/''',
+  '''e2e/''',
+  '''bun\.lock$''',
+  '''package-lock\.json$''',
+  '''database\.types\.ts$''',
+  '''docs/''',
+  '''\.md$''',
+]
