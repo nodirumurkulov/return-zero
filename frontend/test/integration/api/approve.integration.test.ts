@@ -29,6 +29,12 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => ({
+    from: vi.fn(() => ({ insert: vi.fn().mockResolvedValue({ error: null }) })),
+  })),
+}));
+
 vi.mock("@/lib/tenancy/server", () => ({
   tryGetStoreScope: vi.fn(),
 }));
