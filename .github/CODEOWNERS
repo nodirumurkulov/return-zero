@@ -1,0 +1,39 @@
+# CODEOWNERS — require review for security-sensitive changes
+#
+# GitHub automatically requests reviews from the listed owners when a PR
+# touches matching paths. This ensures security-critical files get proper
+# review before merging.
+#
+# Syntax: <pattern> <owner> [<owner>...]
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ── CI / GitHub Actions ──────────────────────────────────────────────────────
+# Workflow changes can inject secrets, modify deploy targets, or weaken checks.
+.github/                          @nodirumurkulov
+
+# ── Security configuration ───────────────────────────────────────────────────
+.gitleaks.toml                    @nodirumurkulov
+.pre-commit-config.yaml           @nodirumurkulov
+
+# ── Auth & middleware ────────────────────────────────────────────────────────
+# Session handling, CSRF, and request filtering.
+frontend/proxy.ts                 @nodirumurkulov
+frontend/lib/csrf.ts              @nodirumurkulov
+frontend/lib/rate-limit.ts        @nodirumurkulov
+frontend/lib/rate-limit-response.ts @nodirumurkulov
+frontend/lib/cron-auth.ts         @nodirumurkulov
+
+# ── Supabase / database ─────────────────────────────────────────────────────
+# Migrations can change RLS policies, drop tables, or alter permissions.
+frontend/supabase/                @nodirumurkulov
+
+# ── Environment & secrets ────────────────────────────────────────────────────
+.env.example                      @nodirumurkulov
+frontend/.env.example             @nodirumurkulov
+
+# ── Security documentation ───────────────────────────────────────────────────
+docs/security-headers.md          @nodirumurkulov
+docs/csrf-protection.md           @nodirumurkulov
+docs/secrets-policy.md            @nodirumurkulov
+docs/rate-limiting.md             @nodirumurkulov
+docs/dependency-security.md       @nodirumurkulov
