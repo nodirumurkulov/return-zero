@@ -1,0 +1,30 @@
+# Pre-commit hooks for return-zero
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# These hooks run automatically before every `git commit` to catch:
+#   1. Accidentally committed secrets (gitleaks)
+#   2. Common file hygiene issues (trailing whitespace, merge conflicts)
+
+repos:
+  # ── Secret scanning ─────────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  # ── File hygiene ────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
