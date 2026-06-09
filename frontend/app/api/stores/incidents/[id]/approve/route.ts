@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { getRequestIp, logSecurityEvent } from "@/lib/audit";
 import { approveIncidentBodySchema } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { tryGetStoreScope } from "@/lib/tenancy/server";
 
@@ -63,6 +65,17 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     logApiError("api/stores/incidents/[id]/approve", err);
     return apiErrorResponse(err);
   }
+
+  void logSecurityEvent(createAdminClient(), {
+    organization_id: scope.organizationId,
+    user_id: user.id,
+    category: "privilege",
+    action: "incident_actions_approved",
+    severity: "medium",
+    ip_address: getRequestIp(req),
+    user_agent: req.headers.get("user-agent"),
+    metadata: { incident_id: params.id, action_ids: actionIds, count: actionIds.length },
+  });
 
   revalidatePath("/incidents");
   revalidatePath(`/incidents/${params.id}`);
