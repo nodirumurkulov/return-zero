@@ -1,3 +1,5 @@
+import { rateLimiters } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit-response";
 import {
   lookupPricingSession,
   pricingChatBodySchema,
@@ -5,6 +7,9 @@ import {
 } from "@/lib/waitlist-pricing";
 
 export async function POST(req: Request) {
+  const blocked = checkRateLimit(req, rateLimiters.pricingChat);
+  if (blocked) return blocked.response;
+
   const raw: unknown = await req.json().catch(() => ({}));
   const parsed = pricingChatBodySchema.safeParse(raw);
 

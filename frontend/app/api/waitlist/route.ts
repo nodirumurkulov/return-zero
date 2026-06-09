@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { sendWaitlistConfirmation } from "@/lib/email/send-waitlist";
+import { rateLimiters } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit-response";
 import { insertWaitlistSignup } from "@/lib/waitlist/mutations";
 import { waitlistBodySchema } from "@/lib/waitlist/schemas";
 
 export async function POST(req: Request) {
+  const blocked = checkRateLimit(req, rateLimiters.waitlist);
+  if (blocked) return blocked.response;
+
   const raw: unknown = await req.json().catch(() => ({}));
   const parsed = waitlistBodySchema.safeParse(raw);
 
