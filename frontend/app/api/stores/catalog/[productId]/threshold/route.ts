@@ -2,8 +2,10 @@ import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse, logApiError } from "@/lib/api-errors";
+import { getRequestIp, logSecurityEvent } from "@/lib/audit";
 import { updateThresholdBodySchema } from "@/lib/stores";
 import { getStore } from "@/lib/stores/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { tryGetStoreScope } from "@/lib/tenancy/server";
 
@@ -43,6 +45,18 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ product
       metricKey,
       threshold,
     });
+
+    void logSecurityEvent(createAdminClient(), {
+      organization_id: scope.organizationId,
+      user_id: user.id,
+      category: "config_change",
+      action: "threshold_updated",
+      severity: "medium",
+      ip_address: getRequestIp(req),
+      user_agent: req.headers.get("user-agent"),
+      metadata: { product_id: productId, metric_key: metricKey, threshold },
+    });
+
     revalidatePath(`/catalog/${productId}`);
     revalidatePath("/catalog");
     return NextResponse.json({ ok: true as const });

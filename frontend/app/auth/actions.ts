@@ -2,7 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { logSecurityEvent } from "@/lib/audit";
 import { AUTH_NEXT_DEFAULT, authNextPathSchema } from "@/lib/auth/schemas";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const credentialsSchema = z.object({
@@ -30,8 +32,25 @@ export async function signIn(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) return { ok: false as const, error: error.message };
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+
+  if (error) {
+    void logSecurityEvent(createAdminClient(), {
+      category: "auth",
+      action: "sign_in_failure",
+      severity: "medium",
+      metadata: { email: parsed.data.email, reason: error.message },
+    });
+    return { ok: false as const, error: error.message };
+  }
+
+  void logSecurityEvent(createAdminClient(), {
+    user_id: data.user?.id,
+    category: "auth",
+    action: "sign_in_success",
+    severity: "low",
+    metadata: { email: parsed.data.email },
+  });
 
   const nextParsed = authNextPathSchema.safeParse(formData.get("next"));
   redirect(nextParsed.success ? nextParsed.data : AUTH_NEXT_DEFAULT);
@@ -60,6 +79,18 @@ export async function signInWithProvider(provider: OAuthProvider) {
 
 export async function signOut() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   await supabase.auth.signOut();
+
+  void logSecurityEvent(createAdminClient(), {
+    user_id: user?.id,
+    category: "auth",
+    action: "sign_out",
+    severity: "low",
+  });
+
   redirect("/sign-in");
 }
