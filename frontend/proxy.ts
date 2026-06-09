@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { hasCronAuth, matchesCronPath } from "@/lib/cron-auth";
+import { verifyCsrfOrigin } from "@/lib/csrf";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_PREFIXES = [
@@ -35,6 +36,11 @@ function redirectWithCookies(url: URL, sessionResponse: NextResponse) {
 export default async function proxy(request: NextRequest) {
   if (matchesCronPath(request.nextUrl.pathname) && hasCronAuth(request)) {
     return NextResponse.next();
+  }
+
+  const csrf = verifyCsrfOrigin(request);
+  if (!csrf.allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { response, user } = await updateSession(request);
