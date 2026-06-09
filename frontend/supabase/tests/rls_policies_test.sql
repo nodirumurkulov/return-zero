@@ -265,4 +265,314 @@ do $$ begin
 end $$;
 reset role;
 
+-- =============================================================
+-- Phase 3B: Extended penetration tests
+-- Covers tables added after the original RLS test suite.
+-- =============================================================
+
+\echo '== setup: additional rows for extended tests (as postgres) =='
+do $$
+declare
+  org_a uuid := 'aaaaaaaa-1111-1111-1111-111111111111';
+  org_b uuid := 'bbbbbbbb-2222-2222-2222-222222222222';
+  store_a uuid;
+  store_b uuid;
+  incident_a uuid := 'aaaaaaaa-1111-1111-1111-111111111201';
+  incident_b uuid := 'bbbbbbbb-2222-2222-2222-222222222201';
+  run_a uuid := 'aaaaaaaa-1111-1111-1111-111111111301';
+  run_b uuid := 'bbbbbbbb-2222-2222-2222-222222222301';
+begin
+  select id into store_a from public.store_connections where organization_id = org_a limit 1;
+  select id into store_b from public.store_connections where organization_id = org_b limit 1;
+
+  -- incident_actions for each org
+  insert into public.incident_actions (organization_id, incident_id, title, auto_deploy, risk_level)
+  values
+    (org_a, incident_a, 'Action A', false, 'low'),
+    (org_b, incident_b, 'Action B', false, 'low')
+  on conflict do nothing;
+
+  -- incident_timeline for each org
+  insert into public.incident_timeline (organization_id, incident_id, event_type, payload)
+  values
+    (org_a, incident_a, 'status_change', '{"from":"detected","to":"investigating"}'::jsonb),
+    (org_b, incident_b, 'status_change', '{"from":"detected","to":"investigating"}'::jsonb)
+  on conflict do nothing;
+
+  -- investigation_steps for each org
+  insert into public.investigation_steps (
+    organization_id, incident_id, run_id, step_key, agent_name, label
+  ) values
+    (org_a, incident_a, run_a, 'step_1', 'Returns Agent', 'Checking return rate'),
+    (org_b, incident_b, run_b, 'step_1', 'Returns Agent', 'Checking return rate')
+  on conflict do nothing;
+
+  -- business_profile for each org
+  insert into public.business_profile (organization_id, store_name)
+  values (org_a, 'Store A'), (org_b, 'Store B')
+  on conflict do nothing;
+
+  -- product_cost_overrides for each org
+  insert into public.product_cost_overrides (organization_id, product_id, cost_per_unit)
+  values
+    (org_a, 'aaaaaaaa-1111-1111-1111-111111111101', 5.00),
+    (org_b, 'bbbbbbbb-2222-2222-2222-222222222201', 8.00)
+  on conflict do nothing;
+
+  -- waitlist_signups (service-role only table)
+  insert into public.waitlist_signups (email, confirmation_token)
+  values ('pentest@example.com', gen_random_uuid())
+  on conflict do nothing;
+end $$;
+
+-- ── incident_actions: cross-tenant isolation ─────────────────────────
+
+\echo '== user A: incident_actions scoped to org A =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.incident_actions;
+  if c < 1 then raise exception 'FAIL: user A sees 0 incident_actions (expected >= 1)'; end if;
+  if exists (
+    select 1 from public.incident_actions
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+  ) then
+    raise exception 'FAIL: user A sees org B incident_actions (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A incident_actions scoped to org A';
+end $$;
+
+\echo '== user A: cannot insert incident_actions into org B =='
+do $$ begin
+  begin
+    insert into public.incident_actions (
+      organization_id, incident_id, title, auto_deploy, risk_level
+    ) values (
+      'bbbbbbbb-2222-2222-2222-222222222222',
+      'bbbbbbbb-2222-2222-2222-222222222201',
+      'cross-tenant action',
+      false,
+      'low'
+    );
+    raise exception 'FAIL: user A inserted incident_actions into org B';
+  exception when insufficient_privilege then
+    raise notice 'PASS: user A insert into org B incident_actions denied';
+  end;
+end $$;
+reset role;
+
+-- ── incident_timeline: cross-tenant isolation ────────────────────────
+
+\echo '== user A: incident_timeline scoped to org A =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.incident_timeline;
+  if c < 1 then raise exception 'FAIL: user A sees 0 incident_timeline (expected >= 1)'; end if;
+  if exists (
+    select 1 from public.incident_timeline
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+  ) then
+    raise exception 'FAIL: user A sees org B incident_timeline (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A incident_timeline scoped to org A';
+end $$;
+reset role;
+
+-- ── investigation_steps: cross-tenant isolation ──────────────────────
+
+\echo '== user A: investigation_steps scoped to org A =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.investigation_steps;
+  if c < 1 then raise exception 'FAIL: user A sees 0 investigation_steps (expected >= 1)'; end if;
+  if exists (
+    select 1 from public.investigation_steps
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+  ) then
+    raise exception 'FAIL: user A sees org B investigation_steps (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A investigation_steps scoped to org A';
+end $$;
+
+\echo '== user A: cannot insert investigation_steps into org B =='
+do $$ begin
+  begin
+    insert into public.investigation_steps (
+      organization_id, incident_id, run_id, step_key, agent_name, label
+    ) values (
+      'bbbbbbbb-2222-2222-2222-222222222222',
+      'bbbbbbbb-2222-2222-2222-222222222201',
+      gen_random_uuid(),
+      'xss_step',
+      'Evil Agent',
+      'Cross-tenant attack'
+    );
+    raise exception 'FAIL: user A inserted investigation_steps into org B';
+  exception when insufficient_privilege then
+    raise notice 'PASS: user A insert into org B investigation_steps denied';
+  end;
+end $$;
+reset role;
+
+-- ── business_profile: cross-tenant isolation ─────────────────────────
+
+\echo '== user A: business_profile scoped to org A =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.business_profile;
+  if c <> 1 then raise exception 'FAIL: user A sees % business_profile (expected 1)', c; end if;
+  if exists (
+    select 1 from public.business_profile
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+  ) then
+    raise exception 'FAIL: user A sees org B business_profile (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A business_profile scoped to org A';
+end $$;
+
+\echo '== user A: cannot update org B business_profile =='
+do $$ begin
+  begin
+    update public.business_profile
+    set store_name = 'Hijacked'
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222';
+    -- RLS silently filters; check 0 rows affected
+    if found then
+      raise exception 'FAIL: user A updated org B business_profile';
+    end if;
+    raise notice 'PASS: user A update org B business_profile = 0 rows';
+  end;
+end $$;
+reset role;
+
+-- ── product_cost_overrides: cross-tenant isolation ───────────────────
+
+\echo '== user A: product_cost_overrides scoped to org A =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.product_cost_overrides;
+  if c <> 1 then raise exception 'FAIL: user A sees % product_cost_overrides (expected 1)', c; end if;
+  if exists (
+    select 1 from public.product_cost_overrides
+    where organization_id = 'bbbbbbbb-2222-2222-2222-222222222222'
+  ) then
+    raise exception 'FAIL: user A sees org B product_cost_overrides (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A product_cost_overrides scoped to org A';
+end $$;
+reset role;
+
+-- ── waitlist_signups: service-role only (no RLS policies) ────────────
+
+\echo '== anon: waitlist_signups denied =='
+set role anon;
+do $$ declare c int;
+begin
+  select count(*) into c from public.waitlist_signups;
+  if c <> 0 then raise exception 'FAIL: anon read waitlist_signups = %', c; end if;
+  raise notice 'PASS: anon sees 0 waitlist_signups';
+end $$;
+reset role;
+
+\echo '== authenticated: waitlist_signups denied (no policies) =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.waitlist_signups;
+  if c <> 0 then raise exception 'FAIL: authenticated read waitlist_signups = % (expected 0)', c; end if;
+  raise notice 'PASS: authenticated sees 0 waitlist_signups (service-role only)';
+end $$;
+
+\echo '== authenticated: cannot insert waitlist_signups =='
+do $$ begin
+  begin
+    insert into public.waitlist_signups (email) values ('hack@evil.com');
+    raise exception 'FAIL: authenticated inserted waitlist_signups';
+  exception when insufficient_privilege then
+    raise notice 'PASS: authenticated insert into waitlist_signups denied';
+  end;
+end $$;
+reset role;
+
+-- ── waitlist_pricing_messages: service-role only ─────────────────────
+
+\echo '== authenticated: waitlist_pricing_messages denied =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.waitlist_pricing_messages;
+  if c <> 0 then raise exception 'FAIL: authenticated read waitlist_pricing_messages = %', c; end if;
+  raise notice 'PASS: authenticated sees 0 waitlist_pricing_messages';
+end $$;
+reset role;
+
+-- ── waitlist_pricing_state: service-role only ────────────────────────
+
+\echo '== authenticated: waitlist_pricing_state denied =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.waitlist_pricing_state;
+  if c <> 0 then raise exception 'FAIL: authenticated read waitlist_pricing_state = %', c; end if;
+  raise notice 'PASS: authenticated sees 0 waitlist_pricing_state';
+end $$;
+reset role;
+
+-- ── user B cross-check on extended tables ────────────────────────────
+
+\echo '== user B: cannot see org A extended data =='
+select set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', false);
+set role authenticated;
+do $$
+begin
+  if exists (select 1 from public.incident_actions where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: user B sees org A incident_actions';
+  end if;
+  if exists (select 1 from public.incident_timeline where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: user B sees org A incident_timeline';
+  end if;
+  if exists (select 1 from public.investigation_steps where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: user B sees org A investigation_steps';
+  end if;
+  if exists (select 1 from public.business_profile where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: user B sees org A business_profile';
+  end if;
+  if exists (select 1 from public.product_cost_overrides where organization_id = 'aaaaaaaa-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: user B sees org A product_cost_overrides';
+  end if;
+  raise notice 'PASS: user B sees no org A data on extended tables';
+end $$;
+reset role;
+
+-- ── organization_members: cannot read other orgs' members ────────────
+
+\echo '== user A: organization_members shows only self =='
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false);
+set role authenticated;
+do $$ declare c int;
+begin
+  select count(*) into c from public.organization_members;
+  if c <> 1 then raise exception 'FAIL: user A sees % org members (expected 1)', c; end if;
+  if exists (
+    select 1 from public.organization_members
+    where user_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+  ) then
+    raise exception 'FAIL: user A sees user B membership (cross-tenant leak)';
+  end if;
+  raise notice 'PASS: user A organization_members shows only self';
+end $$;
+reset role;
+
 \echo 'ALL RLS CHECKS PASSED'
